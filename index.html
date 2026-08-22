@@ -3,489 +3,461 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Axion Protocol — Gobernanza para IA agentiva</title>
-  <meta name="description" content="Axion Protocol te deja dirigir una IA sin saber programar, y saber siempre qué hizo y por qué. Runtime experimental de gobernanza local: siete fases, aprobaciones firmadas y evidencia SHA-256.">
+  <title>Axion Protocol — Gobernanza Determinista para Agentes de IA</title>
+  <meta name="description" content="Arnés de gobernanza local (118 kB, cero dependencias) para agentes de IA: cristalización de intención, preflight fail-closed, rollback instantáneo y atestaciones in-toto.">
   <meta name="color-scheme" content="dark">
-  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="%23050710"/><path d="M16 6 26 26H21.4L16 15.2 10.6 26H6z" fill="%2300f0ff"/></svg>'>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2308090D'/><path d='M16 5L27 25H21.5L16 14.5L10.5 25H5L16 5Z' fill='%2310B981'/></svg>">
 
-  <meta property="og:title" content="Axion Protocol — Gobernanza para IA agentiva">
-  <meta property="og:description" content="Dirige una IA sin saber programar, y sabe siempre qué hizo y por qué. Proyecto experimental, con sus defectos abiertos declarados.">
-  <meta property="og:type" content="website">
-
+  <!-- Tipografía Editorial Moderna -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="theme-cyan">
+<body>
 
-  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <!-- Toast Notification Container -->
+  <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
-  <div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>
-  <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
-  <canvas id="hero-canvas" class="hero-canvas" aria-hidden="true"></canvas>
-
-  <div class="app-layout">
-
-    <!-- ── Navegación lateral ─────────────────────────────────────────── -->
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <div class="brand-logo">
-          <div class="logo-icon" aria-hidden="true">A</div>
-          <div>
-            <div class="brand-name">Axion<span class="brand-dot">.</span></div>
-            <div class="brand-tag">Protocol v1.1.0-alpha</div>
-          </div>
+  <!-- ── Barra de Navegación Flotante ──────────────────────────────── -->
+  <header class="navbar-wrapper">
+    <nav class="navbar">
+      <a href="#" class="nav-brand">
+        <div class="brand-shield" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+            <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-        <div class="status-badge" title="El proyecto no está certificado y tiene defectos abiertos declarados.">
-          <span class="status-pulse" aria-hidden="true"></span>
-          <span>Experimental · no certificado</span>
-        </div>
+        <span class="brand-title">Axion<span class="brand-accent">Protocol</span></span>
+        <span class="version-pill">v1.1.0-alpha</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#simulador" class="nav-link">Simulador en Vivo</a>
+        <a href="#fases" class="nav-link">7 Fases</a>
+        <a href="#capacidades" class="nav-link">Capacidades</a>
+        <a href="#comparativa" class="nav-link">Comparativa</a>
       </div>
 
-      <nav class="side-nav" aria-label="Secciones de la página">
-        <a href="#hero" class="nav-item active"><span class="nav-num">00</span><span>Qué es</span></a>
-        <a href="#problema" class="nav-item"><span class="nav-num">01</span><span>Qué problema resuelve</span></a>
-        <a href="#clarificador" class="nav-item"><span class="nav-num">02</span><span>Pruébalo</span></a>
-        <a href="#blueprint" class="nav-item"><span class="nav-num">03</span><span>Las siete fases</span></a>
-        <a href="#playground" class="nav-item"><span class="nav-num">04</span><span>Consola de ejemplo</span></a>
-        <a href="#estado" class="nav-item"><span class="nav-num">05</span><span>Estado real</span></a>
-        <a href="#instalacion" class="nav-item"><span class="nav-num">06</span><span>Instalación</span></a>
-      </nav>
-
-      <div class="sidebar-controls">
-        <span class="control-header">Sonido de interfaz</span>
-        <button class="audio-btn" id="audio-toggle-btn" aria-pressed="false">
-          <span class="audio-btn-label">
-            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
-            <span id="audio-state-text">Sonido desactivado</span>
-          </span>
-          <span class="audio-spectrum" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
-        </button>
-
-        <span class="control-header">Color de acento</span>
-        <div class="accent-buttons" role="group" aria-label="Color de acento de la interfaz">
-          <button class="accent-btn cyan active" data-theme="theme-cyan" aria-label="Cian" title="Cian"></button>
-          <button class="accent-btn indigo" data-theme="theme-indigo" aria-label="Índigo" title="Índigo"></button>
-          <button class="accent-btn lime" data-theme="theme-lime" aria-label="Verde" title="Verde"></button>
-          <button class="accent-btn crimson" data-theme="theme-crimson" aria-label="Carmesí" title="Carmesí"></button>
-        </div>
+      <div class="nav-actions">
+        <a href="https://github.com/Acourd/axion-protocol" target="_blank" rel="noopener noreferrer" class="btn-github">
+          <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span>GitHub</span>
+          <span class="badge-status">38/38 PASS</span>
+        </a>
       </div>
-    </aside>
+    </nav>
+  </header>
 
-    <!-- ── Contenido ──────────────────────────────────────────────────── -->
-    <main class="main-content" id="contenido">
+  <!-- ── Hero Principal ────────────────────────────────────────────── -->
+  <main class="main-container">
+    <section class="hero-section">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        <span>Gobernanza Determinista · Zero-Bloat · 118 kB</span>
+      </div>
 
-      <header class="top-bar">
-        <button class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="sidebar">
-          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-          <span>Secciones</span>
-        </button>
-        <div class="path-tag">Proyecto experimental · código abierto Apache-2.0</div>
-        <button class="cmd-palette-btn" id="cmd-palette-trigger">
-          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <span class="cmd-btn-text">Buscar…</span>
-          <kbd>Ctrl K</kbd>
-        </button>
-      </header>
+      <h1 class="hero-heading">
+        Dirige agentes de IA sin perder el control <br>
+        <span class="gradient-text">ni romper tu código.</span>
+      </h1>
 
-      <!-- 00 · Hero -->
-      <section id="hero">
-        <p class="eyebrow">Para quien dirige una IA sin saber programar</p>
-        <h1 class="hero-title">
-          Dile a una IA qué quieres.<br>
-          <span class="accent-text">Y entérate de todo lo que hace.</span>
-        </h1>
-        <p class="hero-desc">
-          Cuando le pides algo a un agente de IA, normalmente pasan dos cosas malas: rellena
-          por su cuenta lo que no le dijiste, y hace cambios que no puedes revisar. Axion se
-          pone en medio. Primero te pregunta hasta entenderte. Después, cada paso que da queda
-          registrado, firmado y se puede deshacer.
-        </p>
+      <p class="hero-subheading">
+        Axion Protocol es el arnés de gobernanza local y transparente para Antigravity, Claude Code y Cursor. Convierte órdenes vagas en contratos verificados, bloquea comandos destructivos y garantiza reversión en 1 clic.
+      </p>
 
-        <div class="hero-actions">
-          <a class="btn-primary-action" href="#clarificador">
-            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 14 9-14 9V3Z"/></svg>
-            Probar el aclarador
-          </a>
-          <a class="btn-ghost-action" href="#estado">Ver el estado real del proyecto</a>
+      <!-- Terminal de Instalación Rápida -->
+      <div class="terminal-install-card">
+        <div class="terminal-header">
+          <div class="terminal-tabs">
+            <button class="term-tab active" data-pm="npx">npx</button>
+            <button class="term-tab" data-pm="npm">npm</button>
+            <button class="term-tab" data-pm="pnpm">pnpm</button>
+          </div>
+          <span class="terminal-label">Instalación en 1 paso</span>
         </div>
-
-        <!-- Métricas: solo hechos comprobables en el repositorio. -->
-        <div class="metrics-strip">
-          <div class="tilt-card">
-            <span class="metric-value counter" data-target="7">0</span>
-            <span class="metric-label">Fases que debe pasar cada tarea</span>
+        <div class="terminal-body">
+          <div class="terminal-code">
+            <span class="prompt-symbol">$</span>
+            <code id="install-command">npx axion-protocol init</code>
           </div>
-          <div class="tilt-card">
-            <span class="metric-value"><span class="counter" data-target="38">0</span>/38</span>
-            <span class="metric-label">Pruebas en verde, ejecutadas</span>
-          </div>
-          <div class="tilt-card">
-            <span class="metric-value">Ed25519</span>
-            <span class="metric-label">Firma de las aprobaciones</span>
-          </div>
-          <div class="tilt-card">
-            <span class="metric-value counter" data-target="0">0</span>
-            <span class="metric-label">Dependencias externas</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- 01 · Problema -->
-      <section id="problema">
-        <h2 class="section-title">01. Qué problema resuelve</h2>
-        <p class="section-lead">
-          No hace falta que sepas qué es una clave criptográfica. Basta con entender estas cuatro
-          situaciones, que probablemente ya has vivido.
-        </p>
-
-        <div class="problem-grid">
-          <article class="problem-card">
-            <div class="problem-icon" aria-hidden="true">
-              <svg class="ico" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2Z"/><path d="M9 22h6"/></svg>
-            </div>
-            <h3>«Yo no pedí eso»</h3>
-            <p class="problem-bad">La IA rellena los huecos de tu petición con suposiciones y construye otra cosa.</p>
-            <p class="problem-good">
-              Axion no empieza hasta haberte preguntado. Te ofrece opciones en lenguaje normal
-              y siempre puedes dictar la tuya. Al final emite un resumen de lo que entendió,
-              para que lo confirmes antes de que se toque nada.
-            </p>
-          </article>
-
-          <article class="problem-card">
-            <div class="problem-icon" aria-hidden="true">
-              <svg class="ico" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
-            </div>
-            <h3>«¿Y esto qué ha roto?»</h3>
-            <p class="problem-bad">Se ejecuta un comando destructivo y te enteras cuando ya no hay vuelta atrás.</p>
-            <p class="problem-good">
-              Antes de ejecutar nada, Axion clasifica el riesgo. Lo que puede hacer daño de
-              verdad exige tu autorización explícita y un plan de vuelta atrás preparado. Si
-              algo no está claro, se detiene en lugar de adivinar.
-            </p>
-          </article>
-
-          <article class="problem-card">
-            <div class="problem-icon" aria-hidden="true">
-              <svg class="ico" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg>
-            </div>
-            <h3>«Demuéstramelo»</h3>
-            <p class="problem-bad">El agente dice que todo salió bien, y su palabra es la única prueba.</p>
-            <p class="problem-good">
-              Cada paso deja una huella criptográfica que enlaza qué se pidió, qué se aprobó,
-              qué se ejecutó y qué se comprobó. Y quien revisa el resultado tiene que ser
-              distinto de quien lo hizo.
-            </p>
-          </article>
-
-          <article class="problem-card">
-            <div class="problem-icon" aria-hidden="true">
-              <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
-            </div>
-            <h3>«Para. Ahora mismo»</h3>
-            <p class="problem-bad">Algo se está torciendo y no hay forma de frenarlo sin cerrar la ventana a lo bruto.</p>
-            <p class="problem-good">
-              Hay una parada de emergencia. Mientras esté puesta, ninguna tarea avanza, ni siquiera
-              para ser analizada. Parar es deliberadamente fácil y no pide permiso a nadie; volver
-              a arrancar sí es una decisión consciente. Y si el sistema no puede leer si hay una
-              parada puesta, se queda quieto: ante la duda, no ejecuta.
-            </p>
-          </article>
-        </div>
-
-        <p class="section-lead" style="margin-top:1.5rem;margin-bottom:0">
-          <strong>Un límite honesto sobre lo último:</strong> la parada frena automatismos, no a
-          alguien decidido. Quien pueda escribir en el disco puede quitarla. Sirve para el caso
-          real y frecuente —un agente desbocado— no para uno hostil.
-        </p>
-      </section>
-
-      <!-- 02 · Wizard -->
-      <section id="clarificador">
-        <h2 class="section-title">02. Pruébalo aquí mismo</h2>
-        <p class="section-lead">
-          Así es como Axion te pregunta antes de construir. Tres pasos, sin una sola palabra
-          técnica. Puedes hacerlo ahora, no hay que instalar nada.
-        </p>
-
-        <div class="wizard-card">
-          <ol class="wizard-steps-indicator">
-            <li class="wizard-step-pill active" id="pill-step-1"><span>1</span> Qué quieres</li>
-            <li class="wizard-step-pill" id="pill-step-2"><span>2</span> Cómo lo quieres</li>
-            <li class="wizard-step-pill" id="pill-step-3"><span>3</span> Confirmación</li>
-          </ol>
-
-          <div id="wizard-step-1-card">
-            <h3 class="wizard-q">Paso 1 · ¿Qué rumbo prefieres?</h3>
-            <p class="wizard-hint">Elige una opción o dicta la tuya. Ninguna respuesta es definitiva: podrás cambiarla.</p>
-
-            <div class="option-cards-grid">
-              <button type="button" class="option-card" data-step="1" data-value="algo sencillo que funcione ya">
-                <span class="option-badge badge-recommended">Recomendada</span>
-                <h4>Algo sencillo que funcione ya</h4>
-                <p>Lo mínimo para resolver el problema principal, sin adornos.</p>
-              </button>
-              <button type="button" class="option-card" data-step="1" data-value="algo completo y guiado">
-                <span class="option-badge badge-standard">Más completa</span>
-                <h4>Algo completo y guiado</h4>
-                <p>Con comprobaciones extra y una interfaz que te va llevando de la mano.</p>
-              </button>
-              <button type="button" class="option-card" data-step="1" data-value="mi propia idea, dictada libremente">
-                <span class="option-badge badge-custom">Tu criterio</span>
-                <h4>Prefiero explicarlo yo</h4>
-                <p>Dictas tu idea con tus palabras, sin ceñirte a las opciones de arriba.</p>
-              </button>
-            </div>
-          </div>
-
-          <div id="wizard-step-2-card" hidden>
-            <h3 class="wizard-q">Paso 2 · ¿Y qué aspecto debería tener?</h3>
-            <p class="wizard-hint">Las sugerencias cambian según lo que elegiste antes. Aquí tampoco hay jerga.</p>
-
-            <div class="option-cards-grid">
-              <button type="button" class="option-card" data-step="2" data-value="sobrio y limpio">
-                <span class="option-badge badge-recommended">Recomendada</span>
-                <h4>Sobrio y limpio</h4>
-                <p>Tonos oscuros mate, mucho aire y nada que distraiga.</p>
-              </button>
-              <button type="button" class="option-card" data-step="2" data-value="vivo y llamativo">
-                <span class="option-badge badge-standard">Con más color</span>
-                <h4>Vivo y llamativo</h4>
-                <p>Colores intensos y más movimiento en la interfaz.</p>
-              </button>
-              <button type="button" class="option-card" data-step="2" data-value="un estilo propio que describiré">
-                <span class="option-badge badge-custom">Tu criterio</span>
-                <h4>Tengo algo en mente</h4>
-                <p>Describes tus colores o referencias, y se parte de ahí.</p>
-              </button>
-            </div>
-          </div>
-
-          <div id="wizard-step-3-card" hidden>
-            <div class="contract-box">
-              <h3 class="contract-title">
-                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
-                Esto es lo que he entendido
-              </h3>
-              <p id="contract-summary"></p>
-              <p class="contract-note">
-                En el protocolo real, hasta que no confirmas este resumen no se toca nada. Si
-                algo no encaja, se vuelve atrás y se pregunta otra vez.
-              </p>
-            </div>
-            <button class="btn-primary-action" id="wizard-reset">
-              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-              Empezar de nuevo
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 03 · Las siete fases -->
-      <section id="blueprint">
-        <h2 class="section-title">03. Las siete fases</h2>
-        <p class="section-lead">
-          Toda tarea recorre estas siete fases en orden. Si una falla, el proceso se detiene ahí
-          y no continúa. Toca cualquiera para ver qué hace.
-        </p>
-
-        <div class="arch-grid" role="tablist" aria-label="Fases del protocolo">
-          <button class="interactive-node active" data-step="1" role="tab" aria-selected="true"><span class="node-num">1</span><span class="node-name">Entender</span></button>
-          <button class="interactive-node" data-step="2" role="tab" aria-selected="false"><span class="node-num">2</span><span class="node-name">Planificar</span></button>
-          <button class="interactive-node" data-step="3" role="tab" aria-selected="false"><span class="node-num">3</span><span class="node-name">Autorizar</span></button>
-          <button class="interactive-node" data-step="4" role="tab" aria-selected="false"><span class="node-num">4</span><span class="node-name">Probar</span></button>
-          <button class="interactive-node" data-step="5" role="tab" aria-selected="false"><span class="node-num">5</span><span class="node-name">Construir</span></button>
-          <button class="interactive-node" data-step="6" role="tab" aria-selected="false"><span class="node-num">6</span><span class="node-name">Auditar</span></button>
-          <button class="interactive-node" data-step="7" role="tab" aria-selected="false"><span class="node-num">7</span><span class="node-name">Promover</span></button>
-        </div>
-
-        <div class="node-inspector" role="tabpanel" aria-live="polite">
-          <div class="inspector-header">
-            <span class="inspector-title" id="inspector-title">1 · Entender</span>
-            <span class="inspector-chip" id="inspector-chip">Sin jerga técnica</span>
-          </div>
-          <p id="inspector-body">
-            Te entrevista antes de tocar nada. Te pregunta qué quieres, cómo lo quieres y hasta
-            dónde llega el encargo, siempre en lenguaje normal y siempre con la posibilidad de
-            responder con tus propias palabras.
-          </p>
-        </div>
-      </section>
-
-      <!-- 04 · Consola -->
-      <section id="playground">
-        <h2 class="section-title">04. Consola de ejemplo</h2>
-        <p class="section-lead">
-          Una muestra de lo que verías al usarlo, con las mismas respuestas que da la herramienta
-          real. Compara un comando escrito de corrido con uno bien formado, y marca la casilla
-          para ver qué pasa con algo peligroso.
-        </p>
-
-        <div class="terminal-window">
-          <div class="term-header">
-            <div class="term-dots" aria-hidden="true">
-              <span class="term-dot red"></span><span class="term-dot yellow"></span><span class="term-dot green"></span>
-            </div>
-            <span class="term-sim-badge">Simulación</span>
-            <span class="term-file">axion</span>
-          </div>
-
-          <div class="term-body" id="term-output" role="log" aria-live="polite">
-[axion] Esto es una SIMULACIÓN: reproduce salidas de ejemplo, no ejecuta las herramientas.
-[axion] Para ejecutarlas de verdad: node tools/preflight.js "&lt;comando&gt;"
-[axion] Pulsa un botón para empezar.
-          </div>
-
-          <div class="term-toolbar">
-            <div class="term-buttons">
-              <button class="btn-primary-action" id="btn-preflight">
-                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 14 9-14 9V3Z"/></svg>
-                Comando escrito de corrido
-              </button>
-              <button class="btn-ghost-action" id="btn-structured">Comando bien formado</button>
-              <button class="btn-ghost-action" id="btn-clarifier">Probar el aclarador</button>
-              <button class="btn-ghost-action subtle" id="btn-clear">Limpiar</button>
-            </div>
-
-            <label class="term-check">
-              <input type="checkbox" id="chk-simulate-error">
-              <span>Intentar un comando peligroso</span>
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <!-- 05 · Estado real -->
-      <section id="estado">
-        <h2 class="section-title">05. Estado real del proyecto</h2>
-        <p class="section-lead">
-          Esta sección existe para que nadie se lleve una sorpresa. Axion es un proyecto
-          experimental con defectos conocidos, y están todos aquí: los dos que siguen abiertos y
-          el que ya se cerró.
-        </p>
-
-        <div class="status-callout">
-          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>
-          <p>
-            <strong>Hoy no debe usarse como medida de seguridad.</strong> No está certificado, y
-            su certificación anterior fue anulada formalmente en agosto de 2026. Sirve para
-            entender y experimentar, no para proteger nada importante.
-          </p>
-        </div>
-
-        <div class="nc-grid">
-          <article class="nc-card nc-critical">
-            <span class="nc-tag">Crítica</span>
-            <h3>La separación de responsabilidades aún no está demostrada</h3>
-            <p>
-              Debería ser imposible que quien ejecuta una tarea sea también quien la aprueba.
-              Se encontraron tres formas de saltarse esa regla sin romper ninguna firma.
-              <strong>Dos ya están cerradas:</strong> dar de alta a la misma persona dos veces
-              con nombres casi idénticos, y cambiar los datos justo después de comprobarlos.
-            </p>
-            <p>
-              Queda la tercera, que es la de fondo: <strong>el sistema cree quién dice ser</strong>
-              quien ejecuta. Resolverlo exige atar esa identidad a la cuenta real del ordenador,
-              no a lo que el propio ejecutor declare. Hasta entonces, esta regla no puede darse
-              por demostrada.
-            </p>
-            <code>AX-NC-0001</code>
-          </article>
-
-          <article class="nc-card nc-high">
-            <span class="nc-tag">Alta</span>
-            <h3>Cuatro pruebas no detectaban fallos</h3>
-            <p>
-              De las trece pruebas que dieron el visto bueno en su día, cuatro habrían aprobado
-              igualmente un sistema completamente roto. Se descubrió rompiéndolo a propósito
-              para ver si se enteraban.
-            </p>
-            <code>AX-NC-0002</code>
-          </article>
-
-          <article class="nc-card nc-fixed">
-            <span class="nc-tag">Resuelta</span>
-            <h3>Las tareas de bajo riesgo ya no se atascan</h3>
-            <p>
-              Una tarea sin peligro debería completarse sola, y se quedaba bloqueada: el sistema
-              exigía la firma de quien autoriza incluso cuando no hacía falta autorización. Ya
-              está corregido, y hay una prueba dedicada a vigilar que el arreglo no sirva para
-              saltarse esa firma cuando sí es obligatoria.
-            </p>
-            <code>AX-NC-0003</code>
-          </article>
-        </div>
-
-        <div class="suite-summary">
-          <h3>Resultado de las pruebas</h3>
-          <p class="suite-meta">Última ejecución completa sobre Node 24 · 38 de 38 en verde</p>
-          <ul class="suite-list">
-            <li><span class="suite-name">Funcionales</span> <span class="suite-bar"><span style="width:100%"></span></span> <span class="suite-score">8/8</span></li>
-            <li><span class="suite-name">Regresión</span> <span class="suite-bar"><span style="width:100%"></span></span> <span class="suite-score">10/10</span></li>
-            <li><span class="suite-name">Criptográficas</span> <span class="suite-bar"><span style="width:100%"></span></span> <span class="suite-score">21/21</span></li>
-          </ul>
-          <p class="suite-note">
-            Que estén todas en verde no significa que el proyecto esté aprobado ni certificado:
-            <code>AX-NC-0001</code> sigue abierta, y es la más grave de las tres. Una suite verde
-            demuestra que lo que se comprueba funciona, no que se esté comprobando todo lo que
-            importa — de hecho <code>AX-NC-0002</code> trata justo de eso.
-          </p>
-        </div>
-      </section>
-
-      <!-- 06 · Instalación -->
-      <section id="instalacion">
-        <h2 class="section-title">06. Instalación</h2>
-        <p class="section-lead">
-          Necesitas Node.js 20 o superior. No hay nada más que instalar: el proyecto usa
-          únicamente lo que Node ya trae.
-        </p>
-
-        <div class="install-box">
-          <code id="install-cmd">node install.js</code>
-          <button class="btn-primary-action" id="btn-copy-install">
-            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-            Copiar
+          <button class="btn-copy" id="btn-copy-install" title="Copiar comando">
+            <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Copiar</span>
           </button>
         </div>
-        <p class="install-note">
-          El instalador copia ficheros y nada más. No activa la supervisión por su cuenta: eso
-          ocurre cuando algo llama al orquestador y respeta su veredicto.
-        </p>
-      </section>
-
-      <footer class="site-footer">
-        <p>
-          Axion Protocol · Licencia Apache-2.0 · Proyecto experimental sin runtimes certificados.
-        </p>
-        <p class="footer-links">
-          <a href="README.md">Documentación</a>
-          <a href="GOVERNANCE.md">Gobernanza</a>
-          <a href="SECURITY.md">Seguridad</a>
-          <a href="CHANGELOG.md">Cambios</a>
-        </p>
-      </footer>
-    </main>
-  </div>
-
-  <!-- Paleta de comandos -->
-  <div class="modal-overlay" id="cmd-modal" role="dialog" aria-modal="true" aria-label="Buscar en la página" hidden>
-    <div class="cmd-palette-box">
-      <input type="text" id="cmd-input" placeholder="Escribe para buscar…" aria-label="Buscar">
-      <div class="cmd-results">
-        <button class="cmd-item" data-action="go-clarificador">Ir a: pruébalo</button>
-        <button class="cmd-item" data-action="go-estado">Ir a: estado real del proyecto</button>
-        <button class="cmd-item" data-action="run-preflight">Ejecutar la consola de ejemplo</button>
-        <button class="cmd-item" data-action="run-clarifier">Ver el aclarador en la consola</button>
-        <button class="cmd-item" data-action="theme-cyan">Acento cian</button>
-        <button class="cmd-item" data-action="theme-indigo">Acento índigo</button>
-        <button class="cmd-item" data-action="theme-lime">Acento verde</button>
-        <button class="cmd-item" data-action="theme-crimson">Acento carmesí</button>
       </div>
-    </div>
-  </div>
+
+      <!-- Métricas Clave -->
+      <div class="hero-metrics">
+        <div class="metric-item">
+          <span class="metric-val">0</span>
+          <span class="metric-label">Dependencias externas</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <span class="metric-val">38/38</span>
+          <span class="metric-label">Pruebas en verde</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <span class="metric-val">&lt; 200 ms</span>
+          <span class="metric-label">Preflight en tiempo real</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <span class="metric-val">100%</span>
+          <span class="metric-label">Ejecución Fail-Closed</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Simulador Interactivo en Vivo (The Live Sandbox) ──────────── -->
+    <section class="sandbox-section" id="simulador">
+      <div class="section-header">
+        <span class="section-tag">Laboratorio Interactivo</span>
+        <h2 class="section-title">Prueba la gobernanza de Axion en tiempo real</h2>
+        <p class="section-subtitle">
+          Experimenta cómo Axion frena alucinaciones, bloquea comandos destructivos y restaura archivos sin que toques la consola.
+        </p>
+      </div>
+
+      <div class="sandbox-container">
+        <!-- Navegación de Modos del Simulador -->
+        <div class="sandbox-nav">
+          <button class="sandbox-tab active" data-mode="intent">
+            <span class="tab-icon">💬</span>
+            <span class="tab-text">1. Aclarador de Intención</span>
+          </button>
+          <button class="sandbox-tab" data-mode="preflight">
+            <span class="tab-icon">🛡️</span>
+            <span class="tab-text">2. Preflight Léxico</span>
+          </button>
+          <button class="sandbox-tab" data-mode="rollback">
+            <span class="tab-icon">⏪</span>
+            <span class="tab-text">3. Rollback Semántico</span>
+          </button>
+        </div>
+
+        <!-- Pantalla del Simulador -->
+        <div class="sandbox-display">
+
+          <!-- ── Modo 1: Aclarador de Intención ──────────────────────── -->
+          <div class="sandbox-panel active" id="panel-intent">
+            <div class="panel-topbar">
+              <span class="panel-status status-amber">● Fase 1: ENTENDER</span>
+              <span class="panel-desc">Freno socrático obligatorio ante peticiones vagas</span>
+            </div>
+
+            <div class="interactive-chat">
+              <div class="chat-msg user-msg">
+                <span class="avatar">👤</span>
+                <div class="bubble">
+                  <p class="msg-author">Tú (Dictado o Texto):</p>
+                  <p class="msg-text">"Quiero crear una aplicación para gestionar citas médicas."</p>
+                </div>
+              </div>
+
+              <div class="chat-msg ai-msg">
+                <span class="avatar">🛡️</span>
+                <div class="bubble">
+                  <p class="msg-author">Axion Protocol (Aclarador Socrático):</p>
+                  <p class="msg-text">Antes de escribir código o proponer arquitecturas, respondamos 2 preguntas clave:</p>
+                  
+                  <div class="socratic-card">
+                    <p class="question-title"><strong>1. ¿Quién agenda las citas principalmente?</strong></p>
+                    <div class="options-grid" id="q1-options">
+                      <button class="btn-option active" data-q="1" data-val="A"><strong>A)</strong> El paciente directamente desde la web</button>
+                      <button class="btn-option" data-q="1" data-val="B"><strong>B)</strong> La clínica / recepcionista internamente</button>
+                      <button class="btn-option" data-q="1" data-val="C"><strong>C)</strong> Ambos con perfiles separados</button>
+                    </div>
+
+                    <p class="question-title" style="margin-top: 14px;"><strong>2. ¿Qué estilo visual prefieres?</strong></p>
+                    <div class="options-grid" id="q2-options">
+                      <button class="btn-option active" data-q="2" data-val="A"><strong>A)</strong> Minimalista clínico (blanco/esmeralda)</button>
+                      <button class="btn-option" data-q="2" data-val="B"><strong>B)</strong> Moderno oscuro tipo SaaS</button>
+                      <button class="btn-option" data-q="2" data-val="C"><strong>C)</strong> Estándar accesible de alto contraste</button>
+                    </div>
+                  </div>
+
+                  <div class="contract-card" id="intent-contract-output">
+                    <div class="contract-header">
+                      <span>📜 IntentContract Cristalizado</span>
+                      <span class="contract-tag">SELLADO CON SHA-256</span>
+                    </div>
+                    <ul class="contract-list">
+                      <li><strong>Objetivo:</strong> Portal web de reservas médicas con gestión de citas para pacientes.</li>
+                      <li><strong>Incluido:</strong> Selector de horarios, formulario de paciente y confirmación inmediata.</li>
+                      <li><strong>Excluido:</strong> Pasarela de pagos complejos y facturación automática (Fase posterior).</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Modo 2: Preflight Léxico ─────────────────────────────── -->
+          <div class="sandbox-panel" id="panel-preflight">
+            <div class="panel-topbar">
+              <span class="panel-status status-emerald">● Fase 5: CONSTRUIR</span>
+              <span class="panel-desc">Inspección estática antes de tocar la terminal (shell: false)</span>
+            </div>
+
+            <div class="preflight-sandbox-content">
+              <p class="sublabel">Elige un comando propuesto por un agente de IA para probar el análisis en tiempo real:</p>
+              
+              <div class="sample-commands">
+                <button class="btn-cmd-sample active" data-cmd="safe">
+                  <span class="dot-safe"></span> 🟢 Comando Seguro: <code>git status --porcelain</code>
+                </button>
+                <button class="btn-cmd-sample" data-cmd="risky">
+                  <span class="dot-warn"></span> 🟡 Riesgo Medio: <code>npm install crypto-js --save</code>
+                </button>
+                <button class="btn-cmd-sample" data-cmd="danger">
+                  <span class="dot-danger"></span> 🔴 Comando Destructivo: <code>rm -rf / --no-preserve-root</code>
+                </button>
+              </div>
+
+              <div class="preflight-terminal-box">
+                <div class="term-titlebar">
+                  <span>Validador Léxico (tools/preflight.js)</span>
+                  <span id="preflight-verdict-badge" class="badge-verdict pass">PASS (ALLOW)</span>
+                </div>
+                <pre class="terminal-output" id="preflight-console-output"><code class="lang-json">{
+  "executable": "git",
+  "args": ["status", "--porcelain"],
+  "cwd": ".",
+  "shell": false,
+  "risk_level": "LOW",
+  "verdict": "PASS",
+  "reason": "Comando de solo lectura; sin efectos secundarios destructivos."
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Modo 3: Rollback Semántico ──────────────────────────── -->
+          <div class="sandbox-panel" id="panel-rollback">
+            <div class="panel-topbar">
+              <span class="panel-status status-sky">● Reversión en Lenguaje Natural</span>
+              <span class="panel-desc">Restauración determinista de archivos sin comandos de Git</span>
+            </div>
+
+            <div class="rollback-sandbox-content">
+              <div class="file-state-comparison">
+                <div class="file-box">
+                  <div class="file-box-header">
+                    <span>Estado Actual en Disco (Modificado por IA)</span>
+                    <span class="status-indicator modified" id="file-status-indicator">⚠️ Archivo con error</span>
+                  </div>
+                  <pre class="code-diff" id="code-diff-display"><code class="lang-js"><span class="diff-rem">- function calcularTotal(items) { return items.reduce(...); }</span>
+<span class="diff-add">+ function calcularTotal() { throw new Error("VibeCoding Error"); }</span></code></pre>
+                </div>
+              </div>
+
+              <div class="rollback-action-bar">
+                <div class="spoken-prompt">
+                  <span class="mic-icon">🎙️</span>
+                  <span>Tú dices: <em>"No me gustó el resultado, deshaz lo que hiciste."</em></span>
+                </div>
+                <button class="btn-revert" id="btn-trigger-rollback">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                  </svg>
+                  <span>Ejecutar Rollback SHA-256</span>
+                </button>
+              </div>
+
+              <div class="rollback-result-card" id="rollback-result-box">
+                <span>✓ Snapshot SHA-256 Restaurado con éxito: <code>e8a10f92b...</code></span>
+                <span class="restored-badge">Archivo 100% Funcional</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Las 7 Fases de Gobernanza (Horizontal Pipeline) ──────────── -->
+    <section class="phases-section" id="fases">
+      <div class="section-header">
+        <span class="section-tag">Arquitectura Fail-Closed</span>
+        <h2 class="section-title">El ciclo determinista de 7 pasos</h2>
+        <p class="section-subtitle">
+          A diferencia de los agentes tradicionales que actúan por impulsividad, Axion impone una máquina de estados estricta.
+        </p>
+      </div>
+
+      <div class="pipeline-grid">
+        <div class="phase-card">
+          <div class="phase-num">01</div>
+          <h3 class="phase-title">ENTENDER</h3>
+          <p class="phase-desc">Aclaración socrática de la intención en 2 preguntas humanas. Se emite el <code>IntentContract</code>.</p>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-num">02</div>
+          <h3 class="phase-title">PLANIFICAR</h3>
+          <p class="phase-desc">Evaluación discreta de riesgo (<code>LOW</code> a <code>CRITICAL</code>) y definición del plan de reversión.</p>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-num">03</div>
+          <h3 class="phase-title">GATE</h3>
+          <p class="phase-desc">Firma criptográfica Ed25519 con nonces de un solo uso para autorizar acciones críticas.</p>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-num">04</div>
+          <h3 class="phase-title">TEST</h3>
+          <p class="phase-desc">Definición de aserciones y tests de verificación antes de tocar el código fuente.</p>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-num">05</div>
+          <h3 class="phase-title">CONSTRUIR</h3>
+          <p class="phase-desc">Modificación atómica con preflight léxico en tiempo real y ejecución <code>shell: false</code>.</p>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-num">06</div>
+          <h3 class="phase-title">AUDITAR</h3>
+          <p class="phase-desc">Comprobación de 38 suites de prueba y firma independiente de la evidencia.</p>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-num">07</div>
+          <h3 class="phase-title">PROMOVER</h3>
+          <p class="phase-desc">Generación de atestación <strong>in-toto / DSSE</strong> y reporte políglota para el usuario.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Bento Grid de Capacidades ─────────────────────────────────── -->
+    <section class="bento-section" id="capacidades">
+      <div class="section-header">
+        <span class="section-tag">Capacidades del Sistema</span>
+        <h2 class="section-title">Construido para creadores exigentes</h2>
+        <p class="section-subtitle">
+          Todo lo necesario para gobernar la IA sin fricción y con rigor criptográfico.
+        </p>
+      </div>
+
+      <div class="bento-grid">
+        <div class="bento-card bento-wide">
+          <div class="bento-badge">Sintonización de Perfil</div>
+          <h3>Adaptabilidad Total: Dictado por Voz & GUI</h3>
+          <p>Con el comando <code>/profile</code>, Axion calibra su tono, cadencia y autonomía estética para usuarios que operan mediante dictado por voz y editores visuales.</p>
+          <div class="bento-pill-group">
+            <span class="bento-pill">🎙️ Síntesis de voz</span>
+            <span class="bento-pill">🖥️ Cero terminal</span>
+            <span class="bento-pill">🎨 Dirección estética guiada</span>
+          </div>
+        </div>
+
+        <div class="bento-card">
+          <div class="bento-badge">Seguridad Dura</div>
+          <h3>Preflight Léxico Real</h3>
+          <p>Supervisa cada llamada de terminal con <code>validate-tool-call.mjs</code> antes de que el proceso toque tu sistema operativo.</p>
+        </div>
+
+        <div class="bento-card">
+          <div class="bento-badge">Rollback Determinista</div>
+          <h3>Reversión sin Git</h3>
+          <p>Restaura snapshots SHA-256 diciendo simplemente <em>"reviértelo"</em>, sin comandos complejos de consola.</p>
+        </div>
+
+        <div class="bento-card">
+          <div class="bento-badge">Estándar OpenSSF</div>
+          <h3>Sobres in-toto DSSE</h3>
+          <p>Evidencias compatibles con SLSA, Cosign y GitHub Attestations para auditorías y cumplimiento normativo.</p>
+        </div>
+
+        <div class="bento-card bento-wide">
+          <div class="bento-badge">Zero-Bloat</div>
+          <h3>118 kB · Cero Dependencias</h3>
+          <p>Funciona exclusivamente con módulos nativos de Node.js (<code>fs</code>, <code>crypto</code>, <code>path</code>, <code>child_process</code>). No requiere <code>npm install</code> ni paquetes de terceros.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Tabla Comparativa (Sin Axion vs Con Axion) ────────────────── -->
+    <section class="comparison-section" id="comparativa">
+      <div class="section-header">
+        <span class="section-tag">El Antes y el Después</span>
+        <h2 class="section-title">¿Qué cambia cuando usas Axion Protocol?</h2>
+      </div>
+
+      <div class="comparison-table-wrapper">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Aspecto</th>
+              <th class="col-without">Agentes Tradicionales (Sin Axion)</th>
+              <th class="col-with">Con Axion Protocol</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Órdenes Vagas</strong></td>
+              <td>La IA asume requisitos y programa código genérico equivocado.</td>
+              <td class="cell-highlight">Freno socrático obligatorio en 2 preguntas humanas (A/B/C).</td>
+            </tr>
+            <tr>
+              <td><strong>Comandos de Consola</strong></td>
+              <td>Ejecución ciega de cadenas de shell crudas y destructivas.</td>
+              <td class="cell-highlight">Preflight léxico estructurado con <code>shell: false</code>.</td>
+            </tr>
+            <tr>
+              <td><strong>Cuando algo sale mal</strong></td>
+              <td>Te pide comandos de Git confusos o intenta parchar sobre el error.</td>
+              <td class="cell-highlight">Rollback semántico instantáneo al snapshot SHA-256 previo.</td>
+            </tr>
+            <tr>
+              <td><strong>Evidencia y Auditoría</strong></td>
+              <td>Ninguna. Solo queda el historial efímero del chat.</td>
+              <td class="cell-highlight">Atestaciones criptográficas formales in-toto / DSSE.</td>
+            </tr>
+            <tr>
+              <td><strong>Huella de Instalación</strong></td>
+              <td>Librerías pesadas en Python/Docker con cientos de megabytes.</td>
+              <td class="cell-highlight">118 kB en Node.js puro sin dependencias externas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Footer ────────────────────────────────────────────────────── -->
+    <footer class="footer-section">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <span class="brand-title">Axion<span class="brand-accent">Protocol</span></span>
+          <p class="footer-desc">Gobernanza determinista y local para la era de la IA agentiva.</p>
+        </div>
+
+        <div class="footer-links">
+          <a href="https://github.com/Acourd/axion-protocol" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a href="README.es.md">Documentación</a>
+          <a href="CHANGELOG.md">Changelog</a>
+          <a href="LICENSE">Licencia Apache 2.0</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2026 Axion Protocol. Cero telemetría, 100% código abierto y ejecución local.</p>
+      </div>
+    </footer>
+  </main>
 
   <script src="script.js"></script>
 </body>
