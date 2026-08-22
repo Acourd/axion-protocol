@@ -23,7 +23,9 @@ const version = require(path.join(RAIZ, 'package.json')).version;
 // con require, para heredar sin traducciones sus codigos de salida y su salida estandar.
 const SUBCOMANDOS = {
   init: { script: 'install.js', ayuda: 'inyecta las reglas de gobernanza en un proyecto' },
+  update: { script: 'tools/updater.js', ayuda: 'actualiza reglas y herramientas preservando configuración' },
   preflight: { script: 'tools/preflight.js', ayuda: 'clasifica un comando antes de ejecutarlo' },
+  profile: { script: 'tools/profile_adapter.js', ayuda: 'consulta o calibra el perfil de usuario' },
   halt: { script: 'tools/killswitch.js', ayuda: 'detiene el sistema', fijo: ['halt'] },
   resume: { script: 'tools/killswitch.js', ayuda: 'retira la parada', fijo: ['resume'] },
   status: { script: 'tools/killswitch.js', ayuda: 'consulta si hay una parada activa', fijo: ['status'] },
