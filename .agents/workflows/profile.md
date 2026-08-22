@@ -1,36 +1,38 @@
 ---
 name: profile
-description: Calibra la experiencia comunicativa y el nivel de tecnicismo de la IA según el perfil del usuario.
+description: Calibra de forma personalizada el entorno de trabajo, método de interacción (Voz vs Teclado) y conecta al usuario con las funciones clave de Axion Protocol.
 ---
 
-# /profile — Adaptador de Perfil y Comunicación (Axion Protocol)
+# /profile — Sintonización Personalizada de Flujo de Trabajo (Axion Protocol)
 
-> **PROPÓSITO**: Ajustar dinámicamente la verbosidad, el tono y el nivel técnico de las respuestas de la IA para que la experiencia sea cómoda y sin saturación.
+> **PROPÓSITO**: Descubrir de manera natural cómo trabaja el usuario (entorno, voz, nivel de autonomía) para que la IA se adapte a su ritmo y le recomiende las mejores herramientas de Axion sin fricción.
 
 ---
 
-## 📋 Protocolo de Diagnóstico Rápido (30 Segundos)
+## 📋 Diagnóstico Conversacional (2 Preguntas Prácticas)
 
-Formula al usuario una única pregunta sencilla con 3 perfiles claros:
+Formula estas 2 preguntas contextuales al usuario:
 
 ```markdown
-### 👤 ¿Qué perfil de comunicación prefieres para esta sesión?
+### 🎙️ Sintonización de Flujo de Trabajo
 
-Elige una opción para calibrar mis explicaciones:
+Para que nuestra dinámica sea lo más fluida y natural posible:
 
-- **A) Visionario / Creador No Técnico**: Respuestas directas al grano, opciones simples, cero tecnicismos aburridos.
-- **B) Constructor Intermedio**: Enfoque práctico, diseño de producto, explicaciones equilibradas.
-- **C) Ingeniero Senior**: Profundidad técnica, detalles de bajo nivel y contratos formales.
+1. **¿Cómo sueles interactuar con la IA principalmente?**
+   - **A) Dictado por voz / Mensajes hablados fluidos** *(filtro pausas y sintetizo tus ideas)*.
+   - **B) Texto directo por teclado** *(instrucciones breves y al grano)*.
+
+2. **¿Desde qué entorno operas habitualmente?**
+   - **A) Interfaz visual / IDE (Antigravity IDE, Cursor, VS Code)** *(foco en código limpio y reversión visual sin terminal)*.
+   - **B) Terminal pura / CLI (Antigravity agy, Claude Code)** *(foco en comandos rápidos y preflight automático)*.
 ```
 
 ---
 
-## ⚙️ Registro y Persistencia
+## 🎯 Conexión Automática con Capacidades de Axion
 
-Una vez que el usuario responde (ej. *"A"*):
-1. Ejecuta:
-   ```bash
-   node tools/profile_adapter.js visionary
-   ```
-   *(o `builder` / `engineer` según la elección).*
-2. Guarda la preferencia en `.axion/PROFILE.json` para que todas las futuras respuestas adopten automáticamente ese nivel de concisión y lenguaje.
+Una vez recibida la respuesta:
+1. **Si usa Voz (1A)**: La IA activa el *Modo Cristalización por Voz* (limpia muletillas, extrae la intención central y formula el contrato en 2 preguntas sencillas).
+2. **Si usa IDE visual (2A)**: La IA activa el *Rollback Semántico en Lenguaje Natural* (*"deshazlo"*), evitando pedir comandos de Git o consola.
+3. **Si usa CLI (2B)**: La IA activa el *Preflight en tiempo real* para supervisar cada comando de shell.
+4. Guarda la configuración en `.axion/PROFILE.json` de forma transparente.

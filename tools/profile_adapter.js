@@ -2,10 +2,10 @@
 'use strict';
 
 /**
- * Axion Protocol - Adaptive User Profile Adapter
+ * Axion Protocol - Adaptive Workflow & Chemistry Profiler
  * 
- * Calibra el estilo de comunicación, nivel de tecnicismo y verbosidad de la IA
- * según el perfil del usuario (Visionario no técnico, Constructor intermedio, Ingeniero senior).
+ * Calibra de forma personalizada el entorno de trabajo, método de entrada (Voz vs Teclado),
+ * nivel de tecnicismo y sugiere las capacidades de Axion más adecuadas para el usuario.
  */
 
 const fs = require('fs');
@@ -15,25 +15,17 @@ const ROOT = path.resolve(__dirname, '..');
 const AXION_DIR = path.join(ROOT, '.axion');
 const PROFILE_FILE = path.join(AXION_DIR, 'PROFILE.json');
 
-const PROFILES = {
-  visionary: {
-    name: 'Visionario / Creador No Técnico',
-    verbosity: 'CONCISE',
-    jargon: 'ZERO_JARGON',
-    style: 'Orientado a objetivos, opciones A/B/C sencillas, cero términos informáticos innecesarios.'
-  },
-  builder: {
-    name: 'Constructor Intermedio / Product Builder',
-    verbosity: 'BALANCED',
-    jargon: 'PRACTICAL',
-    style: 'Explicaciones directas, foco en arquitectura de producto y trade-offs clave.'
-  },
-  engineer: {
-    name: 'Ingeniero Senior / DevSecOps',
-    verbosity: 'DETAILED',
-    jargon: 'TECHNICAL',
-    style: 'Detalles técnicos profundos, contratos de bajo nivel, diffs y análisis de seguridad.'
-  }
+const DEFAULT_PROFILE = {
+  environment: 'IDE', // 'CLI' | 'IDE'
+  input_mode: 'VOICE_OR_CONVERSATIONAL', // 'VOICE_OR_CONVERSATIONAL' | 'KEYBOARD_SHORT'
+  technical_depth: 'VISIONARY', // 'VISIONARY' | 'BUILDER' | 'ENGINEER'
+  verbosity: 'CONCISE',
+  recommended_features: [
+    'voice_intent_crystallization',
+    'semantic_rollback_natural_language',
+    'discrete_risk_planning'
+  ],
+  summary: 'Usuario Visionario / Creador. Prefiere ideas directas, dictado conversacional y cero fricción técnica.'
 };
 
 function getProfile() {
@@ -41,43 +33,34 @@ function getProfile() {
     try {
       return JSON.parse(fs.readFileSync(PROFILE_FILE, 'utf8'));
     } catch (e) {
-      return PROFILES.visionary;
+      return DEFAULT_PROFILE;
     }
   }
-  return PROFILES.visionary;
+  return DEFAULT_PROFILE;
 }
 
-function setProfile(type) {
+function saveCustomProfile(profileData) {
   if (!fs.existsSync(AXION_DIR)) {
     fs.mkdirSync(AXION_DIR, { recursive: true });
   }
 
-  const selected = PROFILES[type.toLowerCase()] || PROFILES.visionary;
-  const data = {
-    type: type.toLowerCase(),
-    ...selected,
+  const merged = {
+    ...DEFAULT_PROFILE,
+    ...profileData,
     updated_at: new Date().toISOString()
   };
 
-  fs.writeFileSync(PROFILE_FILE, JSON.stringify(data, null, 2), 'utf8');
-  console.log(`✓ Perfil adaptativo actualizado a: ${data.name}`);
-  console.log(`  Estilo: ${data.style}`);
-  return data;
+  fs.writeFileSync(PROFILE_FILE, JSON.stringify(merged, null, 2), 'utf8');
+  return merged;
 }
 
 function main() {
-  const arg = process.argv[2];
-  if (!arg || arg === 'status') {
-    const current = getProfile();
-    console.log(`[Axion Profile] Perfil activo: ${current.name} (${current.verbosity || 'CONCISE'})`);
-    return;
-  }
-
-  setProfile(arg);
+  const current = getProfile();
+  console.log(`[Axion Profile] Perfil activo: ${current.technical_depth} | Entrada: ${current.input_mode} | Entorno: ${current.environment}`);
 }
 
 if (require.main === module) {
   main();
 }
 
-module.exports = { getProfile, setProfile, PROFILES };
+module.exports = { getProfile, saveCustomProfile, DEFAULT_PROFILE };
