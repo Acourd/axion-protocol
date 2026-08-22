@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "runtime": "antigravity",
+  "name": "axion-protocol",
+  "description": "Axion Protocol Governance and Fail-Closed Runtime Harness",
+  "phases": {
+    "discovery": {
+      "rules": ".agents/rules",
+      "workflows": ".agents/workflows"
+    },
+    "hooks": {
+      "config": ".agents/hooks.json",
+      "policy": ".agents/hooks/validate-tool-call.mjs"
+    },
+    "orchestration": {
+      "workflows": ["clarify", "preflight", "rollback", "halt", "unhalt", "attest"],
+      "tools": ["preflight.js", "risk_policy_compiler.js", "approval_ed25519.js", "evidence_hasher.js", "killswitch.js"]
+    }
+  }
+}
