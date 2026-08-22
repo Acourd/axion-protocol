@@ -1,38 +1,49 @@
 ---
 name: profile
-description: Calibra de forma personalizada el entorno de trabajo, método de interacción (Voz vs Teclado) y conecta al usuario con las funciones clave de Axion Protocol.
+description: Calibra la experiencia personalizada del usuario en 5 dimensiones (Perfil técnico, Voz vs Teclado, Entorno, Cadencia y Autonomía visual).
 ---
 
-# /profile — Sintonización Personalizada de Flujo de Trabajo (Axion Protocol)
+# /profile — Sintonización Personalizada del Flujo de Trabajo (Axion Protocol)
 
-> **PROPÓSITO**: Descubrir de manera natural cómo trabaja el usuario (entorno, voz, nivel de autonomía) para que la IA se adapte a su ritmo y le recomiende las mejores herramientas de Axion sin fricción.
+> **PROPÓSITO**: Configurar en menos de 1 minuto cómo interactúas con la IA para que el ritmo, el tono y la autonomía se adapten exactamente a tu estilo de trabajo.
 
 ---
 
-## 📋 Diagnóstico Conversacional (2 Preguntas Prácticas)
+## 📋 Diagnóstico Conversacional (5 Preguntas Rápidas)
 
-Formula estas 2 preguntas contextuales al usuario:
+Presenta estas 5 preguntas directas al usuario:
 
 ```markdown
-### 🎙️ Sintonización de Flujo de Trabajo
+### 👤 Sintonización de Perfil y Estilo de Trabajo
 
-Para que nuestra dinámica sea lo más fluida y natural posible:
+Para calibrar nuestra dinámica exactamente a tu medida, responde con tus opciones (ej: `1A, 2A, 3A, 4A, 5A`):
 
-1. **¿Cómo sueles interactuar con la IA principalmente?**
-   - **A) Dictado por voz / Mensajes hablados fluidos** *(filtro pausas y sintetizo tus ideas)*.
-   - **B) Texto directo por teclado** *(instrucciones breves y al grano)*.
+1. **Nivel de Enfoque Técnico**:
+   - **A) Visionario / Creador No Técnico**: Foco en producto, negocio y experiencia de usuario; cero jerga técnica.
+   - **B) Constructor Intermedio**: Balance práctico entre arquitectura y producto.
+   - **C) Ingeniero Senior**: Detalles técnicos profundos, contratos de bajo nivel y análisis de seguridad.
 
-2. **¿Desde qué entorno operas habitualmente?**
-   - **A) Interfaz visual / IDE (Antigravity IDE, Cursor, VS Code)** *(foco en código limpio y reversión visual sin terminal)*.
-   - **B) Terminal pura / CLI (Antigravity agy, Claude Code)** *(foco en comandos rápidos y preflight automático)*.
+2. **Método de Interacción Principal**:
+   - **A) Dictado por voz / Mensajes hablados fluidos**: La IA filtra pausas y sintetiza tus ideas habladas.
+   - **B) Texto directo por teclado**: Instrucciones escritas breves y al grano.
+
+3. **Entorno de Trabajo**:
+   - **A) Interfaz visual / IDE (Antigravity IDE, Cursor, VS Code)**: Cero terminal, foco en vistas y diffs visuales.
+   - **B) Terminal pura / CLI (Antigravity agy, Claude Code)**: Velocidad de comandos y preflight directo.
+
+4. **Cadencia de Entrega**:
+   - **A) Bloque Completo**: Construye la pantalla o función entera de un tirón para probarla de golpe.
+   - **B) Micro-Pasos**: Avanza componente por componente pidiendo feedback tras cada paso.
+
+5. **Autonomía Creativa y de Diseño**:
+   - **A) Autonomía Alta (Anti-Slop)**: La IA propone paletas modernas, tipografías y estética cuidada por su cuenta.
+   - **B) Dirección Guiada**: La IA te consulta y sigue tu dirección visual exacta antes de aplicar estilos.
 ```
 
 ---
 
-## 🎯 Conexión Automática con Capacidades de Axion
+## ⚙️ Registro y Activación Automática
 
-Una vez recibida la respuesta:
-1. **Si usa Voz (1A)**: La IA activa el *Modo Cristalización por Voz* (limpia muletillas, extrae la intención central y formula el contrato en 2 preguntas sencillas).
-2. **Si usa IDE visual (2A)**: La IA activa el *Rollback Semántico en Lenguaje Natural* (*"deshazlo"*), evitando pedir comandos de Git o consola.
-3. **Si usa CLI (2B)**: La IA activa el *Preflight en tiempo real* para supervisar cada comando de shell.
-4. Guarda la configuración en `.axion/PROFILE.json` de forma transparente.
+Una vez que el usuario responde:
+1. Registra las 5 preferencias en `.axion/PROFILE.json` invocando `tools/profile_adapter.js`.
+2. Emite una ficha de sintonización confirmando el perfil activo y las reglas que gobernará en adelante.

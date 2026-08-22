@@ -2,10 +2,14 @@
 'use strict';
 
 /**
- * Axion Protocol - Adaptive Workflow & Chemistry Profiler
+ * Axion Protocol - Comprehensive Adaptive Profiler
  * 
- * Calibra de forma personalizada el entorno de trabajo, método de entrada (Voz vs Teclado),
- * nivel de tecnicismo y sugiere las capacidades de Axion más adecuadas para el usuario.
+ * Calibra de forma personalizada las 5 dimensiones clave del usuario:
+ * 1. Nivel de Perfil Técnico (Visionario / Builder / Senior)
+ * 2. Método de Entrada (Voz vs Teclado)
+ * 3. Entorno de Trabajo (IDE Visual vs CLI Terminal)
+ * 4. Cadencia de Entrega (Bloque Completo vs Micro-Pasos)
+ * 5. Autonomía Creativa / Diseño (Iniciativa Moderna vs Dirección Guiada)
  */
 
 const fs = require('fs');
@@ -16,16 +20,12 @@ const AXION_DIR = path.join(ROOT, '.axion');
 const PROFILE_FILE = path.join(AXION_DIR, 'PROFILE.json');
 
 const DEFAULT_PROFILE = {
-  environment: 'IDE', // 'CLI' | 'IDE'
-  input_mode: 'VOICE_OR_CONVERSATIONAL', // 'VOICE_OR_CONVERSATIONAL' | 'KEYBOARD_SHORT'
   technical_depth: 'VISIONARY', // 'VISIONARY' | 'BUILDER' | 'ENGINEER'
-  verbosity: 'CONCISE',
-  recommended_features: [
-    'voice_intent_crystallization',
-    'semantic_rollback_natural_language',
-    'discrete_risk_planning'
-  ],
-  summary: 'Usuario Visionario / Creador. Prefiere ideas directas, dictado conversacional y cero fricción técnica.'
+  input_mode: 'VOICE_DICTATION', // 'VOICE_DICTATION' | 'KEYBOARD_CONCISE'
+  environment: 'IDE_GUI',        // 'IDE_GUI' | 'CLI_TERMINAL'
+  cadence: 'COMPLETE_BLOCK',     // 'COMPLETE_BLOCK' | 'MICRO_STEPS'
+  creative_autonomy: 'HIGH',     // 'HIGH' | 'GUIDED'
+  summary: 'Director / Creador. Dictado por voz, Antigravity IDE, entregas en bloque completo y alta autonomía visual.'
 };
 
 function getProfile() {
@@ -44,8 +44,9 @@ function saveCustomProfile(profileData) {
     fs.mkdirSync(AXION_DIR, { recursive: true });
   }
 
+  const current = getProfile();
   const merged = {
-    ...DEFAULT_PROFILE,
+    ...current,
     ...profileData,
     updated_at: new Date().toISOString()
   };
@@ -56,7 +57,7 @@ function saveCustomProfile(profileData) {
 
 function main() {
   const current = getProfile();
-  console.log(`[Axion Profile] Perfil activo: ${current.technical_depth} | Entrada: ${current.input_mode} | Entorno: ${current.environment}`);
+  console.log(`[Axion Profile] Perfil: ${current.technical_depth} | Entrada: ${current.input_mode} | Entorno: ${current.environment} | Cadencia: ${current.cadence}`);
 }
 
 if (require.main === module) {
