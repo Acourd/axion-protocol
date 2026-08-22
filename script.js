@@ -1,11 +1,33 @@
 /**
- * Axion Protocol — Deep Cobalt Interactive Controller
- * Precision interactions, smart sidebar auto-collapse, circuit phase switching.
+ * Axion Protocol — Interactive Controller & Theme Engine
+ * Clean, lightweight, handles Light/Dark mode, smart sidebar, and circuit phases.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ── 1. Toast Notification ──────────────────────────────────────────
+  // ── 1. Light / Dark Mode Toggle ────────────────────────────────────
+  const themeToggleBtn = document.getElementById('theme-toggle');
+  const rootHtml = document.documentElement;
+
+  // Cargar preferencia guardada o respetar la del sistema
+  const savedTheme = localStorage.getItem('axion-theme');
+  if (savedTheme) {
+    rootHtml.setAttribute('data-theme', savedTheme);
+  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+    rootHtml.setAttribute('data-theme', 'light');
+  }
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = rootHtml.getAttribute('data-theme') || 'dark';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      rootHtml.setAttribute('data-theme', newTheme);
+      localStorage.setItem('axion-theme', newTheme);
+      showToast(`✓ Modo ${newTheme === 'dark' ? 'Oscuro' : 'Claro'} activado`);
+    });
+  }
+
+  // ── 2. Toast Notification ──────────────────────────────────────────
   const toast = document.getElementById('toast');
   function showToast(message) {
     if (!toast) return;
@@ -16,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2500);
   }
 
-  // ── 2. Warp Terminal Install Switcher & Copy ────────────────────────
+  // ── 3. Warp Terminal Install Switcher & Copy ────────────────────────
   const warpCmdText = document.getElementById('warp-cmd-text');
   const btnCopyWarp = document.getElementById('btn-copy-warp');
   const warpTabs = document.querySelectorAll('.w-tab');
@@ -49,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ── 3. Circuit 7-Phase Interactive Controller ──────────────────────
+  // ── 4. Circuit 7-Phase Interactive Controller ──────────────────────
   const circuitNodes = document.querySelectorAll('.circuit-node');
   const circuitPhaseTitle = document.getElementById('circuit-phase-title');
   const circuitPhaseText = document.getElementById('circuit-phase-text');
@@ -72,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ── 4. Smart Sidebar Auto-Collapse on Scroll ────────────────────────
+  // ── 5. Smart Sidebar Auto-Collapse on Scroll ────────────────────────
   const sidebar = document.getElementById('smart-sidebar');
   let lastScrollY = window.scrollY;
 
@@ -80,10 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentScrollY = window.scrollY;
     if (sidebar) {
       if (currentScrollY > 150 && currentScrollY > lastScrollY) {
-        // Scrolling down: make sidebar subtly semi-transparent
         sidebar.style.opacity = '0.35';
       } else {
-        // Scrolling up or top: restore full opacity
         sidebar.style.opacity = '1';
       }
     }
