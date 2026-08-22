@@ -1,0 +1,20 @@
+{
+  "schema": "axion-private-leakage-scan-v1",
+  "created_at": "2026-08-04T01:31:22.503Z",
+  "result": "PASS",
+  "historical_leakage": {
+    "ax_f_identifiers": 0,
+    "previous_phase_names": 0,
+    "previous_verdicts": 0,
+    "baseline_hashes": 0,
+    "personal_absolute_paths": 0
+  },
+  "total_matches": 0,
+  "matches": {
+    "ax_f_identifiers": [],
+    "previous_phase_names": [],
+    "previous_verdicts": [],
+    "baseline_hashes": [],
+    "personal_absolute_paths": []
+  }
+}

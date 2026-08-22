@@ -1,0 +1,437 @@
+{
+  "schema": "axion-private-classified-diff-v1",
+  "created_at": "2026-08-04T01:30:51.329Z",
+  "result": "PASS",
+  "source_files": 70,
+  "blind_files": 70,
+  "differences": [
+    {
+      "category": "PERSONAL_PATH_REDACTION",
+      "original_file": ".claude/CLAUDE.md",
+      "blind_file": ".claude/CLAUDE.md",
+      "original_lines": {
+        "start": 3,
+        "end": 3
+      },
+      "blind_lines": {
+        "start": 3,
+        "end": 3
+      }
+    },
+    {
+      "category": "PERSONAL_PATH_REDACTION",
+      "original_file": "CLAUDE.md",
+      "blind_file": "CLAUDE.md",
+      "original_lines": {
+        "start": 3,
+        "end": 3
+      },
+      "blind_lines": {
+        "start": 3,
+        "end": 3
+      }
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "docs/lineage.md",
+      "blind_file": "docs/lineage.md",
+      "original_lines": {
+        "start": 3,
+        "end": 3
+      },
+      "blind_lines": {
+        "start": 3,
+        "end": 3
+      }
+    },
+    {
+      "category": "PERSONAL_PATH_REDACTION",
+      "original_file": "README.md",
+      "blind_file": "README.md",
+      "original_lines": {
+        "start": 65,
+        "end": 65
+      },
+      "blind_lines": {
+        "start": 65,
+        "end": 65
+      }
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "README.md",
+      "blind_file": "README.md",
+      "original_lines": {
+        "start": 76,
+        "end": 77
+      },
+      "blind_lines": {
+        "start": 76,
+        "end": 77
+      }
+    },
+    {
+      "category": "FILENAME_NEUTRALIZATION",
+      "original_file": "README.md",
+      "blind_file": "README.md",
+      "original_lines": {
+        "start": 80,
+        "end": 80
+      },
+      "blind_lines": {
+        "start": 80,
+        "end": 80
+      }
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "tests/README.md",
+      "blind_file": "tests/README.md",
+      "original_lines": {
+        "start": 12,
+        "end": 12
+      },
+      "blind_lines": {
+        "start": 12,
+        "end": 12
+      }
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "tests/README.md",
+      "blind_file": "tests/README.md",
+      "original_lines": {
+        "start": 14,
+        "end": 16
+      },
+      "blind_lines": {
+        "start": 14,
+        "end": 15
+      }
+    },
+    {
+      "category": "FILENAME_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_001_installer_backup.test.js",
+      "blind_file": "tests/regression/installer_preserves_existing_configuration.test.js",
+      "original_lines": null,
+      "blind_lines": null
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_001_installer_backup.test.js",
+      "blind_file": "tests/regression/installer_preserves_existing_configuration.test.js",
+      "original_lines": {
+        "start": 2,
+        "end": 2
+      },
+      "blind_lines": {
+        "start": 2,
+        "end": 2
+      }
+    },
+    {
+      "category": "TEMP_PATH_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_001_installer_backup.test.js",
+      "blind_file": "tests/regression/installer_preserves_existing_configuration.test.js",
+      "original_lines": {
+        "start": 17,
+        "end": 17
+      },
+      "blind_lines": {
+        "start": 17,
+        "end": 17
+      }
+    },
+    {
+      "category": "DIAGNOSTIC_STRING_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_001_installer_backup.test.js",
+      "blind_file": "tests/regression/installer_preserves_existing_configuration.test.js",
+      "original_lines": {
+        "start": 56,
+        "end": 56
+      },
+      "blind_lines": {
+        "start": 56,
+        "end": 56
+      }
+    },
+    {
+      "category": "FILENAME_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_002_risk_gate.test.js",
+      "blind_file": "tests/regression/risk_gate_normalization.test.js",
+      "original_lines": null,
+      "blind_lines": null
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_002_risk_gate.test.js",
+      "blind_file": "tests/regression/risk_gate_normalization.test.js",
+      "original_lines": {
+        "start": 2,
+        "end": 2
+      },
+      "blind_lines": {
+        "start": 2,
+        "end": 2
+      }
+    },
+    {
+      "category": "DIAGNOSTIC_STRING_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_002_risk_gate.test.js",
+      "blind_file": "tests/regression/risk_gate_normalization.test.js",
+      "original_lines": {
+        "start": 55,
+        "end": 55
+      },
+      "blind_lines": {
+        "start": 55,
+        "end": 55
+      }
+    },
+    {
+      "category": "FILENAME_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_003_verified_requires_checks.test.js",
+      "blind_file": "tests/regression/workflow_verification_requirements.test.js",
+      "original_lines": null,
+      "blind_lines": null
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_003_verified_requires_checks.test.js",
+      "blind_file": "tests/regression/workflow_verification_requirements.test.js",
+      "original_lines": {
+        "start": 2,
+        "end": 2
+      },
+      "blind_lines": {
+        "start": 2,
+        "end": 2
+      }
+    },
+    {
+      "category": "DIAGNOSTIC_STRING_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_003_verified_requires_checks.test.js",
+      "blind_file": "tests/regression/workflow_verification_requirements.test.js",
+      "original_lines": {
+        "start": 47,
+        "end": 47
+      },
+      "blind_lines": {
+        "start": 47,
+        "end": 47
+      }
+    },
+    {
+      "category": "FILENAME_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_004_evidence_manifest.test.js",
+      "blind_file": "tests/regression/evidence_manifest_conformance.test.js",
+      "original_lines": null,
+      "blind_lines": null
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_004_evidence_manifest.test.js",
+      "blind_file": "tests/regression/evidence_manifest_conformance.test.js",
+      "original_lines": {
+        "start": 2,
+        "end": 2
+      },
+      "blind_lines": {
+        "start": 2,
+        "end": 2
+      }
+    },
+    {
+      "category": "DIAGNOSTIC_STRING_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_004_evidence_manifest.test.js",
+      "blind_file": "tests/regression/evidence_manifest_conformance.test.js",
+      "original_lines": {
+        "start": 60,
+        "end": 60
+      },
+      "blind_lines": {
+        "start": 60,
+        "end": 60
+      }
+    },
+    {
+      "category": "FILENAME_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_005_preflight_destructive.test.js",
+      "blind_file": "tests/regression/preflight_destructive_commands.test.js",
+      "original_lines": null,
+      "blind_lines": null
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_005_preflight_destructive.test.js",
+      "blind_file": "tests/regression/preflight_destructive_commands.test.js",
+      "original_lines": {
+        "start": 2,
+        "end": 2
+      },
+      "blind_lines": {
+        "start": 2,
+        "end": 2
+      }
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_005_preflight_destructive.test.js",
+      "blind_file": "tests/regression/preflight_destructive_commands.test.js",
+      "original_lines": {
+        "start": 13,
+        "end": 13
+      },
+      "blind_lines": {
+        "start": 13,
+        "end": 13
+      }
+    },
+    {
+      "category": "DIAGNOSTIC_STRING_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_005_preflight_destructive.test.js",
+      "blind_file": "tests/regression/preflight_destructive_commands.test.js",
+      "original_lines": {
+        "start": 59,
+        "end": 59
+      },
+      "blind_lines": {
+        "start": 59,
+        "end": 59
+      }
+    },
+    {
+      "category": "PERSONAL_PATH_REDACTION",
+      "original_file": "tests/regression/ax_f_005_preflight_destructive.test.js",
+      "blind_file": "tests/regression/preflight_destructive_commands.test.js",
+      "original_lines": {
+        "start": 26,
+        "end": 26
+      },
+      "blind_lines": {
+        "start": 26,
+        "end": 26
+      }
+    },
+    {
+      "category": "FILENAME_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_006_learnings_preservation.test.js",
+      "blind_file": "tests/regression/learning_history_preservation.test.js",
+      "original_lines": null,
+      "blind_lines": null
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_006_learnings_preservation.test.js",
+      "blind_file": "tests/regression/learning_history_preservation.test.js",
+      "original_lines": {
+        "start": 2,
+        "end": 2
+      },
+      "blind_lines": {
+        "start": 2,
+        "end": 2
+      }
+    },
+    {
+      "category": "TEMP_PATH_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_006_learnings_preservation.test.js",
+      "blind_file": "tests/regression/learning_history_preservation.test.js",
+      "original_lines": {
+        "start": 13,
+        "end": 13
+      },
+      "blind_lines": {
+        "start": 13,
+        "end": 13
+      }
+    },
+    {
+      "category": "DIAGNOSTIC_STRING_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_006_learnings_preservation.test.js",
+      "blind_file": "tests/regression/learning_history_preservation.test.js",
+      "original_lines": {
+        "start": 59,
+        "end": 59
+      },
+      "blind_lines": {
+        "start": 59,
+        "end": 59
+      }
+    },
+    {
+      "category": "FILENAME_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_008_doc_consistency.test.js",
+      "blind_file": "tests/regression/documentation_consistency.test.js",
+      "original_lines": null,
+      "blind_lines": null
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_008_doc_consistency.test.js",
+      "blind_file": "tests/regression/documentation_consistency.test.js",
+      "original_lines": {
+        "start": 2,
+        "end": 2
+      },
+      "blind_lines": {
+        "start": 2,
+        "end": 2
+      }
+    },
+    {
+      "category": "DIAGNOSTIC_STRING_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_008_doc_consistency.test.js",
+      "blind_file": "tests/regression/documentation_consistency.test.js",
+      "original_lines": {
+        "start": 58,
+        "end": 58
+      },
+      "blind_lines": {
+        "start": 58,
+        "end": 58
+      }
+    },
+    {
+      "category": "FILENAME_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_012_suite_integrity.test.js",
+      "blind_file": "tests/regression/test_suite_integrity.test.js",
+      "original_lines": null,
+      "blind_lines": null
+    },
+    {
+      "category": "COMMENT_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_012_suite_integrity.test.js",
+      "blind_file": "tests/regression/test_suite_integrity.test.js",
+      "original_lines": {
+        "start": 2,
+        "end": 2
+      },
+      "blind_lines": {
+        "start": 2,
+        "end": 2
+      }
+    },
+    {
+      "category": "DIAGNOSTIC_STRING_NEUTRALIZATION",
+      "original_file": "tests/regression/ax_f_012_suite_integrity.test.js",
+      "blind_file": "tests/regression/test_suite_integrity.test.js",
+      "original_lines": {
+        "start": 54,
+        "end": 54
+      },
+      "blind_lines": {
+        "start": 54,
+        "end": 54
+      }
+    }
+  ],
+  "categories": {
+    "PERSONAL_PATH_REDACTION": 4,
+    "COMMENT_NEUTRALIZATION": 13,
+    "FILENAME_NEUTRALIZATION": 9,
+    "TEMP_PATH_NEUTRALIZATION": 2,
+    "DIAGNOSTIC_STRING_NEUTRALIZATION": 8
+  },
+  "errors": []
+}

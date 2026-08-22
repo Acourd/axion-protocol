@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:axion-protocol:schema:check-attestation:1.0.0",
+  "title": "Axion independent CHECK attestation",
+  "type": "object",
+  "required": ["check", "algorithm", "signature"],
+  "properties": {
+    "check": {
+      "type": "object",
+      "required": [
+        "contractVersion", "checkId", "missionId", "actorId", "keyId",
+        "executorActorId", "risk", "commandHash", "approvalDigest", "assertionsHash",
+        "result", "exitCode", "evidenceHash", "issuedAt", "expiresAt"
+      ],
+      "properties": {
+        "contractVersion": { "const": "1.0.0" },
+        "checkId": { "type": "string", "minLength": 1 },
+        "missionId": { "type": "string", "minLength": 1 },
+        "actorId": { "type": "string", "minLength": 1 },
+        "keyId": { "type": "string", "pattern": "^ed25519:[a-f0-9]{64}$" },
+        "executorActorId": { "type": "string", "minLength": 1 },
+        "risk": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+        "commandHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "approvalDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "assertionsHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "result": { "enum": ["PASS", "FAIL"] },
+        "exitCode": { "type": "integer" },
+        "evidenceHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "issuedAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "algorithm": { "const": "Ed25519" },
+    "signature": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

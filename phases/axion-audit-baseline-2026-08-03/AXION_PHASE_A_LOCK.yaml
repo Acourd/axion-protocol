@@ -1,0 +1,47 @@
+# AXION PROTOCOL — BLOQUEO DE FASE A
+# Este archivo firma el informe de auditoría ciega. No modificar el informe tras esta fecha.
+
+phase_a_lock:
+  completed: true
+  locked_at: "2026-08-03"
+  report_saved_as: "AXION_PHASE_A_REPORT.md"
+  sha256: "47E8880E6C5AB446FCA64FF427806E9E5185165E6A9CC619D36BF56798E51072"
+  size_bytes: 89883
+  hash_algorithm: "SHA-256"
+  hash_supported: true
+  immutable_copy_created: true
+  immutable_copy: "AXION_PHASE_A_REPORT.locked.md"
+  immutable_copy_sha256: "47E8880E6C5AB446FCA64FF427806E9E5185165E6A9CC619D36BF56798E51072"
+  immutable_copy_readonly: true
+
+corpus:
+  project_root: "C:\\Users\\Ayco\\Shoshin\\Project\\Axion Protocol"
+  head_commit: "ef229b4"
+  files_in_scope: 67
+  working_tree_at_open: "3 modificados, 27 sin seguimiento (30 entradas)"
+  working_tree_at_close: "3 modificados, 27 sin seguimiento (30 entradas)"
+  corpus_modified_by_audit: false
+  audited_file_hashes:
+    install.js: "B36978B48C3AC68B6F5150E57D2FC4EC864E68791193E463FED1ED2F9F09688C"
+    script.js: "5A597AC4D42D1BE5C1FFB8D8EB2527E8D6AC743E5FDC6DAC3F194E4A3BD79FD9"
+    index.html: "835C78B4F665DE19012183780822103F8F8E7347DBECA4DAB2A5B08BA978D120"
+    style.css: "C9D599802FC68C789F0DBE1165A868765B2CD8A4E2D6EC4A25C31242922B040C"
+    tools/preflight.js: "A5166AC6E87B2E5034ABB49EB2BF33F18E22B0B208E6F451FCDDA3B8B10FB410"
+    tools/vibeguard.js: "CCEF70072644DC84DA737D8C2471236726779AEC9A9F511A128C8DD79F94D588"
+    tools/evidence_hasher.js: "B1AAF63FA37A1B014110227465223589CD0851B1B2EC1693E594D1B943419286"
+    tools/workflow_runner.js: "89D242F21D1FF868801380ED21708D847E7DA055DD5BFAE95D258E8FF2670DBC"
+    tools/learning_engine.js: "67739AFF179F3434E609D923A9838A57EAA58C0C226EBC3086C06811CDC3F092"
+    tools/git_assistant.js: "9EE4438BDDCC3E776F79F9D801C09A1E2519C4ECE64D9DA4950BC25CCD46AC79"
+    tools/intent_clarifier.js: "B4187CECA21C7DF442F89E630138CCEE48EEE09311F3FB6245D7805CD1493F02"
+    tools/dashboard.html: "B929B507CBF7DBEFF39E64C9134B7D142D8F5313DEF011A2D1ED2E9920B259DA"
+
+verdict: REQUEST_CHANGES
+
+phase_b:
+  status: NOT_STARTED
+  unlock_token_required: "PHASE_B_UNLOCK"
+  required_inputs:
+    - informes de auditoría anteriores del mismo corpus
+  note: >
+    La Fase A no debe reescribirse retroactivamente. Cualquier comparación con informes
+    previos se registrará como cross_validation en un documento separado.

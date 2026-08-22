@@ -1,27 +1,30 @@
-# Roadmap
+# Roadmap — Axion Protocol
 
-## Estado actual — Pre-alpha documental
+## Estado Actual — v1.1.0-alpha (Consolidado)
 
-- [x] Definir misión, límites y roles.
-- [x] Crear políticas experimentales y esquemas iniciales.
-- [x] Documentar linaje y relación con ecosistemas externos.
-- [ ] Seleccionar una licencia mediante decisión humana.
+- [x] **Clarificación de Intención:** Aclarador secuencial en 3 sub-pasos sin tecnicismos (`tools/intent_clarifier.js`).
+- [x] **Compilador de Políticas de Riesgo:** Motor de evaluación de riesgos `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` (`tools/risk_policy_compiler.js`).
+- [x] **Seguridad y Atribución Ed25519:** Firma digital, atestación independiente y consumo único de *nonces* (`tools/approval_ed25519.js` y `tools/check_ed25519.js`).
+- [x] **Ejecución Estructurada y Preflight:** Aislamiento con `shell: false` y validación léxica de sintaxis (`tools/structured_command.js` y `tools/preflight.js`).
+- [x] **Evidencias Criptográficas SHA-256:** Manifiestos de auditoría inmutables vinculados a misión, riesgo, estado y rollback (`tools/evidence_hasher.js`).
+- [x] **Workflow Runner Fail-Closed:** Orquestador de las 7 fases (`tools/workflow_runner.js`).
+- [x] **Instalador Autónomo de 1 Paso:** Copia protegida e idempotente (`install.js`).
+- [x] **Licencia Abierta:** Licencia MIT aprobada (`LICENSE`).
+- [x] **CI/CD Automático:** Integración continua con GitHub Actions (`.github/workflows/ci.yml`).
 
-## Siguiente candidato — Contratos verificables
+---
 
-- definir consumidores reales de los esquemas;
-- diseñar validadores sin activar ejecución;
-- establecer un formato de evidencia reproducible;
-- seleccionar un único runtime experimental;
-- crear pruebas de fallo cerrado y rollback.
+## Próximo hito — v1.2.0-beta (Integración de Adaptadores Nativos)
 
-## Futuro condicionado
+- [ ] Adaptador directo para Hooks de Antigravity 2.0 (`.agents/hooks.json`).
+- [ ] Adaptador directo para MCP (Model Context Protocol).
+- [ ] Dashboard interactivo refinado (`tools/dashboard.html`) con métricas en tiempo real.
+- [x] Empaquetado NPM para distribución CLI global (`npx axion-protocol`). Preparado y verificado
+      con `npm pack --dry-run`; **sin publicar** todavía.
 
-- adaptador mínimo para un runtime probado;
-- auditoría independiente del adaptador;
-- evaluación de proveedores externos por licencia y procedencia;
-- promoción a `CANDIDATE` solo mediante gate humano.
+---
 
-## Fuera del roadmap actual
+## Fuera del alcance (Límites Explícitos)
 
-No se planean un runtime universal, memoria universal, catálogo masivo de skills ni compatibilidad automática con todos los hosts.
+- No se planea un runtime universal desacoplado del usuario.
+- No se busca reemplazar motores de capacidades técnicas (como `ag-kit` o `ECC`), sino actuar como su capa de gobernanza.

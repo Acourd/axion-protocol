@@ -1,0 +1,9 @@
+# Axion Protocol — estabilidad de bytes.
+#
+# La integridad del corpus se demuestra con SHA-256 (sha256-manifest.txt,
+# 09_candidate_manifest.json, phase-e-integrity.yaml y los manifiestos de evidencia
+# bajo phases/). Cualquier normalizacion de finales de linea cambiaria el byte de
+# cada fichero de texto y romperia todos esos hashes al clonar en Windows.
+#
+# Por eso se desactiva toda conversion. No lo cambies sin volver a sellar el corpus.
+* -text

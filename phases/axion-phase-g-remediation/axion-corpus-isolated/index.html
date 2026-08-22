@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Axion Protocol — Masterpiece Flagship OS para IA Agentiva</title>
+  <meta name="description" content="Protocolo de gobernanza y supervisión para permitir que usuarios no técnicos operen Inteligencia Artificial agentiva con cero errores y custodia absoluta de su visión.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-cyan">
+
+  <!-- Custom Awwwards Dual Cursor -->
+  <div class="custom-cursor" id="custom-cursor"></div>
+  <div class="custom-cursor-follower" id="custom-cursor-follower"></div>
+
+  <!-- Toast Notification System Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scroll Progress Indicator -->
+  <div class="scroll-progress" id="scroll-progress"></div>
+
+  <!-- Canvas Particle Universe Background -->
+  <canvas id="hero-canvas" class="hero-canvas"></canvas>
+
+  <div class="app-layout">
+    <!-- Sidebar Navigation Controls -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <div class="logo-icon">A</div>
+          <div>
+            <div class="brand-name">Axion<span style="color: var(--accent);">.</span></div>
+            <div class="brand-tag">MASTERPIECE OS v1.0</div>
+          </div>
+        </div>
+        <div class="status-badge">
+          <span class="status-pulse"></span>
+          <span>ESTADO: EXPERIMENTAL</span>
+        </div>
+      </div>
+
+      <nav class="side-nav">
+        <a href="#hero" class="nav-item active">
+          <span class="nav-num">00</span>
+          <span>Vista General</span>
+        </a>
+        <a href="#clarificador" class="nav-item">
+          <span class="nav-num">01</span>
+          <span>Aclarador Multi-Paso</span>
+        </a>
+        <a href="#blueprint" class="nav-item">
+          <span class="nav-num">02</span>
+          <span>Ciclo de 7 Pasos</span>
+        </a>
+        <a href="#playground" class="nav-item">
+          <span class="nav-num">03</span>
+          <span>Console Playground</span>
+        </a>
+        <a href="#instalacion" class="nav-item">
+          <span class="nav-num">04</span>
+          <span>Instalación Rápida</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-controls">
+        <span class="control-header">// EFECTOS DE SONIDO (AUDIO FX)</span>
+        <button class="audio-btn" id="audio-toggle-btn">
+          <span>🔊 SONIDO: ACTIVO</span>
+          <div class="audio-spectrum">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </button>
+
+        <span class="control-header">// TEMA VISUAL DE LA INTERFAZ</span>
+        <div class="accent-buttons">
+          <button class="accent-btn cyan active" data-theme="theme-cyan" title="Cian Ciber"></button>
+          <button class="accent-btn indigo" data-theme="theme-indigo" title="Índigo Profundo"></button>
+          <button class="accent-btn lime" data-theme="theme-lime" title="Verde Ácido"></button>
+          <button class="accent-btn crimson" data-theme="theme-crimson" title="Rojo Carmesí"></button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Command Bar -->
+      <header class="top-bar">
+        <div class="path-tag">ROOT: ~/Projects/AxionProtocol // ENFORCEMENT: DOCUMENT_ONLY</div>
+        <button class="cmd-palette-btn" id="cmd-palette-trigger">
+          <span>Buscar o Ejecutar Comandos...</span>
+          <kbd>Ctrl K</kbd>
+        </button>
+      </header>
+
+      <!-- Hero Section -->
+      <section id="hero">
+        <h1 class="hero-title">
+          El Sistema Operativo Cognitivo de Gobernanza para <br>
+          <span style="color: var(--accent);">Inteligencia Artificial Agentiva.</span>
+        </h1>
+        <p class="hero-desc">
+          Axion Protocol aísla las alucinaciones, cristaliza la visión del creador no técnico mediante aclaraciones por sub-pasos y supervisa la ejecución de comandos en tiempo real con preflight léxico (DA-0015) y firmas SHA-256.
+        </p>
+
+        <!-- 3D Tilt Metrics Cards Strip -->
+        <div class="metrics-strip">
+          <div class="tilt-card">
+            <span class="metric-value counter" data-target="100">0</span>%
+            <span class="metric-label">Custodia de Intención</span>
+          </div>
+          <div class="tilt-card">
+            <span class="metric-value counter" data-target="0">0</span>
+            <span class="metric-label">Alucinaciones Silenciosas</span>
+          </div>
+          <div class="tilt-card">
+            <span class="metric-value">&lt; 1ms</span>
+            <span class="metric-label">Latencia Preflight</span>
+          </div>
+          <div class="tilt-card">
+            <span class="metric-value">SHA-256</span>
+            <span class="metric-label">Firma Criptográfica</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Interactive Clarifier Sub-step Wizard -->
+      <section id="clarificador">
+        <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">01. Wizard Interactivo del Aclarador Multi-Paso</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Experimenta el proceso de clarificación secuencial que evita que la IA asuma cosas silenciosamente.</p>
+
+        <div class="wizard-card">
+          <div class="wizard-steps-indicator">
+            <div class="wizard-step-pill active" id="pill-step-1">
+              <span>1</span> Dirección de Producto
+            </div>
+            <div class="wizard-step-pill" id="pill-step-2">
+              <span>2</span> Estilo Visual & UX
+            </div>
+            <div class="wizard-step-pill" id="pill-step-3">
+              <span>3</span> Contrato de Entendimiento
+            </div>
+          </div>
+
+          <!-- Wizard Step 1 -->
+          <div id="wizard-step-1-card">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem;">Sub-paso 1: ¿Qué rumbo de producto prefieres?</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Elige una de las 3 alternativas predefinidas o dicta tu opción personalizada:</p>
+
+            <div class="option-cards-grid">
+              <div class="option-card" onclick="selectWizardOption(1, 'Opción A (Solución Ágil y Directa)')">
+                <span class="option-badge badge-recommended">⭐ Recomendada</span>
+                <h4 style="font-size: 1rem; color: var(--accent); margin-bottom: 0.4rem;">Opción A: Ágil y Directa</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Implementación minimalista enfocada en la función principal.</p>
+              </div>
+              <div class="option-card" onclick="selectWizardOption(1, 'Opción B (Solución Completa y Guiada)')">
+                <span class="option-badge badge-standard">Completa</span>
+                <h4 style="font-size: 1rem; margin-bottom: 0.4rem;">Opción B: Solución Guiada</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Incluye validaciones avanzadas e interfaz detallada.</p>
+              </div>
+              <div class="option-card" onclick="selectWizardOption(1, 'Opción Personalizada (Dictado Libre)')">
+                <span class="option-badge badge-custom">✏️ Tu Propio Criterio</span>
+                <h4 style="font-size: 1rem; margin-bottom: 0.4rem;">Opción Personalizada</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Dicta libremente tu propia idea sin acotarte a las sugeridas.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Wizard Step 2 (Tailored Style Choices) -->
+          <div id="wizard-step-2-card" style="display: none;">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem;">Sub-paso 2: Estilo Visual & UX (Filtrado Dinámico)</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Las sugerencias estéticas han sido filtradas dinámicamente según la dirección elegida:</p>
+
+            <div class="option-cards-grid">
+              <div class="option-card" onclick="selectWizardOption(2, 'Apple Glassmorphism Minimalista')">
+                <span class="option-badge badge-recommended">⭐ Recomendada</span>
+                <h4 style="font-size: 1rem; color: var(--accent); margin-bottom: 0.4rem;">Apple Glassmorphism</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Fondo mate gris oscuro, bordes de 1px, vidrio esmerilado y cero orbes recargados.</p>
+              </div>
+              <div class="option-card" onclick="selectWizardOption(2, 'Cyber Glow & Neón')">
+                <span class="option-badge badge-standard">Vibrante</span>
+                <h4 style="font-size: 1rem; margin-bottom: 0.4rem;">Cyber Glow & Neón</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Fondo oscuro con gradientes intensos e interacciones llamativas.</p>
+              </div>
+              <div class="option-card" onclick="selectWizardOption(2, 'Dictado Libre de Estilo')">
+                <span class="option-badge badge-custom">✏️ Estilo Libre</span>
+                <h4 style="font-size: 1rem; margin-bottom: 0.4rem;">Estilo Personalizado</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Especifica tus propios colores, paletas o referencias estéticas.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Wizard Step 3 (IntentContract Result) -->
+          <div id="wizard-step-3-card" style="display: none;">
+            <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); padding: 1.5rem; border-radius: 14px; margin-bottom: 1.5rem;">
+              <h3 style="color: var(--green); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem;">✓ Contrato de Entendimiento Emitido (Fase 1 Completa)</h3>
+              <p id="contract-summary" style="font-size: 0.95rem; color: var(--text-main); font-weight: 500;"></p>
+            </div>
+            <button class="btn-primary-action" onclick="resetWizard()">🔄 Reiniciar Prueba del Wizard</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7-Step Interactive Blueprint -->
+      <section id="blueprint">
+        <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">02. Plano del Ciclo Híbrido de 7 Pasos</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Haz clic en cualquier nodo para inspeccionar su mecanismo de supervisión en el panel inspector.</p>
+
+        <div class="arch-grid">
+          <div class="interactive-node active" data-step="1">
+            <div class="node-num">1</div>
+            <div style="font-size: 0.85rem; font-weight: 600;">ENTENDER</div>
+          </div>
+          <div class="interactive-node" data-step="2">
+            <div class="node-num">2</div>
+            <div style="font-size: 0.85rem; font-weight: 600;">PLANIFICAR</div>
+          </div>
+          <div class="interactive-node" data-step="3">
+            <div class="node-num">3</div>
+            <div style="font-size: 0.85rem; font-weight: 600;">GATE</div>
+          </div>
+          <div class="interactive-node" data-step="4">
+            <div class="node-num">4</div>
+            <div style="font-size: 0.85rem; font-weight: 600;">TEST</div>
+          </div>
+          <div class="interactive-node" data-step="5">
+            <div class="node-num">5</div>
+            <div style="font-size: 0.85rem; font-weight: 600;">CONSTRUIR</div>
+          </div>
+          <div class="interactive-node" data-step="6">
+            <div class="node-num">6</div>
+            <div style="font-size: 0.85rem; font-weight: 600;">AUDITAR</div>
+          </div>
+          <div class="interactive-node" data-step="7">
+            <div class="node-num">7</div>
+            <div style="font-size: 0.85rem; font-weight: 600;">PROMOVER</div>
+          </div>
+        </div>
+
+        <div class="node-inspector">
+          <div class="inspector-header">
+            <span class="inspector-title" id="inspector-title">1. ENTENDER (Aclaración por Sub-pasos)</span>
+            <span style="font-size: 0.75rem; color: var(--accent); background: var(--accent-glow); padding: 0.25rem 0.7rem; border-radius: 6px; font-weight: 700;">GOBERNANZA NO TÉCNICA</span>
+          </div>
+          <p id="inspector-body" style="color: var(--text-muted); font-size: 0.98rem; line-height: 1.7;">
+            Entrevista al usuario sin jerga técnica. Ejecuta Sub-paso 1 (Dirección), Sub-paso 2 (Diseño/UX con filtrado dinámico + Opción Personalizada) y Sub-paso 3 (Alcance) antes de tocar una sola línea de código.
+          </p>
+        </div>
+      </section>
+
+      <!-- Console Playground Sandbox -->
+      <section id="playground">
+        <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">03. Console Playground (Simulador en Vivo)</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Interactúa directamente con la consola de supervisión en tiempo real.</p>
+
+        <div class="terminal-window">
+          <div class="term-header">
+            <div class="term-dots">
+              <span class="term-dot red"></span>
+              <span class="term-dot yellow"></span>
+              <span class="term-dot green"></span>
+            </div>
+            <div class="term-tabs">
+              <button class="term-tab active">Preflight Audit DA-0015</button>
+              <button class="term-tab">Intent Clarifier</button>
+              <button class="term-tab">SHA-256 Hashes</button>
+            </div>
+            <span style="font-family: monospace; font-size: 0.82rem; color: var(--text-subtle);">axion_cli.exe</span>
+          </div>
+
+          <div class="term-body" id="term-output">
+            [AXION CLI] SIMULACIÓN. Esta consola reproduce salidas de ejemplo; no ejecuta las herramientas.
+            [STATUS] Para ejecutarlas de verdad: node tools/preflight.js "&lt;comando&gt;"
+            Usa los botones o activa el simulador de errores abajo.
+          </div>
+
+          <div class="term-toolbar">
+            <div style="display: flex; gap: 0.8rem;">
+              <button class="btn-primary-action" onclick="runPreflightDemo()">▶ Ejecutar Preflight Audit</button>
+              <button class="btn-primary-action" style="background: rgba(255, 255, 255, 0.08); color: var(--text-main);" onclick="runClarifierDemo()">⚡ Probar Aclarador</button>
+              <button class="btn-primary-action" style="background: rgba(255, 255, 255, 0.04); color: var(--text-subtle);" onclick="clearTerm()">🧹 Limpiar Consola</button>
+            </div>
+
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--text-muted); cursor: pointer;">
+              <input type="checkbox" id="chk-simulate-error">
+              <span>Simular Comando Destructivo (Bloqueo Fail-Closed)</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Installation Section -->
+      <section id="instalacion" style="margin-bottom: 5rem;">
+        <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">04. Inicialización Autónoma en 1 Clic</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Inyecta las reglas de gobernanza en Antigravity (Gemini) y Claude Code con una sola línea de comando.</p>
+
+        <div style="background: var(--bg-card); border: 1px solid var(--border-bright); border-radius: 18px; padding: 2rem; display: flex; justify-content: space-between; align-items: center;">
+          <code style="font-family: monospace; font-size: 1.15rem; color: var(--accent);">node install.js</code>
+          <button class="btn-primary-action" onclick="navigator.clipboard.writeText('node install.js'); showToast('Comando copiado al portapapeles', 'success');">Copiar Comando</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Command Palette Modal (Ctrl+K) -->
+  <div class="modal-overlay" id="cmd-modal">
+    <div class="cmd-palette-box">
+      <input type="text" id="cmd-input" placeholder="Escribe un comando o busca en Axion Protocol...">
+      <div class="cmd-results">
+        <div class="cmd-item" data-action="run-clarifier">▶ Probar Módulo Aclarador de Intención</div>
+        <div class="cmd-item" data-action="run-preflight">⚡ Ejecutar Auditoría Preflight DA-0015</div>
+        <div class="cmd-item" data-action="theme-cyan">🎨 Cambiar Acento a Cian Ciber</div>
+        <div class="cmd-item" data-action="theme-indigo">🎨 Cambiar Acento a Índigo Profundo</div>
+        <div class="cmd-item" data-action="theme-lime">🎨 Cambiar Acento a Verde Ácido</div>
+        <div class="cmd-item" data-action="theme-crimson">🎨 Cambiar Acento a Rojo Carmesí</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+Axion Protocol
+Copyright 2026 Axion Protocol
+
+Este producto se distribuye bajo la Licencia Apache, Version 2.0.
+El texto completo esta en el fichero LICENSE de la raiz.
+
+
+AVISO SOBRE EL MATERIAL HISTORICO BAJO phases/
+----------------------------------------------
+
+El directorio phases/ conserva la evidencia de las fases A a H del proyecto:
+corpus congelados, informes de auditoria, manifiestos de integridad y archivos
+de custodia.
+
+Varios de esos snapshots incluyen su propia copia del fichero LICENSE con el
+texto anterior a la decision de licenciamiento, que declaraba:
+
+    Status: UNDECIDED
+    No open-source or commercial license has been selected for this project.
+
+Ese texto NO esta vigente. La licencia aplicable a todo el repositorio es la
+Apache-2.0 de la raiz.
+
+Esas copias se conservan sin modificar de forma deliberada. Cada snapshot esta
+sellado por su propio manifiesto SHA-256, y reescribir su contenido invalidaria
+la cadena de evidencia que documenta el estado real del proyecto en cada fase.
+En un proyecto cuya tesis es el binding criptografico de evidencia, falsificar
+el rastro para que luzca coherente seria el peor error posible.
+
+
+ESTADO DEL SOFTWARE
+-------------------
+
+Axion Protocol es EXPERIMENTAL y no esta certificado. Tiene tres
+no-conformidades abiertas y documentadas (AX-NC-0001 critica, AX-NC-0002 y
+AX-NC-0003 altas). Consulta README.md antes de usarlo como control de
+seguridad: hoy no lo es.

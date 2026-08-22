@@ -1,0 +1,61 @@
+{
+  "name": "axion-protocol",
+  "version": "1.1.0-alpha.0",
+  "description": "Experimental local governance runtime for agentic AI operations: seven fail-closed phases, Ed25519 approvals, independent CHECK, SHA-256 evidence and in-toto attestations. No dependencies.",
+  "keywords": [
+    "ai-governance",
+    "agentic",
+    "fail-closed",
+    "ed25519",
+    "in-toto",
+    "dsse",
+    "attestation",
+    "audit-trail",
+    "human-in-the-loop"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "type": "commonjs",
+  "main": "tools/workflow_runner.js",
+  "bin": {
+    "axion-protocol": "bin/axion.js",
+    "axion": "bin/axion.js"
+  },
+  "scripts": {
+    "test": "node tests/run_all.js",
+    "test:functional": "node tests/run_all.js funcional",
+    "test:regression": "node tests/run_all.js regresion",
+    "test:phase-e": "node tests/run_all.js phase_e"
+  },
+  "dependencies": {},
+  "files": [
+    "bin/",
+    "tools/",
+    "tests/",
+    "policies/",
+    "schemas/",
+    "core/",
+    "adapters/",
+    "docs/",
+    "examples/",
+    "install.js",
+    "GOVERNANCE.md",
+    "SECURITY.md",
+    "ROADMAP.md",
+    "CHANGELOG.md",
+    "NOTICE",
+    "README.es.md",
+    "09_candidate_manifest.json",
+    "sha256-manifest.txt",
+    "phase-e-integrity.yaml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/axion-protocol/axion-protocol.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

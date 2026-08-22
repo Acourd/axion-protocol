@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:axion-protocol:schema:non-conformance:0.1.0",
+  "title": "Axion Non-Conformance Record",
+  "allOf": [
+    {"$ref": "urn:axion-protocol:schema:common:0.1.0#/$defs/metadata"},
+    {
+      "type": "object",
+      "required": ["nc_id", "title", "category", "description", "impact_level", "root_cause_classification", "status"],
+      "properties": {
+        "nc_id": {
+          "type": "string",
+          "pattern": "^AX-NC-[0-9]{4,}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "enum": ["REQUIREMENT_AMBIGUITY", "CONTRACT_DEVIATION", "AUTHORITY_CONFLICT", "MISSING_EVIDENCE", "UNAUTHORIZED_EXECUTION", "PREFLIGHT_FAILURE"]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "impact_level": {
+          "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        },
+        "root_cause_classification": {
+          "enum": ["ARTIFACT_DEFECT", "REQUIREMENT_DEFECT", "VERIFIER_DEFECT", "INDETERMINATE"]
+        },
+        "affected_components": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "remediation_plan": {
+          "type": "string"
+        },
+        "resolution_authority_decision": {
+          "type": "string"
+        },
+        "status": {
+          "enum": ["OPEN", "INVESTIGATING", "RESOLVED", "DEFERRED", "CLOSED_FAIL_SAFE"]
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

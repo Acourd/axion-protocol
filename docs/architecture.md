@@ -38,4 +38,14 @@ Modelos, herramientas, skills y ecosistemas externos se consumen mediante contra
 
 ## Estado
 
-Esta arquitectura no está implementada. Los directorios `core` describen contratos conceptuales, no componentes ejecutables.
+Esta arquitectura está **parcialmente implementada**, y conviene distinguir las dos mitades.
+
+Los directorios `core` siguen siendo **conceptuales**: describen las responsabilidades de
+Director, Supervisor, Auditor y Evidence Layer, y no contienen componentes ejecutables.
+
+La capa de workflow y enforcement **sí existe** y vive en `tools/`: orquestación fail-closed de
+las siete fases, compilación de la política de riesgo, verificación Ed25519 de aprobaciones y
+CHECK, clasificación de comandos y manifiestos de evidencia SHA-256.
+
+Ese enforcement solo actúa cuando un consumidor invoca `tools/workflow_runner.js` y respeta su
+veredicto. No hay interceptación global ni runtime certificado.

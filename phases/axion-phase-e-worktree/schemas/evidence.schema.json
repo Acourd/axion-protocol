@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:axion-protocol:schema:evidence:0.1.0",
+  "title": "Axion evidence",
+  "allOf": [
+    {"$ref": "urn:axion-protocol:schema:common:0.1.0#/$defs/metadata"},
+    {
+      "type": "object",
+      "required": ["evidence_id", "evidence_type", "source", "location", "hash_algorithm", "hash", "retention_class"],
+      "properties": {
+        "evidence_id": {"type": "string", "pattern": "^AX-EVD-[0-9]{4,}$"},
+        "evidence_type": {"enum": ["LOG", "MANIFEST", "HASH", "SNAPSHOT", "BUNDLE", "DECISION", "REPORT"]},
+        "source": {"type": "string", "minLength": 1},
+        "location": {"type": "string", "minLength": 1},
+        "hash_algorithm": {"enum": ["SHA-256", "GIT-SHA-1", "GIT-SHA-256"]},
+        "hash": {"type": "string", "minLength": 1},
+        "retention_class": {"enum": ["CRITICAL", "GOVERNANCE", "OPERATIONAL", "TEMPORARY"]},
+        "restoration_instructions": {"type": "string"}
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

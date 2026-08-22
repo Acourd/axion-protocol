@@ -1,0 +1,142 @@
+{
+  "schema": "axion-private-suite-result-v1",
+  "created_at": "2026-08-04T01:09:49.942Z",
+  "root": "C:\\Users\\Ayco\\Shoshin\\axion-blind-prep-2026-08-03\\private\\unneutralized-corpus",
+  "tests_expected": 16,
+  "tests_executed": 16,
+  "results": [
+    {
+      "test": "tests/tools.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "=== Pruebas de Herramientas de Axion Protocol (ZetProG Migrated Safe Tools) ===\n\n--- Pruebas de preflight.js ---\n✓ Comando git limpio pasó correctamente (PASS)\n✓ Comando con comillas balanceadas pasó correctamente (PASS)\n✓ Comillas desbalanceadas bloqueadas correctamente (STOP)\n✓ Comando destructivo bloqueado correctamente (STOP)\n\n--- Pruebas de evidence_hasher.js ---\n✓ Generación de SHA-256 para string válida (64 caracteres hex)\n✓ Manifiesto de evidencia de archivo y logs generado con éxito\n\n=== TODAS LAS PRUEBAS PASARON EXITOSAMENTE (PASS) ===\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/workflow.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "=== Pruebas del Flujo de Trabajo Híbrido Unificado (Axion Protocol) ===\n\n--- Caso 1: Tarea de bajo riesgo con intención clara ---\n✓ Tarea de bajo riesgo completó los 7 pasos con estado VERIFIED\n\n--- Caso 2: Tarea de alto riesgo sin autorización (Bloqueo en GATE) ---\n✓ Tarea de alto riesgo sin aprobación fue bloqueada correctamente en GATE\n\n--- Caso 3: Comando peligroso o sintaxis corrupta (Bloqueo en PREFLIGHT) ---\n✓ Comando peligroso fue detenido en la fase de CONSTRUIR/PREFLIGHT\n\n=== TODAS LAS PRUEBAS DEL FLUJO HÍBRIDO PASARON EXITOSAMENTE (PASS) ===\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/clarifier.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "=== Pruebas del Módulo Aclarador de Intención e Ideas (Intent Clarifier) ===\n\n--- Caso 1: Solicitud vaga (\"haz un login\") ---\n✓ Solicitud vaga identificada correctamente. Generadas preguntas y opciones de decisión.\n\n--- Caso 2: Solicitud detallada y clara ---\n✓ Solicitud clara procesada con éxito. Contrato de Entendimiento emitido.\n\n--- Caso 3: Bloqueo de Workflow por Intención Ambigua ---\n✓ El Workflow detuvo la ejecución en la Fase 1 (ENTENDER) al detectar solicitud vaga.\n\n=== TODAS LAS PRUEBAS DEL ACLARADOR PASARON EXITOSAMENTE (PASS) ===\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/learning_git.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "=== Pruebas de Aprendizaje por Retroalimentación y Asistente Git ===\n\n--- 1. Pruebas de learning_engine.js ---\n✓ Retroalimentación de preferencia de producto clasificada como PRODUCT_PREFERENCE\n✓ Retroalimentación de seguridad clasificada como SAFETY_RULE\n✓ Retroalimentación humana registrada correctamente en archivo markdown.\n\n--- 2. Pruebas de git_assistant.js ---\n✓ Diagnóstico de Git ejecutado con éxito: Status \"NOT_GIT_REPO\". Mensaje: \"Este proyecto no cuenta con un repositorio Git activo.\"\n\n=== TODAS LAS PRUEBAS DE APRENDIZAJE Y GIT PASARON EXITOSAMENTE (PASS) ===\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/install.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "=== Pruebas del Instalador Autónomo Dual (Antigravity & Claude Code) ===\n\n--- Ejecutando instalación autónoma dual en: C:\\Users\\Ayco\\Shoshin\\axion-blind-prep-2026-08-03\\private\\unneutralized-corpus\\scratch\\test_install_target ---\n[Axion Installer] Iniciando instalación autónoma en: C:\\Users\\Ayco\\Shoshin\\axion-blind-prep-2026-08-03\\private\\unneutralized-corpus\\scratch\\test_install_target\n  ✓ Reglas Antigravity inyectadas: .agents/AGENTS.md\n  ✓ Reglas Claude Code inyectadas: CLAUDE.md\n  ✓ Reglas Claude Code inyectadas: .claude/CLAUDE.md\n  ✓ Herramienta inyectada: tools/intent_clarifier.js\n  ✓ Herramienta inyectada: tools/preflight.js\n  ✓ Herramienta inyectada: tools/evidence_hasher.js\n  ✓ Herramienta inyectada: tools/workflow_runner.js\n  ✓ Herramienta inyectada: tools/learning_engine.js\n  ✓ Herramienta inyectada: tools/git_assistant.js\n  ✓ Herramienta inyectada: tools/vibeguard.js\n  ✓ Adaptador plano inyectado: adapters/prompt_bridge.json\n\n[Axion Installer] Instalación completada exitosamente.\nAntigravity y Claude Code ahora detectarán y aplicarán automáticamente Axion Protocol en este proyecto.\n\n✓ Verificado archivo inyectado: .agents\\AGENTS.md\n✓ Verificado archivo inyectado: CLAUDE.md\n✓ Verificado archivo inyectado: .claude\\CLAUDE.md\n✓ Verificado archivo inyectado: tools\\intent_clarifier.js\n✓ Verificado archivo inyectado: tools\\preflight.js\n✓ Verificado archivo inyectado: tools\\evidence_hasher.js\n✓ Verificado archivo inyectado: tools\\workflow_runner.js\n✓ Verificado archivo inyectado: adapters\\prompt_bridge.json\n\n=== TODAS LAS PRUEBAS DE INSTALACIÓN DUAL PASARON EXITOSAMENTE (PASS) ===\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/adversarial.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "=== Suite de Pruebas Adversarias y Casos Límite (Axion Red Team) ===\n\n--- 1. Pruebas Adversarias de preflight.js ---\n✓ preflight.js resistió entradas nulas, vacías y comandos maliciosos/corruptos con Fail-Closed (PASS)\n\n--- 2. Pruebas Adversarias de intent_clarifier.js ---\n✓ intent_clarifier.js manejó cadenas gigantes (>50k palabras) y nulos sin colapsar (PASS)\n\n--- 3. Pruebas Adversarias de evidence_hasher.js ---\n✓ evidence_hasher.js registró el archivo ausente sin descartarlo ni autoaprobarse (PASS)\n\n--- 4. Pruebas Adversarias de learning_engine.js ---\n✓ learning_engine.js manejó categorías de resguardo universales sin perder datos (PASS)\n\n--- 5. Pruebas Adversarias de git_assistant.js ---\n✓ git_assistant.js diagnosticó correctamente un directorio fuera de todo repositorio (PASS)\n\n=== TODAS LAS PRUEBAS ADVERSARIAS PASARON EXITOSAMENTE (PASS) ===\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/vibeguard.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "=== Pruebas del Escáner Anti-Vibecoding (VibeGuard) ===\n\n✓ Código limpio verificado correctamente como CLEAN (PASS)\n✓ Antipatrones de Vibecoding (catch mudo, TODO, !important) detectados con éxito (PASS)\n\n=== TODAS LAS PRUEBAS DE VIBEGUARD PASARON EXITOSAMENTE (PASS) ===\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/human_anti_patterns.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "=== Pruebas de Desactivación de Malas Prácticas del Humano (Human Anti-Patterns) ===\n\n✓ Shotgun Debugging (\"no funciona arreglalo\") fue detenido por el Aclarador (PASS)\n✓ Prompt vago (\"haz login\") canalizado a clarificación por sub-pasos (PASS)\n✓ Comando destructivo por impaciencia (\"rm -rf /\") detenido por Preflight Fail-Closed (PASS)\n\n=== TODAS LAS PRUEBAS DE ORIENTACIÓN AL HUMANO PASARON EXITOSAMENTE (PASS) ===\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/regression/ax_f_001_installer_backup.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS AX-F-001 — configuración preexistente respaldada y recuperable\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/regression/ax_f_005_preflight_destructive.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS AX-F-005 — 20 destructivos detenidos, 7 legítimos permitidos\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/regression/ax_f_012_suite_integrity.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS AX-F-012 — 8 pruebas documentadas, 0 imports rotos, 0 tautologías, 0 mensajes falsos\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/regression/ax_f_008_doc_consistency.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS AX-F-008 — sin contradicción entre documentación normativa, contenido real e interfaces\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/regression/ax_f_002_risk_gate.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS AX-F-002 — 8 grafías exigen gate, 8 valores fuera de dominio bloquean\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/regression/ax_f_003_verified_requires_checks.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS AX-F-003 — VERIFIED sólo se alcanza con comprobaciones completas y superadas\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/regression/ax_f_004_evidence_manifest.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS AX-F-004 — manifiesto conforme al esquema, completo y sin autoaprobación\n",
+      "stderr": ""
+    },
+    {
+      "test": "tests/regression/ax_f_006_learnings_preservation.test.js",
+      "exit_code": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "PASS AX-F-006 — historial preservado ante fallo de escritura y error propagado\n",
+      "stderr": ""
+    }
+  ],
+  "root_tree_unchanged": true,
+  "temporary_tree_before": [],
+  "temporary_tree_after": [],
+  "temporary_tree_unchanged": true,
+  "all_exit_zero": true
+}

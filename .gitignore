@@ -1,0 +1,28 @@
+# Residuo de ejecucion de las suites de Fase E.
+# Las pruebas escriben en .phase-e/test-runtime/ y dejan laboratorios en
+# .phase-e/artifacts/. No es evidencia: es salida reproducible.
+.phase-e/
+
+# Estado de runtime de la parada de emergencia. Es senal operativa, no fuente:
+# versionarla significaria arrastrar la parada de una maquina a otra.
+.axion/
+
+# Espacio de trabajo efimero.
+scratch/
+
+# Node — el proyecto no tiene dependencias externas, pero un consumidor puede instalarlas.
+node_modules/
+npm-debug.log*
+
+# Tarballs de npm pack. Se generan al empaquetar y no se versionan.
+*.tgz
+
+# Logs y temporales
+*.log
+*.tmp
+*.bak
+
+# Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store

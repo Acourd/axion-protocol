@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:axion-protocol:schema:component:0.1.0",
+  "title": "Axion component",
+  "allOf": [
+    {"$ref": "urn:axion-protocol:schema:common:0.1.0#/$defs/metadata"},
+    {
+      "type": "object",
+      "required": ["component_id", "purpose", "consumer", "runtime", "activator", "component_state", "license"],
+      "properties": {
+        "component_id": {"type": "string", "pattern": "^AX-CMP-[0-9]{4,}$"},
+        "purpose": {"type": "string", "minLength": 1},
+        "consumer": {"type": ["string", "null"]},
+        "runtime": {"type": ["string", "null"]},
+        "activator": {"type": ["string", "null"]},
+        "component_state": {"enum": ["EXPERIMENTAL", "CANDIDATE", "APPROVED", "STABLE", "DEPRECATED", "ARCHIVED", "REJECTED", "EXTERNAL"]},
+        "license": {"type": "string", "minLength": 1},
+        "rollback_reference": {"type": ["string", "null"]}
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

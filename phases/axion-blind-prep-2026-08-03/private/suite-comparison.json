@@ -1,0 +1,173 @@
+{
+  "schema": "axion-private-suite-comparison-v1",
+  "created_at": "2026-08-04T01:15:46.136Z",
+  "result": "PASS",
+  "tests_compared": 16,
+  "exit_codes_identical": true,
+  "pass_fail_results_identical": true,
+  "persistent_filesystem_effects_identical": true,
+  "diagnostic_outputs_changed": 9,
+  "pairs": [
+    {
+      "original_test": "tests/tools.test.js",
+      "blind_test": "tests/tools.test.js",
+      "expected_blind_test": "tests/tools.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": true
+    },
+    {
+      "original_test": "tests/workflow.test.js",
+      "blind_test": "tests/workflow.test.js",
+      "expected_blind_test": "tests/workflow.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": true
+    },
+    {
+      "original_test": "tests/clarifier.test.js",
+      "blind_test": "tests/clarifier.test.js",
+      "expected_blind_test": "tests/clarifier.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": true
+    },
+    {
+      "original_test": "tests/learning_git.test.js",
+      "blind_test": "tests/learning_git.test.js",
+      "expected_blind_test": "tests/learning_git.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": true
+    },
+    {
+      "original_test": "tests/install.test.js",
+      "blind_test": "tests/install.test.js",
+      "expected_blind_test": "tests/install.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": false
+    },
+    {
+      "original_test": "tests/adversarial.test.js",
+      "blind_test": "tests/adversarial.test.js",
+      "expected_blind_test": "tests/adversarial.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": true
+    },
+    {
+      "original_test": "tests/vibeguard.test.js",
+      "blind_test": "tests/vibeguard.test.js",
+      "expected_blind_test": "tests/vibeguard.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": true
+    },
+    {
+      "original_test": "tests/human_anti_patterns.test.js",
+      "blind_test": "tests/human_anti_patterns.test.js",
+      "expected_blind_test": "tests/human_anti_patterns.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": true
+    },
+    {
+      "original_test": "tests/regression/ax_f_001_installer_backup.test.js",
+      "blind_test": "tests/regression/installer_preserves_existing_configuration.test.js",
+      "expected_blind_test": "tests/regression/installer_preserves_existing_configuration.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": false
+    },
+    {
+      "original_test": "tests/regression/ax_f_005_preflight_destructive.test.js",
+      "blind_test": "tests/regression/preflight_destructive_commands.test.js",
+      "expected_blind_test": "tests/regression/preflight_destructive_commands.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": false
+    },
+    {
+      "original_test": "tests/regression/ax_f_012_suite_integrity.test.js",
+      "blind_test": "tests/regression/test_suite_integrity.test.js",
+      "expected_blind_test": "tests/regression/test_suite_integrity.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": false
+    },
+    {
+      "original_test": "tests/regression/ax_f_008_doc_consistency.test.js",
+      "blind_test": "tests/regression/documentation_consistency.test.js",
+      "expected_blind_test": "tests/regression/documentation_consistency.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": false
+    },
+    {
+      "original_test": "tests/regression/ax_f_002_risk_gate.test.js",
+      "blind_test": "tests/regression/risk_gate_normalization.test.js",
+      "expected_blind_test": "tests/regression/risk_gate_normalization.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": false
+    },
+    {
+      "original_test": "tests/regression/ax_f_003_verified_requires_checks.test.js",
+      "blind_test": "tests/regression/workflow_verification_requirements.test.js",
+      "expected_blind_test": "tests/regression/workflow_verification_requirements.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": false
+    },
+    {
+      "original_test": "tests/regression/ax_f_004_evidence_manifest.test.js",
+      "blind_test": "tests/regression/evidence_manifest_conformance.test.js",
+      "expected_blind_test": "tests/regression/evidence_manifest_conformance.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": false
+    },
+    {
+      "original_test": "tests/regression/ax_f_006_learnings_preservation.test.js",
+      "blind_test": "tests/regression/learning_history_preservation.test.js",
+      "expected_blind_test": "tests/regression/learning_history_preservation.test.js",
+      "original_exit_code": 0,
+      "blind_exit_code": 0,
+      "exit_code_identical": true,
+      "pass_fail_identical": true,
+      "diagnostic_output_identical": false
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,32 @@
+{
+  "identifier": "AX-EVD-0001",
+  "version": "1.0.0",
+  "date": "2026-08-03",
+  "provenance": "Auditoria independiente bajo Axion Mission Compiler V0.5, sesion aislada sin informes previos",
+  "status": "LOCKED_IMMUTABLE",
+  "owner": "Human Authority",
+  "risk": "HIGH",
+  "evidence": [
+    "AXION_PHASE_A_REPORT.md",
+    "AXION_PHASE_A_LOCK.yaml",
+    "AXION_MISSION_CLOSURE.yaml",
+    "harness/exp_controls.js",
+    "harness/exp_data.js",
+    "harness/exp_install_git.js",
+    "harness/exp_robust.js"
+  ],
+  "approval": {
+    "required": true,
+    "state": "WAITING",
+    "approved_by": null,
+    "approved_at": null
+  },
+  "evidence_id": "AX-EVD-0001",
+  "evidence_type": "REPORT",
+  "source": "Axion Protocol @ ef229b4 (67 archivos en alcance)",
+  "location": "Project/axion-audit-baseline-2026-08-03/AXION_PHASE_A_REPORT.md",
+  "hash_algorithm": "SHA-256",
+  "hash": "47E8880E6C5AB446FCA64FF427806E9E5185165E6A9CC619D36BF56798E51072",
+  "retention_class": "GOVERNANCE",
+  "restoration_instructions": "Recalcular el SHA-256 de AXION_PHASE_A_REPORT.md y compararlo con el campo hash. Coincidencia = linea base integra. Divergencia = artefacto alterado tras el bloqueo; no usar como linea base."
+}

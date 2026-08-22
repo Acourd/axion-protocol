@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:axion-protocol:schema:audit:0.1.0",
+  "title": "Axion audit",
+  "allOf": [
+    {"$ref": "urn:axion-protocol:schema:common:0.1.0#/$defs/metadata"},
+    {
+      "type": "object",
+      "required": ["audit_id", "subject", "auditor", "independent_from_executor", "assertions", "findings", "verdict"],
+      "properties": {
+        "audit_id": {"type": "string", "pattern": "^AX-AUD-[0-9]{4,}$"},
+        "subject": {"type": "string", "minLength": 1},
+        "auditor": {"type": "string", "minLength": 1},
+        "independent_from_executor": {"const": true},
+        "assertions": {"type": "array", "items": {"type": "string"}},
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["severity", "description"],
+            "properties": {
+              "severity": {"enum": ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"]},
+              "description": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        },
+        "verdict": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+        "reproduction_steps": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

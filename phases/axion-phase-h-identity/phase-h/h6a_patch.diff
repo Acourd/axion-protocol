@@ -1,0 +1,1563 @@
+# AXION H-6a — parche de reparacion del verificador
+#
+# Naturaleza: ADITIVO. Ningun fichero existente ha sido modificado ni eliminado.
+# El corpus del candidato G permanece intacto (99/99 vs 09_candidate_manifest.json)
+# y el ZIP sellado conserva su SHA-256 b84462b5...c563b753.
+#
+# Los defectos de G NO se corrigen en esta etapa: el verificador debe reportarlos
+# en rojo, que es exactamente lo que hace.
+#
+# Raiz: Proyectos/Axion Protocol/phases/axion-phase-h-identity/
+
+diff --git a/h6a/runner.js b/h6a/runner.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/runner.js
+@@ -0,0 +1,355 @@
++#!/usr/bin/env node
++'use strict';
++/**
++ * AXION H-6a — corredor de verificación.
++ *
++ * Principio rector: ninguna anotación del inventario puede convertir un FAIL en exit 0.
++ * El campo `expectation` es informativo para el informe; jamás altera el código de salida.
++ *
++ * Uso:
++ *   node runner.js --corpus <ruta> --inventory <ruta> [--out <ruta.json>] [--emit-inventory]
++ */
++
++const fs = require('fs');
++const path = require('path');
++const crypto = require('crypto');
++const { spawnSync } = require('child_process');
++
++const HARNESS = __dirname;
++
++// --------------------------------------------------------------------------- args
++function parseArgs(argv) {
++  const a = { emitInventory: false };
++  for (let i = 2; i < argv.length; i += 1) {
++    const k = argv[i];
++    if (k === '--corpus') a.corpus = path.resolve(argv[++i]);
++    else if (k === '--inventory') a.inventory = path.resolve(argv[++i]);
++    else if (k === '--out') a.out = path.resolve(argv[++i]);
++    else if (k === '--emit-inventory') a.emitInventory = true;
++    else throw new Error(`Argumento desconocido: ${k}`);
++  }
++  if (!a.corpus) throw new Error('--corpus es obligatorio');
++  if (!a.inventory) throw new Error('--inventory es obligatorio');
++  return a;
++}
++
++const sha256 = (p) => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
++
++function walk(dir, out = []) {
++  if (!fs.existsSync(dir)) return out;
++  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
++    const p = path.join(dir, e.name);
++    if (e.isDirectory()) walk(p, out);
++    else if (e.isFile() && e.name.endsWith('.test.js')) out.push(p);
++  }
++  return out;
++}
++
++// ------------------------------------------------------------------- descubrimiento
++function discover(corpus) {
++  const corpusSuites = walk(path.join(corpus, 'tests')).map((p) => ({
++    id: path.relative(corpus, p).split(path.sep).join('/'),
++    source: 'corpus',
++    file: p,
++    sha256: sha256(p),
++  }));
++  const redSuites = walk(path.join(HARNESS, 'red')).map((p) => ({
++    id: 'h6a/red/' + path.basename(p),
++    source: 'h6a-red-probe',
++    file: p,
++    sha256: sha256(p),
++  }));
++  return [...corpusSuites, ...redSuites].sort((x, y) => x.id.localeCompare(y.id));
++}
++
++// ------------------------------------------------------- guardarraíles estáticos
++// Requisitos 7, 8 y 9 de la autorización H-6a. Cada hallazgo cita su evidencia.
++const GUARDRAILS = [
++  {
++    code: 'EXIT_ZERO_ON_FAILURE_PATH',
++    requirement: 7,
++    detect(src) {
++      const re = /if\s*\(\s*([A-Za-z_$][\w$]*)\s*>\s*0\s*\)\s*\{(?:[^{}]|\{[^{}]*\})*?process\.exit\(\s*0\s*\)/gs;
++      const hits = [];
++      let m;
++      while ((m = re.exec(src)) !== null) {
++        hits.push(`if (${m[1]} > 0) { ... process.exit(0) }`);
++      }
++      return hits;
++    },
++  },
++  {
++    code: 'GLOBAL_CATCH_SWALLOW',
++    requirement: 8,
++    detect(src) {
++      const re = /catch\s*\([^)]*\)\s*\{((?:[^{}]|\{[^{}]*\})*)\}/gs;
++      const hits = [];
++      let m;
++      while ((m = re.exec(src)) !== null) {
++        const body = m[1];
++        const propagates = /throw\b/.test(body)
++          || /process\.exit\(\s*(?!0\s*\))/.test(body)
++          || /process\.exitCode\s*=\s*(?!0)/.test(body);
++        if (!propagates && body.trim() !== '') hits.push(body.trim().slice(0, 80).replace(/\s+/g, ' '));
++      }
++      return hits;
++    },
++  },
++  {
++    code: 'SIMULATED_SUITE',
++    requirement: 9,
++    detect(src) {
++      const asserts = /\bassert\b|\bthrow\b|process\.exit\(\s*[1-9]/.test(src);
++      const claimsPass = /console\.log\((['"`]).*PASS/i.test(src);
++      return !asserts && claimsPass ? ['declara PASS sin ninguna aserción ni propagación'] : [];
++    },
++  },
++];
++
++function scanGuardrails(suites) {
++  const findings = [];
++  for (const s of suites) {
++    if (s.source !== 'corpus') continue;
++    const src = fs.readFileSync(s.file, 'utf8');
++    for (const g of GUARDRAILS) {
++      for (const ev of g.detect(src)) {
++        findings.push({ suite: s.id, code: g.code, requirement: g.requirement, evidence: ev });
++      }
++    }
++  }
++  return findings;
++}
++
++// -------------------------------------------------------------------- ejecución
++function runSuite(suite, corpus, extraEnv = {}) {
++  const started = Date.now();
++  const res = spawnSync(process.execPath, [suite.file], {
++    cwd: corpus,
++    env: { ...process.env, AXION_CORPUS: corpus, ...extraEnv },
++    encoding: 'utf8',
++    timeout: 120000,
++    windowsHide: true,
++  });
++  const out = `${res.stdout || ''}${res.stderr || ''}`;
++  return {
++    exitCode: res.status === null ? 124 : res.status,
++    timedOut: res.status === null,
++    durationMs: Date.now() - started,
++    tail: out.trim().split(/\r?\n/).slice(-6).join('\n'),
++  };
++}
++
++// ------------------------------------------------------------------ meta-oráculo
++function runOracle(suite, corpus, mutatorRel, baselinePassed) {
++  const mutator = path.join(HARNESS, mutatorRel);
++  if (!fs.existsSync(mutator)) {
++    return { verdict: 'ORACLE_MUTATOR_MISSING', mutator: mutatorRel, exitCode: null };
++  }
++  // La meta-prueba sólo discrimina si la suite pasa sin mutación. Si ya está en
++  // rojo, no puede distinguirse un oráculo sano de uno defectuoso.
++  if (!baselinePassed) {
++    return { verdict: 'ORACLE_INCONCLUSIVE_BASELINE_RED', mutator: mutatorRel, exitCode: null };
++  }
++  const r = runSuite(suite, corpus, {
++    NODE_OPTIONS: `${process.env.NODE_OPTIONS || ''} --require "${mutator}"`.trim(),
++    AXION_H6A_MUTATION: '1',
++  });
++  // Un oráculo sano DEBE fallar cuando el módulo bajo prueba está mutado.
++  return {
++    verdict: r.exitCode !== 0 ? 'ORACLE_SOUND' : 'ORACLE_DEFECT',
++    mutator: mutatorRel,
++    exitCode: r.exitCode,
++    tail: r.tail,
++  };
++}
++
++// ----------------------------------------------------------------------- main
++function main() {
++  const args = parseArgs(process.argv);
++  const discovered = discover(args.corpus);
++
++  if (args.emitInventory) {
++    const inv = {
++      identifier: 'AX-H6A-TEST-INVENTORY',
++      version: '1.0.0',
++      generated_from_corpus_sha256: null,
++      suites: discovered.map((s) => ({
++        id: s.id, source: s.source, sha256: s.sha256,
++        category: null, critical: false, expectation: 'PASS', oracle_mutator: null, notes: '',
++      })),
++    };
++    fs.writeFileSync(args.inventory, `${JSON.stringify(inv, null, 2)}\n`, 'utf8');
++    console.log(`Inventario emitido con ${inv.suites.length} suites en ${args.inventory}`);
++    return 0;
++  }
++
++  const inventory = JSON.parse(fs.readFileSync(args.inventory, 'utf8'));
++  const invById = new Map(inventory.suites.map((s) => [s.id, s]));
++  const discById = new Map(discovered.map((s) => [s.id, s]));
++
++  // ---- Gate 1: descubrimiento == inventario (requisito 6)
++  const missingFromDisc = [...invById.keys()].filter((k) => !discById.has(k));
++  const missingFromInv = [...discById.keys()].filter((k) => !invById.has(k));
++  const drifted = discovered.filter((s) => invById.has(s.id) && invById.get(s.id).sha256 !== s.sha256);
++  const discoveryMismatch = missingFromDisc.length + missingFromInv.length + drifted.length > 0;
++
++  // ---- Guardarraíles estáticos (requisitos 7-9)
++  const guardrails = scanGuardrails(discovered);
++
++  // ---- Ejecución de todas las suites descubiertas (requisito 1, 2, 10)
++  const results = [];
++  for (const s of discovered) {
++    const meta = invById.get(s.id) || {};
++    const r = runSuite(s, args.corpus);
++    results.push({
++      id: s.id, source: s.source, category: meta.category || null,
++      expectation: meta.expectation || 'PASS', maps_to_g_defect: meta.maps_to_g_defect || null,
++      exitCode: r.exitCode, passed: r.exitCode === 0, timedOut: r.timedOut,
++      durationMs: r.durationMs, tail: r.tail,
++    });
++  }
++
++  const executed = results.length;
++  const passed = results.filter((r) => r.passed).length;
++  const failed = executed - passed;
++
++  // ---- Gate 2: aritmética (requisitos 3 y 4)
++  const countGate = {
++    inventory: inventory.suites.length,
++    discovered: discovered.length,
++    executed,
++    passed,
++    failed,
++    discovered_eq_inventory: discovered.length === inventory.suites.length && !discoveryMismatch,
++    executed_eq_discovered: executed === discovered.length,
++    sum_eq_executed: passed + failed === executed,
++  };
++  const countGateOk = countGate.discovered_eq_inventory && countGate.executed_eq_discovered && countGate.sum_eq_executed;
++
++  // ---- Meta-oráculo (obligatorio para suites críticas)
++  const oracles = [];
++  for (const s of discovered) {
++    const meta = invById.get(s.id);
++    if (!meta || !meta.critical || !meta.oracle_mutator) continue;
++    const baseline = results.find((r) => r.id === s.id);
++    oracles.push({ suite: s.id, ...runOracle(s, args.corpus, meta.oracle_mutator, baseline && baseline.passed) });
++  }
++  const oracleDefects = oracles.filter((o) => o.verdict === 'ORACLE_DEFECT' || o.verdict === 'ORACLE_MUTATOR_MISSING');
++  const oracleInconclusive = oracles.filter((o) => o.verdict === 'ORACLE_INCONCLUSIVE_BASELINE_RED');
++
++  // ---- Cobertura de defectos conocidos de G
++  const gDefects = {};
++  for (const s of inventory.suites) {
++    if (!s.maps_to_g_defect) continue;
++    const r = results.find((x) => x.id === s.id);
++    gDefects[s.maps_to_g_defect] = {
++      suite: s.id,
++      detected: r ? !r.passed : false,
++      exitCode: r ? r.exitCode : null,
++      mechanism: 'red-probe',
++    };
++  }
++  // G6 se detecta por dos mecanismos independientes: el meta-oráculo (mutación) y
++  // el guardarraíl estático. Se registran ambos porque no son equivalentes: una
++  // mutación puede caer en una rama que sí propaga y dar ORACLE_SOUND aun
++  // existiendo una vía de exit 0 en otra rama del mismo fichero.
++  const exitZeroFindings = guardrails.filter((g) => g.code === 'EXIT_ZERO_ON_FAILURE_PATH');
++  if (oracleDefects.length > 0 || exitZeroFindings.length > 0) {
++    const mech = [
++      oracleDefects.length ? 'oracle-meta-test' : null,
++      exitZeroFindings.length ? 'static-guardrail' : null,
++    ].filter(Boolean).join(' + ');
++    gDefects['G6_EXIT_ZERO_DESPITE_FAILED_ASSERT'] = {
++      suite: [...new Set([...oracleDefects.map((o) => o.suite), ...exitZeroFindings.map((f) => f.suite)])].join(', '),
++      detected: true, exitCode: 0, mechanism: mech,
++    };
++  }
++  const declaredByG = inventory.g_declared_regression_scope || [];
++  const omitted = discovered.filter((s) => s.source === 'corpus' && !declaredByG.includes(s.id));
++  if (omitted.length > 0) {
++    gDefects['G7_INCOMPLETE_DISCOVERY'] = {
++      suite: `${omitted.length} suites fuera del alcance declarado por G`,
++      detected: true, exitCode: null, mechanism: 'discovery-gate',
++    };
++  }
++
++  // ---- Veredicto. Ningún campo del inventario puede producir exit 0 con fallos.
++  const blocking = [];
++  if (discoveryMismatch) blocking.push('TEST_DISCOVERY_MISMATCH');
++  if (!countGateOk) blocking.push('COUNT_GATE_MISMATCH');
++  if (oracleDefects.length > 0) blocking.push('ORACLE_DEFECT');
++  if (guardrails.length > 0) blocking.push('GUARDRAIL_VIOLATION');
++  if (failed > 0) blocking.push('SUITE_FAILURES');
++
++  const report = {
++    contractVersion: '1.0.0',
++    stage: 'H-6a',
++    generated_at: new Date().toISOString(),
++    corpus: { path: args.corpus },
++    count_gate: countGate,
++    count_gate_ok: countGateOk,
++    discovery: {
++      mismatch: discoveryMismatch,
++      inventoried_but_not_found: missingFromDisc,
++      found_but_not_inventoried: missingFromInv,
++      hash_drift: drifted.map((d) => d.id),
++      g_declared_scope_size: declaredByG.length,
++      omitted_by_g_scope: omitted.map((o) => o.id),
++    },
++    guardrail_findings: guardrails,
++    oracle_meta_tests: oracles,
++    oracle_defects: oracleDefects.map((o) => o.suite),
++    oracle_inconclusive: oracleInconclusive.map((o) => o.suite),
++    g_defect_coverage: gDefects,
++    suites: results,
++    blocking_conditions: blocking,
++    exit_code: blocking.length > 0 ? 1 : 0,
++  };
++
++  if (args.out) fs.writeFileSync(args.out, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
++
++  // ---------------------------------------------------------------- salida legible
++  const L = (k, v) => console.log(`  ${String(k).padEnd(34)} ${v}`);
++  console.log('=== AXION H-6a — CORREDOR DE VERIFICACION ===\n');
++  console.log('-- Gate de descubrimiento');
++  L('inventariadas', countGate.inventory);
++  L('descubiertas', countGate.discovered);
++  L('no encontradas', missingFromDisc.length ? missingFromDisc.join(', ') : '0');
++  L('no inventariadas', missingFromInv.length ? missingFromInv.join(', ') : '0');
++  L('deriva de hash', drifted.length ? drifted.map((d) => d.id).join(', ') : '0');
++  L('omitidas por el alcance de G', `${omitted.length} de ${discovered.filter((s) => s.source === 'corpus').length} suites del corpus`);
++
++  console.log('\n-- Gate aritmetico');
++  L('ejecutadas', executed);
++  L('PASS', passed);
++  L('FAIL', failed);
++  L('discovered == inventory', countGate.discovered_eq_inventory);
++  L('executed == discovered', countGate.executed_eq_discovered);
++  L('passed + failed == executed', countGate.sum_eq_executed);
++
++  console.log('\n-- Guardarrailes estaticos');
++  if (!guardrails.length) console.log('  (sin hallazgos)');
++  for (const g of guardrails) console.log(`  [R${g.requirement}] ${g.code.padEnd(26)} ${g.suite}\n         evidencia: ${g.evidence}`);
++
++  console.log('\n-- Meta-pruebas del oraculo');
++  for (const o of oracles) {
++    const tag = o.verdict === 'ORACLE_SOUND' ? 'OK  ' : (o.verdict === 'ORACLE_DEFECT' ? 'DEF ' : '--  ');
++    console.log(`  ${tag} ${o.suite.padEnd(52)} ${o.verdict}${o.exitCode === null ? '' : ` (exit ${o.exitCode})`}`);
++  }
++
++  console.log('\n-- Defectos de G detectados en rojo');
++  for (const [k, v] of Object.entries(gDefects)) {
++    console.log(`  ${v.detected ? 'ROJO' : 'NO  '} ${k.padEnd(38)} ${v.mechanism} :: ${v.suite}`);
++  }
++
++  console.log('\n-- Suites en FAIL');
++  for (const r of results.filter((x) => !x.passed)) {
++    console.log(`  exit ${String(r.exitCode).padEnd(4)} ${r.id}${r.expectation !== 'PASS' ? `   [${r.expectation}]` : ''}`);
++  }
++
++  console.log(`\nCondiciones bloqueantes: ${blocking.length ? blocking.join(', ') : 'ninguna'}`);
++  console.log(`EXIT ${report.exit_code}`);
++  return report.exit_code;
++}
++
++process.exitCode = main();
+
+diff --git a/h6a/lib/probe_kit.js b/h6a/lib/probe_kit.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/lib/probe_kit.js
+@@ -0,0 +1,153 @@
++'use strict';
++/**
++ * Utilidades compartidas por las sondas rojas de H-6a.
++ * Operan sobre un corpus indicado por AXION_CORPUS; nunca lo modifican.
++ */
++const crypto = require('crypto');
++const fs = require('fs');
++const os = require('os');
++const path = require('path');
++
++const CORPUS = process.env.AXION_CORPUS
++  ? path.resolve(process.env.AXION_CORPUS)
++  : (() => { throw new Error('AXION_CORPUS no definido'); })();
++
++const tool = (n) => require(path.join(CORPUS, 'tools', n));
++const { createSignedApproval, computePublicKeyId } = tool('approval_ed25519.js');
++const { createSignedCheck } = tool('check_ed25519.js');
++const { hashCanonical } = tool('canonical_json.js');
++const { compileRiskPolicy } = tool('risk_policy_compiler.js');
++const { executeHybridWorkflow } = tool('workflow_runner.js');
++
++const POLICY_SOURCE = fs.readFileSync(path.join(CORPUS, 'policies', 'risk.yaml'), 'utf8');
++const COMPILED = compileRiskPolicy(POLICY_SOURCE);
++const POLICY_HASH = crypto.createHash('sha256').update(POLICY_SOURCE, 'utf8').digest('hex');
++
++// Espacio de trabajo fuera del corpus: las sondas no ensucian el artefacto auditado.
++function workspace(label) {
++  const dir = path.join(os.tmpdir(), 'axion-h6a', `${label}-${crypto.randomBytes(5).toString('hex')}`);
++  fs.mkdirSync(path.join(dir, 'consumed'), { recursive: true });
++  return { dir, consumptionDir: path.join(dir, 'consumed') };
++}
++
++function authority(actorId, keys, roles) {
++  return {
++    actorId,
++    keyId: computePublicKeyId(keys.publicKey),
++    publicKeyPem: keys.publicKey.export({ type: 'spki', format: 'pem' }),
++    roles,
++    status: 'TRUSTED',
++    expiresAt: '2099-01-01T00:00:00.000Z',
++  };
++}
++
++function writeRegistry(dir, entries) {
++  const p = path.join(dir, 'authorities.json');
++  fs.writeFileSync(p, JSON.stringify({ version: '1.0.0', authorities: entries }, null, 2), 'utf8');
++  return p;
++}
++
++function mission(missionId, risk = 'HIGH') {
++  const command = { executable: 'node', args: ['--version'], cwd: CORPUS, shell: false };
++  const scope = ['tools/workflow_runner.js'];
++  const rollbackPlan = {
++    contractVersion: '1.0.0',
++    planId: `RB-${missionId}`,
++    missionId,
++    strategy: 'RESTORE_SNAPSHOT',
++    snapshotDigest: 'a'.repeat(64),
++    steps: ['restaurar snapshot'],
++    verification: ['comparar manifest'],
++  };
++  return {
++    missionId, risk, command, scope, rollbackPlan,
++    rollbackHash: hashCanonical(rollbackPlan),
++    requirementsHash: hashCanonical(COMPILED.levels[risk].requirements),
++    policyHash: POLICY_HASH,
++    testAssertions: ['assert exit code 0'],
++  };
++}
++
++function signApproval(m, actorId, keys) {
++  return createSignedApproval({
++    contractVersion: '1.0.0',
++    approvalId: `APR-${crypto.randomBytes(6).toString('hex')}`,
++    missionId: m.missionId,
++    actorId,
++    keyId: computePublicKeyId(keys.publicKey),
++    decision: 'APPROVE',
++    risk: m.risk,
++    command: m.command,
++    scope: m.scope,
++    requirementsHash: m.requirementsHash,
++    policyHash: m.policyHash,
++    rollbackHash: m.rollbackHash,
++    issuedAt: new Date(Date.now() - 60_000).toISOString(),
++    expiresAt: new Date(Date.now() + 600_000).toISOString(),
++    nonce: crypto.randomBytes(32).toString('base64url'),
++    usageLimit: 1,
++  }, keys.privateKey);
++}
++
++function signCheck(m, actorId, keys, executorActorId, approvalDigest) {
++  return createSignedCheck({
++    contractVersion: '1.0.0',
++    checkId: `CHK-${crypto.randomBytes(6).toString('hex')}`,
++    missionId: m.missionId,
++    actorId,
++    keyId: computePublicKeyId(keys.publicKey),
++    executorActorId,
++    risk: m.risk,
++    commandHash: hashCanonical(m.command),
++    approvalDigest,
++    assertionsHash: hashCanonical(m.testAssertions),
++    result: 'PASS',
++    exitCode: 0,
++    evidenceHash: hashCanonical({ probe: m.missionId }),
++    issuedAt: new Date(Date.now() - 30_000).toISOString(),
++    expiresAt: new Date(Date.now() + 600_000).toISOString(),
++  }, keys.privateKey);
++}
++
++function payload(m, approvalEnvelope, checkEnvelope) {
++  return {
++    missionId: m.missionId,
++    title: 'Sonda roja H-6a',
++    rawUserRequest: 'Ejecutar una comprobacion verificable con evidencia independiente y alcance delimitado.',
++    scope: m.scope,
++    risk: m.risk,
++    command: m.command,
++    rollbackPlan: m.risk === 'LOW' ? undefined : m.rollbackPlan,
++    testAssertions: m.testAssertions,
++    approvalEnvelope,
++    checkEnvelope,
++    modifiedFiles: [],
++  };
++}
++
++const keypair = () => crypto.generateKeyPairSync('ed25519');
++
++/** Aserción de sonda roja: registra el hecho observado y propaga el fallo. */
++function expectBlocked(label, result, note) {
++  const ok = result.status !== 'VERIFIED';
++  console.log(`  [${ok ? 'OK  ' : 'ROJO'}] ${label} -> ${result.status}`);
++  if (!ok) {
++    console.log(`         ${note}`);
++    throw new Error(`INVARIANTE VIOLADA: ${label} alcanzo VERIFIED. ${note}`);
++  }
++}
++
++function expectVerified(label, result, note) {
++  const ok = result.status === 'VERIFIED';
++  console.log(`  [${ok ? 'OK  ' : 'ROJO'}] ${label} -> ${result.status}`);
++  if (!ok) {
++    console.log(`         ${note}`);
++    throw new Error(`FLUJO ROTO: ${label} no alcanzo VERIFIED. ${note}`);
++  }
++}
++
++module.exports = {
++  CORPUS, workspace, authority, writeRegistry, mission, signApproval, signCheck,
++  payload, keypair, hashCanonical, executeHybridWorkflow, expectBlocked, expectVerified,
++  crypto, fs, path,
++};
+
+diff --git a/h6a/oracle/mut_check_always_valid.js b/h6a/oracle/mut_check_always_valid.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/oracle/mut_check_always_valid.js
+@@ -0,0 +1,29 @@
++'use strict';
++/**
++ * MUTADOR DE ORÁCULO — `verifyIndependentCheck` siempre devuelve CHECK_VALID.
++ *
++ * Se precarga con `--require` antes de la suite. Una suite cuyo oráculo sea sano
++ * DEBE fallar (exit != 0) al ejecutarse bajo esta mutación, porque todos sus casos
++ * de independencia negativa dejan de bloquear.
++ *
++ * Si la suite sigue saliendo con código 0, su oráculo no puede distinguir un
++ * sistema correcto de uno roto: ORACLE_DEFECT.
++ */
++const path = require('path');
++
++const corpus = path.resolve(process.env.AXION_CORPUS || process.cwd());
++const target = path.join(corpus, 'tools', 'check_ed25519.js');
++
++const mod = require(target);
++const original = mod.verifyIndependentCheck;
++
++mod.verifyIndependentCheck = function mutated(args) {
++  const real = original(args);
++  return Object.freeze({
++    status: 'CHECK_VALID',
++    checkId: real.checkId || 'MUTATED-CHECK',
++    checkDigest: real.checkDigest || 'f'.repeat(64),
++    keyId: real.keyId || 'ed25519:' + 'f'.repeat(64),
++    evidenceHash: real.evidenceHash || 'f'.repeat(64),
++  });
++};
+
+diff --git a/h6a/oracle/mut_approval_always_valid.js b/h6a/oracle/mut_approval_always_valid.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/oracle/mut_approval_always_valid.js
+@@ -0,0 +1,24 @@
++'use strict';
++/**
++ * MUTADOR DE ORÁCULO — `verifyAndConsumeApproval` siempre devuelve APPROVAL_VALID.
++ *
++ * Anula a la vez la verificación de firma, la independencia y el anti-replay.
++ * Una suite con oráculo sano DEBE fallar bajo esta mutación.
++ */
++const path = require('path');
++const crypto = require('crypto');
++
++const corpus = path.resolve(process.env.AXION_CORPUS || process.cwd());
++const mod = require(path.join(corpus, 'tools', 'approval_ed25519.js'));
++
++mod.verifyAndConsumeApproval = function mutated({ envelope }) {
++  const approval = envelope && envelope.approval ? envelope.approval : {};
++  return Object.freeze({
++    status: 'APPROVAL_VALID',
++    approvalId: approval.approvalId || 'MUTATED-APPROVAL',
++    approvalDigest: crypto.createHash('sha256')
++      .update(JSON.stringify(approval || {}))
++      .digest('hex'),
++    keyId: approval.keyId || 'ed25519:' + 'f'.repeat(64),
++  });
++};
+
+diff --git a/h6a/oracle/mut_state_machine_always_verified.js b/h6a/oracle/mut_state_machine_always_verified.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/oracle/mut_state_machine_always_verified.js
+@@ -0,0 +1,32 @@
++'use strict';
++/**
++ * MUTADOR DE ORÁCULO — la máquina de estados acepta cualquier transición y
++ * declara VERIFIED de inmediato.
++ *
++ * Rompe el orden de las siete fases y el fallo cerrado de `block`. Una suite que
++ * afirme verificar el workflow DEBE fallar bajo esta mutación.
++ */
++const path = require('path');
++
++const corpus = path.resolve(process.env.AXION_CORPUS || process.cwd());
++const mod = require(path.join(corpus, 'tools', 'workflow_state_machine.js'));
++
++mod.createWorkflowStateMachine = function mutated(missionId) {
++  const history = [];
++  return Object.freeze({
++    advance(phase, outcome, evidenceDigest = null) {
++      history.push(Object.freeze({ phase, outcome, evidenceDigest }));
++      return 'VERIFIED';
++    },
++    block() { return 'VERIFIED'; },
++    snapshot() {
++      return Object.freeze({
++        missionId,
++        state: 'VERIFIED',
++        terminal: true,
++        nextPhase: null,
++        history: Object.freeze(history.map((e) => Object.freeze({ ...e }))),
++      });
++    },
++  });
++};
+
+diff --git a/h6a/red/r01_operator_not_authenticated.test.js b/h6a/red/r01_operator_not_authenticated.test.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/red/r01_operator_not_authenticated.test.js
+@@ -0,0 +1,73 @@
++'use strict';
++/**
++ * SONDA ROJA R-01 — defecto G #1: identidad de operador/ejecutor no autenticada.
++ *
++ * Invariante bajo prueba (adjudicación D-06):
++ *     operator_principal != approver_principal
++ *
++ * El aprobador `alice` es también quien ejecuta. Se limita a declarar otro
++ * `executorActorId`. Si el sistema no autentica esa identidad, la invariante se
++ * evalúa contra una cadena elegida por el atacante.
++ */
++const K = require('../lib/probe_kit.js');
++
++console.log('R-01 · operador == aprobador con identidad de ejecutor autodeclarada');
++
++// --- Control positivo: la sonda debe poder distinguir. Con tres identidades
++//     distintas el flujo legitimo tiene que completarse.
++{
++  const ws = K.workspace('r01-ctrl');
++  const approver = K.keypair();
++  const auditor = K.keypair();
++  const registryPath = K.writeRegistry(ws.dir, [
++    K.authority('alice', approver, ['HUMAN_AUTHORITY']),
++    K.authority('bob', auditor, ['INDEPENDENT_AUDITOR']),
++  ]);
++  const m = K.mission('AX-R01-CONTROL');
++  const ap = K.signApproval(m, 'alice', approver);
++  const ck = K.signCheck(m, 'bob', auditor, 'charlie', K.hashCanonical(ap.approval));
++  const r = K.executeHybridWorkflow(K.payload(m, ap, ck), {
++    registryPath, approvalConsumptionDir: ws.consumptionDir,
++    executorActorId: 'charlie', executor: () => ({ status: 0 }),
++  });
++  console.log(`  [ctrl] tres identidades distintas -> ${r.status}`);
++  if (r.status !== 'VERIFIED') {
++    throw new Error(`CONTROL INVALIDO: el caso legitimo dio ${r.status}; la sonda no discrimina.`);
++  }
++}
++
++const alias = [
++  'axion-runtime-01',
++  'no-existe-en-el-registro',
++  'x',
++  'alice ',            // mismo nombre con espacio final
++  'аlice',        // homoglifo cirílico de "alice"
++];
++
++for (const declared of alias) {
++  const ws = K.workspace('r01');
++  const approver = K.keypair();
++  const auditor = K.keypair();
++  const registryPath = K.writeRegistry(ws.dir, [
++    K.authority('alice', approver, ['HUMAN_AUTHORITY']),
++    K.authority('bob', auditor, ['INDEPENDENT_AUDITOR']),
++  ]);
++  const m = K.mission(`AX-R01-${K.crypto.randomBytes(3).toString('hex')}`);
++  const ap = K.signApproval(m, 'alice', approver);
++  const ck = K.signCheck(m, 'bob', auditor, declared, K.hashCanonical(ap.approval));
++
++  const r = K.executeHybridWorkflow(K.payload(m, ap, ck), {
++    registryPath,
++    approvalConsumptionDir: ws.consumptionDir,
++    executorActorId: declared,
++    executor: () => ({ status: 0 }),
++  });
++
++  K.expectBlocked(
++    `aprobador alice ejecuta declarandose ${JSON.stringify(declared)}`,
++    r,
++    'executorActorId procede de runtimeContext y no de una atestacion firmada.',
++  );
++}
++
++console.log('R-01 PASS');
+
+diff --git a/h6a/red/r02_principal_alias.test.js b/h6a/red/r02_principal_alias.test.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/red/r02_principal_alias.test.js
+@@ -0,0 +1,99 @@
++'use strict';
++/**
++ * SONDA ROJA R-02 — defecto G #2: alias de principal.
++ *
++ * Invariantes bajo prueba:
++ *     approver_principal != auditor_principal
++ *     operator_principal != auditor_principal
++ *
++ * El mismo humano aparece en el registro con dos identidades textualmente
++ * distintas. La separación se decide por igualdad exacta de cadenas, no por
++ * principal canónico.
++ */
++const K = require('../lib/probe_kit.js');
++
++console.log('R-02 · alias de identidad en el registro de autoridades');
++
++// --- Control negativo: sin alias, la coincidencia exacta SI se detecta.
++{
++  const ws = K.workspace('r02-ctrl');
++  const k1 = K.keypair();
++  const k2 = K.keypair();
++  const registryPath = K.writeRegistry(ws.dir, [
++    K.authority('alice', k1, ['HUMAN_AUTHORITY']),
++    K.authority('alice', k2, ['INDEPENDENT_AUDITOR']),
++  ]);
++  const m = K.mission('AX-R02-CONTROL');
++  const ap = K.signApproval(m, 'alice', k1);
++  const ck = K.signCheck(m, 'alice', k2, 'charlie', K.hashCanonical(ap.approval));
++  const r = K.executeHybridWorkflow(K.payload(m, ap, ck), {
++    registryPath, approvalConsumptionDir: ws.consumptionDir,
++    executorActorId: 'charlie', executor: () => ({ status: 0 }),
++  });
++  console.log(`  [ctrl] aprobador y auditor "alice" identicos -> ${r.status}`);
++  if (r.status === 'VERIFIED') {
++    throw new Error('CONTROL INVALIDO: ni la coincidencia exacta se detecta; el defecto es mas amplio que el alias.');
++  }
++}
++
++// --- Caso A: aprobador == auditor con alias por espacio final
++{
++  const ws = K.workspace('r02a');
++  const k1 = K.keypair();
++  const k2 = K.keypair();
++  const registryPath = K.writeRegistry(ws.dir, [
++    K.authority('alice', k1, ['HUMAN_AUTHORITY']),
++    K.authority('alice ', k2, ['INDEPENDENT_AUDITOR']),
++  ]);
++  const m = K.mission('AX-R02A-001');
++  const ap = K.signApproval(m, 'alice', k1);
++  const ck = K.signCheck(m, 'alice ', k2, 'charlie', K.hashCanonical(ap.approval));
++  const r = K.executeHybridWorkflow(K.payload(m, ap, ck), {
++    registryPath, approvalConsumptionDir: ws.consumptionDir,
++    executorActorId: 'charlie', executor: () => ({ status: 0 }),
++  });
++  K.expectBlocked('aprobador "alice" y auditor "alice " (mismo humano)', r,
++    'El registro impone unicidad de keyId, no de principal.');
++}
++
++// --- Caso B: ejecutor == auditor con el mismo alias
++{
++  const ws = K.workspace('r02b');
++  const approver = K.keypair();
++  const auditor = K.keypair();
++  const registryPath = K.writeRegistry(ws.dir, [
++    K.authority('alice', approver, ['HUMAN_AUTHORITY']),
++    K.authority('charlie ', auditor, ['INDEPENDENT_AUDITOR']),
++  ]);
++  const m = K.mission('AX-R02B-001');
++  const ap = K.signApproval(m, 'alice', approver);
++  const ck = K.signCheck(m, 'charlie ', auditor, 'charlie', K.hashCanonical(ap.approval));
++  const r = K.executeHybridWorkflow(K.payload(m, ap, ck), {
++    registryPath, approvalConsumptionDir: ws.consumptionDir,
++    executorActorId: 'charlie', executor: () => ({ status: 0 }),
++  });
++  K.expectBlocked('ejecutor "charlie" y auditor "charlie " (mismo humano)', r,
++    'La comparacion es textual exacta; no hay canonicalizacion NFKC ni deteccion de homoglifos.');
++}
++
++// --- Caso C: homoglifo cirilico
++{
++  const ws = K.workspace('r02c');
++  const k1 = K.keypair();
++  const k2 = K.keypair();
++  const registryPath = K.writeRegistry(ws.dir, [
++    K.authority('alice', k1, ['HUMAN_AUTHORITY']),
++    K.authority('аlice', k2, ['INDEPENDENT_AUDITOR']),
++  ]);
++  const m = K.mission('AX-R02C-001');
++  const ap = K.signApproval(m, 'alice', k1);
++  const ck = K.signCheck(m, 'аlice', k2, 'charlie', K.hashCanonical(ap.approval));
++  const r = K.executeHybridWorkflow(K.payload(m, ap, ck), {
++    registryPath, approvalConsumptionDir: ws.consumptionDir,
++    executorActorId: 'charlie', executor: () => ({ status: 0 }),
++  });
++  K.expectBlocked('aprobador "alice" y auditor U+0430 "alice"', r,
++    'Homoglifo aceptado como identidad distinta.');
++}
++
++console.log('R-02 PASS');
+
+diff --git a/h6a/red/r03_payload_reread.test.js b/h6a/red/r03_payload_reread.test.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/red/r03_payload_reread.test.js
+@@ -0,0 +1,70 @@
++'use strict';
++/**
++ * SONDA ROJA R-03 — defecto G #3: relectura del payload tras la verificación.
++ *
++ * Regla bajo prueba (H-1 · 06):
++ *   «Después de validar un artefacto firmado, ninguna decisión posterior puede
++ *    depender otra vez de su representación original no confiable.»
++ *
++ * Control experimental: el mismo escenario con payload plano DEBE bloquear.
++ * Sonda: con un accessor sobre `envelope.approval`, el resultado debe ser idéntico.
++ * Si difiere, la decisión de seguridad se está tomando sobre datos no verificados.
++ */
++const K = require('../lib/probe_kit.js');
++
++console.log('R-03 · reconstruccion de identidad desde el payload crudo');
++
++const k1 = K.keypair();
++const k2 = K.keypair();
++const wsReg = K.workspace('r03-reg');
++const registryPath = K.writeRegistry(wsReg.dir, [
++  K.authority('alice', k1, ['HUMAN_AUTHORITY']),
++  K.authority('alice', k2, ['INDEPENDENT_AUDITOR']),   // misma identidad, segunda clave
++]);
++
++function run(m, envelope, checkEnvelope) {
++  const ws = K.workspace('r03');
++  return K.executeHybridWorkflow(K.payload(m, envelope, checkEnvelope), {
++    registryPath, approvalConsumptionDir: ws.consumptionDir,
++    executorActorId: 'charlie', executor: () => ({ status: 0 }),
++  });
++}
++
++// --- Control: payload plano. Aprobador == auditor, debe bloquear.
++const mA = K.mission('AX-R03-CONTROL');
++const apA = K.signApproval(mA, 'alice', k1);
++const ckA = K.signCheck(mA, 'alice', k2, 'charlie', K.hashCanonical(apA.approval));
++const control = run(mA, apA, ckA);
++console.log(`  [ctrl] payload plano -> ${control.status}`);
++if (control.status === 'VERIFIED') {
++  throw new Error('CONTROL INVALIDO: el caso base ya alcanza VERIFIED; la sonda no discrimina.');
++}
++
++// --- Sonda: accessor que devuelve la aprobacion real durante la verificacion
++//     y un senuelo en las lecturas posteriores del runner.
++const mB = K.mission('AX-R03-ACCESSOR');
++const apB = K.signApproval(mB, 'alice', k1);
++const ckB = K.signCheck(mB, 'alice', k2, 'charlie', K.hashCanonical(apB.approval));
++
++let reads = 0;
++const trapped = { algorithm: 'Ed25519', signature: apB.signature };
++Object.defineProperty(trapped, 'approval', {
++  enumerable: true,
++  configurable: true,
++  get() {
++    reads += 1;
++    return reads <= 3 ? apB.approval : { ...apB.approval, actorId: 'nadie' };
++  },
++});
++
++const probe = run(mB, trapped, ckB);
++console.log(`  [sonda] lecturas de envelope.approval = ${reads}`);
++K.expectBlocked('aprobador == auditor con accessor mutante', probe,
++  `El runner releyo .approval.actorId tras verificar (${reads} lecturas totales).`);
++
++if (probe.status !== control.status) {
++  throw new Error(`DIVERGENCIA: payload plano -> ${control.status}, payload mutante -> ${probe.status}. `
++    + 'La decision depende de la representacion original no confiable.');
++}
++
++console.log('R-03 PASS');
+
+diff --git a/h6a/red/r04_ledger_executor_controlled.test.js b/h6a/red/r04_ledger_executor_controlled.test.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/red/r04_ledger_executor_controlled.test.js
+@@ -0,0 +1,55 @@
++'use strict';
++/**
++ * SONDA ROJA R-04 — defecto G #4: ledger anti-replay seleccionable por el ejecutor.
++ *
++ * Propiedad bajo prueba (H-1 · 05):
++ *   el almacén de consumo no puede ser un parámetro del request, y el ejecutor
++ *   no puede elegirlo ni vaciarlo.
++ *
++ * Caso A: replay dentro del mismo almacén (debe bloquear — control positivo).
++ * Caso B: mismo sobre firmado, almacén distinto (debe bloquear).
++ * Caso C: mismo sobre firmado, marcador borrado (debe bloquear).
++ */
++const K = require('../lib/probe_kit.js');
++
++console.log('R-04 · almacen de consumo bajo control del ejecutor');
++
++const ws = K.workspace('r04');
++const approver = K.keypair();
++const auditor = K.keypair();
++const registryPath = K.writeRegistry(ws.dir, [
++  K.authority('alice', approver, ['HUMAN_AUTHORITY']),
++  K.authority('bob', auditor, ['INDEPENDENT_AUDITOR']),
++]);
++const m = K.mission('AX-R04-001');
++const ap = K.signApproval(m, 'alice', approver);
++const ck = K.signCheck(m, 'bob', auditor, 'charlie', K.hashCanonical(ap.approval));
++const pl = K.payload(m, ap, ck);
++const base = { registryPath, executorActorId: 'charlie', executor: () => ({ status: 0 }) };
++
++const first = K.executeHybridWorkflow(pl, { ...base, approvalConsumptionDir: ws.consumptionDir });
++console.log(`  [ctrl] primer uso legitimo -> ${first.status}`);
++if (first.status !== 'VERIFIED') {
++  throw new Error(`CONTROL INVALIDO: el primer uso deberia ser VERIFIED, fue ${first.status}.`);
++}
++
++// --- Caso A: replay en el mismo almacen
++const sameStore = K.executeHybridWorkflow(pl, { ...base, approvalConsumptionDir: ws.consumptionDir });
++K.expectBlocked('replay en el mismo almacen', sameStore, 'Anti-replay dentro del directorio.');
++
++// --- Caso B: el ejecutor elige otro almacen
++const other = K.path.join(ws.dir, 'consumed-elegido-por-el-ejecutor');
++K.fs.mkdirSync(other, { recursive: true });
++const otherStore = K.executeHybridWorkflow(pl, { ...base, approvalConsumptionDir: other });
++K.expectBlocked('misma firma, almacen distinto', otherStore,
++  'approvalConsumptionDir es un parametro del runtimeContext no confiable; usageLimit:1 no se sostiene.');
++
++// --- Caso C: el ejecutor borra el marcador de consumo
++for (const f of K.fs.readdirSync(ws.consumptionDir)) {
++  K.fs.unlinkSync(K.path.join(ws.consumptionDir, f));
++}
++const wiped = K.executeHybridWorkflow(pl, { ...base, approvalConsumptionDir: ws.consumptionDir });
++K.expectBlocked('misma firma tras borrar el marcador', wiped,
++  'El estado anti-replay reside donde el ejecutor tiene permiso de borrado.');
++
++console.log('R-04 PASS');
+
+diff --git a/h6a/red/r05_low_regression.test.js b/h6a/red/r05_low_regression.test.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/red/r05_low_regression.test.js
+@@ -0,0 +1,48 @@
++'use strict';
++/**
++ * SONDA ROJA R-05 — defecto G #5: regresión funcional del nivel LOW.
++ *
++ * Criterio de aceptación (H-1 · 07, decisión D-08):
++ *   LOW no requiere aprobación; sí requiere ejecutor atestado, auditor
++ *   independiente y ledger confiable. Debe alcanzar VERIFIED.
++ *
++ * Esta sonda es la única del conjunto que espera VERIFIED. Su fallo indica
++ * regresión, no bypass: el fallo de G es cerrado pero rompe el workflow.
++ */
++const K = require('../lib/probe_kit.js');
++
++console.log('R-05 · el nivel LOW debe alcanzar VERIFIED sin aprobacion humana');
++
++const ws = K.workspace('r05');
++const auditor = K.keypair();
++const registryPath = K.writeRegistry(ws.dir, [
++  K.authority('bob', auditor, ['INDEPENDENT_AUDITOR']),
++]);
++
++const m = K.mission('AX-R05-001', 'LOW');
++m.scope = ['tools/preflight.js'];
++
++// En ausencia de aprobacion, el runner sintetiza este digest determinista.
++const approvalDigest = K.hashCanonical({
++  missionId: m.missionId,
++  approvalRequired: false,
++  risk: 'LOW',
++});
++const ck = K.signCheck(m, 'bob', auditor, 'charlie', approvalDigest);
++
++const r = K.executeHybridWorkflow(K.payload(m, undefined, ck), {
++  registryPath,
++  executorActorId: 'charlie',
++  executor: () => ({ status: 0 }),
++});
++
++console.log(`  check: ${r.check && r.check.status}`);
++K.expectVerified('mision LOW con CHECK independiente firmado', r,
++  'La ausencia legitima de aprobador se codifica como cadena vacia y '
++  + 'verifyIndependentCheck la rechaza con CHECK_NOT_INDEPENDENT.');
++
++if (r.workflow.history.length !== 7) {
++  throw new Error(`Se esperaban 7 fases, hubo ${r.workflow.history.length}.`);
++}
++
++console.log('R-05 PASS');
+
+diff --git a/h6a/red/r06_nonce_burn.test.js b/h6a/red/r06_nonce_burn.test.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/red/r06_nonce_burn.test.js
+@@ -0,0 +1,48 @@
++'use strict';
++/**
++ * SONDA ROJA R-06 — quema de nonce por fallo posterior al GATE.
++ *
++ * Propiedad bajo prueba (H-1 · 05, patrón Reserve/Commit):
++ *   una aprobación legítima no puede quedar inutilizada por un fallo de
++ *   verificación posterior a su consumo.
++ *
++ * Sonda adicional a la lista de ocho defectos de la autorización: procede de la
++ * evidencia de AX-NC-0001 (PoC-6) y cubre el mismo patrón de consumo prematuro.
++ */
++const K = require('../lib/probe_kit.js');
++
++console.log('R-06 · consumo del nonce antes de evaluar la separacion completa');
++
++const ws = K.workspace('r06');
++const approver = K.keypair();
++const auditor = K.keypair();
++const registryPath = K.writeRegistry(ws.dir, [
++  K.authority('alice', approver, ['HUMAN_AUTHORITY']),
++  K.authority('bob', auditor, ['INDEPENDENT_AUDITOR']),
++]);
++
++const m = K.mission('AX-R06-001');
++const ap = K.signApproval(m, 'alice', approver);
++const digest = K.hashCanonical(ap.approval);
++const runtime = {
++  registryPath,
++  approvalConsumptionDir: ws.consumptionDir,
++  executorActorId: 'charlie',
++  executor: () => ({ status: 0 }),
++};
++
++// Intento 1: CHECK invalido a proposito (atesta otro ejecutor).
++const badCheck = K.signCheck(m, 'bob', auditor, 'OTRO-EJECUTOR', digest);
++const first = K.executeHybridWorkflow(K.payload(m, ap, badCheck), runtime);
++const markers = K.fs.readdirSync(ws.consumptionDir).length;
++console.log(`  intento 1 (CHECK invalido) -> ${first.status}; marcadores de nonce: ${markers}`);
++
++// Intento 2: misma aprobacion legitima, ahora con CHECK correcto.
++const goodCheck = K.signCheck(m, 'bob', auditor, 'charlie', digest);
++const second = K.executeHybridWorkflow(K.payload(m, ap, goodCheck), runtime);
++
++K.expectVerified('aprobacion legitima reutilizable tras un fallo en TEST', second,
++  `El nonce se consumio en GATE (${markers} marcador/es) antes de evaluar la independencia `
++  + 'aprobador-auditor; la aprobacion queda inutilizada de forma permanente.');
++
++console.log('R-06 PASS');
+
+diff --git a/h6a/red/r07_workflow_invariant_matrix.test.js b/h6a/red/r07_workflow_invariant_matrix.test.js
+new file mode 100644
+--- /dev/null
++++ b/h6a/red/r07_workflow_invariant_matrix.test.js
+@@ -0,0 +1,94 @@
++'use strict';
++/**
++ * SONDA ROJA R-07 — defecto G #8: el workflow real no satisface las invariantes.
++ *
++ * Requisito 10 de la autorización H-6a: ejecutar el workflow real, no primitivas
++ * aisladas. La suite de G evaluaba `verifyAndConsumeApproval` y
++ * `verifyIndependentCheck` por separado, pasando `approvalActorId` a mano, de modo
++ * que la derivación de identidades dentro del runner quedaba sin cobertura.
++ *
++ * Esta es la sonda de integración: evalúa las invariantes de D-06 sobre PRINCIPALS
++ * (personas), no sobre cadenas. Cada escenario declara qué persona ocupa cada rol y
++ * bajo qué representación textual aparece. Un sistema que sólo compara cadenas
++ * satisface la matriz cuando las cadenas coinciden y la viola cuando no.
++ */
++const K = require('../lib/probe_kit.js');
++
++console.log('R-07 · matriz de invariantes D-06 sobre el workflow real');
++
++/**
++ * @param {object} spec
++ *   people:   { <persona>: { asOperator?, asApprover?, asAuditor? } } representaciones textuales
++ */
++function scenario({ label, invariant, operatorStr, approver, auditor, note }) {
++  const ws = K.workspace('r07');
++  const approverKeys = K.keypair();
++  const auditorKeys = K.keypair();
++  const registryPath = K.writeRegistry(ws.dir, [
++    K.authority(approver, approverKeys, ['HUMAN_AUTHORITY']),
++    K.authority(auditor, auditorKeys, ['INDEPENDENT_AUDITOR']),
++  ]);
++  const m = K.mission(`AX-R07-${K.crypto.randomBytes(3).toString('hex')}`);
++  const ap = K.signApproval(m, approver, approverKeys);
++  const ck = K.signCheck(m, auditor, auditorKeys, operatorStr, K.hashCanonical(ap.approval));
++  const r = K.executeHybridWorkflow(K.payload(m, ap, ck), {
++    registryPath, approvalConsumptionDir: ws.consumptionDir,
++    executorActorId: operatorStr, executor: () => ({ status: 0 }),
++  });
++  const ok = r.status !== 'VERIFIED';
++  console.log(`  [${ok ? 'OK  ' : 'ROJO'}] ${invariant} · ${label} -> ${r.status}`);
++  if (!ok) return { invariant, label, note };
++  return null;
++}
++
++// La misma persona bajo dos representaciones textuales admitidas por el registro.
++const violations = [
++  // I1 — operator_principal != approver_principal
++  scenario({
++    invariant: 'I1', label: 'Alice aprueba y opera; declara "axion-runtime-01"',
++    operatorStr: 'axion-runtime-01', approver: 'alice', auditor: 'bob',
++    note: 'La identidad del operador es autodeclarada; no procede de una atestacion firmada.',
++  }),
++  // I2 — operator_principal != auditor_principal
++  scenario({
++    invariant: 'I2', label: 'Charlie opera y audita; audita como "charlie "',
++    operatorStr: 'charlie', approver: 'alice', auditor: 'charlie ',
++    note: 'Alias por espacio final: dos cadenas, un solo principal.',
++  }),
++  // I3 — approver_principal != auditor_principal
++  scenario({
++    invariant: 'I3', label: 'Alice aprueba y audita; audita como "аlice" (U+0430)',
++    operatorStr: 'charlie', approver: 'alice', auditor: 'аlice',
++    note: 'Homoglifo cirilico: dos cadenas, un solo principal.',
++  }),
++].filter(Boolean);
++
++// Control positivo: tres personas distintas deben completar el flujo.
++{
++  const ws = K.workspace('r07-ctrl');
++  const approverKeys = K.keypair();
++  const auditorKeys = K.keypair();
++  const registryPath = K.writeRegistry(ws.dir, [
++    K.authority('alice', approverKeys, ['HUMAN_AUTHORITY']),
++    K.authority('bob', auditorKeys, ['INDEPENDENT_AUDITOR']),
++  ]);
++  const m = K.mission('AX-R07-CONTROL');
++  const ap = K.signApproval(m, 'alice', approverKeys);
++  const ck = K.signCheck(m, 'bob', auditorKeys, 'charlie', K.hashCanonical(ap.approval));
++  const r = K.executeHybridWorkflow(K.payload(m, ap, ck), {
++    registryPath, approvalConsumptionDir: ws.consumptionDir,
++    executorActorId: 'charlie', executor: () => ({ status: 0 }),
++  });
++  console.log(`  [ctrl] tres personas distintas -> ${r.status}`);
++  if (r.status !== 'VERIFIED') {
++    throw new Error(`CONTROL INVALIDO: el caso legitimo dio ${r.status}; la sonda no discrimina.`);
++  }
++}
++
++if (violations.length > 0) {
++  console.log(`\n  ${violations.length} de 3 invariantes D-06 violadas por el workflow real:`);
++  for (const v of violations) console.log(`   - ${v.invariant} · ${v.label}\n     ${v.note}`);
++  throw new Error(`R-07: ${violations.length}/3 invariantes D-06 no se sostienen sobre principals.`);
++}
++
++console.log('R-07 PASS');
+
+diff --git a/phase-h/12_h6a_test_inventory.json b/phase-h/12_h6a_test_inventory.json
+new file mode 100644
+--- /dev/null
++++ b/phase-h/12_h6a_test_inventory.json
+@@ -0,0 +1,394 @@
++{
++  "identifier": "AX-H6A-TEST-INVENTORY",
++  "version": "1.0.0",
++  "date": "2026-08-06",
++  "provenance": "H-6a reparacion del verificador; descubrimiento sobre axion-phase-g-candidate.zip sha256 b84462b565feafd2fd6e5dd21daf0577e18371cd71af708fa0952417c563b753",
++  "owner": "Human Authority",
++  "risk": "HIGH",
++  "status": "ACTIVE",
++  "policy": {
++    "exit_code_contract": "cualquier fallo produce exit code distinto de cero",
++    "expectation_field_is_informative": "el campo expectation NUNCA convierte un FAIL en exit 0",
++    "discovery_gate": "discovered == inventory; cualquier diferencia produce TEST_DISCOVERY_MISMATCH",
++    "count_gate": "executed == discovered && passed + failed == executed",
++    "no_silent_skips": "no existe mecanismo de omision"
++  },
++  "g_declared_regression_scope": [
++    "tests/phase_e/approval_ed25519.test.js",
++    "tests/phase_e/approval_forgery_baseline.test.js",
++    "tests/phase_e/c01_governance_chain.test.js",
++    "tests/phase_e/c02_destructive_classifier.test.js",
++    "tests/phase_e/c03_independent_attestations.test.js",
++    "tests/phase_e/check_ed25519.test.js",
++    "tests/phase_e/evidence_binding.test.js",
++    "tests/phase_e/risk_policy_compiler.test.js",
++    "tests/phase_e/role_separation.test.js",
++    "tests/phase_e/rollback_plan.test.js",
++    "tests/phase_e/structured_command.test.js",
++    "tests/phase_e/workflow_enforcement_e2e.test.js",
++    "tests/phase_e/workflow_state_machine.test.js"
++  ],
++  "g_declared_scope_note": "phase-g/06_regression_results.md declaro 13/13 PASS limitando el alcance a tests/phase_e/*; las 16 suites restantes del corpus quedaron fuera",
++  "suites": [
++    {
++      "id": "h6a/red/r01_operator_not_authenticated.test.js",
++      "source": "h6a-red-probe",
++      "sha256": "cbec574aed5e7911533a734d291c88020f7472ac5a9840063a126d05f05f5058",
++      "category": "red-probe",
++      "critical": true,
++      "oracle_mutator": null,
++      "expectation": "RED_UNTIL_H_BUILD",
++      "maps_to_g_defect": "G1_EXECUTOR_IDENTITY_NOT_AUTHENTICATED"
++    },
++    {
++      "id": "h6a/red/r02_principal_alias.test.js",
++      "source": "h6a-red-probe",
++      "sha256": "ad8eeac267fe737407649c2ee69b9cf88c566048cd69ae220e25c116af7b384e",
++      "category": "red-probe",
++      "critical": true,
++      "oracle_mutator": null,
++      "expectation": "RED_UNTIL_H_BUILD",
++      "maps_to_g_defect": "G2_PRINCIPAL_ALIAS"
++    },
++    {
++      "id": "h6a/red/r03_payload_reread.test.js",
++      "source": "h6a-red-probe",
++      "sha256": "25473944aa67cea88c2ad1bcc8415826e7b6eb049624c59e35eedff9dfb5cad5",
++      "category": "red-probe",
++      "critical": true,
++      "oracle_mutator": null,
++      "expectation": "RED_UNTIL_H_BUILD",
++      "maps_to_g_defect": "G3_PAYLOAD_REREAD_AFTER_VERIFY"
++    },
++    {
++      "id": "h6a/red/r04_ledger_executor_controlled.test.js",
++      "source": "h6a-red-probe",
++      "sha256": "2c67586358aa9ef44de5cfb14c805038152e8072029719512169deea357e85de",
++      "category": "red-probe",
++      "critical": true,
++      "oracle_mutator": null,
++      "expectation": "RED_UNTIL_H_BUILD",
++      "maps_to_g_defect": "G4_LEDGER_EXECUTOR_CONTROLLED"
++    },
++    {
++      "id": "h6a/red/r05_low_regression.test.js",
++      "source": "h6a-red-probe",
++      "sha256": "5469a9cb37ec184f4c6045b7e1232b579a2daf22b883477d14c4ab72e30e09f1",
++      "category": "red-probe",
++      "critical": true,
++      "oracle_mutator": null,
++      "expectation": "RED_UNTIL_H_BUILD",
++      "maps_to_g_defect": "G5_LOW_REGRESSION"
++    },
++    {
++      "id": "h6a/red/r06_nonce_burn.test.js",
++      "source": "h6a-red-probe",
++      "sha256": "b966dbd2388f2a711b5ffcb2ce5f8c417b55ba219a715772a67791e124bef43b",
++      "category": "red-probe",
++      "critical": true,
++      "oracle_mutator": null,
++      "expectation": "RED_UNTIL_H_BUILD",
++      "maps_to_g_defect": "G9_NONCE_BURN_BEFORE_SEPARATION"
++    },
++    {
++      "id": "h6a/red/r07_workflow_invariant_matrix.test.js",
++      "source": "h6a-red-probe",
++      "sha256": "5e91bb268012e7b88a2de5060cab5c42b1d7610c44c22ed02c08ea178ee55921",
++      "category": "red-probe",
++      "critical": true,
++      "oracle_mutator": null,
++      "expectation": "RED_UNTIL_H_BUILD",
++      "maps_to_g_defect": "G8_REAL_WORKFLOW_VIOLATES_INVARIANTS"
++    },
++    {
++      "id": "tests/adversarial.test.js",
++      "source": "corpus",
++      "sha256": "334f7ae28dbb8a6747758e7f83f31f5dcd93da203744c003c7f6635af496a664",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/clarifier.test.js",
++      "source": "corpus",
++      "sha256": "ecbe857c8bdf52684c2d6f347024d378b6031d76df989282145a0e96afc3d01e",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/human_anti_patterns.test.js",
++      "source": "corpus",
++      "sha256": "a0eb50ced1a36338a12c56cf2b16b618f8c2cd943b42f67ea0f84cf1e2577f31",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/install.test.js",
++      "source": "corpus",
++      "sha256": "693b3009d1bc371577f612cb3993a563c70482b42183a8f6dfaf658fb2eb0a5f",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/learning_git.test.js",
++      "source": "corpus",
++      "sha256": "aec10ebf8ab746ecfb2219ecdf76fc0854a6daeaa3095dd376e3f5feaedb5269",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/approval_ed25519.test.js",
++      "source": "corpus",
++      "sha256": "5097179879189364b083131cc021bc92b5b13c84d6b7bfb53912d0df64c6e7d2",
++      "category": "primitive",
++      "critical": true,
++      "oracle_mutator": "oracle/mut_approval_always_valid.js",
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/approval_forgery_baseline.test.js",
++      "source": "corpus",
++      "sha256": "95279574a6f0cf19712cd1f03a9e6cce59d33d642c902200c1819f4a0f7eceee",
++      "category": "e2e",
++      "critical": true,
++      "oracle_mutator": "oracle/mut_approval_always_valid.js",
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/c01_governance_chain.test.js",
++      "source": "corpus",
++      "sha256": "e06c526709d00c2f938f89980ff06cf759f2aa980e03ce739bf1075fd27c9f40",
++      "category": "e2e",
++      "critical": true,
++      "oracle_mutator": "oracle/mut_approval_always_valid.js",
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/c02_destructive_classifier.test.js",
++      "source": "corpus",
++      "sha256": "4187af856b33bf47d645f47053e690f6ce910c1ada563fd17481de597d2b70b9",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/c03_independent_attestations.test.js",
++      "source": "corpus",
++      "sha256": "caaf46621ba49aea39d2ed63431378d5f050a62b790a7775415f299c78f1bf7e",
++      "category": "e2e",
++      "critical": true,
++      "oracle_mutator": "oracle/mut_check_always_valid.js",
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/check_ed25519.test.js",
++      "source": "corpus",
++      "sha256": "d0fe9cbc311c6f6a38b77f77f27dfaa1a31f4e8e682f5eb30299bf9a34ed7ec9",
++      "category": "primitive",
++      "critical": true,
++      "oracle_mutator": "oracle/mut_check_always_valid.js",
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/evidence_binding.test.js",
++      "source": "corpus",
++      "sha256": "293e07638004dfbed29b854df929fce983310a321f63b937f42b50d49b1a8817",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/risk_policy_compiler.test.js",
++      "source": "corpus",
++      "sha256": "ff1eb6ea62cce2d5afb0ce9722d0330692728e072314ad220defc8046d68c8a2",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/role_separation.test.js",
++      "source": "corpus",
++      "sha256": "4ce7db49b8dfa5f06395d1c38fc2b69646279e77ae3b15963c630544785a85f8",
++      "category": "primitive",
++      "critical": true,
++      "oracle_mutator": "oracle/mut_check_always_valid.js",
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/rollback_plan.test.js",
++      "source": "corpus",
++      "sha256": "0308f392bfc6cf4680a1e3dc3c7c67623e63a44c0151896b18f8abf685467b52",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/structured_command.test.js",
++      "source": "corpus",
++      "sha256": "0d21789b10a704f441dc1c7b5753fd4d67595ab519b93de98556b496db33d5c9",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/workflow_enforcement_e2e.test.js",
++      "source": "corpus",
++      "sha256": "8d8b31d622c9fe7db34cef6f925efa6a6be518651ff672c6d323abf21cf94e75",
++      "category": "e2e",
++      "critical": true,
++      "oracle_mutator": "oracle/mut_approval_always_valid.js",
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/phase_e/workflow_state_machine.test.js",
++      "source": "corpus",
++      "sha256": "c52ee99a00fed40b006363825df72a1e6c38f4ae491e4eb1bf492c2a1bbdd580",
++      "category": "unit",
++      "critical": true,
++      "oracle_mutator": "oracle/mut_state_machine_always_verified.js",
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/regression/ax_f_001_installer_backup.test.js",
++      "source": "corpus",
++      "sha256": "bd8b514835be60572686647647009560c92f700c417fa100480619bf46a61a34",
++      "category": "regression",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/regression/ax_f_002_risk_gate.test.js",
++      "source": "corpus",
++      "sha256": "d36880f90306254babcff370bc8ace8ce782e8a45a0e7ce240c1b3977e2b24a7",
++      "category": "regression",
++      "critical": true,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/regression/ax_f_003_verified_requires_checks.test.js",
++      "source": "corpus",
++      "sha256": "f90388b660be156069e492ee6fceba95c0aec6792c586223864538f25f7852d4",
++      "category": "regression",
++      "critical": true,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/regression/ax_f_004_evidence_manifest.test.js",
++      "source": "corpus",
++      "sha256": "742aadd902aa7b18a6b6e9516ee6ffa444cbde32fffeeff0fbbec33f050ca4b7",
++      "category": "regression",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/regression/ax_f_005_preflight_destructive.test.js",
++      "source": "corpus",
++      "sha256": "259fba8f1b2793154dd5b04202d5c66c576795b1157f85982b759a29c6adf118",
++      "category": "regression",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/regression/ax_f_006_learnings_preservation.test.js",
++      "source": "corpus",
++      "sha256": "11604d4d41b59b89eedfc9a7ebee5fa13f427a5968e1e629ed4a6e8226d8c922",
++      "category": "regression",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/regression/ax_f_008_doc_consistency.test.js",
++      "source": "corpus",
++      "sha256": "4d403b21c37482bea6d6482d5f8cc4feddccfa7a1ed0547fe7706ac45264c393",
++      "category": "regression",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/regression/ax_f_012_suite_integrity.test.js",
++      "source": "corpus",
++      "sha256": "4fc9b9b6d42256f3866e34c138a0395e2a2e6f18e70e1ebd77a5b189597b5e3e",
++      "category": "regression",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/tools.test.js",
++      "source": "corpus",
++      "sha256": "58db5541659906d07e5a9e5b20c18743e80b9561b261a70bb50dce9ac1b0fac0",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/vibeguard.test.js",
++      "source": "corpus",
++      "sha256": "b81bb8c20f2c8999d1d34ff25ff2aad56ab038a17e10d983f9c43ec93555b39a",
++      "category": "unit",
++      "critical": false,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    },
++    {
++      "id": "tests/workflow.test.js",
++      "source": "corpus",
++      "sha256": "e56435c3d56df86dae23b106703b9c0d927f0a3262b0aecc06d48a0524a2d517",
++      "category": "e2e",
++      "critical": true,
++      "oracle_mutator": null,
++      "expectation": "PASS",
++      "maps_to_g_defect": null
++    }
++  ]
++}
+

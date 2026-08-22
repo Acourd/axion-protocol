@@ -1,0 +1,15 @@
+{
+  "phase": "G",
+  "status": "READY_FOR_G_IMPLEMENTATION",
+  "corpus_source": "C:\\Users\\Ayco\\Shoshin\\Proyectos\\Axion Protocol\\phases\\axion-phase-e-worktree",
+  "isolated_copy": "C:\\Users\\Ayco\\Shoshin\\Proyectos\\Axion Protocol\\phases\\axion-phase-g-remediation\\axion-corpus-isolated",
+  "artifacts_path": "C:\\Users\\Ayco\\Shoshin\\Proyectos\\Axion Protocol\\phases\\axion-phase-g-remediation\\phase-g",
+  "baseline_manifest": "01_baseline_manifest.json",
+  "verification": {
+    "report_sha256": "6f24de4d17d5fae3955d7f423e2b1cd55cabbfc8fdab89cd26296b2f5ab38436",
+    "executor_neq_auditor": "ENFORCED",
+    "executor_neq_approver": "NOT ENFORCED",
+    "approver_neq_auditor": "NOT ENFORCED",
+    "interpreters_bypass": "REFUTED"
+  }
+}

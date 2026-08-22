@@ -1,0 +1,36 @@
+{
+  "contractVersion": "1.0.0",
+  "timestamp": "2026-08-06T10:40:56.576Z",
+  "baseline_custody": {
+    "path": "C:\\Users\\Ayco\\Shoshin\\Proyectos\\Axion Protocol\\phases\\axion-phase-g-remediation\\phase-g\\baseline-custody.zip",
+    "file_count": 1118,
+    "archive_sha256": "96402ab31af10b6a8e59f0514f74c91e6c1176b952ed15ac0e4065ed67a59238",
+    "immutable": true,
+    "restoration_test": "PASS"
+  },
+  "red_phase": {
+    "unsafe_cases_fail_for_expected_reason": true,
+    "safe_case_passes": true
+  },
+  "green_phase": {
+    "all_tests_pass": true
+  },
+  "nonce_safety": {
+    "nonce_consumed_on_rejection": false,
+    "replay_prevention": "PASS"
+  },
+  "regression": {
+    "entry_mode": "PACKAGE_JSON_ABSENT",
+    "total_files": 13,
+    "passed": 13,
+    "failed": 0
+  },
+  "candidate_zip": {
+    "path": "C:\\Users\\Ayco\\Shoshin\\Proyectos\\Axion Protocol\\phases\\axion-phase-g-remediation\\axion-phase-g-candidate.zip",
+    "archive_sha256": "B84462B565FEAFD2FD6E5DD21DAF0577E18371CD71AF708FA0952417C563B753",
+    "internal_manifest": "09_candidate_manifest.json",
+    "secret_scan": "PASS",
+    "personal_paths_scan": "PASS"
+  },
+  "status": "READY_FOR_TARGETED_REAUDIT"
+}

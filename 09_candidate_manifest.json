@@ -1,0 +1,582 @@
+[
+  {
+    "Path": ".agents/AGENTS.md",
+    "Hash": "7838fc0bb3c1a978cb0b853297941af2db9b688e365f4c9d694a9f585a3c564b",
+    "Size": 3773
+  },
+  {
+    "Path": ".claude/CLAUDE.md",
+    "Hash": "d3f07090a66b5f4a662a1b625ee07217b10e45ac4a6f3bcb91b2ed3dc5e7b1b3",
+    "Size": 444
+  },
+  {
+    "Path": "CLAUDE.md",
+    "Hash": "281fe90b100c9d1bb9da4d3d9eea547b372ba38bae7d32e8babb0578bf59766a",
+    "Size": 686
+  },
+  {
+    "Path": "GOVERNANCE.md",
+    "Hash": "af19cf937164bc51906492e9f2de2926a9ac8be663c7e6dd20de0986a9267bdd",
+    "Size": 1878
+  },
+  {
+    "Path": "LICENSE",
+    "Hash": "4b7f4710bae0f17f152cb1d84dbb3a92af687b65bfc909d6d6ce462d0aa8e768",
+    "Size": 11344
+  },
+  {
+    "Path": "README.es.md",
+    "Hash": "b82db38f5b6220f8575e8f98250159419546bb6266a7d1359fbe71a8efb5774a",
+    "Size": 17639
+  },
+  {
+    "Path": "README.md",
+    "Hash": "8db3535608ee65f861dfd08319da8e87664db30f1780a6c8786273100f641abf",
+    "Size": 17460
+  },
+  {
+    "Path": "ROADMAP.md",
+    "Hash": "f87e51f93244fb6fda2129b5ea2bbb6fbb8c2d79b16796606a268e9e91f74682",
+    "Size": 1898
+  },
+  {
+    "Path": "SECURITY.md",
+    "Hash": "6c6eb5e52a8635a2f74bd1d5aa2b470d8c4e666ada4a28a11fad152e55e70a67",
+    "Size": 1781
+  },
+  {
+    "Path": "adapters/README.md",
+    "Hash": "419c6683f1d6b52ece12b56f83f35d2b458bb7235b3296af458b1ec7b713c7b9",
+    "Size": 796
+  },
+  {
+    "Path": "adapters/prompt_bridge.json",
+    "Hash": "491e081bf381a22f484e39f142a5a084c5b607486362801e44102ca84d21234c",
+    "Size": 951
+  },
+  {
+    "Path": "bin/axion.js",
+    "Hash": "ebcf8feb4d4e67ec3d987515ec912a5dee3bf54b5cfb876643f49b39f05da1ae",
+    "Size": 3732
+  },
+  {
+    "Path": "core/auditor/README.md",
+    "Hash": "d264ed7c4664158cedc96fcf70317e79008128ba548b07c0d47187e3ebc41982",
+    "Size": 453
+  },
+  {
+    "Path": "core/director/README.md",
+    "Hash": "a6297b311cf1ab209b96ce92a73db1bae435a0d781d31ea0bd47da7dcb182997",
+    "Size": 509
+  },
+  {
+    "Path": "core/evidence/README.md",
+    "Hash": "9252501aed0b2d34e09360fca523bfaaaddf9d4d608de54ad0aa4214835587b5",
+    "Size": 502
+  },
+  {
+    "Path": "core/supervisor/README.md",
+    "Hash": "6e86aa5954e714d212f51af6744382562a2663c36c03325971ac2dc6922635d1",
+    "Size": 458
+  },
+  {
+    "Path": "docs/architecture.md",
+    "Hash": "aa71da07e9959ed99f836628411500268a849f8b56228cbf7fe267d978ffbb7f",
+    "Size": 1862
+  },
+  {
+    "Path": "docs/external_ecosystems.md",
+    "Hash": "ff3cbce3cd415c14f2c63510d89da1b0a1ca48f9f7f2ad2655e582129e9083a8",
+    "Size": 860
+  },
+  {
+    "Path": "docs/lineage.md",
+    "Hash": "95d3276bc5b22168c86aa39f4b6b8af08828ba5368b1be14f9b8c4212348db66",
+    "Size": 1263
+  },
+  {
+    "Path": "docs/non_goals.md",
+    "Hash": "980b05e86984cef5f6b324be9fddd14d9e568aefc7ec5e19933f943f96d8fef1",
+    "Size": 643
+  },
+  {
+    "Path": "docs/task_model.md",
+    "Hash": "817b5438e04c2414a25028063d773a8d282559c449bc61b9a4a2bcd0af36068c",
+    "Size": 712
+  },
+  {
+    "Path": "docs/terminology.md",
+    "Hash": "d4de3f715ff6b9c369d4081c4c81b277723e0b597a9576033c20bb2b549b05d4",
+    "Size": 1134
+  },
+  {
+    "Path": "docs/threat_model.md",
+    "Hash": "4a2cf694549424c35030998b0b7129ea261a080bd5c86116b6f4effe99660894",
+    "Size": 1261
+  },
+  {
+    "Path": "docs/vision.md",
+    "Hash": "11b89997832433d68744b94866b8fe0444ac1c516c76a2f41ef9ff779618e143",
+    "Size": 784
+  },
+  {
+    "Path": "examples/README.md",
+    "Hash": "a1c6f11268f6ffcf05f0c279247ffc8f047b1c60104d23d7a98c8426cbf05a80",
+    "Size": 240
+  },
+  {
+    "Path": "index.html",
+    "Hash": "69b0e6992e6e52ee9e56d740046fc0f3af42dec700715a0f8b4bdcd483a94749",
+    "Size": 26579
+  },
+  {
+    "Path": "install.js",
+    "Hash": "2f0c8b7bf7c10bedea7b2582f39aceed892171c56882143d42ae88fd0c623ef5",
+    "Size": 6075
+  },
+  {
+    "Path": "package.json",
+    "Hash": "8d04c6cad24ac2f697af51fe97e4a8b7c3598e5dc7d6bf66d7d4b080599d4abe",
+    "Size": 1437
+  },
+  {
+    "Path": "phase-e-integrity.yaml",
+    "Hash": "4d044487a56dd1831333404d91cc8baf93bfa3a98b1251133b16f70421681317",
+    "Size": 1302
+  },
+  {
+    "Path": "phase-e-inventory.yaml",
+    "Hash": "bb5bb4639247b2763ada9b449feb9d40387d0f47d9e2799ba2233188da503d31",
+    "Size": 4251
+  },
+  {
+    "Path": "policies/README.md",
+    "Hash": "2dc10dbceacc1cf5bc10a80c5f417a0a1ae5c9e00866708e66c5c6ea8a227d72",
+    "Size": 564
+  },
+  {
+    "Path": "policies/authority.yaml",
+    "Hash": "d3d55a9a24b66b3e78fc0009336c872152cc6e70647b5c79ac99ca7622b2fa64",
+    "Size": 1337
+  },
+  {
+    "Path": "policies/promotion.yaml",
+    "Hash": "c836c2912c1135e3800bd3edb529294c5f5f7bbc398e798b138983cd5ea27c84",
+    "Size": 868
+  },
+  {
+    "Path": "policies/retention.yaml",
+    "Hash": "4e261231d3e57923b23e9adf8fb5531390b7e88cdd6c970fff57e2673dbf4d89",
+    "Size": 1209
+  },
+  {
+    "Path": "policies/risk.yaml",
+    "Hash": "6afa368a6fd18eb51dc8659b932913c3694eed7a46ba85f70e4ea54230c1cd73",
+    "Size": 1301
+  },
+  {
+    "Path": "schemas/README.md",
+    "Hash": "0a34801f9296657fc2da4a396c9b7703c5d8c6e9a99be553781cdec13fcc25f1",
+    "Size": 1364
+  },
+  {
+    "Path": "schemas/action.schema.json",
+    "Hash": "4eba7377129fef2ed0c818bca2b9a28aca7af71e3c9191e2b11aadf94290d9b7",
+    "Size": 1100
+  },
+  {
+    "Path": "schemas/approval.schema.json",
+    "Hash": "dbbdd357d0919c4e8781f8285dbf44d1022318ab7ac45ef8640fca536609d7d0",
+    "Size": 2175
+  },
+  {
+    "Path": "schemas/audit.schema.json",
+    "Hash": "7f42f98b82772a99f1d5ddd76a6f31c7ea66960667515ee317ef9d87a013f4eb",
+    "Size": 1300
+  },
+  {
+    "Path": "schemas/authority_registry.schema.json",
+    "Hash": "4209818af0641ecfdd6344413a3b7c02937ae5dcb5c5762916a47ed3952c5855",
+    "Size": 1077
+  },
+  {
+    "Path": "schemas/check_attestation.schema.json",
+    "Hash": "4c9ef6c1c1332475b74170e20e323d3bd275eabc756d5dd18282c996fef962c3",
+    "Size": 1721
+  },
+  {
+    "Path": "schemas/common.schema.json",
+    "Hash": "b49e87fca685f4ed8df6759bd0be0f566b208bc2268eff1b2f65197e9b3b386c",
+    "Size": 1942
+  },
+  {
+    "Path": "schemas/component.schema.json",
+    "Hash": "3303e4da06068addc546eed136c2aacce68269e81be4817476e5fd5a5581ff6c",
+    "Size": 987
+  },
+  {
+    "Path": "schemas/decision.schema.json",
+    "Hash": "4e3d3b334b5df980f58018b386802d35c28d0cc2e666ac3696046cefa61c6ec2",
+    "Size": 813
+  },
+  {
+    "Path": "schemas/evidence.schema.json",
+    "Hash": "4f9dec28686f00cec7601112dd3bcbf4ebb61febc97cab81168285281f953c23",
+    "Size": 1026
+  },
+  {
+    "Path": "schemas/non_conformance.schema.json",
+    "Hash": "ebcafbb0ff939dbb9557f47245f06bfd2b44d2200b9727fee0164a080345ccb9",
+    "Size": 1551
+  },
+  {
+    "Path": "schemas/rollback-plan.schema.json",
+    "Hash": "6fda46e5662f30518db77ad9a88a6b54dd23f1cd66ecd524b6e78c39c99ceb22",
+    "Size": 838
+  },
+  {
+    "Path": "schemas/rollback.schema.json",
+    "Hash": "d441a89e2fda737f465df7ad36f9f431c041c0a7aaf49858ac8f5f08b78a95b6",
+    "Size": 877
+  },
+  {
+    "Path": "schemas/runtime.schema.json",
+    "Hash": "b5a9266a81b31b0af5147fd681eefaa6b2aef026819c6d6802a3f7101aa219b5",
+    "Size": 943
+  },
+  {
+    "Path": "schemas/task.schema.json",
+    "Hash": "538ac6c8e7518eb14b4ec0667fa975c47117baeed807df6c77b4cd68d9c9a679",
+    "Size": 2549
+  },
+  {
+    "Path": "script.js",
+    "Hash": "33126abb7b858f3f3800e784202c1f3c22a74b0bb1f9bfa21a89cef1f975b3ad",
+    "Size": 20544
+  },
+  {
+    "Path": "sha256-manifest.txt",
+    "Hash": "f49300d5737752f2627dfba7abc2bbc65a70e21d1170dc35cb5b62b38510dbb4",
+    "Size": 6426
+  },
+  {
+    "Path": "style.css",
+    "Hash": "7a44ed2af2ea0d3a5e17f5f3cab8ede9e4ea9559801573114d23d5f42342fbba",
+    "Size": 25717
+  },
+  {
+    "Path": "tests/README.md",
+    "Hash": "15c40a9d947b400fc779ebd1192e2d608cf1ef03a7b928e2134bcefc13dbac90",
+    "Size": 1054
+  },
+  {
+    "Path": "tests/adversarial.test.js",
+    "Hash": "334f7ae28dbb8a6747758e7f83f31f5dcd93da203744c003c7f6635af496a664",
+    "Size": 3843
+  },
+  {
+    "Path": "tests/clarifier.test.js",
+    "Hash": "ecbe857c8bdf52684c2d6f347024d378b6031d76df989282145a0e96afc3d01e",
+    "Size": 1972
+  },
+  {
+    "Path": "tests/human_anti_patterns.test.js",
+    "Hash": "a0eb50ced1a36338a12c56cf2b16b618f8c2cd943b42f67ea0f84cf1e2577f31",
+    "Size": 1287
+  },
+  {
+    "Path": "tests/install.test.js",
+    "Hash": "0877054ecb7ae514f68c802f88b7a391659fd323ff758311bbe5d82dc793ca34",
+    "Size": 2778
+  },
+  {
+    "Path": "tests/learning_git.test.js",
+    "Hash": "aec10ebf8ab746ecfb2219ecdf76fc0854a6daeaa3095dd376e3f5feaedb5269",
+    "Size": 2223
+  },
+  {
+    "Path": "tests/phase_e/approval_ed25519.test.js",
+    "Hash": "5097179879189364b083131cc021bc92b5b13c84d6b7bfb53912d0df64c6e7d2",
+    "Size": 10935
+  },
+  {
+    "Path": "tests/phase_e/approval_forgery_baseline.test.js",
+    "Hash": "95279574a6f0cf19712cd1f03a9e6cce59d33d642c902200c1819f4a0f7eceee",
+    "Size": 806
+  },
+  {
+    "Path": "tests/phase_e/approval_required_bypass.test.js",
+    "Hash": "2b070e154d98ec662e39c0bd1b9ad9119c355b3a4fb7464606a5d059546b9571",
+    "Size": 5769
+  },
+  {
+    "Path": "tests/phase_e/assurance.test.js",
+    "Hash": "0fa0fb7ba5477c001761e2d4209f31f6ca8531a5b009a0f0706f6b9e7b70909e",
+    "Size": 5820
+  },
+  {
+    "Path": "tests/phase_e/attestation.test.js",
+    "Hash": "2b470fd83542c9ca14364721c5cfc964b8151ae4f56d3340247a2993b52b9cd1",
+    "Size": 8760
+  },
+  {
+    "Path": "tests/phase_e/c01_governance_chain.test.js",
+    "Hash": "e06c526709d00c2f938f89980ff06cf759f2aa980e03ce739bf1075fd27c9f40",
+    "Size": 917
+  },
+  {
+    "Path": "tests/phase_e/c02_destructive_classifier.test.js",
+    "Hash": "4187af856b33bf47d645f47053e690f6ce910c1ada563fd17481de597d2b70b9",
+    "Size": 1309
+  },
+  {
+    "Path": "tests/phase_e/c03_independent_attestations.test.js",
+    "Hash": "caaf46621ba49aea39d2ed63431378d5f050a62b790a7775415f299c78f1bf7e",
+    "Size": 801
+  },
+  {
+    "Path": "tests/phase_e/check_ed25519.test.js",
+    "Hash": "d0fe9cbc311c6f6a38b77f77f27dfaa1a31f4e8e682f5eb30299bf9a34ed7ec9",
+    "Size": 3858
+  },
+  {
+    "Path": "tests/phase_e/evidence_binding.test.js",
+    "Hash": "293e07638004dfbed29b854df929fce983310a321f63b937f42b50d49b1a8817",
+    "Size": 1648
+  },
+  {
+    "Path": "tests/phase_e/killswitch.test.js",
+    "Hash": "2b2bea343ab3327c188431834db5eb4024de5dd887956d8affd2a325b537fc5d",
+    "Size": 6306
+  },
+  {
+    "Path": "tests/phase_e/payload_reread.test.js",
+    "Hash": "ac2a75c7aed90db2bd70aeb7922c9dc3a2cc6da57661ad586405498d033b1b77",
+    "Size": 3078
+  },
+  {
+    "Path": "tests/phase_e/principal_alias.test.js",
+    "Hash": "73647720adb8c2c81b10c3fcf43f6cff6939b4f5c86612f4355aab38176d30d5",
+    "Size": 7228
+  },
+  {
+    "Path": "tests/phase_e/revocation.test.js",
+    "Hash": "4caedfa06789ff4588957a9097666373b0c8ec5a4b72d529bba6db25b30fde70",
+    "Size": 5580
+  },
+  {
+    "Path": "tests/phase_e/risk_policy_compiler.test.js",
+    "Hash": "8b1dcf67f4fa380b094d2f304ea42c61d927adf837ce72eb1e670a9bd3f20314",
+    "Size": 3057
+  },
+  {
+    "Path": "tests/phase_e/role_separation.test.js",
+    "Hash": "4ce7db49b8dfa5f06395d1c38fc2b69646279e77ae3b15963c630544785a85f8",
+    "Size": 23230
+  },
+  {
+    "Path": "tests/phase_e/rollback_plan.test.js",
+    "Hash": "0308f392bfc6cf4680a1e3dc3c7c67623e63a44c0151896b18f8abf685467b52",
+    "Size": 1035
+  },
+  {
+    "Path": "tests/phase_e/structured_command.test.js",
+    "Hash": "0d21789b10a704f441dc1c7b5753fd4d67595ab519b93de98556b496db33d5c9",
+    "Size": 1620
+  },
+  {
+    "Path": "tests/phase_e/workflow_enforcement_e2e.test.js",
+    "Hash": "8d8b31d622c9fe7db34cef6f925efa6a6be518651ff672c6d323abf21cf94e75",
+    "Size": 5480
+  },
+  {
+    "Path": "tests/phase_e/workflow_state_machine.test.js",
+    "Hash": "c52ee99a00fed40b006363825df72a1e6c38f4ae491e4eb1bf492c2a1bbdd580",
+    "Size": 1044
+  },
+  {
+    "Path": "tests/regression/ax_f_001_installer_backup.test.js",
+    "Hash": "bd8b514835be60572686647647009560c92f700c417fa100480619bf46a61a34",
+    "Size": 2510
+  },
+  {
+    "Path": "tests/regression/ax_f_002_risk_gate.test.js",
+    "Hash": "d36880f90306254babcff370bc8ace8ce782e8a45a0e7ce240c1b3977e2b24a7",
+    "Size": 2241
+  },
+  {
+    "Path": "tests/regression/ax_f_003_verified_requires_checks.test.js",
+    "Hash": "f90388b660be156069e492ee6fceba95c0aec6792c586223864538f25f7852d4",
+    "Size": 1610
+  },
+  {
+    "Path": "tests/regression/ax_f_004_evidence_manifest.test.js",
+    "Hash": "742aadd902aa7b18a6b6e9516ee6ffa444cbde32fffeeff0fbbec33f050ca4b7",
+    "Size": 3875
+  },
+  {
+    "Path": "tests/regression/ax_f_005_preflight_destructive.test.js",
+    "Hash": "259fba8f1b2793154dd5b04202d5c66c576795b1157f85982b759a29c6adf118",
+    "Size": 2170
+  },
+  {
+    "Path": "tests/regression/ax_f_006_learnings_preservation.test.js",
+    "Hash": "11604d4d41b59b89eedfc9a7ebee5fa13f427a5968e1e629ed4a6e8226d8c922",
+    "Size": 2866
+  },
+  {
+    "Path": "tests/regression/ax_f_008_doc_consistency.test.js",
+    "Hash": "4e74987dfca1581be044b51af11f1168892ba678fc3eb5720dd9038889ceaf01",
+    "Size": 8129
+  },
+  {
+    "Path": "tests/regression/ax_f_012_suite_integrity.test.js",
+    "Hash": "aa77d142ec274d86c646fd7da5be40b7560c65d8d2fd8b316e55c8828d389e79",
+    "Size": 4243
+  },
+  {
+    "Path": "tests/regression/ax_f_013_documented_examples.test.js",
+    "Hash": "ef5a5d1aa028caf8d34eb1d9e981b58fe07099c093a7b8b40886015751008645",
+    "Size": 4488
+  },
+  {
+    "Path": "tests/regression/ax_f_014_package_contract.test.js",
+    "Hash": "921f2d764ac8f8e4e716b0ef2fa587cb0974fc0adb8118b4bb382ac14ed49899",
+    "Size": 6188
+  },
+  {
+    "Path": "tests/run_all.js",
+    "Hash": "f57dfb7e1275e8dbea2a30db4d61d858b8847abfa84a8361bfd2674ad476444f",
+    "Size": 2441
+  },
+  {
+    "Path": "tests/tools.test.js",
+    "Hash": "ebb0fd844b3f74dbdc626f283aeb515ec5b754c7e5e2330231550635151bc57d",
+    "Size": 2518
+  },
+  {
+    "Path": "tests/trust_fixture.js",
+    "Hash": "568267b3a1f701139f2b3b13b82c53be44f588fa214cdd00064666a8d31cae10",
+    "Size": 2567
+  },
+  {
+    "Path": "tests/vibeguard.test.js",
+    "Hash": "b81bb8c20f2c8999d1d34ff25ff2aad56ab038a17e10d983f9c43ec93555b39a",
+    "Size": 1095
+  },
+  {
+    "Path": "tests/workflow.test.js",
+    "Hash": "e56435c3d56df86dae23b106703b9c0d927f0a3262b0aecc06d48a0524a2d517",
+    "Size": 2357
+  },
+  {
+    "Path": "tools/README.md",
+    "Hash": "09154879dae4fca25689cc5cc39bce7d524a615791b21b5502daf8f3bb14dbf0",
+    "Size": 1347
+  },
+  {
+    "Path": "tools/approval_ed25519.js",
+    "Hash": "f4f5471daa294385aab0d3346eeeb5f10aad93ffe69580376c39703748de08f7",
+    "Size": 13228
+  },
+  {
+    "Path": "tools/assurance.js",
+    "Hash": "5a56dc4f8f965a1279cc875e22f9d03c77f4d8923a0b689411edea9aab93bbbb",
+    "Size": 4235
+  },
+  {
+    "Path": "tools/attestation.js",
+    "Hash": "59fac97c5fa982aa9431f94f6cb95ac997df4ff6535f73baaad4731f813c764f",
+    "Size": 8171
+  },
+  {
+    "Path": "tools/canonical_json.js",
+    "Hash": "b0e73801783474229d95df7bb6e3b16bfccd0ddbdbd73f46ff6d0f6f1b16313c",
+    "Size": 1111
+  },
+  {
+    "Path": "tools/check_ed25519.js",
+    "Hash": "f5a99fe9260bddd7226ef147a12c5996c15ff7d820f43f8ec141d7c5a130e210",
+    "Size": 7984
+  },
+  {
+    "Path": "tools/dashboard.html",
+    "Hash": "1ae5df9386c47981af2c4fc8ac80b6ebb38dff81ea810c028e2d970622b38cdd",
+    "Size": 13790
+  },
+  {
+    "Path": "tools/dsse.js",
+    "Hash": "c0b839d8c0a815dd18b1a44cb4c5284e365ce1627780e2faf535b4a436d58a94",
+    "Size": 6232
+  },
+  {
+    "Path": "tools/evidence_hasher.js",
+    "Hash": "99b00bee3d62b7650bda839c7d291af22343b437a3c6ebff7a9f75cc3570f75f",
+    "Size": 5232
+  },
+  {
+    "Path": "tools/git_assistant.js",
+    "Hash": "9ee4438bddcc3e776f79f9d801c09a1e2519c4ece64d9da4950bc25ccd46ac79",
+    "Size": 2742
+  },
+  {
+    "Path": "tools/identity_canonical.js",
+    "Hash": "77f51aa61b8c49652a1aee63f75cb955115387bdcf61a1e88e65bdad6317449b",
+    "Size": 4959
+  },
+  {
+    "Path": "tools/intent_clarifier.js",
+    "Hash": "b4187ceca21c7df442f89e630138ccee48eee09311f3fb6245d7805cd1493f02",
+    "Size": 7086
+  },
+  {
+    "Path": "tools/killswitch.js",
+    "Hash": "4e0232d734f21b87282cfaa0f332cccedba4666ed41928d103713eb5dba89048",
+    "Size": 6308
+  },
+  {
+    "Path": "tools/learning_engine.js",
+    "Hash": "52fd6e39fe864a575f38214dfdeeb8c7dfdfb3cb0c7c1d1ca2c15fa615f98a30",
+    "Size": 3360
+  },
+  {
+    "Path": "tools/preflight.js",
+    "Hash": "81757b27a88de980497fa65c30de2dfbe60fcb13573c76f408c8986fbe7be8a1",
+    "Size": 2744
+  },
+  {
+    "Path": "tools/presentation.html",
+    "Hash": "8a7a03d7ebab29add2bc5552f3a139fafc06ce039dfa65b20d9ef76756156ca4",
+    "Size": 362
+  },
+  {
+    "Path": "tools/risk_policy_compiler.js",
+    "Hash": "fd6e5b82e10b9cbb38932784262f3cb8bdc1c9c4a4ef97d4705003ab48592cad",
+    "Size": 4713
+  },
+  {
+    "Path": "tools/rollback_plan.js",
+    "Hash": "eca45480dec24e33c835b553fbc44a11e9236abbaea4bd4af19d56827ede7988",
+    "Size": 1549
+  },
+  {
+    "Path": "tools/structured_command.js",
+    "Hash": "455ce2e91f9f279af0ea2afcdce5d814fed62ca714e7d7255de5e7424d2764f7",
+    "Size": 5168
+  },
+  {
+    "Path": "tools/vibeguard.js",
+    "Hash": "ccef70072644dc84da737d8c2471236726779aec9a9f511a128c8dd79f94d588",
+    "Size": 3997
+  },
+  {
+    "Path": "tools/workflow_runner.js",
+    "Hash": "2e291e6f661c073d16d8f407918cffa2363cbdc3464df5ae255e83dee7c80403",
+    "Size": 12862
+  },
+  {
+    "Path": "tools/workflow_state_machine.js",
+    "Hash": "d9ea22aee20fb0a7ac31c5ce4f1a683a5b6b4ec2dfe773f73b9133248fe1007d",
+    "Size": 1860
+  }
+]
