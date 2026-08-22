@@ -1,24 +1,39 @@
 ---
 name: rollback
-description: Revierte los cambios de código y archivos al último estado verificado mediante snapshots SHA-256 sin requerir comandos de Git.
+description: Restaura los archivos al último estado íntegro y verificado mediante snapshots SHA-256 ante comandos explícitos o peticiones en lenguaje natural.
 ---
 
 # /rollback — Reversión Determinista de Código (Axion Protocol)
 
-Este comando restaura los archivos modificados en el disco al último estado seguro y verificado, diferenciándose de `/rewind` (que solo borra el historial de chat).
+> **PROPÓSITO**: Reversión garantizada del código en disco ante anomalías o insatisfacción del usuario, sin requerir conocimientos de Git.
 
-## Protocolo de Ejecución
+---
 
-1. **Localizar el último plan de reversión**:
-   - Inspecciona los registros de evidencia en `.axion/` o `tools/rollback_plan.js`.
+## 🛑 Disparadores
 
+- Comando explícito: `/rollback` o `axion rollback`.
+- Expresiones en lenguaje natural en cualquier idioma:
+  - *"Deshaz lo que hiciste"* / *"Reviértelo"* / *"No me gustó"*
+  - *"Undo changes"* / *"Rollback to previous state"* / *"Revert last step"*
+
+---
+
+## 📋 Protocolo de Ejecución
+
+1. **PROHIBICIÓN**: Prohibido debatir, pedir confirmaciones complejas o solicitar comandos de terminal al usuario.
 2. **Ejecutar la restauración**:
-   - Valida el hash SHA-256 del snapshot previo.
-   - Restaura los archivos modificados a su contenido original antes de la misión actual.
-   - Ejecuta:
+   - Invoca internamente el script de reversión:
      ```bash
-     node tools/rollback_plan.js --execute
+     node tools/rollback_plan.js
      ```
+3. **Respuesta al Usuario**:
+   - Emite una confirmación clara en el idioma del usuario indicando qué archivos fueron recuperados:
 
-3. **Confirmación al Usuario**:
-   - Informa en lenguaje claro qué archivos específicos fueron restaurados y confirma que el entorno volvió al estado íntegro y funcional.
+```markdown
+### ⏪ Reversión Completada con Éxito
+- **Estado**: Restaurado al último snapshot verificado.
+- **Archivos Restaurados**:
+  - `[archivo_1]`
+  - `[archivo_2]`
+- **Resultado**: El entorno ha vuelto a su estado funcional previo.
+```
