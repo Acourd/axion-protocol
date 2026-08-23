@@ -53,3 +53,15 @@ Al completar cualquier tarea o hito, el resumen final debe entregarse en el **id
 2. 📦 **Archivos Afectados**: Lista limpia de rutas modificadas o creadas.
 3. 🧪 **Pruebas de Verificación**: La salida real de `node tools/verify_changes.js`, con el recuento que imprimió esa ejecución.
 4. 🔐 **Sello de Evidencia**: Hash SHA-256 inmutable de la atestación.
+
+---
+
+## 🧠 6. Invariante de Alta Exigencia y Deliberación Previa (/deep)
+
+- **Freno a la Precipitación**: Para tareas arquitectónicas, refactorizaciones complejas o adición de módulos:
+- **PROHIBIDO** editar código apresuradamente sin haber analizado el panorama completo.
+- **Protocolo de Deliberación Pre-Mortem en 4 Pasos**:
+  1. Mapear el **Radio de Impacto (*Blast Radius*)** y componentes dependientes.
+  2. Plantear al menos **3 Modos de Falla Adversariales** (casos límite, regresiones, runtime).
+  3. Comprobar **Invariantes P0, Perfil del Usuario y Cero-Bloat**.
+  4. Definir el **Criterio Determinista de Prueba** con salida exitosa 0.

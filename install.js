@@ -86,7 +86,7 @@ function runInstallation(targetDir) {
   const workflows = [
     'clarify.md', 'profile.md', 'rollback.md', 'preflight.md',
     'halt.md', 'unhalt.md', 'attest.md', 'review.md',
-    'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md', 'remember.md'
+    'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md', 'remember.md', 'deep.md'
   ];
   workflows.forEach(wf => {
     anotar(copiarProtegido(path.join(sourceRoot, '.agents', 'workflows', wf), path.join(rootDir, '.agents', 'workflows', wf), ausentes));
@@ -150,7 +150,9 @@ function runInstallation(targetDir) {
     'health_check.js',
     'emit_attestation.js',
     'vibeguard_gate.js',
-    'memory.js'
+    'memory.js',
+    'deep_reasoning.js',
+    'fuzzer.js'
   ];
   tools.forEach(t => {
     anotar(copiarProtegido(path.join(sourceRoot, 'tools', t), path.join(rootDir, 'tools', t), ausentes));

@@ -24,7 +24,7 @@ const DIR_CC = path.join(ROOT, '.claude', 'commands');
 const WORKFLOWS = [
   'clarify.md', 'profile.md', 'rollback.md', 'preflight.md',
   'halt.md', 'unhalt.md', 'attest.md', 'review.md',
-  'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md', 'remember.md',
+  'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md', 'remember.md', 'deep.md'
 ];
 
 const leer = (p) => fs.readFileSync(p, 'utf8');
