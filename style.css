@@ -306,7 +306,41 @@ body {
 .top-nav-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+}
+
+/* Language Switcher Pill */
+.lang-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-prominent);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.btn-lang {
+  background: transparent;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.btn-lang:hover {
+  color: var(--text-primary);
+}
+
+.btn-lang.active {
+  background: var(--emerald-radiant);
+  color: #FFF;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
 }
 
 .status-indicator-pill {
@@ -327,7 +361,12 @@ body {
   height: 7px;
   border-radius: 50%;
   background: var(--emerald-radiant);
-  box-shadow: 0 0 8px var(--emerald-radiant);
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 6px var(--emerald-radiant); transform: scale(1); }
+  50% { box-shadow: 0 0 14px var(--emerald-radiant); transform: scale(1.2); }
 }
 
 /* Theme Toggle Button */
@@ -620,8 +659,15 @@ body {
   left: 50px;
   right: 50px;
   height: 2px;
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.2), var(--emerald-radiant), rgba(16, 185, 129, 0.2));
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, var(--emerald-radiant) 50%, rgba(16, 185, 129, 0.15) 100%);
+  background-size: 200% 100%;
+  animation: circuitEnergyFlow 6s linear infinite;
   z-index: 1;
+}
+
+@keyframes circuitEnergyFlow {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 .circuit-nodes {
@@ -631,7 +677,7 @@ body {
   z-index: 2;
   gap: 8px;
   overflow-x: auto;
-  padding: 16px 6px 12px 6px;
+  padding: 18px 8px 14px 8px;
 }
 
 .circuit-node {
@@ -657,7 +703,24 @@ body {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--text-secondary);
-  transition: all var(--duration-fast);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: all var(--duration-fast) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Glass shine on the upper hemisphere */
+.node-circle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 100%);
+  border-radius: 50% 50% 0 0;
+  pointer-events: none;
+  opacity: 0.8;
 }
 
 .node-name {
@@ -670,11 +733,14 @@ body {
 
 .circuit-node:hover .node-circle,
 .circuit-node.active .node-circle {
-  border-color: var(--emerald-radiant);
-  background: var(--emerald-radiant);
-  color: #FFF;
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.6), 0 0 35px rgba(16, 185, 129, 0.25);
-  transform: scale(1.08);
+  border-color: #34D399;
+  background: radial-gradient(circle at 50% 30%, #34D399 0%, #10B981 60%, #059669 100%);
+  color: #FFFFFF;
+  box-shadow: 
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    0 0 20px rgba(16, 185, 129, 0.7),
+    0 0 45px rgba(16, 185, 129, 0.35);
+  transform: scale(1.1);
 }
 
 .circuit-node:hover .node-name,

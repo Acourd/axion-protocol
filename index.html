@@ -96,13 +96,19 @@
         </a>
 
         <div class="top-nav-right">
+          <!-- Switcher de Idioma (Bilingual EN/ES) -->
+          <div class="lang-switcher" id="lang-switcher" aria-label="Language selector">
+            <button class="btn-lang active" data-lang="en" title="English">EN</button>
+            <button class="btn-lang" data-lang="es" title="Español">ES</button>
+          </div>
+
           <div class="status-indicator-pill">
             <span class="pulse-dot"></span>
             <span>v1.2.0-beta.1 · 42 Suites PASS</span>
           </div>
 
           <!-- Botón de Modo Claro / Modo Oscuro -->
-          <button class="btn-theme-toggle" id="theme-toggle" title="Cambiar a Modo Claro / Oscuro" aria-label="Cambiar tema">
+          <button class="btn-theme-toggle" id="theme-toggle" title="Toggle Theme" aria-label="Toggle theme">
             <svg class="theme-icon sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="4"></circle>
               <path d="M12 2v2"></path>
