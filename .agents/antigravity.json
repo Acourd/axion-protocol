@@ -13,8 +13,39 @@
       "policy": ".agents/hooks/validate-tool-call.mjs"
     },
     "orchestration": {
-      "workflows": ["clarify", "preflight", "rollback", "halt", "unhalt", "attest"],
-      "tools": ["preflight.js", "risk_policy_compiler.js", "approval_ed25519.js", "evidence_hasher.js", "killswitch.js"]
+      "workflows": [
+        "clarify",
+        "profile",
+        "onboard",
+        "preflight",
+        "checkpoint",
+        "rollback",
+        "verify",
+        "debug",
+        "review",
+        "compact",
+        "attest",
+        "halt",
+        "unhalt",
+        "remember"
+      ],
+      "tools": [
+        "preflight.js",
+        "structured_command.js",
+        "risk_policy_compiler.js",
+        "approval_ed25519.js",
+        "check_ed25519.js",
+        "evidence_hasher.js",
+        "killswitch.js",
+        "checkpoint.js",
+        "context_shield.js",
+        "verify_changes.js",
+        "attestation.js",
+        "health_check.js",
+        "profile_adapter.js",
+        "intent_clarifier.js",
+        "memory.js"
+      ]
     }
   }
 }

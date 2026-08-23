@@ -13,11 +13,20 @@ const path = require('path');
 const { runInstallation } = require('../install.js');
 
 const ROOT = path.resolve(__dirname, '..');
-const pkg = require(path.join(ROOT, 'package.json'));
+
+// Leerla con require() reventaba el actualizador en cualquier proyecto sin package.json
+// junto a tools/. La version es informativa: no debe poder tumbar la actualizacion.
+function version() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
+  } catch (_) {
+    return 'instalado';
+  }
+}
 
 function runUpdate(targetDir) {
   const target = path.resolve(targetDir || process.cwd());
-  console.log(`[Axion Updater] Comprobando actualizaciones para Axion Protocol v${pkg.version}...`);
+  console.log(`[Axion Updater] Comprobando actualizaciones para Axion Protocol v${version()}...`);
   console.log(`  Directorio objetivo: ${target}\n`);
 
   const profilePath = path.join(target, '.axion', 'PROFILE.json');
@@ -40,7 +49,15 @@ function runUpdate(targetDir) {
     console.log('  ✓ Perfil de usuario preservado intacto.');
   }
 
-  console.log(`\n🎉 [Axion Updater] Proyecto actualizado con éxito a v${pkg.version}.`);
+  // Una actualización incompleta no es una actualización. Anunciarla como tal dejaría al
+  // usuario creyendo que tiene gobernanza nueva justo donde le faltan piezas.
+  if (result.status !== 'SUCCESS') {
+    console.error(`\n✗ [Axion Updater] Actualización INCOMPLETA: faltan ${(result.missing || []).length} archivo(s) en el paquete de origen.`);
+    console.error('   Reinstala el paquete antes de dar por actualizado el proyecto.');
+    return result;
+  }
+
+  console.log(`\n🎉 [Axion Updater] Proyecto actualizado con éxito a v${version()}.`);
   return result;
 }
 
@@ -55,7 +72,8 @@ function main() {
     }
   }
 
-  runUpdate(target);
+  const r = runUpdate(target);
+  process.exit(r.status === 'SUCCESS' ? 0 : 1);
 }
 
 if (require.main === module) {

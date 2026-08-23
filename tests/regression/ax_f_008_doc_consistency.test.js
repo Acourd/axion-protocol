@@ -37,10 +37,27 @@ if (adapters > 0 && /sin código ejecutable/i.test(adaptersReadme) && /no existe
 const gobernanza = leer(path.join(ROOT, 'GOVERNANCE.md'));
 const esExperimental = /EXPERIMENTAL/.test(gobernanza) && /No adquiere enforcement/i.test(gobernanza);
 
-const index = leer(path.join(ROOT, 'index.html'));
-for (const afirmacion of ['VERIFIED_STABLE', 'GOBERNANZA_ACTIVA', 'Todos los motores verificados en estado PASS']) {
-  if (esExperimental && index.includes(afirmacion)) {
-    conflictos.push(`index.html declara "${afirmacion}" mientras GOVERNANCE.md declara EXPERIMENTAL sin enforcement`);
+// La portada no viaja en el paquete publicado -y no debe: un consumidor no instala una
+// landing page-. Exigirla igualmente hacia fallar `axion test` en todo proyecto instalado.
+// El discriminante es .git, que existe en el repositorio y nunca en un paquete de npm.
+// Dentro del repositorio la portada es obligatoria, asi que borrarla sigue rompiendo esto.
+const EN_REPOSITORIO = fs.existsSync(path.join(ROOT, '.git'));
+if (EN_REPOSITORIO) {
+  for (const rel of ['index.html', 'script.js']) {
+    if (!fs.existsSync(path.join(ROOT, rel))) {
+      conflictos.push(`falta ${rel} en el repositorio: la auditoria de la portada quedaria sin objeto`);
+    }
+  }
+}
+
+const index = EN_REPOSITORIO && fs.existsSync(path.join(ROOT, 'index.html'))
+  ? leer(path.join(ROOT, 'index.html'))
+  : null;
+if (index !== null) {
+  for (const afirmacion of ['VERIFIED_STABLE', 'GOBERNANZA_ACTIVA', 'Todos los motores verificados en estado PASS']) {
+    if (esExperimental && index.includes(afirmacion)) {
+      conflictos.push(`index.html declara "${afirmacion}" mientras GOVERNANCE.md declara EXPERIMENTAL sin enforcement`);
+    }
   }
 }
 
@@ -54,7 +71,7 @@ if (/Ejecutando tools\/preflight\.js/.test(dashboard) && !/SIMULACI[ÓO]N|DEMOST
   conflictos.push('tools/dashboard.html emite salida de preflight sin declararse simulación');
 }
 
-if (/preflight|term-output/i.test(index) && !/SIMULACI[ÓO]N|SIMULACION/i.test(index)) {
+if (index !== null && /preflight|term-output/i.test(index) && !/SIMULACI[ÓO]N|SIMULACION/i.test(index)) {
   conflictos.push('index.html reproduce salida de herramientas sin declararse simulación');
 }
 
@@ -89,7 +106,10 @@ const promesasAbsolutas = [
   [/100\s*%\s*(?:seguro|fiable)/i, 'seguridad total'],
 ];
 
-const portadas = [['README.md', readme], ['README.es.md', readmeEs], ['index.html', index]];
+// index puede ser null fuera del repositorio; se filtra en vez de dejar que un null
+// se convierta en la cadena "null" y pase por texto auditado.
+const portadas = [['README.md', readme], ['README.es.md', readmeEs], ['index.html', index]]
+  .filter(([, texto]) => typeof texto === 'string');
 for (const [nombre, texto] of portadas) {
   for (const [patron, etiqueta] of promesasAbsolutas) {
     if (esExperimental && patron.test(texto)) {

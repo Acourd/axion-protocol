@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/.agents/hooks/validate-tool-call.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
