@@ -1,6 +1,6 @@
 {
   "name": "axion-protocol",
-  "version": "1.2.0-beta.0",
+  "version": "1.2.0-beta.1",
   "description": "Experimental local governance runtime for agentic AI operations: seven fail-closed phases, Ed25519 approvals, independent CHECK, SHA-256 evidence and in-toto attestations. No dependencies.",
   "keywords": [
     "ai-governance",
@@ -40,7 +40,10 @@
     "adapters/",
     "docs/",
     "examples/",
+    ".agents/",
+    ".claude/",
     "install.js",
+    "CLAUDE.md",
     "GOVERNANCE.md",
     "SECURITY.md",
     "ROADMAP.md",

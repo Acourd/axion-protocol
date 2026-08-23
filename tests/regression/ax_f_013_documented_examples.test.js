@@ -89,6 +89,22 @@ for (const ej of EJEMPLOS) {
 
 // --- 2. Las superficies publicas no pueden prometer otro resultado -----------
 
+// La portada (index.html, script.js, README) no viaja en el paquete publicado, y no debe:
+// un consumidor no instala una landing page. Pero exigirla igualmente hacia que
+// `axion test` fallase 2 de 40 suites en cada proyecto instalado. Se distingue por .git,
+// que existe en el repositorio y nunca en un paquete de npm; dentro del repositorio la
+// comprobacion sigue siendo obligatoria, asi que borrar la portada la rompe igual.
+const EN_REPOSITORIO = fs.existsSync(path.join(ROOT, '.git'));
+if (!EN_REPOSITORIO) {
+  console.log('SKIP AX-F-013 (2/2) — superficies de portada no incluidas en el paquete publicado.');
+  console.log('PASS AX-F-013 — la CLI documentada se comporta como se documenta.');
+  process.exit(0);
+}
+for (const rel of ['README.md', 'README.es.md', 'script.js', 'index.html']) {
+  assert.ok(fs.existsSync(path.join(ROOT, rel)),
+    `${rel} falta en el repositorio: la comprobacion de superficies publicas quedaria sin objeto`);
+}
+
 const readme = leer('README.md');
 const script = leer('script.js');
 const index = leer('index.html');

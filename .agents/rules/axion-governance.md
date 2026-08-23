@@ -34,7 +34,7 @@
   - *"Deshaz lo que hiciste"* / *"Reviértelo"* / *"No me gustó, vuelve atrás"*
   - *"Undo changes"* / *"Rollback to previous state"* / *"Desfazer alterações"*
 - **PROHIBICIÓN**: Prohibido discutir con el usuario o pedirle que ejecute comandos de Git a mano.
-- **Acción Inmediata**: Invocar internamente `node tools/rollback_plan.js` para restaurar el estado al último snapshot SHA-256 verificado e informar los archivos restaurados.
+- **Acción Inmediata**: Invocar `node tools/checkpoint.js restore latest` para restaurar el árbol al último punto de control verificado con SHA-256 e informar los archivos restaurados. Verifica el manifiesto completo antes de escribir; si un solo hash no cuadra, no restaura nada.
 
 ---
 
@@ -51,5 +51,5 @@ Al completar cualquier tarea o hito, el resumen final debe entregarse en el **id
 
 1. 🎯 **Objetivo Cumplido**: Resumen de 1 línea del contrato inicial.
 2. 📦 **Archivos Afectados**: Lista limpia de rutas modificadas o creadas.
-3. 🧪 **Pruebas de Verificación**: Salida del test suite (`38/38 PASS`).
+3. 🧪 **Pruebas de Verificación**: La salida real de `node tools/verify_changes.js`, con el recuento que imprimió esa ejecución.
 4. 🔐 **Sello de Evidencia**: Hash SHA-256 inmutable de la atestación.

@@ -44,7 +44,7 @@ Axion Protocol incorpora comandos de gobernanza diseñados para coexistir sin co
    - Modificaciones de código atómicas con preflight léxico (`tools/preflight.js`) y `shell: false`.
 
 6. **AUDITAR & VERIFICAR:**
-   - Ejecución empírica de pruebas (38/38 suites).
+   - Ejecución empírica de la suite: reporta el número real de suites en verde que imprimió la salida, no una cifra memorizada.
    - Generación de evidencia criptográfica SHA-256 (`tools/evidence_hasher.js`).
 
 7. **PROMOVER & REPORTE POLÍGLOTA:**
@@ -54,7 +54,7 @@ Axion Protocol incorpora comandos de gobernanza diseñados para coexistir sin co
 
 ## Regla de Rollback Semántico en Lenguaje Natural
 
-Si el usuario expresa en cualquier idioma la intención de revertir o deshacer cambios (*"deshaz lo que hiciste"*, *"reviértelo"*, *"undo changes"*, *"go back to previous state"*), la IA tiene **estrictamente prohibido debatir o pedir comandos de Git**. Debe ejecutar de inmediato `tools/rollback_plan.js` para restaurar el estado al último snapshot SHA-256 e informar qué archivos fueron recuperados.
+Si el usuario expresa en cualquier idioma la intención de revertir o deshacer cambios (*"deshaz lo que hiciste"*, *"reviértelo"*, *"undo changes"*, *"go back to previous state"*), la IA tiene **estrictamente prohibido debatir o pedir comandos de Git**. Debe ejecutar de inmediato `node tools/checkpoint.js restore latest` para restaurar el árbol al último punto de control verificado con SHA-256 e informar qué archivos fueron recuperados. El motor verifica el manifiesto entero antes de escribir nada y crea una red de seguridad previa, así que la propia reversión es reversible. Si no existe ningún punto de control, sale con `CHECKPOINT_MISSING`: informa de que no había red en lugar de dar la reversión por hecha.
 
 ---
 

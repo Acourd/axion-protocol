@@ -47,7 +47,7 @@ Diseñados para coexistir **sin colisiones** con Antigravity, Claude Code y AG-K
 | :--- | :--- | :--- |
 | **`/clarify`** | Cristaliza la intención socrática en 2 preguntas sencillas (A/B/C). | Antes de `/plan` o ante peticiones difusas. |
 | **`/profile`** | Calibra el tono, voz, entorno y nivel de tecnicismo a tu medida. | Al iniciar sesión o en cualquier momento. |
-| **`/rollback`** | Restaura el código y disco al último snapshot SHA-256 verificado. | Cuando quieras deshacer cambios con 1 frase. |
+| **`/rollback`** | Restaura el árbol al último punto de control verificado con SHA-256. Verifica el manifiesto entero antes de escribir y sella antes una red de seguridad. | Cuando quieras deshacer cambios con 1 frase. |
 | **`/preflight`** | Validador sintáctico léxico y clasificador de riesgo (`shell: false`). | Automáticamente antes de ejecutar comandos. |
 | **`/halt`** | Parada de emergencia inmediata que congela toda acción (*fail-closed*). | Si la IA intenta tocar zonas críticas. |
 | **`/unhalt`** | Desbloqueo humano deliberado de la parada de emergencia. | Para reanudar la ejecución segura. |
@@ -67,10 +67,10 @@ Diseñados para coexistir **sin colisiones** con Antigravity, Claude Code y AG-K
 
 ## 🧪 Verificación y Suite de Pruebas
 
-Axion Protocol incluye **38 suites de prueba deterministas** listas para ejecutarse sin dependencias externas:
+Axion Protocol incluye **41 suites de prueba deterministas** listas para ejecutarse sin dependencias externas:
 
 ```bash
-# Ejecutar las 38 suites de prueba
+# Ejecutar las 41 suites de prueba
 node tests/run_all.js
 ```
 

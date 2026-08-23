@@ -47,7 +47,7 @@ Axion commands are designed for **zero-collision synergy** with Antigravity, Cla
 | :--- | :--- | :--- |
 | **`/clarify`** | Socratic intent crystallization in 2 plain questions (A/B/C). | Before `/plan` or on vague requests. |
 | **`/profile`** | Adapts AI tone, depth, and verbosity to your personal profile. | At session start or anytime. |
-| **`/rollback`** | Restores code and disk to the last SHA-256 verified snapshot. | When changes need to be undone. |
+| **`/rollback`** | Restores the tree to the last SHA-256 verified checkpoint. Verifies the whole manifest before writing and seals a safety checkpoint first. | When changes need to be undone. |
 | **`/preflight`** | Lexical syntax validator and risk classifier (`shell: false`). | Automatically before running terminal tools. |
 | **`/halt`** | Emergency killswitch blocking all agent actions (*fail-closed*). | To immediately freeze an agent. |
 | **`/unhalt`** | Deliberate human release of the emergency stop. | To resume safe execution. |
@@ -67,15 +67,15 @@ Axion commands are designed for **zero-collision synergy** with Antigravity, Cla
 
 ## 🧪 Verification & Test Suite
 
-Axion Protocol includes **38 deterministic test suites** out of the box with zero external dependencies:
+Axion Protocol includes **41 deterministic test suites** out of the box with zero external dependencies:
 
 ```bash
-# Run all 38 test suites
+# Run all 41 test suites
 node tests/run_all.js
 ```
 
 <details>
-<summary><strong>📋 View all 38 Test Suites Included</strong></summary>
+<summary><strong>📋 View all 41 Test Suites Included</strong></summary>
 
 ### Funcional
 - `adversarial.test.js`
@@ -98,6 +98,8 @@ node tests/run_all.js
 - `ax_f_012_suite_integrity.test.js`
 - `ax_f_013_documented_examples.test.js`
 - `ax_f_014_package_contract.test.js`
+- `ax_f_015_workflow_contract.test.js`
+- `ax_f_016_tool_contracts.test.js`
 
 ### Phase E (Criptografía y Gobernanza)
 - `approval_ed25519.test.js`
@@ -109,6 +111,7 @@ node tests/run_all.js
 - `c02_destructive_classifier.test.js`
 - `c03_independent_attestations.test.js`
 - `check_ed25519.test.js`
+- `checkpoint_restore.test.js`
 - `evidence_binding.test.js`
 - `killswitch.test.js`
 - `payload_reread.test.js`
