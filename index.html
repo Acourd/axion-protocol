@@ -73,7 +73,7 @@
               <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
             </svg>
           </div>
-          <span class="side-label">GitHub · 38/38</span>
+          <span class="side-label">GitHub · 42/42</span>
         </a>
       </div>
     </div>
@@ -98,7 +98,7 @@
         <div class="top-nav-right">
           <div class="status-indicator-pill">
             <span class="pulse-dot"></span>
-            <span>v1.2.0-beta · 38 Suites PASS</span>
+            <span>v1.2.0-beta.1 · 42 Suites PASS</span>
           </div>
 
           <!-- Botón de Modo Claro / Modo Oscuro -->
@@ -142,7 +142,7 @@
         </h1>
 
         <p class="hero-lead">
-          Axion Protocol es el arnés de gobernanza determinista (118 kB, cero dependencias). Frena alucinaciones mediante contratos socráticos de 2 preguntas, bloquea comandos destructivos y garantiza reversión en 1 clic.
+          Axion Protocol es el arnés de gobernanza determinista (123 kB, cero dependencias). Frena alucinaciones mediante contratos socráticos de 2 preguntas, supervisa llamadas de terminal con preflight léxico en tiempo real y garantiza reversión verificada al byte.
         </p>
 
         <!-- Terminal de Comando Warp-Style -->
@@ -178,10 +178,11 @@
 
         <!-- Métricas Limpias -->
         <div class="hero-stats-row">
-          <div class="stat-pill"><strong>0</strong> dependencias externas</div>
-          <div class="stat-pill"><strong>118 kB</strong> huella ultra-ligera</div>
-          <div class="stat-pill"><strong>38/38</strong> suites de prueba</div>
-          <div class="stat-pill"><strong>Fail-Closed</strong> por diseño</div>
+          <div class="stat-pill"><strong>0</strong> dependencias</div>
+          <div class="stat-pill"><strong>123 kB</strong> ultra-ligero</div>
+          <div class="stat-pill"><strong>42/42</strong> suites PASS</div>
+          <div class="stat-pill"><strong>14</strong> slash commands</div>
+          <div class="stat-pill"><strong>Fail-Closed</strong> nativo</div>
         </div>
       </section>
 
@@ -371,14 +372,14 @@
           <!-- Tarjeta 5: Zero-Bloat (Ancha) -->
           <div class="bento-box box-wide">
             <div class="box-badge">Zero-Bloat</div>
-            <h3>118 kB · Cero Dependencias</h3>
-            <p>Construido exclusivamente con módulos nativos de Node.js (<code>fs</code>, <code>crypto</code>, <code>path</code>, <code>child_process</code>). No requiere <code>npm install</code> ni contenedores pesados de Docker.</p>
+            <h3>123 kB · Cero Dependencias</h3>
+            <p>Construido exclusivamente con módulos nativos de Node.js (<code>fs</code>, <code>crypto</code>, <code>path</code>, <code>child_process</code>). No requiere <code>npm install</code> de librerías externas ni contenedores pesados de Docker.</p>
             
             <div class="micro-visual-size">
               <div class="size-bar-group">
                 <div class="size-row axion-bar">
                   <span class="size-name">Axion Protocol</span>
-                  <div class="bar-fill axion"><span class="bar-label">118 kB (Nativo)</span></div>
+                  <div class="bar-fill axion"><span class="bar-label">123 kB (Nativo)</span></div>
                 </div>
                 <div class="size-row heavy-bar">
                   <span class="size-name">Frameworks en Python/Docker</span>
@@ -390,47 +391,81 @@
         </div>
       </section>
 
-      <!-- ── Tabla Comparativa ─────────────────────────────────────────── -->
+      <!-- ── Tabla Comparativa Multi-Producto ───────────────────────── -->
       <section class="comparison-section" id="comparativa">
         <div class="section-label-group">
-          <span class="section-badge-emerald">El Antes y el Después</span>
-          <h2 class="section-headline">¿Por qué usar Axion Protocol?</h2>
+          <span class="section-badge-emerald">Benchmark Técnico</span>
+          <h2 class="section-headline">Matriz Comparativa de Arquitectura</h2>
+          <p class="section-desc">Auditoría rigurosa: Axion Protocol frente a los kits y frameworks de referencia del ecosistema:</p>
         </div>
 
         <div class="clean-table-container">
           <table class="clean-table">
             <thead>
               <tr>
-                <th>Situación</th>
-                <th class="th-without">Sin Axion (Agentes Tradicionales)</th>
-                <th class="th-with">Con Axion Protocol</th>
+                <th>Capacidad Clave</th>
+                <th class="th-axion">Axion Protocol (v1.2.0-beta.1)</th>
+                <th>Everything Claude Code (ECC)</th>
+                <th>AG-Kit (Antigravity Kit)</th>
+                <th>SuperClaude</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong>Peticiones Vagas</strong></td>
-                <td>La IA adivina requisitos y programa código equivocado.</td>
-                <td class="td-highlight">Freno socrático en 2 preguntas humanas (A/B/C).</td>
+                <td><strong>Gobernanza Fail-Closed en Vivo</strong></td>
+                <td class="td-axion"><span class="tbl-badge pass">✓ NATIVO</span> PreToolUse hook ejecutable · Bloquea destructivos</td>
+                <td><span class="tbl-badge fail">✗ NO</span> Solo prompts/reglas de texto</td>
+                <td><span class="tbl-badge fail">✗ NO</span> Solo reglas de texto en markdown</td>
+                <td><span class="tbl-badge fail">✗ NO</span> Solo prompts</td>
               </tr>
               <tr>
-                <td><strong>Comandos de Terminal</strong></td>
-                <td>Ejecución ciega de cadenas de shell crudas y destructivas.</td>
-                <td class="td-highlight">Preflight léxico estructurado con <code>shell: false</code>.</td>
+                <td><strong>Reversión y Rollback Determinista</strong></td>
+                <td class="td-axion"><span class="tbl-badge pass">✓ NATIVO</span> Motor real SHA-256 (checkpoint.js) · Restaura al byte</td>
+                <td><span class="tbl-badge fail">✗ NO</span> Sin motor de reversión</td>
+                <td><span class="tbl-badge fail">✗ NO</span> Sin motor de reversión</td>
+                <td><span class="tbl-badge fail">✗ NO</span> Sin motor de reversión</td>
               </tr>
               <tr>
-                <td><strong>Cuando algo sale mal</strong></td>
-                <td>Pide comandos de Git confusos o parcha con errores.</td>
-                <td class="td-highlight">Rollback semántico al snapshot SHA-256 previo.</td>
+                <td><strong>Criptografía Ed25519 & in-toto DSSE</strong></td>
+                <td class="td-axion"><span class="tbl-badge pass">✓ NATIVO</span> Firmas asimétricas + Sobres DSSE (SLSA/Cosign)</td>
+                <td><span class="tbl-badge fail">✗ NO</span> No implementado</td>
+                <td><span class="tbl-badge fail">✗ NO</span> No implementado</td>
+                <td><span class="tbl-badge fail">✗ NO</span> No implementado</td>
               </tr>
               <tr>
-                <td><strong>Evidencia de Misión</strong></td>
-                <td>Ninguna. Solo queda el historial efímero del chat.</td>
-                <td class="td-highlight">Atestaciones formales in-toto / DSSE firmadas.</td>
+                <td><strong>Memoria Persistente & Escudo de Contexto</strong></td>
+                <td class="td-axion"><span class="tbl-badge pass">✓ NATIVO</span> <code>/remember</code> + <code>/compact</code> (Anti 'lost-in-the-middle')</td>
+                <td><span class="tbl-badge warn">⚠️ PARCIAL</span> /compact nativo de Claude</td>
+                <td><span class="tbl-badge warn">⚠️ PARCIAL</span> Archivos markdown dispersos</td>
+                <td><span class="tbl-badge warn">⚠️ PARCIAL</span> Prompts de memoria</td>
               </tr>
               <tr>
-                <td><strong>Peso e Instalación</strong></td>
-                <td>Contenedores pesados y cientos de paquetes obsoletos.</td>
-                <td class="td-highlight">118 kB en Node.js puro sin dependencias.</td>
+                <td><strong>Sinergia Multi-Agente Híbrida</strong></td>
+                <td class="td-axion"><span class="tbl-badge pass">✓ UNIVERSAL</span> Antigravity (.agents/) + Claude Code (.claude/) + Cursor</td>
+                <td><span class="tbl-badge warn">⚠️ LIMITADO</span> Solo Claude Code</td>
+                <td><span class="tbl-badge warn">⚠️ LIMITADO</span> Solo Antigravity</td>
+                <td><span class="tbl-badge warn">⚠️ LIMITADO</span> Solo Claude Code</td>
+              </tr>
+              <tr>
+                <td><strong>Calibración de Perfil de Usuario</strong></td>
+                <td class="td-axion"><span class="tbl-badge pass">✓ NATIVO</span> <code>/profile</code> (Voz, GUI, Visionario, cadencia y dirección)</td>
+                <td><span class="tbl-badge fail">✗ NO</span> Sin calibración adaptativa</td>
+                <td><span class="tbl-badge warn">⚠️ PARCIAL</span> Reglas estáticas fijas</td>
+                <td><span class="tbl-badge warn">⚠️ PARCIAL</span> Personalidades predefinidas</td>
+              </tr>
+              <tr>
+                <td><strong>Huella e Instalación (Zero-Bloat)</strong></td>
+                <td class="td-axion"><span class="tbl-badge pass">✓ 123 kB</span> 0 dependencias (Módulos nativos de Node.js)</td>
+                <td><span class="tbl-badge warn">⚠️ MEDIANO</span> Colección de prompts</td>
+                <td><span class="tbl-badge warn">⚠️ 1.2+ MB</span> Cientos de archivos de texto</td>
+                <td><span class="tbl-badge warn">⚠️ MEDIANO</span> Colección de prompts</td>
+              </tr>
+              <tr>
+                <td><strong>Pruebas y Verificación Automatizada</strong></td>
+                <td class="td-axion"><span class="tbl-badge pass">✓ 42/42 PASS</span> 42 suites de prueba + 10 chequeos de salud</td>
+                <td><span class="tbl-badge fail">✗ 0</span> Sin suites de prueba</td>
+                <td><span class="tbl-badge fail">✗ 0</span> Sin suites de prueba</td>
+                <td><span class="tbl-badge fail">✗ 0</span> Sin suites de prueba</td>
               </tr>
             </tbody>
           </table>
@@ -441,43 +476,111 @@
       <section class="commands-section" id="comandos">
         <div class="section-label-group">
           <span class="section-badge-emerald">Ergonomía</span>
-          <h2 class="section-headline">Slash Commands de Gobernanza</h2>
-          <p class="section-desc">Diseñados para coexistir sin colisiones con Antigravity, Claude Code y AG-Kit:</p>
+          <h2 class="section-headline">14 Slash Commands Universales</h2>
+          <p class="section-desc">Diseñados para operar con paridad total en Antigravity (.agents/workflows) y Claude Code (.claude/commands):</p>
         </div>
 
         <div class="commands-grid">
+          <!-- 1. clarify -->
           <div class="cmd-card">
             <div class="cmd-top">
               <code class="cmd-code">/clarify</code>
               <span class="cmd-tag">Intención</span>
             </div>
-            <p class="cmd-desc">Aclara requerimientos en 2 preguntas con opciones A/B/C antes de `/plan`.</p>
+            <p class="cmd-desc">Freno socrático: aclara requerimientos en 2 preguntas (A/B/C) antes de tocar código.</p>
           </div>
 
+          <!-- 2. profile -->
           <div class="cmd-card">
             <div class="cmd-top">
               <code class="cmd-code">/profile</code>
               <span class="cmd-tag">Adaptabilidad</span>
             </div>
-            <p class="cmd-desc">Calibra el tono, entrada por voz, entorno y nivel de tecnicismo a tu medida.</p>
+            <p class="cmd-desc">Calibra tu perfil (Voz, GUI, Visionario, cadencia híbrida y dirección guiada).</p>
           </div>
 
+          <!-- 3. review -->
+          <div class="cmd-card">
+            <div class="cmd-top">
+              <code class="cmd-code">/review</code>
+              <span class="cmd-tag">Calidad</span>
+            </div>
+            <p class="cmd-desc">Auditoría selectiva por 4 Lentes: Técnica, Funcional, UX/Producto y Arquitectónica.</p>
+          </div>
+
+          <!-- 4. onboard -->
+          <div class="cmd-card">
+            <div class="cmd-top">
+              <code class="cmd-code">/onboard</code>
+              <span class="cmd-tag">Contexto</span>
+            </div>
+            <p class="cmd-desc">Indexa y sintetiza repositorios nuevos o existentes sin sobreescribir memoria.</p>
+          </div>
+
+          <!-- 5. remember -->
+          <div class="cmd-card">
+            <div class="cmd-top">
+              <code class="cmd-code">/remember</code>
+              <span class="cmd-tag">Memoria</span>
+            </div>
+            <p class="cmd-desc">Registra decisiones, reglas y hechos durables que persisten entre sesiones.</p>
+          </div>
+
+          <!-- 6. compact -->
+          <div class="cmd-card">
+            <div class="cmd-top">
+              <code class="cmd-code">/compact</code>
+              <span class="cmd-tag">Optimización</span>
+            </div>
+            <p class="cmd-desc">Escudo de contexto: purga logs y sella estado para prevenir pérdida de foco.</p>
+          </div>
+
+          <!-- 7. verify -->
+          <div class="cmd-card">
+            <div class="cmd-top">
+              <code class="cmd-code">/verify</code>
+              <span class="cmd-tag">TDD</span>
+            </div>
+            <p class="cmd-desc">Bucle determinista: ejecuta pruebas reales y valida código de salida 0.</p>
+          </div>
+
+          <!-- 8. rollback -->
           <div class="cmd-card">
             <div class="cmd-top">
               <code class="cmd-code">/rollback</code>
               <span class="cmd-tag">Reversión</span>
             </div>
-            <p class="cmd-desc">Restaura los archivos al último snapshot SHA-256 verificado en 1 segundo.</p>
+            <p class="cmd-desc">Restaura los archivos al último checkpoint verificado en lenguaje natural.</p>
           </div>
 
+          <!-- 9. checkpoint -->
+          <div class="cmd-card">
+            <div class="cmd-top">
+              <code class="cmd-code">/checkpoint</code>
+              <span class="cmd-tag">Seguridad</span>
+            </div>
+            <p class="cmd-desc">Crea un snapshot manual SHA-256 con etiqueta previa a cambios delicados.</p>
+          </div>
+
+          <!-- 10. debug -->
+          <div class="cmd-card">
+            <div class="cmd-top">
+              <code class="cmd-code">/debug</code>
+              <span class="cmd-tag">Diagnóstico</span>
+            </div>
+            <p class="cmd-desc">Depuración en 4 fases deterministas: Reproducción ➔ Causa Raíz ➔ Fix ➔ Test.</p>
+          </div>
+
+          <!-- 11. preflight -->
           <div class="cmd-card">
             <div class="cmd-top">
               <code class="cmd-code">/preflight</code>
-              <span class="cmd-tag">Seguridad</span>
+              <span class="cmd-tag">Inspección</span>
             </div>
-            <p class="cmd-desc">Inspecciona comandos antes de ejecutarse en terminal con modo fail-closed.</p>
+            <p class="cmd-desc">Supervisa comandos de terminal en modo fail-closed con <code>shell: false</code>.</p>
           </div>
 
+          <!-- 12. halt -->
           <div class="cmd-card">
             <div class="cmd-top">
               <code class="cmd-code">/halt</code>
@@ -486,12 +589,22 @@
             <p class="cmd-desc">Parada de emergencia inmediata que congela cualquier acción en curso.</p>
           </div>
 
+          <!-- 13. unhalt -->
+          <div class="cmd-card">
+            <div class="cmd-top">
+              <code class="cmd-code">/unhalt</code>
+              <span class="cmd-tag">Reanudación</span>
+            </div>
+            <p class="cmd-desc">Desbloqueo humano deliberado de la parada de emergencia.</p>
+          </div>
+
+          <!-- 14. attest -->
           <div class="cmd-card">
             <div class="cmd-top">
               <code class="cmd-code">/attest</code>
-              <span class="cmd-tag">Auditoría</span>
+              <span class="cmd-tag">Atestación</span>
             </div>
-            <p class="cmd-desc">Genera la atestación formal in-toto / DSSE con hash de evidencia.</p>
+            <p class="cmd-desc">Emite el certificado formal in-toto Statement v1 / DSSE firmado con Ed25519.</p>
           </div>
         </div>
       </section>
