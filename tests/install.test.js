@@ -70,7 +70,7 @@ assert.doesNotThrow(() => require(path.join(scratchDir, 'tools', 'workflow_runne
 const WORKFLOWS = [
   'clarify.md', 'profile.md', 'rollback.md', 'preflight.md',
   'halt.md', 'unhalt.md', 'attest.md', 'review.md',
-  'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md'
+  'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md', 'remember.md'
 ];
 WORKFLOWS.forEach(wf => {
   const enAgents = path.join(scratchDir, '.agents', 'workflows', wf);

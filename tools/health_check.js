@@ -12,7 +12,7 @@
  * Por eso aquí se verifica capacidad, no presencia:
  *   - El hook se dispara de verdad contra un destructivo, no solo existe ni solo compila.
  *   - Está registrado en los dos runtimes, no en uno.
- *   - Los 13 comandos están en las dos superficies y sin divergir entre ellas.
+ *   - Los 14 comandos están en las dos superficies y sin divergir entre ellas.
  *   - Cada `node tools/X.js` citado en un workflow apunta a un archivo real.
  */
 
@@ -36,7 +36,7 @@ function versionInstalada() {
 const WORKFLOWS = [
   'clarify.md', 'profile.md', 'rollback.md', 'preflight.md',
   'halt.md', 'unhalt.md', 'attest.md', 'review.md',
-  'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md',
+  'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md', 'remember.md',
 ];
 
 const leer = (p) => {
@@ -143,7 +143,7 @@ function runHealthCheck(targetDir) {
   }
   addCheck('Perfil Calibrado', perfilOk, etiquetaPerfil);
 
-  // 6. Los 13 comandos, en las dos superficies.
+  // 6. Los 14 comandos, en las dos superficies.
   const dirWorkflows = path.join(target, '.agents', 'workflows');
   const dirComandos = path.join(target, '.claude', 'commands');
   const enWf = WORKFLOWS.filter((w) => fs.existsSync(path.join(dirWorkflows, w)));

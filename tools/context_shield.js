@@ -22,6 +22,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { bloqueParaAncla } = require('./memory.js');
 
 const RAIZ_MODULO = path.resolve(__dirname, '..');
 const SNAPSHOTS_A_CONSERVAR = 10;
@@ -121,6 +122,7 @@ function compactSessionContext(targetDir) {
   }
 
   const { digest, cubiertos } = digestGobernanza(raiz);
+  const memoria = bloqueParaAncla(raiz);
   const detenido = fs.existsSync(path.join(raiz, '.axion', 'HALT'));
   const checkpoint = ultimoCheckpoint(raiz);
   const marca = new Date().toISOString();
@@ -147,6 +149,7 @@ function compactSessionContext(targetDir) {
     last_checkpoint: checkpoint,
     active_invariants: invariantes,
     governance_files: cubiertos,
+    memory_entries: memoria ? memoria.length : 0,
     state_digest: digest,
   };
 
@@ -169,6 +172,10 @@ function compactSessionContext(targetDir) {
     '## Invariantes P0 que siguen vigentes',
     ...invariantes.map((i) => `- ${i}`),
     '',
+    // La memoria entra en el ancla, y no en un archivo aparte que nadie abre. Una
+    // decisión que hay que ir a buscar es una decisión que se repetirá: si va a servir
+    // de algo tras compactar, tiene que estar donde el agente vuelve a mirar.
+    ...(memoria ? ['## Memoria del proyecto', ...memoria, ''] : []),
     '> Relee este fichero despues de cada compactacion. Su unica funcion es devolver las',
     '> reglas P0 al final de la ventana de contexto, que es donde el modelo si las atiende.',
     '',

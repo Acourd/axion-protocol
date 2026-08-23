@@ -6,38 +6,186 @@ on:
   pull_request:
     branches: [ main, master ]
 
+# Lo que este pipeline aprendió por las malas: pasar las suites no demuestra que el
+# producto funcione. La v1.2.0-beta.0 tenía 38/38 en verde con el hook PreToolUse muerto,
+# sin ningún slash command en Claude Code y con un tarball que no llevaba la gobernanza.
+# Ninguna prueba unitaria podía verlo, porque el defecto vivía entre las piezas.
+# Por eso aquí hay tres trabajos y no uno: las suites, las puertas, y el producto
+# instalado desde el paquete real que se publicaría.
+
 jobs:
-  test:
+  suites:
     name: Suites de gobernanza
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
         node-version: [20.x, 22.x, 24.x]
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
-      # El proyecto no tiene dependencias externas: solo modulos integrados de Node,
-      # asi que no hay paso de instalacion.
+      # Sin paso de instalación: el proyecto declara cero dependencias externas y
+      # ax_f_014 lo verifica. Si algún día aparece un `npm ci` aquí, es que esa promesa
+      # se rompió.
 
-      # Las 31 suites de una vez. El runner no omite ninguna: la version anterior de
-      # este workflow ejecutaba 7 de las 13 de Fase E y dejaba fuera role_separation,
-      # que es la sonda de AX-NC-0001. Enumerar suites a mano acaba oxidandose.
       - name: Suite completa
         run: node tests/run_all.js
 
-      # Desglose por tanda si algo falla, para localizarlo sin abrir el log entero.
       - name: Desglose por tanda
         if: failure()
         run: |
           node tests/run_all.js funcional || true
           node tests/run_all.js regresion || true
           node tests/run_all.js phase_e || true
+
+  puertas:
+    name: Puertas de calidad y salud
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      # Ejercita el hook contra un destructivo real, comprueba el registro en los dos
+      # runtimes y valida que toda herramienta citada por un prompt exista.
+      - name: Auditoría de salud
+        run: node bin/axion.js check
+
+      - name: Puerta de calidad
+        run: node bin/axion.js vibeguard
+
+      # El hook es la única salvaguarda que corre en tiempo real. Que esté escrito no
+      # basta: aquí se dispara y se exige que deniegue, que consulte y que deje pasar.
+      - name: El hook PreToolUse bloquea de verdad
+        run: |
+          set -e
+          echo '{"tool_input":{"command":"rm -rf /"}}' | node .agents/hooks/validate-tool-call.mjs && {
+            echo "FALLO: el hook dejó pasar un comando destructivo"; exit 1;
+          } || echo "OK: destructivo denegado"
+          echo '{"tool_input":{"file_path":"a.txt"}}' | node .agents/hooks/validate-tool-call.mjs > /dev/null || {
+            echo "FALLO: el hook bloquea llamadas inocuas"; exit 1;
+          }
+          echo "OK: llamada inocua permitida"
+
+      - name: La parada de emergencia detiene el hook
+        run: |
+          set -e
+          node tools/killswitch.js halt "verificacion de CI" || true
+          echo '{"tool_input":{"command":"echo hola"}}' | node .agents/hooks/validate-tool-call.mjs && {
+            echo "FALLO: el hook ignoró la parada de emergencia"; exit 1;
+          } || echo "OK: parada respetada"
+          node tools/killswitch.js resume
+          test ! -f .axion/HALT
+
+      - name: La reversión restaura de verdad
+        run: |
+          set -e
+          mkdir -p /tmp/axion-cp/src && echo "original" > /tmp/axion-cp/src/a.txt
+          node tools/checkpoint.js create ci --target /tmp/axion-cp
+          echo "corrompido" > /tmp/axion-cp/src/a.txt
+          node tools/checkpoint.js restore latest --target /tmp/axion-cp
+          test "$(cat /tmp/axion-cp/src/a.txt)" = "original"
+          echo "OK: contenido restaurado"
+
+      - name: La cadena de atestación cierra
+        run: node tools/emit_attestation.js
+
+  producto:
+    name: Producto instalado desde el paquete
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows incluido a propósito: la mitad de los defectos de rutas y de códigos
+        # de salida de este proyecto solo aparecen fuera de Linux.
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      # El recorrido completo de un tercero: empaquetar, instalar el tarball en un
+      # proyecto virgen y comprobar que la gobernanza llegó entera y funciona. Es el
+      # trabajo que habría cazado el `files[]` incompleto que dejaba el paquete sin
+      # reglas, sin hooks y sin comandos.
+      - name: Empaquetar e instalar en un proyecto virgen
+        shell: bash
+        run: |
+          set -e
+          mkdir -p /tmp/axion-dist
+          npm pack --pack-destination /tmp/axion-dist
+          TARBALL=$(ls /tmp/axion-dist/*.tgz)
+          mkdir -p /tmp/axion-consumer && cd /tmp/axion-consumer
+          npm init -y > /dev/null
+          npm install "$TARBALL"
+          npx axion init
+
+      - name: El proyecto instalado goza de salud
+        shell: bash
+        working-directory: /tmp/axion-consumer
+        run: npx axion check
+
+      - name: El proyecto instalado pasa la suite
+        shell: bash
+        working-directory: /tmp/axion-consumer
+        run: npx axion test
+
+      - name: Los 14 comandos llegaron a las dos superficies
+        shell: bash
+        working-directory: /tmp/axion-consumer
+        run: |
+          set -e
+          for d in .agents/workflows .claude/commands; do
+            n=$(ls "$d"/*.md | wc -l)
+            test "$n" -eq 14 || { echo "FALLO: $d tiene $n comandos, esperaba 14"; exit 1; }
+            echo "OK: $d -> $n comandos"
+          done
+          grep -q validate-tool-call.mjs .claude/settings.json
+
+      - name: Checkpoint y rollback sobre archivos reales
+        shell: bash
+        working-directory: /tmp/axion-consumer
+        run: |
+          set -e
+          echo "v1" > app.js
+          npx axion checkpoint create ci
+          echo "roto" > app.js
+          npx axion rollback latest
+          test "$(cat app.js)" = "v1"
+          echo "OK: rollback verificado en el producto instalado"
+
+  manifiestos:
+    name: Manifiestos de distribución
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      # Un manifiesto que apunta a un directorio inexistente rompe la instalación del
+      # plugin sin romper ninguna prueba.
+      - name: Plugin de Claude Code
+        run: |
+          set -e
+          node -e "
+            const fs=require('fs');
+            const p=JSON.parse(fs.readFileSync('.claude-plugin/plugin.json','utf8'));
+            for (const clave of ['commands','hooks']) {
+              const ruta = p[clave].replace(/^\.\//,'');
+              if (!fs.existsSync(ruta)) { console.error('FALLO: plugin.json.'+clave+' apunta a '+ruta+', que no existe'); process.exit(1); }
+              console.log('OK: '+clave+' -> '+ruta);
+            }
+            const m=JSON.parse(fs.readFileSync('.claude-plugin/marketplace.json','utf8'));
+            if (m.plugins[0].version !== p.version) { console.error('FALLO: marketplace y plugin declaran versiones distintas'); process.exit(1); }
+            const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+            if (pkg.version !== p.version) { console.error('FALLO: package.json v'+pkg.version+' y plugin.json v'+p.version+' no coinciden'); process.exit(1); }
+            console.log('OK: las tres versiones coinciden en '+p.version);
+          "

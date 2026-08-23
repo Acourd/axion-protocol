@@ -26,7 +26,8 @@
         "compact",
         "attest",
         "halt",
-        "unhalt"
+        "unhalt",
+        "remember"
       ],
       "tools": [
         "preflight.js",
@@ -42,7 +43,8 @@
         "attestation.js",
         "health_check.js",
         "profile_adapter.js",
-        "intent_clarifier.js"
+        "intent_clarifier.js",
+        "memory.js"
       ]
     }
   }

@@ -25,17 +25,33 @@ ENTENDER ──► PLANIFICAR ──► GATE ──► TEST ──► CONSTRUIR 
 
 ---
 
-## 🚀 Inicio Rápido (10 Segundos)
+## 🚀 Inicio Rápido
 
-Requiere **Node.js 20**+. Ejecuta directamente mediante `npx` o inyecta el protocolo en cualquier proyecto existente:
+Requiere **Node.js 20+**. Cero dependencias: solo módulos integrados de Node.
+
+### Como plugin de Claude Code
 
 ```bash
-# Ejecutar CLI directamente
-npx axion-protocol
-
-# Inyectar reglas de gobernanza en tu proyecto actual
-npx axion-protocol init
+/plugin marketplace add Acourd/axion-protocol
+/plugin install axion-protocol
 ```
+
+Los 14 comandos y la puerta `PreToolUse` quedan disponibles al instante.
+
+### Como paquete npm (Antigravity, Cursor, VS Code, Codex, CI)
+
+```bash
+# Inyecta la gobernanza en el proyecto actual
+npx axion-protocol init
+
+# Comprueba que llegó de verdad
+npx axion check
+```
+
+`init` escribe en `.agents/` (Antigravity), `.claude/` (Claude Code), `tools/`,
+`policies/` y `schemas/`. Nunca sobrescribe sin respaldo SHA-256, se niega a anunciar
+éxito sobre un paquete incompleto, y si ya tienes un `.claude/settings.json` no lo toca:
+te dice qué añadirle.
 
 ---
 
@@ -45,13 +61,20 @@ Diseñados para coexistir **sin colisiones** con Antigravity, Claude Code y AG-K
 
 | Comando | Propósito | Cuándo usarlo |
 | :--- | :--- | :--- |
-| **`/clarify`** | Cristaliza la intención socrática en 2 preguntas sencillas (A/B/C). | Antes de `/plan` o ante peticiones difusas. |
-| **`/profile`** | Calibra el tono, voz, entorno y nivel de tecnicismo a tu medida. | Al iniciar sesión o en cualquier momento. |
-| **`/rollback`** | Restaura el árbol al último punto de control verificado con SHA-256. Verifica el manifiesto entero antes de escribir y sella antes una red de seguridad. | Cuando quieras deshacer cambios con 1 frase. |
-| **`/preflight`** | Validador sintáctico léxico y clasificador de riesgo (`shell: false`). | Automáticamente antes de ejecutar comandos. |
-| **`/halt`** | Parada de emergencia inmediata que congela toda acción (*fail-closed*). | Si la IA intenta tocar zonas críticas. |
-| **`/unhalt`** | Desbloqueo humano deliberado de la parada de emergencia. | Para reanudar la ejecución segura. |
-| **`/attest`** | Genera evidencia formal **in-toto Statement v1 / DSSE**. | Al completar una misión certificada. |
+| **`/clarify`** | Freno socrático: exactamente 2 preguntas humanas con opciones A/B/C. | Antes de planificar, ante peticiones difusas. |
+| **`/profile`** | Calibra 5 dimensiones (profundidad, entrada, entorno, cadencia, autonomía) y las persiste. | Una vez por proyecto; ajústalo cuando quieras. |
+| **`/onboard`** | Indexa un repositorio: stack, puntos de entrada, cómo se prueba, qué no tocar. | Primer contacto con un código ajeno. |
+| **`/checkpoint`** | Sella un snapshot del árbol verificable con SHA-256. | Antes de refactors, migraciones o borrados masivos. |
+| **`/rollback`** | Restaura el último punto de control. Verifica el manifiesto entero antes de escribir y sella antes una red. | «Deshaz eso» — en cualquier idioma. |
+| **`/preflight`** | Clasificador léxico de riesgo. `ALLOW` / `NEEDS_HUMAN_REVIEW` / `DENY`. | Automáticamente, antes de cada comando. |
+| **`/verify`** | Verificación determinista por ejecución. Exit code 0 o no funcionaba. | Antes de afirmar que algo funciona. |
+| **`/debug`** | Cuatro fases: reproducir, causa raíz, corrección atómica, verificar. Sin parches ciegos. | Cuando algo falla. |
+| **`/review`** | Cuatro lentes (técnica, funcional, UX, arquitectura) con escala de severidad. | Antes de fusionar o promover. |
+| **`/compact`** | Sella un ancla corta que devuelve las reglas P0 al final de la ventana. | Sesiones largas, contra el 'lost-in-the-middle'. |
+| **`/remember`** | Memoria persistente: decisiones, convenciones, límites y correcciones. | Para no tener que repetirte nunca. |
+| **`/halt`** | Parada de emergencia. Bloquea toda llamada a herramienta, fail-closed. | Para congelar un agente desbocado, ya. |
+| **`/unhalt`** | Levantamiento humano y deliberado de la parada. | Para reanudar la ejecución segura. |
+| **`/attest`** | in-toto Statement v1 en sobre DSSE, verificable con cosign. | Al completar una misión certificada. |
 
 ---
 
@@ -67,10 +90,10 @@ Diseñados para coexistir **sin colisiones** con Antigravity, Claude Code y AG-K
 
 ## 🧪 Verificación y Suite de Pruebas
 
-Axion Protocol incluye **41 suites de prueba deterministas** listas para ejecutarse sin dependencias externas:
+Axion Protocol incluye **42 suites de prueba deterministas** listas para ejecutarse sin dependencias externas:
 
 ```bash
-# Ejecutar las 41 suites de prueba
+# Ejecutar las 42 suites de prueba
 node tests/run_all.js
 ```
 

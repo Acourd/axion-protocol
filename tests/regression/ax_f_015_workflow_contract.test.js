@@ -24,7 +24,7 @@ const DIR_CC = path.join(ROOT, '.claude', 'commands');
 const WORKFLOWS = [
   'clarify.md', 'profile.md', 'rollback.md', 'preflight.md',
   'halt.md', 'unhalt.md', 'attest.md', 'review.md',
-  'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md',
+  'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md', 'remember.md',
 ];
 
 const leer = (p) => fs.readFileSync(p, 'utf8');
@@ -104,7 +104,29 @@ for (const entrada of ['.agents/', '.claude/', 'CLAUDE.md', 'install.js', 'tools
 }
 console.log('✓ package.json publica la superficie de gobernanza completa');
 
-// --- 8. El hook está registrado en los dos runtimes ---
+// --- 8. Los manifiestos de plugin apuntan a algo que existe ---
+// Un manifiesto que cita un directorio inexistente rompe `/plugin install` sin romper
+// ninguna prueba: el fallo aparece en la maquina de quien intenta instalarlo.
+const plugin = JSON.parse(leer(path.join(ROOT, '.claude-plugin', 'plugin.json')));
+for (const clave of ['commands', 'hooks']) {
+  const relativo = String(plugin[clave]).replace(/^\.\//, '');
+  ok(fs.existsSync(path.join(ROOT, relativo)),
+    `plugin.json declara ${clave}: "${plugin[clave]}" y esa ruta no existe`);
+}
+const mercado = JSON.parse(leer(path.join(ROOT, '.claude-plugin', 'marketplace.json')));
+ok(mercado.plugins[0].version === plugin.version,
+  `marketplace.json v${mercado.plugins[0].version} y plugin.json v${plugin.version} divergen`);
+ok(pkg.version === plugin.version,
+  `package.json v${pkg.version} y plugin.json v${plugin.version} divergen: el plugin publicaria otra version`);
+ok((pkg.files || []).includes('.claude-plugin/'),
+  'package.json no publica .claude-plugin/: el manifiesto no viajaria en el tarball');
+// El hook del plugin se resuelve con CLAUDE_PLUGIN_ROOT, no con CLAUDE_PROJECT_DIR:
+// dentro de un plugin instalado, el proyecto y el plugin no son el mismo directorio.
+ok(leer(path.join(ROOT, '.claude-plugin', 'hooks.json')).includes('CLAUDE_PLUGIN_ROOT'),
+  'el hook del plugin debe resolverse contra CLAUDE_PLUGIN_ROOT');
+console.log('✓ manifiestos de plugin coherentes y con rutas existentes');
+
+// --- 9. El hook está registrado en los dos runtimes ---
 const hooksJson = leer(path.join(ROOT, '.agents', 'hooks.json'));
 ok(hooksJson.includes('validate-tool-call.mjs'), '.agents/hooks.json no registra el hook (Antigravity)');
 const settings = path.join(ROOT, '.claude', 'settings.json');
@@ -112,7 +134,7 @@ ok(fs.existsSync(settings), 'falta .claude/settings.json: el hook nunca se ejecu
 ok(leer(settings).includes('validate-tool-call.mjs'), '.claude/settings.json no registra el hook');
 console.log('✓ hook registrado en Antigravity y en Claude Code');
 
-// --- 9. Y bloquea de verdad ---
+// --- 10. Y bloquea de verdad ---
 // La comprobación que faltaba. El hook roto era sintácticamente impecable: solo se
 // delataba al ejecutarlo.
 const hook = path.join(ROOT, '.agents', 'hooks', 'validate-tool-call.mjs');
@@ -139,9 +161,9 @@ ok(crudo.status === 0 && /"permissionDecision"\s*:\s*"ask"/.test(crudo.stdout ||
   'una cadena de shell cruda debería pedir confirmación humana, no bloquearse ni pasar en silencio');
 console.log('✓ hook ejercitado: deniega destructivos, consulta shell crudo, deja pasar lo inocuo');
 
-// --- 10. El CLI responde a todo comando que los workflows anuncian ---
+// --- 11. El CLI responde a todo comando que los workflows anuncian ---
 const { SUBCOMANDOS } = require(path.join(ROOT, 'bin', 'axion.js'));
-for (const cmd of ['checkpoint', 'rollback', 'halt', 'resume', 'unhalt', 'verify', 'compact', 'profile', 'preflight', 'attest', 'check']) {
+for (const cmd of ['checkpoint', 'rollback', 'halt', 'resume', 'unhalt', 'verify', 'compact', 'memory', 'profile', 'preflight', 'attest', 'check']) {
   ok(Object.prototype.hasOwnProperty.call(SUBCOMANDOS, cmd),
     `bin/axion.js no expone "${cmd}", anunciado por los workflows`);
   ok(fs.existsSync(path.join(ROOT, SUBCOMANDOS[cmd].script)),

@@ -1,0 +1,28 @@
+{
+  "name": "axion-protocol",
+  "version": "1.2.0-beta.1",
+  "description": "Runtime de gobernanza fail-closed para agentes: 14 comandos, puerta PreToolUse con clasificacion lexica, parada de emergencia, reversion determinista verificada con SHA-256, aprobaciones Ed25519 y atestaciones in-toto v1 en sobre DSSE. Cero dependencias.",
+  "author": {
+    "name": "Adria",
+    "url": "https://github.com/Acourd"
+  },
+  "homepage": "https://github.com/Acourd/axion-protocol",
+  "repository": "https://github.com/Acourd/axion-protocol",
+  "license": "Apache-2.0",
+  "keywords": [
+    "governance",
+    "fail-closed",
+    "ai-governance",
+    "agentic",
+    "ed25519",
+    "in-toto",
+    "dsse",
+    "attestation",
+    "audit-trail",
+    "rollback",
+    "killswitch",
+    "human-in-the-loop"
+  ],
+  "commands": "./.claude/commands/",
+  "hooks": "./.claude-plugin/hooks.json"
+}

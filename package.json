@@ -42,6 +42,7 @@
     "examples/",
     ".agents/",
     ".claude/",
+    ".claude-plugin/",
     "install.js",
     "CLAUDE.md",
     "GOVERNANCE.md",

@@ -25,17 +25,33 @@ ENTENDER ──► PLANIFICAR ──► GATE ──► TEST ──► CONSTRUIR 
 
 ---
 
-## 🚀 Quick Start (10 Seconds)
+## 🚀 Quick Start
 
-Requires **Node.js 20**+. Run directly via `npx` or inject into any existing project:
+Requires **Node.js 20+**. Zero dependencies — only Node built-ins.
+
+### As a Claude Code plugin
 
 ```bash
-# Run CLI directly
-npx axion-protocol
-
-# Inject governance rules into your current project
-npx axion-protocol init
+/plugin marketplace add Acourd/axion-protocol
+/plugin install axion-protocol
 ```
+
+The 14 commands and the `PreToolUse` gate become available immediately.
+
+### As an npm package (Antigravity, Cursor, VS Code, Codex, CI)
+
+```bash
+# Inject governance into the current project
+npx axion-protocol init
+
+# Verify it actually landed
+npx axion check
+```
+
+`init` writes to `.agents/` (Antigravity), `.claude/` (Claude Code), `tools/`,
+`policies/` and `schemas/`. It never overwrites without a SHA-256 backup, it refuses to
+claim success on an incomplete payload, and it leaves an existing `.claude/settings.json`
+untouched — telling you what to add instead.
 
 ---
 
@@ -45,13 +61,20 @@ Axion commands are designed for **zero-collision synergy** with Antigravity, Cla
 
 | Command | Purpose | When to use |
 | :--- | :--- | :--- |
-| **`/clarify`** | Socratic intent crystallization in 2 plain questions (A/B/C). | Before `/plan` or on vague requests. |
-| **`/profile`** | Adapts AI tone, depth, and verbosity to your personal profile. | At session start or anytime. |
-| **`/rollback`** | Restores the tree to the last SHA-256 verified checkpoint. Verifies the whole manifest before writing and seals a safety checkpoint first. | When changes need to be undone. |
-| **`/preflight`** | Lexical syntax validator and risk classifier (`shell: false`). | Automatically before running terminal tools. |
-| **`/halt`** | Emergency killswitch blocking all agent actions (*fail-closed*). | To immediately freeze an agent. |
-| **`/unhalt`** | Deliberate human release of the emergency stop. | To resume safe execution. |
-| **`/attest`** | Generates verifiable **in-toto Statement v1 / DSSE** evidence. | When completing a certified mission. |
+| **`/clarify`** | Socratic intent gate: exactly 2 plain questions with A/B/C options. | Before planning, on vague requests. |
+| **`/profile`** | Calibrates 5 dimensions (depth, input, environment, cadence, autonomy) and persists them. | Once per project; adjust anytime. |
+| **`/onboard`** | Indexes a repository: stack, entry points, how it is tested, what not to touch. | First contact with a codebase. |
+| **`/checkpoint`** | Seals a SHA-256 verifiable snapshot of the tree. | Before refactors, migrations, mass deletes. |
+| **`/rollback`** | Restores the last verified checkpoint. Verifies the whole manifest before writing; seals a safety net first. | "Undo that" — in any language. |
+| **`/preflight`** | Lexical risk classifier. `ALLOW` / `NEEDS_HUMAN_REVIEW` / `DENY`. | Automatically, before every terminal call. |
+| **`/verify`** | Deterministic verification by execution. Exit code 0 or it did not work. | Before claiming anything works. |
+| **`/debug`** | Four phases: reproduce, root cause, atomic fix, verify. No blind patches. | When something fails. |
+| **`/review`** | Four lenses (technical, functional, UX, architecture) with severity scale. | Before merging or promoting. |
+| **`/compact`** | Seals a short context anchor that returns P0 rules to the end of the window. | Long sessions, against 'lost-in-the-middle'. |
+| **`/remember`** | Persistent project memory: decisions, conventions, limits, corrections. | So you never have to repeat yourself. |
+| **`/halt`** | Emergency killswitch. Blocks every tool call, fail-closed. | To freeze a runaway agent, now. |
+| **`/unhalt`** | Deliberate human release of the stop. | To resume safe execution. |
+| **`/attest`** | in-toto Statement v1 in a DSSE envelope, verifiable with cosign. | On completing a certified mission. |
 
 ---
 
@@ -67,15 +90,15 @@ Axion commands are designed for **zero-collision synergy** with Antigravity, Cla
 
 ## 🧪 Verification & Test Suite
 
-Axion Protocol includes **41 deterministic test suites** out of the box with zero external dependencies:
+Axion Protocol includes **42 deterministic test suites** out of the box with zero external dependencies:
 
 ```bash
-# Run all 41 test suites
+# Run all 42 test suites
 node tests/run_all.js
 ```
 
 <details>
-<summary><strong>📋 View all 41 Test Suites Included</strong></summary>
+<summary><strong>📋 View all 42 Test Suites Included</strong></summary>
 
 ### Funcional
 - `adversarial.test.js`
@@ -100,6 +123,7 @@ node tests/run_all.js
 - `ax_f_014_package_contract.test.js`
 - `ax_f_015_workflow_contract.test.js`
 - `ax_f_016_tool_contracts.test.js`
+- `ax_f_017_memory.test.js`
 
 ### Phase E (Criptografía y Gobernanza)
 - `approval_ed25519.test.js`

@@ -1,0 +1,35 @@
+{
+  "name": "axion-protocol",
+  "owner": {
+    "name": "Adria",
+    "url": "https://github.com/Acourd"
+  },
+  "metadata": {
+    "description": "Gobernanza fail-closed para operaciones de IA agentiva: freno de intencion, clasificacion de riesgo antes de la terminal, parada de emergencia y evidencia criptografica verificable por terceros."
+  },
+  "plugins": [
+    {
+      "name": "axion-protocol",
+      "source": "./",
+      "description": "14 comandos de gobernanza, puerta PreToolUse fail-closed, reversion determinista verificada antes de escribir, y atestaciones in-toto v1 comprobables con cosign o cualquier herramienta SLSA. Sin dependencias externas.",
+      "version": "1.2.0-beta.1",
+      "author": {
+        "name": "Adria",
+        "url": "https://github.com/Acourd"
+      },
+      "homepage": "https://github.com/Acourd/axion-protocol",
+      "repository": "https://github.com/Acourd/axion-protocol",
+      "license": "Apache-2.0",
+      "keywords": [
+        "governance",
+        "fail-closed",
+        "rollback",
+        "killswitch",
+        "attestation",
+        "ed25519",
+        "in-toto",
+        "audit-trail"
+      ]
+    }
+  ]
+}

@@ -28,6 +28,20 @@ Auditoría de arnés completa. La versión anterior pasaba sus 38 suites en verd
 - `tests/regression/ax_f_015_workflow_contract.test.js` — el invariante que faltaba: cada `node tools/X.js` citado en un prompt existe, el instalador lo copia, el tarball lo publica, las dos superficies de comandos no divergen, y el hook se dispara de verdad contra `rm -rf /`.
 - `tests/phase_e/checkpoint_restore.test.js` — 20 comprobaciones sobre el motor de reversión, centradas en que se **niegue** a restaurar mal.
 
+### Added (tercera pasada: paridad de distribución y memoria)
+
+- **Distribución como plugin de Claude Code.** `.claude-plugin/plugin.json`, `marketplace.json` y `hooks.json` (resueltos contra `CLAUDE_PLUGIN_ROOT`, no contra el directorio del proyecto: dentro de un plugin instalado no son el mismo sitio). Instalación en dos líneas: `/plugin marketplace add Acourd/axion-protocol` y `/plugin install axion-protocol`. Era la vía que ECC y SuperClaude ya ofrecían y Axion no.
+- **`/remember` y `tools/memory.js` — memoria persistente del proyecto**, la única brecha real que quedaba frente a AG-Kit. Cuatro tipos y ninguno es «notas»: `decision` (exige `--porque`: una decisión sin razón no se puede revisar), `convencion`, `limite` y `correccion`. El identificador sale del contenido, así que el mismo hecho guardado dos veces se actualiza en vez de duplicarse. Las entradas más consecuentes viajan al ancla de `/compact` ordenadas por el coste de ignorarlas —primero los límites, luego las correcciones—, así que la memoria sobrevive justo a la compactación, que es cuando más falta hace.
+- **CI en cuatro trabajos, no en uno.** Pasar las suites nunca demostró que el producto funcionara: la beta.0 tenía 38/38 en verde con el hook muerto y un tarball sin gobernanza. Ahora, además de las suites en Node 20/22/24: las puertas (salud, vibeguard, el hook disparado contra `rm -rf /`, la parada de emergencia bloqueando, la reversión restaurando y la cadena de atestación cerrando), el producto instalado desde el tarball real en Linux **y Windows**, y la coherencia de los manifiestos de distribución.
+- `tests/regression/ax_f_017_memory.test.js` — 29 comprobaciones, más sobre lo que la memoria **rechaza** que sobre lo que acepta: una memoria que admite todo se vuelve un vertedero que deja de caber en el ancla, y entonces el agente la ignora entera.
+
+### Fixed (tercera pasada)
+
+- El README documentaba 7 de los 14 comandos. Ahora están los 14, con propósito y momento de uso.
+- `package.json` no publicaba `.claude-plugin/`: el manifiesto no habría viajado en el tarball.
+
+---
+
 ### Fixed (segunda pasada: barrido de las 31 herramientas)
 
 - **`npx axion init` instalaba gobernanza pero `axion test` fallaba 2/40 en todo proyecto consumidor.** Dos suites de regresión leían `index.html` y `script.js`, que —correctamente— no viajan en el paquete. Ahora detectan el contexto por la presencia de `.git` y se saltan solo esa mitad; dentro del repositorio siguen siendo obligatorias, así que borrar la portada las rompe igual.
