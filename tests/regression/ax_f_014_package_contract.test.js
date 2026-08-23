@@ -59,9 +59,20 @@ console.log('=== AX-F-014 - contrato del paquete ===\n');
   }
   ok(`los ${Object.keys(pkg.bin || {}).length} ejecutables declarados existen y llevan shebang`);
 
+  // Los patrones de negacion (`!docs/site/`) tambien tienen que apuntar a algo real, o la
+  // exclusion no protege de nada y nadie se entera el dia que la ruta vuelve con otro
+  // nombre. Pero eso solo se puede exigir en el repositorio: dentro del paquete instalado
+  // la ruta excluida esta ausente precisamente porque la exclusion funciono, asi que
+  // comprobarla alli convertiria el exito en un fallo.
+  const EN_REPOSITORIO = fs.existsSync(path.join(ROOT, '.git'));
   for (const entrada of pkg.files || []) {
-    const abs = path.join(ROOT, entrada.replace(/\/$/, ''));
-    assert.ok(fs.existsSync(abs), `files declara "${entrada}", que no existe`);
+    const negacion = entrada.startsWith('!');
+    if (negacion && !EN_REPOSITORIO) continue;
+    const rel = entrada.replace(/^!/, '').replace(/\/$/, '');
+    assert.ok(fs.existsSync(path.join(ROOT, rel)),
+      negacion
+        ? `files excluye "${entrada}", pero esa ruta no existe en el repositorio: la exclusion sobra o quedo obsoleta`
+        : `files declara "${entrada}", que no existe`);
   }
   assert.ok(fs.existsSync(path.join(ROOT, pkg.main)), 'el main declarado debe existir');
   ok(`las ${(pkg.files || []).length} entradas de files existen`);

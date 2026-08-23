@@ -2,6 +2,30 @@
 
 Todos los cambios relevantes de Axion Protocol se documentarán aquí.
 
+## [1.2.0-beta.1] — 2026-08-23 · revisión posterior a la purga
+
+Verificación de la purga de `phases/` y de la reubicación de la portada a `docs/site/`, más los efectos de segundo orden que ninguna de las dos cosas dejaba a la vista.
+
+### Verificado
+
+- La purga eliminó **605 archivos, todos dentro de `phases/`** y ninguno fuera. Ningún documento, herramienta, prueba ni manifiesto dependía de ese directorio. La propia revisión de componentes del repositorio (`archive_manifest/zetprog_component_review.csv`) ya había decidido `historical_evidence → keep_outside_active_repository`: la purga ejecutó una decisión registrada y sin aplicar.
+- La reubicación de la portada actualizó `ax_f_008` y `ax_f_013` en lugar de debilitarlas. Falsificado: escondiendo `docs/site/index.html` ambas suites se ponen en rojo, y vuelven a verde al restaurarla.
+
+### Fixed
+
+- **`sha256-manifest.txt` no declaraba su alcance.** 70 entradas, 32 sin cuadrar, y ni una línea que explicara si eso era deriva normal o corrupción. Un desajuste que nadie sabe interpretar se acaba ignorando, y entonces el manifiesto deja de ser evidencia. Ahora declara qué congela y a qué herramienta acudir para sellar el árbol actual.
+- **`phase-e-integrity.yaml` señalaba a `09_candidate_manifest.json` como «la forma de verificar el corpus ACTUAL»**, cuando 29 de sus entradas ya no coincidían y 3 apuntaban a los archivos movidos. Remite ahora a `tools/evidence_hasher.js`, que calcula sobre lo que hay en disco.
+- **`evidence_hasher.js` emitía los digests en MAYÚSCULAS**, contra `sha256sum`, git, in-toto y el resto del propio repositorio. `workflow_runner.js` llevaba dos `.toLowerCase()` tapándolo. Un operador que comparase ambas salidas veía un desajuste inexistente, que es el peor defecto posible en una herramienta cuyo único trabajo es permitir comparaciones.
+- **La portada viajaba en el paquete publicado.** Al mudarse a `docs/site/` quedó dentro de `docs/`, que sí se publica: cada consumidor se descargaba una página web que no va a abrir. Excluida con `!docs/site/`; los 8 documentos `.md` siguen viajando.
+- Dos prompts ilustraban con `phases/`, que ya no existe. Un ejemplo que cita una ruta fantasma enseña al agente a inventar rutas.
+
+### Added
+
+- `tests/regression/ax_f_018_evidence_scope.test.js` — la regla que impide que esto vuelva: **o el artefacto de integridad se declara histórico, o cuadra con el árbol**. No hay tercera opción, y menos la de callarse. Comprueba además que el verificador vivo funcione, que la portada quede fuera del tarball y que ningún workflow cite rutas inexistentes.
+- `ax_f_014` valida también los patrones de negación de `files[]`: excluir una ruta que ya no existe es una exclusión que no protege de nada.
+
+---
+
 ## [1.2.0-beta.1] — 2026-08-23
 
 Auditoría de arnés completa. La versión anterior pasaba sus 38 suites en verde mientras varias de sus salvaguardas más visibles no se ejecutaban nunca. Esta versión cierra esa brecha y añade las pruebas que la habrían impedido.

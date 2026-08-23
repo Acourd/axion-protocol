@@ -11,9 +11,16 @@
 # YA NO COINCIDEN con el contenido actual, y eso es lo correcto: si coincidieran,
 # significaria que alguien reescribio el registro para que luciera limpio.
 #
-# Para verificar el corpus ACTUAL usa 09_candidate_manifest.json, que sella los 98
-# ficheros del candidato de Fase G. La integridad de ese manifiesto la aporta el
-# propio historial de git: un manifiesto no puede contener su propio hash.
+# 09_candidate_manifest.json y sha256-manifest.txt son igualmente historicos: sellan el
+# candidato de Fase G, no el arbol de hoy. Tampoco coinciden ya, y por el mismo motivo.
+#
+# Para sellar el corpus ACTUAL hay una herramienta viva, que calcula sobre lo que hay en
+# disco en este instante en vez de sobre una foto de hace meses:
+#
+#   node tools/evidence_hasher.js <fichero_1> [fichero_2 ...]
+#
+# La integridad de estos registros la aporta el propio historial de git: un manifiesto
+# no puede contener su propio hash.
 
 integrity_snapshot:
   kind: 'historical_checkpoint'

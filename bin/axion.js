@@ -63,7 +63,7 @@ const USO = [
   '  axion halt "el agente esta tocando produccion"',
   '  axion checkpoint create pre-refactor-auth',
   '  axion rollback latest',
-  '  axion memory add limite "no tocar phases/"',
+  '  axion memory add limite "no reescribir los manifiestos historicos"',
   '  axion test',
   '',
   'Una cadena de shell cruda nunca obtiene ALLOW: lo mejor a lo que puede aspirar es',

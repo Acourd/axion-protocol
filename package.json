@@ -53,7 +53,8 @@
     "README.es.md",
     "09_candidate_manifest.json",
     "sha256-manifest.txt",
-    "phase-e-integrity.yaml"
+    "phase-e-integrity.yaml",
+    "!docs/site/"
   ],
   "repository": {
     "type": "git",

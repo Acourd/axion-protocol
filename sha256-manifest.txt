@@ -1,3 +1,22 @@
+# Manifiesto SHA-256 del candidato de Fase G — REGISTRO HISTORICO, no sello vivo.
+#
+# ALCANCE. Congela el corpus tal y como estaba al cerrar la Fase G. El arbol ha
+# seguido evolucionando desde entonces, asi que varios de estos hashes YA NO
+# COINCIDEN, y eso es lo correcto: si coincidieran todos, significaria que alguien
+# reescribio el registro para que luciera limpio.
+#
+# Un desajuste aqui NO es corrupcion. Para sellar el arbol ACTUAL usa la herramienta
+# viva, que calcula sobre lo que hay en disco en este momento:
+#
+#   node tools/evidence_hasher.js <fichero_1> [fichero_2 ...]
+#
+# La integridad de este fichero la aporta el historial de git: un manifiesto no
+# puede contener su propio hash.
+#
+# Tres rutas de este registro (index.html, script.js, style.css) se movieron a
+# docs/site/ en el commit 2eae9c3. Se conservan tal cual estaban: un registro
+# historico se lee junto al historial que lo explica, no se reescribe.
+#
 7838fc0bb3c1a978cb0b853297941af2db9b688e365f4c9d694a9f585a3c564b  .agents/AGENTS.md
 d3f07090a66b5f4a662a1b625ee07217b10e45ac4a6f3bcb91b2ed3dc5e7b1b3  .claude/CLAUDE.md
 8f00d928468b92b525dacc975d82385c512f47305b581846fe530deee3e0471a  adapters/prompt_bridge.json

@@ -17,7 +17,7 @@ description: Guarda en la memoria persistente del proyecto una decisión, conven
 |---|---|---|
 | `decision` | Una decisión tomada **y su porqué**. | *"El corpus es CommonJS — porque todo usa `require()` y marcarlo ESM lo rompería de golpe."* |
 | `convencion` | Una regla del proyecto que seguir. | *"Los mensajes al usuario van en su idioma; los identificadores, en inglés."* |
-| `limite` | Zona intocable o compatibilidad que preservar. | *"No tocar `phases/`: es evidencia histórica sellada."* |
+| `limite` | Zona intocable o compatibilidad que preservar. | *"No tocar `phase-e-integrity.yaml`: es un registro histórico y sus hashes no deben coincidir."* |
 | `correccion` | Un error del agente y cómo actuar en adelante. | *"Nunca citar un recuento de suites de memoria; solo el que imprima la ejecución."* |
 
 ---

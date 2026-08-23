@@ -7,6 +7,14 @@
  * salidas de comandos y snapshots de estado.
  */
 
+/*
+ * Nota sobre el formato de los digests: minuscula hexadecimal, como sha256sum, git,
+ * in-toto y el resto de este repositorio. Antes se emitian en mayuscula, y workflow_runner
+ * tenia que llamar a .toLowerCase() dos veces para poder encadenarlos. Un operador que
+ * comparase esta salida con la de sha256sum veia un desajuste que no existia, que es el
+ * peor defecto posible en una herramienta cuyo unico trabajo es permitir comparaciones.
+ */
+
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -18,7 +26,7 @@ function hashFile(filePath) {
     const fileBuffer = fs.readFileSync(filePath);
     const hashSum = crypto.createHash('sha256');
     hashSum.update(fileBuffer);
-    return hashSum.digest('hex').toUpperCase();
+    return hashSum.digest('hex');
   } catch (err) {
     return null;
   }
@@ -27,7 +35,7 @@ function hashFile(filePath) {
 function hashString(content) {
   const hashSum = crypto.createHash('sha256');
   hashSum.update(content, 'utf8');
-  return hashSum.digest('hex').toUpperCase();
+  return hashSum.digest('hex');
 }
 
 /**
@@ -114,7 +122,7 @@ function createEvidenceManifest(options) {
     source: taskId,
     location: process.cwd().split(path.sep).join('/'),
     hash_algorithm: 'SHA-256',
-    hash: hashCanonical(payload).toUpperCase(),
+    hash: hashCanonical(payload),
     retention_class: 'OPERATIONAL',
     restoration_instructions: 'Recalcular el SHA-256 de cada archivo listado en evidence.files y compararlo con el valor registrado. Un manifiesto con complete:false no acredita cobertura total.'
   };
@@ -137,8 +145,8 @@ function createBoundEvidenceManifest(options) {
   const manifest = createEvidenceManifest({ ...options, binding });
   return Object.freeze({
     ...manifest,
-    binding_hash: hashCanonical(binding).toUpperCase(),
-    hash: hashCanonical(manifest.evidence).toUpperCase(),
+    binding_hash: hashCanonical(binding),
+    hash: hashCanonical(manifest.evidence),
   });
 }
 
