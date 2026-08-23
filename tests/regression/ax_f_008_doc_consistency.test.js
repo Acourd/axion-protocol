@@ -39,19 +39,22 @@ const esExperimental = /EXPERIMENTAL/.test(gobernanza) && /No adquiere enforceme
 
 // La portada no viaja en el paquete publicado -y no debe: un consumidor no instala una
 // landing page-. Exigirla igualmente hacia fallar `axion test` en todo proyecto instalado.
-// El discriminante es .git, que existe en el repositorio y nunca en un paquete de npm.
-// Dentro del repositorio la portada es obligatoria, asi que borrarla sigue rompiendo esto.
+// El discriminante es .git. En el repositorio puede residir en docs/site/ o en la raíz.
 const EN_REPOSITORIO = fs.existsSync(path.join(ROOT, '.git'));
+const SITE_DIR = fs.existsSync(path.join(ROOT, 'docs', 'site', 'index.html'))
+  ? path.join(ROOT, 'docs', 'site')
+  : ROOT;
+
 if (EN_REPOSITORIO) {
   for (const rel of ['index.html', 'script.js']) {
-    if (!fs.existsSync(path.join(ROOT, rel))) {
-      conflictos.push(`falta ${rel} en el repositorio: la auditoria de la portada quedaria sin objeto`);
+    if (!fs.existsSync(path.join(SITE_DIR, rel))) {
+      conflictos.push(`falta ${rel} en ${SITE_DIR}: la auditoria de la portada quedaria sin objeto`);
     }
   }
 }
 
-const index = EN_REPOSITORIO && fs.existsSync(path.join(ROOT, 'index.html'))
-  ? leer(path.join(ROOT, 'index.html'))
+const index = EN_REPOSITORIO && fs.existsSync(path.join(SITE_DIR, 'index.html'))
+  ? leer(path.join(SITE_DIR, 'index.html'))
   : null;
 if (index !== null) {
   for (const afirmacion of ['VERIFIED_STABLE', 'GOBERNANZA_ACTIVA', 'Todos los motores verificados en estado PASS']) {

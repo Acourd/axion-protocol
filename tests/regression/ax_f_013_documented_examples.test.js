@@ -100,14 +100,23 @@ if (!EN_REPOSITORIO) {
   console.log('PASS AX-F-013 — la CLI documentada se comporta como se documenta.');
   process.exit(0);
 }
-for (const rel of ['README.md', 'README.es.md', 'script.js', 'index.html']) {
+
+const SITE_DIR = fs.existsSync(path.join(ROOT, 'docs', 'site', 'index.html'))
+  ? path.join(ROOT, 'docs', 'site')
+  : ROOT;
+
+for (const rel of ['README.md', 'README.es.md']) {
   assert.ok(fs.existsSync(path.join(ROOT, rel)),
     `${rel} falta en el repositorio: la comprobacion de superficies publicas quedaria sin objeto`);
 }
+for (const rel of ['script.js', 'index.html']) {
+  assert.ok(fs.existsSync(path.join(SITE_DIR, rel)),
+    `${rel} falta en ${SITE_DIR}: la comprobacion de superficies publicas quedaria sin objeto`);
+}
 
 const readme = leer('README.md');
-const script = leer('script.js');
-const index = leer('index.html');
+const script = fs.readFileSync(path.join(SITE_DIR, 'script.js'), 'utf8');
+const index = fs.readFileSync(path.join(SITE_DIR, 'index.html'), 'utf8');
 
 // Si una portada ensena la CLI con una cadena cruda, debe advertir de que eso no basta.
 // Se comprueban las dos portadas y en los dos idiomas.
