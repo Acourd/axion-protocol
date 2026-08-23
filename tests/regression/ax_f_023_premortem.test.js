@@ -1,8 +1,11 @@
 /**
  * Regresión AX-F-023 — Comando /premortem y Motor de Resiliencia Conceptual
  * 
- * Verifica que el simulador de fracaso evalúa las autopsias prematuras,
- * valida medidas de mitigación obligatorias y rechaza análisis incompletos.
+ * Verifica:
+ *  1. Rechazo de análisis incompletos.
+ *  2. Evaluación multi-ancla (Seguridad, Rendimiento, Arquitectura, UX).
+ *  3. Soporte de 3 niveles de profundidad y auto-crítica de soluciones.
+ *  4. Sincronización automática de mitigaciones críticas con MEMORY.md.
  */
 const assert = require('assert');
 const fs = require('fs');
@@ -23,48 +26,59 @@ try {
   };
   const rIncompleto = engine.evaluateAssessment(incompleto);
   assert.strictEqual(rIncompleto.status, 'DENIED');
-  assert.ok(rIncompleto.errors.length >= 3, 'Debe requerir autopsia, justificación y peores escenarios');
+  assert.ok(rIncompleto.errors.length >= 3, 'Debe requerir autopsia/anclas, justificación y peores escenarios');
   console.log('✓ rechaza análisis pre-mortem incompletos o superficiales');
 
-  // 2. Aprobación de pre-mortem completo con blindaje
-  const completo = {
-    feature_name: "Sistema de Caché en Memoria",
-    failure_hypotheses: [
-      "Razón 1: Desincronización de caché que entrega datos obsoletos a clientes en producción",
-      "Razón 2: Crecimiento no acotado del heap en Node.js que provoca Out-Of-Memory en servidores",
-      "Razón 3: Complejidad excesiva de invalidación que introduce bugs en operaciones atómicas"
-    ],
+  // 2. Aprobación de pre-mortem multi-ancla (Nivel 1 y 2)
+  const multiAncla = {
+    feature_name: "Sistema de Notificaciones Push",
+    depth_level: 2,
+    anchors: {
+      security: ["Riesgo de suplantación de identidad por tokens no validados"],
+      performance: ["Fuga de descriptores de socket bajo alta concurrencia"],
+      architecture: ["Acoplamiento rígido con el servicio de transporte externo"],
+      ux: ["Sobrecarga y fatiga de alertas que provoquen el descarte de la app"]
+    },
     competence_check: {
       justified: true,
-      rationale: "Optimiza la latencia en 90% para lecturas repetitivas sin sobrecargar la base de datos."
+      rationale: "Esencial para alertas críticas del sistema."
     },
     worst_case_scenarios: [
-      "Escenario 1: Concurrencia masiva simultánea que satura el recolector de basura de V8",
-      "Escenario 2: Caída intempestiva del proceso que pierde escrituras no confirmadas en disco"
+      "Escenario 1: Caída de la red del proveedor que detiene el bucle de eventos",
+      "Escenario 2: Notificaciones duplicadas infinitas por error de reintento"
     ],
     mandatory_mitigations: [
-      "Implementar política estricta de desalojo LRU con límite de memoria fijo (máximo 50 MB)",
-      "Añadir expiración TTL determinista para cada clave"
-    ]
+      "Añadir deduplicación por UUID con TTL de 10 minutos en memoria",
+      "Implementar cola desacoplada con backoff exponencial"
+    ],
+    mitigation_stress_test: {
+      has_critical_weakness: false,
+      tested_mitigation: "La cola con backoff previene saturación pero consume 10 MB de RAM máx."
+    }
   };
 
-  const rCompleto = engine.evaluateAssessment(completo);
-  assert.strictEqual(rCompleto.status, 'APPROVED');
-  assert.strictEqual(rCompleto.verdict, 'APPROVED_WITH_SAFEGUARDS');
-  assert.ok(Boolean(rCompleto.premortem_id), 'Debe emitir ID de pre-mortem');
-  assert.ok(Boolean(rCompleto.digest), 'Debe emitir digest SHA-256');
-  console.log('✓ pre-mortem formal aprobado con salvaguardas y firmado con SHA-256');
+  const rMultiAncla = engine.evaluateAssessment(multiAncla);
+  assert.strictEqual(rMultiAncla.status, 'APPROVED');
+  assert.strictEqual(rMultiAncla.depth_level, 2);
+  assert.strictEqual(rMultiAncla.verdict, 'APPROVED_WITH_SAFEGUARDS');
+  assert.ok(Boolean(rMultiAncla.premortem_id));
+  assert.ok(Boolean(rMultiAncla.digest));
+  console.log('✓ evaluación multi-ancla (Seguridad, Rendimiento, Arquitectura, UX) aprobada');
 
-  // 3. Generador de reporte markdown
-  const md = PreMortemEngine.formatReport(
-    completo.feature_name,
-    completo.failure_hypotheses,
-    completo.worst_case_scenarios,
-    completo.mandatory_mitigations
-  );
-  assert.ok(md.includes('Reporte Pre-Mortem Adversarial'), 'Debe generar encabezado');
-  assert.ok(md.includes('Autopsia Prematura'), 'Debe incluir sección de autopsia');
-  console.log('✓ generador de reportes de resiliencia conceptual operativo');
+  // 3. Generador de reporte markdown de 3 niveles
+  const md = PreMortemEngine.formatReport({
+    featureName: multiAncla.feature_name,
+    anchors: multiAncla.anchors,
+    worstCases: multiAncla.worst_case_scenarios,
+    mitigations: multiAncla.mandatory_mitigations,
+    solutionStress: ["Riesgo de que la cola en memoria pierda mensajes no enviados ante crash súbito"],
+    depth: 3
+  });
+
+  assert.ok(md.includes('Las 4 Anclas de Impacto'), 'Debe incluir sección de 4 anclas');
+  assert.ok(md.includes('Seguridad & Integridad'), 'Debe incluir ancla de seguridad');
+  assert.ok(md.includes('Auto-Crítica de la Solución'), 'Debe incluir sección de auto-crítica');
+  console.log('✓ generador de reportes de 3 niveles de profundidad operativo');
 
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });

@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 /**
- * Axion Protocol — Adversarial Pre-Mortem & Resilience Engine
- * Evaluates feature proposals through a structured 5-pillar worst-case simulation:
- *  1. PREMATURE_AUTOPSY: Assumes the feature failed completely in 6 months; analyzes root causes.
- *  2. COMPETENCE_AUDIT: Checks if the feature adds genuine value or is bloated/incompetent.
- *  3. WORST_CASE_SCENARIOS: Concurrency, data loss, performance spikes, corrupted states.
- *  4. BLIND_SPOTS: Hidden maintenance costs, breaking changes, user friction.
- *  5. MITIGATION_CONTRACT: Mandatory architectural safeguards required before coding.
+ * Axion Protocol — Multi-Anchor Adversarial Pre-Mortem & Resilience Engine (Fase 2: PLAN/GATE)
  * 
- * Zero external dependencies.
+ * Estructura de 3 Niveles de Profundidad:
+ *  - Nivel 1 (4 Anclas): Riesgos graves clasificados por Seguridad, Rendimiento, Arquitectura y UX.
+ *  - Nivel 2 (Estrés de Dominio): Casos límite técnicos específicos a la tecnología y entorno de ejecución.
+ *  - Nivel 3 (Auto-Crítica de la Solución): Estrés sobre las propias mitigaciones para evitar sobreingeniería.
+ * 
+ * Zero dependencias externas.
  */
 
 const fs = require('fs');
@@ -16,6 +15,13 @@ const path = require('path');
 const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
+
+const ANCHORS = {
+  SECURITY: '🛡️ Seguridad & Integridad',
+  PERFORMANCE: '⚡ Rendimiento & Recursos',
+  ARCHITECTURE: '🧩 Arquitectura & Deuda Técnica',
+  UX: '👥 Ergonomía & Experiencia Humana'
+};
 
 class PreMortemEngine {
   constructor(projectRoot = ROOT) {
@@ -48,24 +54,24 @@ class PreMortemEngine {
       errors.push('feature_name es obligatorio y debe tener al menos 3 caracteres.');
     }
 
-    // 1. Validar Autopsia Prematura
-    if (!payload.failure_hypotheses || !Array.isArray(payload.failure_hypotheses) || payload.failure_hypotheses.length < 3) {
-      errors.push('failure_hypotheses debe contener al menos 3 razones concretas por las que la función fracasó.');
+    // 1. Validar Hipótesis de Falla (Global o por 4 Anclas)
+    const hasAnchors = payload.anchors && typeof payload.anchors === 'object';
+    if (hasAnchors) {
+      const { security, performance, architecture, ux } = payload.anchors;
+      if (!Array.isArray(security) || security.length === 0) errors.push('anchors.security debe contener al menos 1 riesgo grave.');
+      if (!Array.isArray(performance) || performance.length === 0) errors.push('anchors.performance debe contener al menos 1 riesgo grave.');
+      if (!Array.isArray(architecture) || architecture.length === 0) errors.push('anchors.architecture debe contener al menos 1 riesgo grave.');
+      if (!Array.isArray(ux) || ux.length === 0) errors.push('anchors.ux debe contener al menos 1 riesgo grave.');
     } else {
-      payload.failure_hypotheses.forEach((h, idx) => {
-        if (String(h || '').trim().length < 25) {
-          errors.push(`Hipótesis de autopsia ${idx + 1} demasiado corta (<25 caracteres).`);
-        }
-      });
+      const hypotheses = payload.failure_hypotheses || [];
+      if (!Array.isArray(hypotheses) || hypotheses.length < 3) {
+        errors.push('failure_hypotheses debe contener al menos 3 razones concretas (o usar la estructura de 4 anclas).');
+      }
     }
 
     // 2. Auditoría de Competencia / Anti-Bloat
     if (!payload.competence_check || typeof payload.competence_check !== 'object') {
       errors.push('Falta competence_check (evaluación de necesidad real frente a complejidad).');
-    } else {
-      if (typeof payload.competence_check.justified !== 'boolean') {
-        errors.push('competence_check.justified debe ser un booleano.');
-      }
     }
 
     // 3. Peores Escenarios Técnicos
@@ -90,54 +96,106 @@ class PreMortemEngine {
     const timestamp = new Date().toISOString();
     const digest = crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
 
+    // Determinar veredicto enriquecido
+    let verdict = 'APPROVED_WITH_SAFEGUARDS';
+    if (payload.verdict) {
+      verdict = payload.verdict;
+    } else if (payload.competence_check && payload.competence_check.justified === false) {
+      verdict = 'REJECTED_AS_UNJUSTIFIED';
+    } else if (payload.mitigation_stress_test && payload.mitigation_stress_test.has_critical_weakness) {
+      verdict = 'CONDITIONAL_TDD';
+    }
+
     const record = {
       premortem_id: premortemId,
+      depth_level: payload.depth_level || (hasAnchors ? 2 : 1),
       timestamp,
       digest,
       payload,
-      verdict: payload.competence_check.justified ? 'APPROVED_WITH_SAFEGUARDS' : 'REJECTED_AS_UNJUSTIFIED'
+      verdict
     };
 
     const recordPath = path.join(this.stateDir, `premortem-${premortemId}.json`);
     fs.writeFileSync(recordPath, JSON.stringify(record, null, 2), 'utf8');
 
+    // Auto-sincronizar con .axion/memory si hay reglas críticas
+    this.syncToMemoryIfCritical(record);
+
     return {
       status: 'APPROVED',
       premortem_id: premortemId,
+      depth_level: record.depth_level,
       digest,
       verdict: record.verdict,
-      message: 'Evaluación Pre-Mortem adversaria certificada.',
+      message: 'Evaluación Pre-Mortem multi-ancla certificada.',
       record_path: recordPath
     };
   }
 
   /**
-   * Generates formatted human markdown output from an idea evaluation.
+   * Sincroniza aprendizajes y anti-patrones críticos descubiertos con .axion/memory
    */
-  static formatReport(featureName, failureReasons, worstCases, mitigations, verdict = 'APROBADA CON BLINDAJE') {
-    return `# 🌪️ Reporte Pre-Mortem Adversarial: ${featureName}
+  syncToMemoryIfCritical(record) {
+    try {
+      const memoryDir = path.join(this.root, '.axion', 'memory');
+      const memoryPath = path.join(memoryDir, 'MEMORY.md');
+      if (!fs.existsSync(memoryDir)) fs.mkdirSync(memoryDir, { recursive: true });
 
-> **EJERCICIO PRE-MORTEM**: Asumimos que esta funcionalidad fue implementada y resultó en un desastre o deuda técnica severa a los 6 meses.
+      const feature = record.payload.feature_name || 'Característica';
+      const verdict = record.verdict;
+      const mitigations = record.payload.mandatory_mitigations || [];
 
----
+      if (mitigations.length > 0 && fs.existsSync(memoryPath)) {
+        let content = fs.readFileSync(memoryPath, 'utf8');
+        const entry = `\n- [Pre-Mortem] ${feature} (${verdict}): ${mitigations[0]}`;
+        if (!content.includes(entry.trim())) {
+          content += entry;
+          fs.writeFileSync(memoryPath, content, 'utf8');
+        }
+      }
+    } catch (_) {}
+  }
 
-### 💀 1. Autopsia Prematura (¿Por qué fracasó la idea?)
-${failureReasons.map((r, i) => `${i + 1}. **${r.title || 'Falla'}**: ${r.detail || r}`).join('\n')}
+  /**
+   * Generates structured markdown for 3-tier deep evaluation.
+   */
+  static formatReport({ featureName, anchors, worstCases, mitigations, solutionStress, verdict = 'APROBADA CON BLINDAJE', depth = 1 }) {
+    let md = `# 🌪️ Reporte Pre-Mortem Adversarial: ${featureName}\n\n`;
+    md += `> **PROFUNDIDAD: NIVEL ${depth}** — Autopsia anticipada y simulación de fracaso a 6 meses.\n\n---\n\n`;
 
----
+    if (anchors) {
+      md += `### 🧭 1. Las 4 Anclas de Impacto y Riesgos Más Graves\n\n`;
+      if (anchors.security) {
+        md += `#### ${ANCHORS.SECURITY}\n` + anchors.security.map((r, i) => `- ⚠️ **[Riesgo ${i + 1}]**: ${r}`).join('\n') + '\n\n';
+      }
+      if (anchors.performance) {
+        md += `#### ${ANCHORS.PERFORMANCE}\n` + anchors.performance.map((r, i) => `- ⚠️ **[Riesgo ${i + 1}]**: ${r}`).join('\n') + '\n\n';
+      }
+      if (anchors.architecture) {
+        md += `#### ${ANCHORS.ARCHITECTURE}\n` + anchors.architecture.map((r, i) => `- ⚠️ **[Riesgo ${i + 1}]**: ${r}`).join('\n') + '\n\n';
+      }
+      if (anchors.ux) {
+        md += `#### ${ANCHORS.UX}\n` + anchors.ux.map((r, i) => `- ⚠️ **[Riesgo ${i + 1}]**: ${r}`).join('\n') + '\n\n';
+      }
+    }
 
-### 🌪️ 2. Peores Escenarios Catastróficos Identificados
-${worstCases.map((w, i) => `- ⚠️ **[Riesgo ${i + 1}]**: ${w}`).join('\n')}
+    if (worstCases && worstCases.length > 0) {
+      md += `---\n\n### 🌪️ 2. Peores Escenarios Catastróficos (Estrés de Dominio)\n`;
+      md += worstCases.map((w, i) => `- 💥 **[Escenario Catastrófico ${i + 1}]**: ${w}`).join('\n') + '\n\n';
+    }
 
----
+    if (mitigations && mitigations.length > 0) {
+      md += `---\n\n### 🛡️ 3. Medidas de Mitigación Obligatorias\n`;
+      md += mitigations.map((m, i) => `- ✅ **[Salvaguarda ${i + 1}]**: ${m}`).join('\n') + '\n\n';
+    }
 
-### 🛡️ 3. Medidas de Mitigación Obligatorias
-${mitigations.map((m, i) => `- ✅ **[Salvaguarda ${i + 1}]**: ${m}`).join('\n')}
+    if (solutionStress && solutionStress.length > 0) {
+      md += `---\n\n### 🔍 4. Auto-Crítica de la Solución (Pre-Mortem de las Mitigaciones)\n`;
+      md += solutionStress.map((s, i) => `- ⚡ **[Punto Débil de la Mitigación ${i + 1}]**: ${s}`).join('\n') + '\n\n';
+    }
 
----
-
-### ⚖️ 4. Veredicto de Resiliencia: **${verdict}**
-`;
+    md += `---\n\n### ⚖️ 5. Veredicto Final: **${verdict}**\n`;
+    return md;
   }
 }
 

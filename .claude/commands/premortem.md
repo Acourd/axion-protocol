@@ -5,7 +5,7 @@ description: Simulación de fracaso y autopsia prematura de ideas o característ
 
 # /premortem — Simulador de Fracaso y Resiliencia Conceptual (Axion Protocol)
 
-> **PROPÓSITO**: Freno estratégico para nuevas ideas o características.
+> **PROPÓSITO**: Freno estratégico para nuevas ideas, refactors o propuestas.
 > Asume de antemano que la propuesta fracasó rotundamente en 6 meses y exige
 > identificar las causas raíz, los peores escenarios y las medidas mínimas de blindaje
 > para no construir soluciones incompetentes ni crear deuda técnica innecesaria.
@@ -20,39 +20,54 @@ description: Simulación de fracaso y autopsia prematura de ideas o característ
 
 ---
 
-## 📋 Los 5 Pasos del Análisis Pre-Mortem
+## 🧭 Los 3 Niveles de Profundidad de /premortem
 
-Ante la idea propuesta, el agente **DEBE** evaluar de forma crítica y responder con este informe estructurado:
+### 🟢 Nivel 1: Las 4 Anclas Ortogonales (Obligatorio)
+Expone los riesgos más graves en cada una de las 4 dimensiones cardinales:
+1. **🛡️ Seguridad & Integridad**: Inyección, fuga de secretos, colisión con zonas protegidas, permisos excesivos.
+2. **⚡ Rendimiento & Recursos**: Fugas de memoria en Node.js, bloqueos en el event loop, crecimiento descontrolado de disco o CPU.
+3. **🧩 Arquitectura & Deuda Técnica**: Acoplamiento innecesario, ruptura de contratos previos, fragilidad al actualizar módulos.
+4. **👥 Ergonomía & Experiencia (UX)**: Fricción humana, fatiga de alertas, mensajes crípticos, sobrecarga cognitiva.
 
-### 💀 1. Autopsia Prematura (¿Por qué fracasó?)
-Imagina que pasaron 6 meses y la idea fue un desastre. Expón al menos **3 causas concretas**:
-1. **Adopción / UX**: ¿Por qué el usuario la ignoró o le causó fricción?
-2. **Deuda Técnica**: ¿Qué complejidad o fragilidad oculta introdujo?
-3. **Puntos de Quiebre**: ¿Qué falló cuando el volumen o la concurrencia crecieron?
+### 🔵 Nivel 2: Estrés de Dominio y Casos Límite (Recomendado)
+Analiza fallas específicas del entorno de ejecución (concurrencia, caídas de red, I/O bloqueante, estados corruptos).
 
-### ⚖️ 2. Auditoría de Competencia (Anti-Bloat)
-- ¿Resuelve un problema real o es complejidad cosmética (*slop*)?
-- ¿Podría lograrse el 80% del beneficio con el 20% del esfuerzo usando lo que ya existe?
+### 🟣 Nivel 3: Auto-Crítica de la Solución (Pre-Mortem de las Mitigaciones)
+Somete a prueba las *propias salvaguardas propuestas* para confirmar que "la cura no sea peor que la enfermedad" (evita sobreingeniería y bucles infinitos).
 
-### 🌪️ 3. Peores Escenarios Catastróficos
-- **Escenario Límite 1**: Entradas corruptas, caídas de red o estados inconsistentes.
-- **Escenario Límite 2**: Impacto en el rendimiento, memoria o límites de cuota.
+---
 
-### 🛡️ 4. Blindaje Técnico Obligatorio
-Medidas mínimas indispensables que deben existir **antes** de dar por aprobada la idea:
-- Invariantes que no pueden romperse.
-- Pruebas deterministas de regresión requeridas.
+## 📋 Estructura de Respuesta del Pre-Mortem
+
+```markdown
+# 🌪️ Reporte Pre-Mortem Adversarial: [Nombre de la Característica]
+
+### 🧭 1. Las 4 Anclas de Impacto
+- 🛡️ **Seguridad**: [1-2 riesgos graves identificados]
+- ⚡ **Rendimiento**: [1-2 riesgos graves identificados]
+- 🧩 **Arquitectura**: [1-2 riesgos graves identificados]
+- 👥 **Ergonomía / UX**: [1-2 riesgos graves identificados]
+
+### 🌪️ 2. Peores Escenarios Catastróficos (Estrés de Dominio)
+- 💥 **[Escenario 1]**: [Detalle de caída o caso límite]
+- 💥 **[Escenario 2]**: [Detalle de caída o caso límite]
+
+### 🛡️ 3. Medidas de Mitigación Obligatorias
+- ✅ **[Salvaguarda 1]**: [Medida concreta]
+- ✅ **[Salvaguarda 2]**: [Medida concreta]
+
+### 🔍 4. Auto-Crítica de la Solución (Estrés de la Mitigación)
+- ⚡ **[Punto Débil de la Salvaguarda]**: [¿Podría causar lentitud o sobrecomplejidad?]
 
 ### ⚖️ 5. Veredicto Final de Resiliencia
-- **APROBADA CON BLINDAJE**: La idea es sólida si se implementan las salvaguardas descritas.
-- **REPLANTEAR DISEÑO**: La idea tiene valor pero el enfoque actual tiene demasiados puntos ciegos.
-- **DESCARTAR POR BLOAT**: La idea introduce más problemas que beneficios.
+- **APROBADA CON BLINDAJE** | **CONDITIONAL_TDD** | **PIVOT_REQUIRED** | **DESCARTAR POR BLOAT**
+```
 
 ---
 
 ## 💻 Registro de Evaluación por Herramienta
 
-Para registrar formalmente el pre-mortem en el árbol de estados:
+Para registrar formalmente el pre-mortem en el árbol de estados `.axion/state/`:
 ```bash
 node tools/premortem.js evaluate '<json_payload>'
 ```
