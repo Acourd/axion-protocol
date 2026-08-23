@@ -49,7 +49,11 @@ function runHealthCheck(targetDir) {
   addCheck('Perfil Calibrado', fs.existsSync(profileFile), profileName);
 
   // 5. Verificar Workflows Slash Commands (.agents/workflows)
-  const workflows = ['clarify.md', 'profile.md', 'rollback.md', 'preflight.md', 'halt.md', 'unhalt.md', 'attest.md'];
+  const workflows = [
+    'clarify.md', 'profile.md', 'rollback.md', 'preflight.md',
+    'halt.md', 'unhalt.md', 'attest.md', 'review.md',
+    'onboard.md', 'checkpoint.md', 'debug.md'
+  ];
   const wfCount = workflows.filter(wf => fs.existsSync(path.join(target, '.agents', 'workflows', wf))).length;
   addCheck('Slash Commands', wfCount === workflows.length, `${wfCount}/${workflows.length} comandos instalados`);
 

@@ -75,11 +75,15 @@ function runInstallation(targetDir) {
   anotar(copiarProtegido(path.join(sourceRoot, '.agents', 'rules', 'axion-governance.md'), path.join(rootDir, '.agents', 'rules', 'axion-governance.md')));
 
   // Slash commands en .agents/workflows
-  const workflows = ['clarify.md', 'profile.md', 'rollback.md', 'preflight.md', 'halt.md', 'unhalt.md', 'attest.md'];
+  const workflows = [
+    'clarify.md', 'profile.md', 'rollback.md', 'preflight.md',
+    'halt.md', 'unhalt.md', 'attest.md', 'review.md',
+    'onboard.md', 'checkpoint.md', 'debug.md'
+  ];
   workflows.forEach(wf => {
     anotar(copiarProtegido(path.join(sourceRoot, '.agents', 'workflows', wf), path.join(rootDir, '.agents', 'workflows', wf)));
   });
-  console.log('  ✓ 7 Slash commands y reglas P0 inyectados en .agents/');
+  console.log(`  ✓ ${workflows.length} Slash commands y reglas P0 inyectados en .agents/`);
 
   // 2. Inyectar Configuración para Claude Code
   console.log('\n📦 2. Configurando Claude Code (.claude)...');
