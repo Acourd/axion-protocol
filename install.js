@@ -78,7 +78,7 @@ function runInstallation(targetDir) {
   const workflows = [
     'clarify.md', 'profile.md', 'rollback.md', 'preflight.md',
     'halt.md', 'unhalt.md', 'attest.md', 'review.md',
-    'onboard.md', 'checkpoint.md', 'debug.md'
+    'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md'
   ];
   workflows.forEach(wf => {
     anotar(copiarProtegido(path.join(sourceRoot, '.agents', 'workflows', wf), path.join(rootDir, '.agents', 'workflows', wf)));

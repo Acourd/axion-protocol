@@ -34,6 +34,8 @@ const SUBCOMANDOS = {
   status: { script: 'tools/killswitch.js', ayuda: 'consulta si hay una parada activa', fijo: ['status'] },
   attest: { script: 'tools/attestation.js', ayuda: 'verifica una atestacion in-toto' },
   clarify: { script: 'tools/intent_clarifier.js', ayuda: 'aclara una peticion vaga' },
+  compact: { script: 'tools/context_shield.js', ayuda: 'compacta el contexto y ancla el estado' },
+  verify: { script: 'tools/verify_changes.js', ayuda: 'ejecuta verificación determinista con código 0' },
   evidence: { script: 'tools/evidence_hasher.js', ayuda: 'genera un manifiesto SHA-256' },
   test: { script: 'tests/run_all.js', ayuda: 'ejecuta la suite completa' },
 };
