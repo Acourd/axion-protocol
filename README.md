@@ -128,6 +128,7 @@ node tests/run_all.js
 - `ax_f_019_deep_reasoning.test.js`
 - `ax_f_020_adversarial_fuzzing.test.js`
 - `ax_f_021_memory_guard.test.js`
+- `ax_f_022_deep_reasoning_robustness.test.js`
 
 ### Phase E (Criptografía y Gobernanza)
 - `approval_ed25519.test.js`

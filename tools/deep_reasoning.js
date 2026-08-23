@@ -5,11 +5,11 @@
  * 
  * 4 Invariant Steps:
  *  1. BLAST_RADIUS: Impacted files, imports, and downstream dependencies.
- *  2. ADVERSARIAL_PREMORTEM: At least 3 concrete failure modes / edge cases analyzed.
- *  3. INVARIANT_CHECK: Alignment with P0 governance, user profile, and past learnings.
+ *  2. ADVERSARIAL_PREMORTEM: At least 3 concrete, non-vacuous failure modes analyzed (>30 chars each).
+ *  3. INVARIANT_CHECK: Alignment with P0 governance, user profile, zero-bloat, and protected zones.
  *  4. VERIFICATION_PROOF: Deterministic test command with exit code 0 requirement.
  * 
- * Zero dependencies. Built-in Node.js crypto/fs.
+ * Zero external dependencies.
  */
 
 const fs = require('fs');
@@ -17,6 +17,25 @@ const path = require('path');
 const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
+
+const PROTECTED_ZONES = [
+  'valorantcoach',
+  'whiteroom',
+  '.git',
+  'node_modules'
+];
+
+const GENERIC_PHRASES = [
+  'puede fallar',
+  'podria fallar',
+  'habra un error',
+  'posible error',
+  'falla 1',
+  'falla 2',
+  'falla 3',
+  'test fail',
+  'error generico'
+];
 
 class DeepReasoningEngine {
   constructor(projectRoot = ROOT) {
@@ -29,6 +48,19 @@ class DeepReasoningEngine {
     if (!fs.existsSync(this.stateDir)) {
       fs.mkdirSync(this.stateDir, { recursive: true });
     }
+  }
+
+  /**
+   * Evaluates task complexity to determine if Deep Reasoning is mandatory.
+   */
+  classifyComplexity({ filesCount = 1, isStructural = false, hasDeletedFiles = false } = {}) {
+    if (isStructural || hasDeletedFiles || filesCount > 2) {
+      return { tier: 'ARCHITECTURAL', requiresDeepReasoning: true, reason: 'Cambio estructural o multi-archivo detectado.' };
+    }
+    if (filesCount === 2) {
+      return { tier: 'MODERATE', requiresDeepReasoning: false, reason: 'Cambio moderado, deliberación recomendada.' };
+    }
+    return { tier: 'TRIVIAL', requiresDeepReasoning: false, reason: 'Cambio puntual de un solo archivo.' };
   }
 
   /**
@@ -52,13 +84,39 @@ class DeepReasoningEngine {
       const files = payload.blast_radius.target_files || [];
       if (!Array.isArray(files) || files.length === 0) {
         errors.push('blast_radius.target_files debe contener al menos un archivo objetivo.');
+      } else {
+        // Verificar contra zonas protegidas
+        for (const file of files) {
+          const lower = String(file).toLowerCase();
+          for (const zone of PROTECTED_ZONES) {
+            if (lower.includes(zone)) {
+              errors.push(`Violación de zona protegida: "${file}" coincide con la zona restringida "${zone}".`);
+            }
+          }
+        }
       }
     }
 
-    // 2. Validar Hipótesis de Falla Adversarial (Pre-Mortem)
+    // 2. Validar Hipótesis de Falla Adversarial (Pre-Mortem con detección de vacuidad)
     const failureModes = payload.adversarial_failure_modes || [];
     if (!Array.isArray(failureModes) || failureModes.length < 3) {
-      errors.push('adversarial_failure_modes debe analizar al menos 3 modos de falla concretos (casos límite o rupturas potenciales).');
+      errors.push('adversarial_failure_modes debe analizar al menos 3 modos de falla concretos.');
+    } else {
+      const seen = new Set();
+      failureModes.forEach((mode, idx) => {
+        const text = String(mode || '').trim();
+        if (text.length < 25) {
+          errors.push(`Hipótesis ${idx + 1} demasiado corta (<25 caracteres). Debe detallar el escenario de falla.`);
+        }
+        const textLower = text.toLowerCase();
+        if (GENERIC_PHRASES.some(phrase => textLower === phrase)) {
+          errors.push(`Hipótesis ${idx + 1} es una frase genérica/tautológica ("${text}"). Debe ser específica.`);
+        }
+        if (seen.has(textLower)) {
+          errors.push(`Hipótesis ${idx + 1} está duplicada.`);
+        }
+        seen.add(textLower);
+      });
     }
 
     // 3. Validar Chequeo de Invariantes
@@ -98,6 +156,9 @@ class DeepReasoningEngine {
     const recordPath = path.join(this.stateDir, `deep-deliberation-${deliberationId}.json`);
     fs.writeFileSync(recordPath, JSON.stringify(record, null, 2), 'utf8');
 
+    // Auto-rotación de estados antiguos (>20)
+    this.pruneOldStates(20);
+
     return {
       status: 'APPROVED',
       deliberation_id: deliberationId,
@@ -105,6 +166,25 @@ class DeepReasoningEngine {
       message: 'Deliberación de Alta Exigencia verificada y aprobada para ejecución.',
       record_path: recordPath
     };
+  }
+
+  /**
+   * Prunes old state files to prevent disk bloat.
+   */
+  pruneOldStates(maxKeep = 20) {
+    try {
+      const files = fs.readdirSync(this.stateDir)
+        .filter(f => f.startsWith('deep-deliberation-') && f.endsWith('.json'))
+        .map(f => ({ name: f, path: path.join(this.stateDir, f), time: fs.statSync(path.join(this.stateDir, f)).mtimeMs }))
+        .sort((a, b) => b.time - a.time);
+
+      if (files.length > maxKeep) {
+        const toDelete = files.slice(maxKeep);
+        toDelete.forEach(f => {
+          try { fs.unlinkSync(f.path); } catch (_) {}
+        });
+      }
+    } catch (_) {}
   }
 
   /**
@@ -124,9 +204,9 @@ completa este bloque de deliberación mental:
     "dependent_components": ["componentes o tests que dependen de estos archivos"]
   },
   "adversarial_failure_modes": [
-    "Falla 1: ¿Qué pasa ante entradas inesperadas o vacías?",
-    "Falla 2: ¿Rompe compatibilidad hacia atrás o tests existentes?",
-    "Falla 3: ¿Qué efecto secundario oculto podría detonar en runtime?"
+    "Falla 1: ¿Qué pasa ante entradas inesperadas, nulas o con caracteres especiales?",
+    "Falla 2: ¿Rompe compatibilidad hacia atrás o altera contratos de tests existentes?",
+    "Falla 3: ¿Qué efecto secundario oculto en concurrencia, memoria o I/O podría detonar?"
   ],
   "invariants_checked": {
     "p0_governance_respected": true,
