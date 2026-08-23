@@ -54,6 +54,7 @@ const expectedFiles = [
   path.join(scratchDir, 'tools', 'profile_adapter.js'),
   path.join(scratchDir, 'tools', 'deep_reasoning.js'),
   path.join(scratchDir, 'tools', 'fuzzer.js'),
+  path.join(scratchDir, 'tools', 'premortem.js'),
   // El hook solo corre si esta registrado; sin este archivo, en Claude Code no corre.
   path.join(scratchDir, '.claude', 'settings.json'),
   path.join(scratchDir, '.agents', 'hooks', 'validate-tool-call.mjs')
@@ -67,12 +68,11 @@ expectedFiles.forEach(file => {
 assert.doesNotThrow(() => require(path.join(scratchDir, 'tools', 'workflow_runner.js')),
   'el runtime instalado debe cargar con todas sus dependencias locales');
 
-// Los 15 slash commands tienen que llegar a las dos superficies. Instalar solo la de
-// Antigravity dejaba a Claude Code sin ningun comando, con el chequeo de salud en verde.
+// Los 16 slash commands tienen que llegar a las dos superficies.
 const WORKFLOWS = [
   'clarify.md', 'profile.md', 'rollback.md', 'preflight.md',
   'halt.md', 'unhalt.md', 'attest.md', 'review.md',
-  'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md', 'remember.md', 'deep.md'
+  'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md', 'remember.md', 'deep.md', 'premortem.md'
 ];
 WORKFLOWS.forEach(wf => {
   const enAgents = path.join(scratchDir, '.agents', 'workflows', wf);
