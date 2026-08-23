@@ -2,6 +2,24 @@
 
 Todos los cambios relevantes de Axion Protocol se documentarán aquí.
 
+## [1.2.0-beta.0] — 2026-08-22
+
+Promoción oficial a fase Beta pública. Introduce capacidades universales de ingeniería de contexto, suite de salud en tiempo real, puente híbrido Antigravity + Claude Code, y herramientas de calidad automatizadas.
+
+### Added
+
+- `tools/health_check.js` (`axion check`) — auditoría instantánea de sincronización de reglas P0, hooks nativos `PreToolUse`, perfiles y claves criptográficas.
+- `tools/context_shield.js` (`/compact` y `axion compact`) — compactación determinista de estado en `.axion/state/` para prevenir el *context rot* y la degradación *lost-in-the-middle* en sesiones largas.
+- `tools/verify_changes.js` (`/verify` y `axion verify`) — bucle de verificación determinista por ejecución real con código de salida 0.
+- `tools/vibeguard_gate.js` (`axion vibeguard`) — detector automático de anti-patrones (TODOs, mocks y stubs no funcionales) para la Fase 6 (AUDITAR).
+- `tools/wizard.js` (`axion wizard`) — asistente interactivo paso a paso para onboarding rápido de creadores en terminal.
+- `tools/profile_adapter.js` (`/profile` y `axion profile`) — calibración de 5 dimensiones del usuario (Voz, GUI, Visionario, cadencia híbrida y dirección guiada) persistida en `.axion/PROFILE.json`.
+- `tools/updater.js` (`axion update`) — actualizador universal no destructivo con respaldo seguro SHA-256.
+- 4 nuevos workflows de interacción portados del linaje de AgentProtocol: `/review` (4 lentes selectivas), `/onboard` (reconocimiento de repositorios), `/checkpoint` (snapshots manuales con etiqueta) y `/debug` (diagnóstico de causa raíz en 4 fases).
+- Landing page renovada con paleta Esmeralda / Obsidiana, switcher de modo claro/oscuro persistente, sidebar vertical retráctil y circuito interactivo de las 7 fases.
+
+---
+
 ## [1.1.0-alpha] — 2026-08-15
 
 Primera publicación del repositorio. Consolida el trabajo de las fases D a H.
