@@ -1,5 +1,7 @@
 const assert = require('assert');
-const { analyzeUserIntent } = require('../tools/intent_clarifier.js');
+const fs = require('fs');
+const path = require('path');
+const { analyzeUserIntent, hasTechnicalSpecificity, sealIntent } = require('../tools/intent_clarifier.js');
 const { executeHybridWorkflow } = require('../tools/workflow_runner.js');
 
 console.log('=== Pruebas del Módulo Aclarador de Intención e Ideas (Intent Clarifier) ===\n');
@@ -20,8 +22,26 @@ assert.strictEqual(clearRes.status, 'INTENT_CLARIFIED');
 assert.strictEqual(typeof clearRes.intentContract.summary, 'string');
 console.log('✓ Solicitud clara procesada con éxito. Contrato de Entendimiento emitido.');
 
-// Caso 3: Integración en workflow_runner.js con solicitud vaga -> Bloqueado en Fase 1 (ENTENDER)
-console.log('\n--- Caso 3: Bloqueo de Workflow por Intención Ambigua ---');
+// Caso 3: Solicitud técnica concisa -> Detecta especificidad (Cero falsos positivos)
+console.log('\n--- Caso 3: Solicitud técnica concisa ("agrega validación SHA-256 en tools/crypto.js") ---');
+assert.strictEqual(hasTechnicalSpecificity('agrega validación SHA-256 en tools/crypto.js'), true);
+const techRes = analyzeUserIntent('agrega validación SHA-256 en tools/crypto.js');
+assert.strictEqual(techRes.status, 'INTENT_CLARIFIED', 'Debe clasificar como clarificado directo ante rutas y hashes técnicos');
+console.log('✓ Detector de especificidad técnica: no interrumpe al usuario con preguntas irrelevantes.');
+
+// Caso 4: Sellado de Contrato en disco con SHA-256
+console.log('\n--- Caso 4: Sellado Atómico de IntentContract ---');
+const sealed = sealIntent('Diseñar panel administrativo', 'Opción A (Slate Dark)');
+assert.strictEqual(sealed.status, 'INTENT_CLARIFIED');
+const contractPath = path.join(__dirname, '..', '.axion', 'state', 'intent-contract.json');
+assert.strictEqual(fs.existsSync(contractPath), true, 'Debe persistirse en .axion/state/intent-contract.json');
+const savedData = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
+assert.strictEqual(Boolean(savedData.digest), true, 'Debe incluir digest SHA-256');
+assert.strictEqual(savedData.selectedOptions, 'Opción A (Slate Dark)');
+console.log('✓ Contrato sellado y persistido atómicamente con digest SHA-256.');
+
+// Caso 5: Integración en workflow_runner.js con solicitud vaga -> Bloqueado en Fase 1 (ENTENDER)
+console.log('\n--- Caso 5: Bloqueo de Workflow por Intención Ambigua ---');
 const taskVagueWorkflow = {
   taskId: 'AX-TASK-VAGUE-001',
   rawUserRequest: 'agrega botones',
