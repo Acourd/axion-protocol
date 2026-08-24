@@ -60,8 +60,30 @@ Somete a prueba las *propias salvaguardas propuestas* para confirmar que "la cur
 - ⚡ **[Punto Débil de la Salvaguarda]**: [¿Podría causar lentitud o sobrecomplejidad?]
 
 ### ⚖️ 5. Veredicto Final de Resiliencia
-- **APROBADA CON BLINDAJE** | **CONDITIONAL_TDD** | **PIVOT_REQUIRED** | **DESCARTAR POR BLOAT**
+- **APPROVED_WITH_SAFEGUARDS** | **CONDITIONAL_TDD** | **PIVOT_REQUIRED** | **REJECTED_AS_BLOAT** | **REJECTED_AS_UNJUSTIFIED**
 ```
+
+---
+
+## ⚖️ Los 5 Veredictos y su Código de Salida
+
+Son los únicos válidos. Úsalos literalmente: el motor rechaza cualquier otra cadena.
+El código de salida sigue el mismo contrato que `/preflight` — **0 adelante · 2 decisión
+humana · 1 no**.
+
+| Veredicto | Exit | Significa |
+|---|:--:|---|
+| `APPROVED_WITH_SAFEGUARDS` | 0 | Adelante, con las salvaguardas comprometidas. |
+| `CONDITIONAL_TDD` | 2 | Solo con prueba que falle primero: hay debilidad crítica en las mitigaciones. |
+| `PIVOT_REQUIRED` | 2 | El enfoque no sobrevive a su propia autopsia; hay que replantearlo. |
+| `REJECTED_AS_BLOAT` | 1 | La complejidad que añade supera al problema que resuelve. |
+| `REJECTED_AS_UNJUSTIFIED` | 1 | No se sostiene la necesidad real de construirlo. |
+
+**El veredicto lo deriva el motor, no lo declaras tú.** Puedes proponer uno *más severo*
+en `payload.verdict` si sabes algo que el análisis no recoge; proponer uno más laxo se
+rechaza con `VERDICT_DOWNGRADE_REFUSED`. Quien es evaluado no dicta su propio resultado:
+es la misma asimetría del killswitch, donde parar es barato y levantar la parada es un
+acto humano deliberado.
 
 ---
 
@@ -70,4 +92,20 @@ Somete a prueba las *propias salvaguardas propuestas* para confirmar que "la cur
 Para registrar formalmente el pre-mortem en el árbol de estados `.axion/state/`:
 ```bash
 node tools/premortem.js evaluate '<json_payload>'
+node tools/premortem.js verdicts        # el contrato de veredictos, en JSON
 ```
+
+### Lo que el motor exige, y por qué
+
+- **≥ 40 caracteres por riesgo, escenario y mitigación.** Un riesgo de una palabra no es
+  un riesgo, es una casilla marcada, y esta herramienta vale exactamente por la sustancia
+  de lo que se escribe en ella.
+- **Anclas ortogonales.** El mismo riesgo repetido en dos anclas se rechaza: cuatro
+  dimensiones que dicen lo mismo son una sola repetida cuatro veces.
+- **`competence_check.justified` booleano explícito.** No vale la ausencia.
+- **El nivel se deriva del contenido, no se declara.** Puedes declarar menos del que
+  alcanzas; declarar más se rechaza. El nivel 3 exige `mitigation_stress_test` con
+  `has_critical_weakness` booleano y una auto-crítica escrita de verdad.
+- **Las salvaguardas aprobadas se persisten en `.axion/memory`** vía la API de memoria,
+  así que sobreviven a la regeneración del índice y viajan al ancla de `/compact`. Un
+  pre-mortem rechazado no deja convenciones: no hay nada que comprometer.

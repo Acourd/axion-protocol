@@ -181,10 +181,17 @@ class DeepReasoningEngine {
       if (files.length > maxKeep) {
         const toDelete = files.slice(maxKeep);
         toDelete.forEach(f => {
-          try { fs.unlinkSync(f.path); } catch (_) {}
+          try {
+            fs.unlinkSync(f.path);
+          } catch (_) {
+            // Un registro bloqueado por otro proceso no invalida la purga de los demas.
+          }
         });
       }
-    } catch (_) {}
+    } catch (_) {
+      // Sin directorio de estado legible no hay nada que purgar, y eso no es un fallo
+      // que deba tumbar la deliberacion que se acaba de registrar.
+    }
   }
 
   /**

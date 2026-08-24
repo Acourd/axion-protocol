@@ -137,14 +137,14 @@ jobs:
         working-directory: /tmp/axion-consumer
         run: npx axion test
 
-      - name: Los 14 comandos llegaron a las dos superficies
+      - name: Los 16 comandos llegaron a las dos superficies
         shell: bash
         working-directory: /tmp/axion-consumer
         run: |
           set -e
           for d in .agents/workflows .claude/commands; do
             n=$(ls "$d"/*.md | wc -l)
-            test "$n" -eq 14 || { echo "FALLO: $d tiene $n comandos, esperaba 14"; exit 1; }
+            test "$n" -eq 16 || { echo "FALLO: $d tiene $n comandos, esperaba 16"; exit 1; }
             echo "OK: $d -> $n comandos"
           done
           grep -q validate-tool-call.mjs .claude/settings.json
