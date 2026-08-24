@@ -60,10 +60,32 @@ const VEREDICTOS = {
 // porque la herramienta entera vale por la sustancia de lo que se escribe en ella, y sin
 // minimo se aprobaba un pre-mortem con "x" en cada una de las cuatro anclas.
 const MINIMO_SUSTANCIA = 40;
+// Palabras distintas de tres o mas letras. Es el suelo que la longitud sola no pone.
+const MINIMO_PALABRAS = 6;
 const MAX_REGISTROS = 20;
+
+// Proporción de frases literalmente reutilizadas a partir de la cual un análisis deja de
+// ser parecido y pasa a ser copiado. El umbral es alto a propósito: el falso positivo aquí
+// -frenar trabajo legítimo- desactiva la puerta antes de que nadie la corrija.
+const UMBRAL_CALCO = 0.7;
 
 const texto = (v) => (typeof v === 'string' ? v.trim() : '');
 const normalizar = (v) => texto(v).toLowerCase().replace(/\s+/g, ' ');
+
+/**
+ * Todas las frases con las que un pre-mortem dice algo. Es lo que se compara para
+ * detectar el calco, y deja fuera el nombre de la característica a propósito: cambiar
+ * solo el título es justamente la maniobra que se persigue.
+ */
+function frasesSustantivas(payload) {
+  const p = payload || {};
+  const anchors = p.anchors && typeof p.anchors === 'object' ? p.anchors : {};
+  return [
+    ...CLAVES_ANCLA.flatMap((k) => (Array.isArray(anchors[k]) ? anchors[k] : [])),
+    ...(Array.isArray(p.worst_case_scenarios) ? p.worst_case_scenarios : []),
+    ...(Array.isArray(p.mandatory_mitigations) ? p.mandatory_mitigations : []),
+  ].map(normalizar).filter(Boolean);
+}
 
 class PreMortemEngine {
   constructor(projectRoot = ROOT) {
@@ -90,9 +112,17 @@ class PreMortemEngine {
       const t = texto(bruto);
       if (t.length < MINIMO_SUSTANCIA) {
         errores.push(`${etiqueta}[${i}] tiene ${t.length} caracteres; se exigen ${MINIMO_SUSTANCIA} para que describa un riesgo y no una casilla marcada.`);
-      } else {
-        limpias.push(t);
+        return;
       }
+      // La longitud sola se rellena con paja: cuarenta y cuatro letras iguales pasaban el
+      // suelo. Se exigen palabras distintas porque un riesgo se explica con lenguaje, y
+      // contar caracteres mide el esfuerzo de teclear, no el de pensar.
+      const distintas = new Set(t.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 3));
+      if (distintas.size < MINIMO_PALABRAS) {
+        errores.push(`${etiqueta}[${i}] tiene ${distintas.size} palabra(s) distinta(s); se exigen ${MINIMO_PALABRAS}. Un riesgo se explica, no se rellena.`);
+        return;
+      }
+      limpias.push(t);
     });
     return { errores, limpias };
   }
@@ -176,6 +206,32 @@ class PreMortemEngine {
       return { status: 'DENIED', reason: 'PREMORTEM_INCOMPLETE', exitCode: 1, errors };
     }
 
+    // --- Calco: la misma autopsia reciclada para otra cosa ---
+    //
+    // Es el escenario catastrófico que la propia autopsia de este cambio identificó: el
+    // equipo se fabrica una plantilla, la pega en cada misión, la puerta aprueba el cien
+    // por cien y no detecta nada, con luz verde certificando que hubo análisis.
+    //
+    // La señal es la reutilización LITERAL, no el parecido. Dos migraciones que se
+    // parecen de verdad se describen con frases distintas porque los riesgos concretos
+    // difieren; un calco reutiliza las mismas cadenas y solo cambia el título. Medir
+    // semejanza semántica frenaría trabajo legítimo, y una puerta que frena trabajo
+    // válido se desactiva antes de que alguien la corrija.
+    const calco = this.detectarCalco(payload);
+    if (calco) {
+      return {
+        status: 'DENIED',
+        reason: 'PREMORTEM_BOILERPLATE',
+        exitCode: 1,
+        errors: [
+          `${calco.repetidas} de ${calco.total} frases son idénticas a las del pre-mortem ${calco.premortem_id} `
+          + `("${calco.feature_name}"). Una autopsia reciclada certifica que se pensó sin que nadie haya pensado: `
+          + 'los riesgos de esta característica son los suyos, no los de la anterior.',
+        ],
+        duplicateOf: calco.premortem_id,
+      };
+    }
+
     // --- Veredicto derivado ---
     let veredicto = 'APPROVED_WITH_SAFEGUARDS';
     if (competencia.justified === false) veredicto = 'REJECTED_AS_UNJUSTIFIED';
@@ -250,6 +306,54 @@ class PreMortemEngine {
       purged: purgados,
       record_path: recordPath,
     };
+  }
+
+  /** Los pre-mortems sellados, del más antiguo al más reciente. */
+  listar() {
+    let ficheros;
+    try {
+      ficheros = fs.readdirSync(this.stateDir).filter((f) => f.startsWith('premortem-') && f.endsWith('.json')).sort();
+    } catch (_) {
+      // Sin directorio de estado todavía no hay historial: no es un fallo, es un inicio.
+      return [];
+    }
+    return ficheros.map((f) => {
+      try {
+        return JSON.parse(fs.readFileSync(path.join(this.stateDir, f), 'utf8'));
+      } catch (_) {
+        return null;
+      }
+    }).filter(Boolean);
+  }
+
+  /**
+   * Busca un pre-mortem anterior, de OTRA característica, del que este reutilice frases
+   * literalmente. Devuelve el primero que supere el umbral, o null.
+   */
+  detectarCalco(payload) {
+    const frases = frasesSustantivas(payload);
+    if (frases.length === 0) return null;
+    const nombre = normalizar(payload.feature_name);
+
+    for (const previo of this.listar()) {
+      // Reevaluar la MISMA característica no es calco: es corregirla, y el id derivado
+      // del contenido ya se encarga de que no se duplique el registro.
+      if (normalizar(previo.feature_name) === nombre) continue;
+
+      const anteriores = new Set(frasesSustantivas(previo.payload));
+      if (anteriores.size === 0) continue;
+      const repetidas = frases.filter((f) => anteriores.has(f)).length;
+
+      if (repetidas / frases.length >= UMBRAL_CALCO) {
+        return {
+          premortem_id: previo.premortem_id,
+          feature_name: previo.feature_name,
+          repetidas,
+          total: frases.length,
+        };
+      }
+    }
+    return null;
   }
 
   /**
@@ -402,9 +506,44 @@ class PreMortemEngine {
   }
 }
 
+/**
+ * Esqueleto rellenable. Existe porque la alternativa era adivinar la forma del payload a
+ * partir de los mensajes de error, que es aprender a fuerza de rechazos.
+ */
+const PLANTILLA = {
+  feature_name: 'Nombre de la característica, el refactor o la integración',
+  mission_id: '(opcional) id de la misión a la que se ata este pre-mortem',
+  competence_check: {
+    justified: true,
+    rationale: 'Por qué la necesidad real justifica la complejidad que añade',
+  },
+  anchors: {
+    security: ['Riesgo grave de seguridad o integridad, explicado en una frase entera'],
+    performance: ['Riesgo grave de rendimiento o consumo de recursos, con su magnitud'],
+    architecture: ['Acoplamiento, contrato roto o deuda que este cambio deja detrás'],
+    ux: ['Fricción humana concreta: qué verá o sufrirá quien lo use'],
+  },
+  worst_case_scenarios: [
+    'Primer escenario catastrófico del entorno real de ejecución',
+    'Segundo escenario, distinto del primero y no una variante suya',
+  ],
+  mandatory_mitigations: [
+    'Salvaguarda concreta que hay que construir sí o sí, no una intención',
+  ],
+  mitigation_stress_test: {
+    has_critical_weakness: false,
+    tested_mitigation: 'Dónde falla la propia salvaguarda: la cura no puede ser peor que la enfermedad',
+  },
+};
+
 const USO = [
   'Uso:',
   '  node tools/premortem.js evaluate <json_payload> [--target <dir>]',
+  '  node tools/premortem.js evaluate --file <ruta.json>   evita pelearse con las comillas',
+  '  node tools/premortem.js template [--out <ruta.json>]  esqueleto rellenable',
+  '  node tools/premortem.js report [id|latest]            el informe en markdown',
+  '  node tools/premortem.js list                          los pre-mortems sellados',
+  '  node tools/premortem.js show <id>                     el registro completo',
   '  node tools/premortem.js verdicts',
   '',
   'Veredictos del contrato, de menos a mas severo:',
@@ -425,9 +564,82 @@ function main() {
     process.exit(2);
   }
 
+  const opcion = (nombre) => {
+    const i = args.indexOf(nombre);
+    return i !== -1 && args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : null;
+  };
+  const raiz = opcion('--target') || ROOT;
+  const motor = new PreMortemEngine(raiz);
+  // Posicionales: ni las banderas ni sus valores.
+  const posicional = [];
+  for (let i = 1; i < args.length; i++) {
+    if (args[i].startsWith('--')) { if (args[i + 1] && !args[i + 1].startsWith('--')) i += 1; continue; }
+    posicional.push(args[i]);
+  }
+
   if (comando === 'verdicts') {
     console.log(JSON.stringify(VEREDICTOS, null, 2));
     process.exit(0);
+  }
+
+  if (comando === 'template') {
+    const salida = opcion('--out');
+    const json = JSON.stringify(PLANTILLA, null, 2);
+    if (salida) {
+      fs.writeFileSync(path.resolve(salida), json, 'utf8');
+      console.log(`Plantilla escrita en ${salida}.`);
+      console.log(`Rellénala y evalúala con: node tools/premortem.js evaluate --file ${salida}`);
+    } else {
+      console.log(json);
+    }
+    process.exit(0);
+  }
+
+  if (comando === 'list') {
+    const todos = motor.listar();
+    if (todos.length === 0) {
+      console.log('Sin pre-mortems sellados. Empieza con: node tools/premortem.js template');
+      process.exit(0);
+    }
+    todos.forEach((r) => console.log(
+      `  ${r.premortem_id}  N${r.depth_level}  ${String(r.verdict).padEnd(24)} ${r.feature_name}`,
+    ));
+    console.log(`\n  ${todos.length} pre-mortem(s) en .axion/state/.`);
+    process.exit(0);
+  }
+
+  if (comando === 'show' || comando === 'report') {
+    const ref = posicional[0];
+    const todos = motor.listar();
+    const registro = (!ref || ref === 'latest')
+      ? todos[todos.length - 1]
+      : todos.find((r) => r.premortem_id === ref);
+
+    if (!registro) {
+      console.error(`No hay ningún pre-mortem con id "${ref || 'latest'}".`);
+      process.exit(1);
+    }
+
+    if (comando === 'show') {
+      console.log(JSON.stringify(registro, null, 2));
+      process.exit(0);
+    }
+
+    // El informe se genera desde el registro sellado, no desde lo que alguien recuerde
+    // haber escrito: el markdown y la evidencia cuentan la misma historia o no sirven.
+    console.log(PreMortemEngine.formatReport({
+      featureName: registro.feature_name,
+      anchors: registro.payload.anchors,
+      worstCases: registro.payload.worst_case_scenarios,
+      mitigations: registro.payload.mandatory_mitigations,
+      solutionStress: registro.payload.mitigation_stress_test
+        ? [registro.payload.mitigation_stress_test.tested_mitigation || registro.payload.mitigation_stress_test.notes].filter(Boolean)
+        : [],
+      verdict: registro.verdict,
+      depth: registro.depth_level,
+    }));
+    console.log(`\n> \`${registro.premortem_id}\` · digest \`${registro.digest.slice(0, 16)}…\` · sellado ${registro.timestamp}`);
+    process.exit(VEREDICTOS[registro.verdict] ? VEREDICTOS[registro.verdict].exit : 1);
   }
 
   if (comando !== 'evaluate') {
@@ -436,12 +648,26 @@ function main() {
     process.exit(2);
   }
 
-  const iTarget = args.indexOf('--target');
-  const raiz = iTarget !== -1 && args[iTarget + 1] ? args[iTarget + 1] : ROOT;
-  const bruto = args.slice(1).find((a) => !a.startsWith('--') && a !== args[iTarget + 1]);
+  // --file evita el infierno de comillas: un payload de siete campos en una sola línea de
+  // shell es una forma segura de perder media hora escapando apóstrofos en Windows.
+  const fichero = opcion('--file');
+  let bruto = fichero ? null : posicional[0];
+  if (fichero) {
+    try {
+      bruto = fs.readFileSync(path.resolve(fichero), 'utf8');
+    } catch (e) {
+      console.error(JSON.stringify({ status: 'DENIED', reason: 'PAYLOAD_FILE_UNREADABLE', exitCode: 1, message: e.message }, null, 2));
+      process.exit(1);
+    }
+  }
 
   if (!bruto) {
-    console.error(JSON.stringify({ status: 'DENIED', reason: 'MISSING_PAYLOAD', exitCode: 1 }, null, 2));
+    console.error(JSON.stringify({
+      status: 'DENIED',
+      reason: 'MISSING_PAYLOAD',
+      exitCode: 1,
+      hint: 'Genera el esqueleto con `node tools/premortem.js template --out premortem.json`.',
+    }, null, 2));
     process.exit(1);
   }
 
@@ -453,8 +679,11 @@ function main() {
     process.exit(1);
   }
 
-  const res = new PreMortemEngine(raiz).evaluateAssessment(payload);
+  const res = motor.evaluateAssessment(payload);
   console.log(JSON.stringify(res, null, 2));
+  if (res.status !== 'DENIED' && !args.includes('--no-report')) {
+    console.log(`\nInforme legible: node tools/premortem.js report ${res.premortem_id}`);
+  }
   process.exit(typeof res.exitCode === 'number' ? res.exitCode : 1);
 }
 

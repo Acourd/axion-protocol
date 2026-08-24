@@ -45,6 +45,13 @@ const premortemValido = (extra) => ({
   ...extra,
 });
 
+// Un arenal por ejecucion. Sin esto las misiones en linea sellaban en el .axion/state del
+// propio proyecto, y el detector de calco veia registros de corridas anteriores: el mismo
+// payload dejaba de decidir siempre lo mismo, que es justo el acoplamiento al historial
+// que la autopsia de este motor habia senalado como riesgo de arquitectura.
+const ARENAL = fs.mkdtempSync(path.join(os.tmpdir(), 'axion-gate-'));
+const ctx = { premortemRoot: ARENAL };
+
 const mision = (extra) => ({
   missionId,
   title: 'Migracion',
@@ -87,7 +94,7 @@ console.log('=== Phase E: el pre-mortem como puerta ===\n');
 
 // --- 2. Sin pre-mortem, una misión CRITICAL no pasa de PLANIFICAR ---
 {
-  const r = executeHybridWorkflow(mision());
+  const r = executeHybridWorkflow(mision(), ctx);
   ok(r.status === 'BLOCKED_PREMORTEM_MISSING', `esperaba BLOCKED_PREMORTEM_MISSING, obtuve ${r.status}`);
   ok(r.workflow.history.every((p) => p.phase !== 'GATE'),
     'no debe llegarse al GATE sin haber pasado la autopsia');
@@ -98,7 +105,7 @@ console.log('=== Phase E: el pre-mortem como puerta ===\n');
 {
   const rechazado = executeHybridWorkflow(mision({
     premortem: premortemValido({ competence_check: { justified: false } }),
-  }));
+  }), ctx);
   ok(rechazado.status === 'BLOCKED_PREMORTEM_DENIED', `esperaba BLOCKED_PREMORTEM_DENIED, obtuve ${rechazado.status}`);
   ok(rechazado.premortem.verdict === 'REJECTED_AS_UNJUSTIFIED', 'debe informar del veredicto que lo detuvo');
 
@@ -112,7 +119,7 @@ console.log('=== Phase E: el pre-mortem como puerta ===\n');
         tested_mitigation: 'Verificar el snapshot dobla la lectura de disco en bases grandes',
       },
     }),
-  }));
+  }), ctx);
   ok(condicional.status === 'BLOCKED_PREMORTEM_CONDITIONAL',
     `un condicional no es via libre, obtuve ${condicional.status}`);
   console.log('✓ un veredicto de rechazo o condicional detiene la misión');
@@ -120,7 +127,7 @@ console.log('=== Phase E: el pre-mortem como puerta ===\n');
 
 // --- 4. Un pre-mortem superado deja seguir, y queda atado a la cadena ---
 {
-  const r = executeHybridWorkflow(mision({ premortem: premortemValido() }));
+  const r = executeHybridWorkflow(mision({ premortem: premortemValido() }), ctx);
   // Sigue faltando la firma humana: la autopsia no sustituye al GATE, lo precede.
   ok(r.status === 'BLOCKED_APPROVAL_MISSING',
     `tras la autopsia debe exigirse la firma, obtuve ${r.status}`);
@@ -131,9 +138,26 @@ console.log('=== Phase E: el pre-mortem como puerta ===\n');
 
   // El digest de la fase tiene que cubrir la autopsia: si no, cambiar de pre-mortem no
   // alteraria una sola huella del recorrido y la evidencia no probaria cual se uso.
+  // Una autopsia de verdad distinta, no la misma con otro titulo: cambiar solo el nombre
+  // es exactamente el calco que el motor rechaza, y usarlo de fixture seria pedirle a la
+  // prueba que ignore la regla que la propia herramienta impone.
   const otro = executeHybridWorkflow(mision({
-    premortem: premortemValido({ feature_name: 'Otra migracion distinta por completo' }),
-  }));
+    premortem: {
+      feature_name: 'Rotacion de claves de firma en caliente',
+      competence_check: { justified: true },
+      anchors: {
+        security: ['Rotar la clave sin ventana de solape invalida las firmas que aun viajan por la red'],
+        performance: ['Cada verificacion prueba dos claves durante el solape y dobla el coste criptografico'],
+        architecture: ['El registro de autoridades pasa a tener dos claves vivas y nada declara cual manda'],
+        ux: ['Quien firmo antes de la rotacion ve su aprobacion rechazada sin entender por que'],
+      },
+      worst_case_scenarios: [
+        'La clave vieja se retira antes de que expiren las aprobaciones ya emitidas con ella',
+        'Las dos claves quedan vivas para siempre porque nadie se atreve a retirar la anterior',
+      ],
+      mandatory_mitigations: ['Declarar la ventana de solape en la politica y retirar la clave vieja al expirar'],
+    },
+  }), ctx);
   const planificarOtro = otro.workflow.history.find((p) => p.phase === 'PLANIFICAR');
   ok(planificar.evidenceDigest !== planificarOtro.evidenceDigest,
     'dos autopsias distintas deben producir digests de fase distintos');
@@ -190,12 +214,18 @@ console.log('=== Phase E: el pre-mortem como puerta ===\n');
   ok(r.status === 'BLOCKED_PREMORTEM_BINDING_MISMATCH',
     `una autopsia de otra mision no puede servir aqui, obtuve ${r.status}`);
 
-  const suelto = motor.evaluateAssessment(premortemValido({ feature_name: 'Autopsia sin mision asignada' }));
-  const r2 = executeHybridWorkflow(mision({ premortemId: suelto.premortem_id }), { premortemRoot: dir });
+  // En su propio arenal: reutilizar el anterior con otro nombre seria un calco, y el
+  // motor lo rechazaria antes de llegar a comprobar el vinculo con la mision. Los dos
+  // casos son independientes y se prueban por separado.
+  const dir2 = fs.mkdtempSync(path.join(os.tmpdir(), 'axion-pmfree-'));
+  const suelto = new PreMortemEngine(dir2).evaluateAssessment(premortemValido({ feature_name: 'Autopsia sin mision asignada' }));
+  ok(suelto.status === 'APPROVED', `la autopsia suelta debe sellarse, obtuve ${suelto.reason || suelto.status}`);
+  const r2 = executeHybridWorkflow(mision({ premortemId: suelto.premortem_id }), { premortemRoot: dir2 });
   ok(r2.status === 'BLOCKED_PREMORTEM_UNBOUND',
     `una autopsia sin mision declarada no puede servir de salvoconducto, obtuve ${r2.status}`);
 
   fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(dir2, { recursive: true, force: true });
   console.log('✓ la autopsia va atada a su misión, como la aprobación');
 }
 
@@ -204,14 +234,14 @@ console.log('=== Phase E: el pre-mortem como puerta ===\n');
 // tramite se rellena sin leerlo. Pero si se aporta una, se valida igual: no hay via en la
 // que un pre-mortem suministrado se ignore.
 {
-  const bajo = executeHybridWorkflow(mision({ risk: 'LOW', rollbackPlan: undefined }));
+  const bajo = executeHybridWorkflow(mision({ risk: 'LOW', rollbackPlan: undefined }), ctx);
   ok(bajo.status !== 'BLOCKED_PREMORTEM_MISSING', 'una accion LOW no debe exigir autopsia');
 
   const bajoConAutopsiaMala = executeHybridWorkflow(mision({
     risk: 'LOW',
     rollbackPlan: undefined,
     premortem: premortemValido({ competence_check: { justified: false } }),
-  }));
+  }), ctx);
   ok(bajoConAutopsiaMala.status === 'BLOCKED_PREMORTEM_DENIED',
     'una autopsia aportada se valida siempre, tambien donde no era obligatoria');
   console.log('✓ LOW no paga peaje, pero lo aportado nunca se ignora');

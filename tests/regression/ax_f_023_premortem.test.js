@@ -281,4 +281,109 @@ console.log('=== AX-F-023 /premortem: simulador de fracaso ===\n');
   console.log('✓ el prompt documenta exactamente los veredictos que el motor emite');
 }
 
+// --- 14. La sustancia se mide en palabras, no en caracteres ---
+// Cuarenta y cuatro letras iguales superaban el suelo. Contar caracteres mide el esfuerzo
+// de teclear; un riesgo se explica con lenguaje o no se ha explicado.
+{
+  const d = arenal();
+  const paja = 'a'.repeat(44);
+  const r = new PreMortemEngine(d).evaluateAssessment({
+    feature_name: 'Relleno con paja',
+    competence_check: { justified: true },
+    anchors: { security: [paja], performance: [paja + 'b'], architecture: [paja + 'c'], ux: [paja + 'd'] },
+    worst_case_scenarios: [paja + 'e', paja + 'f'],
+    mandatory_mitigations: [paja + 'g'],
+  });
+  ok(r.status === 'DENIED', 'el relleno de una sola letra no puede pasar el suelo');
+  ok(r.errors.some((e) => /palabra/.test(e)), 'debe explicar que faltan palabras, no caracteres');
+  fs.rmSync(d, { recursive: true, force: true });
+  console.log('✓ la sustancia se mide en palabras distintas, no en longitud');
+}
+
+// --- 15. Calco: reutilizar una autopsia no es parecerse a ella ---
+// Es el escenario catastrófico que identificó la autopsia de este mismo cambio: una
+// plantilla pegada en cada misión hace que la puerta apruebe el cien por cien sin detectar
+// nada. Aquel veredicto fue CONDITIONAL_TDD y exigía escribir PRIMERO la prueba que
+// distingue copiar de parecerse. Es esta, y por eso están los dos casos juntos.
+{
+  const d = arenal();
+  const engine = new PreMortemEngine(d);
+  engine.evaluateAssessment(base({ feature_name: 'Migracion de la tabla de usuarios' }));
+
+  // (a) Copia literal con el título cambiado.
+  const copia = engine.evaluateAssessment(base({ feature_name: 'Migracion de la tabla de pedidos' }));
+  ok(copia.status === 'DENIED' && copia.reason === 'PREMORTEM_BOILERPLATE',
+    `una autopsia reciclada debe rechazarse, obtuve ${copia.reason || copia.status}`);
+  // Sin nombrar el original, el usuario no sabe qué frase reescribir. Era una de las
+  // salvaguardas comprometidas en la autopsia de este cambio.
+  ok(Boolean(copia.duplicateOf) && copia.errors[0].includes('Migracion de la tabla de usuarios'),
+    'el rechazo debe nombrar el pre-mortem con el que choca');
+
+  // (b) Legítimamente parecido: mismo tema, riesgos escritos de verdad. Debe pasar, porque
+  // una puerta que frena trabajo válido se desactiva antes de que nadie la corrija.
+  const parecido = engine.evaluateAssessment({
+    feature_name: 'Migracion del catalogo de productos',
+    competence_check: { justified: true },
+    anchors: {
+      security: ['El catalogo lleva precios de coste que no deben quedar en la tabla intermedia'],
+      performance: ['Son ochocientas mil filas con imagenes y el indice se reconstruye entero'],
+      architecture: ['El buscador lee del catalogo por un indice que la migracion invalida'],
+      ux: ['La tienda muestra precios viejos mientras la migracion avanza y nadie lo entiende'],
+    },
+    worst_case_scenarios: [
+      'La reconstruccion del indice agota la memoria y deja el buscador entero sin servicio',
+      'Las imagenes apuntan a rutas del esquema anterior y el catalogo sale sin ninguna foto',
+    ],
+    mandatory_mitigations: ['Migrar el catalogo por lotes de mil filas con el indice reconstruido al final'],
+  });
+  ok(parecido.status === 'APPROVED',
+    `dos trabajos parecidos escritos de verdad deben pasar, obtuve ${parecido.reason || parecido.status}`);
+
+  // (c) Reevaluar la MISMA característica no es calco: es corregirla.
+  ok(engine.evaluateAssessment(base({ feature_name: 'Migracion de la tabla de usuarios' })).status === 'APPROVED',
+    'reevaluar la misma caracteristica no puede confundirse con reciclar otra');
+
+  fs.rmSync(d, { recursive: true, force: true });
+  console.log('✓ distingue reciclar una autopsia de parecerse a ella');
+}
+
+// --- 16. Interfaz: la herramienta se puede usar sin adivinar ---
+// Era un validador excelente con una interfaz penosa: devolvía JSON donde el prompt
+// prometía un informe, y obligaba a construir siete campos en una sola línea de shell.
+{
+  const d = arenal();
+  const { spawnSync } = require('child_process');
+  const CLI = path.join(__dirname, '..', '..', 'tools', 'premortem.js');
+  const correr = (...a) => spawnSync(process.execPath, [CLI, ...a], { encoding: 'utf8', timeout: 30000 });
+
+  // La plantilla tiene que ser evaluable tal cual se rellene, no un ejemplo aproximado.
+  const plantilla = JSON.parse(correr('template').stdout);
+  for (const clave of ['feature_name', 'competence_check', 'anchors', 'worst_case_scenarios', 'mandatory_mitigations']) {
+    ok(Object.prototype.hasOwnProperty.call(plantilla, clave), `la plantilla debe incluir ${clave}`);
+  }
+  ok(Object.keys(plantilla.anchors).length === 4, 'la plantilla debe traer las cuatro anclas');
+
+  // --file: el payload por archivo evita el infierno de comillas del shell.
+  const ruta = path.join(d, 'pm.json');
+  fs.writeFileSync(ruta, JSON.stringify(base({ feature_name: 'Evaluacion desde archivo en disco' })));
+  const porArchivo = correr('evaluate', '--file', ruta, '--target', d);
+  ok(porArchivo.status === 0, `evaluate --file debe funcionar, salio con ${porArchivo.status}`);
+
+  const idSellado = JSON.parse(porArchivo.stdout.split('\n\nInforme')[0]).premortem_id;
+  ok(correr('list', '--target', d).stdout.includes(idSellado), 'list debe mostrar lo sellado');
+  ok(correr('show', idSellado, '--target', d).stdout.includes('contractVersion'), 'show debe volcar el registro');
+
+  // El informe sale del registro sellado, no de lo que alguien recuerde haber escrito.
+  const informe = correr('report', 'latest', '--target', d).stdout;
+  ok(/Las 4 Anclas de Impacto/.test(informe) && /Veredicto Final/.test(informe), 'report debe emitir el markdown completo');
+  ok(informe.includes(idSellado), 'el informe debe llevar el id del registro del que sale');
+
+  ok(correr('report', 'inexistente', '--target', d).status === 1, 'un id que no existe no puede devolver exito');
+  ok(correr('evaluate', '--file', path.join(d, 'no-esta.json')).status === 1, 'un archivo ilegible debe fallar');
+  ok(correr('accion-inventada').status === 2, 'una accion desconocida sale con 2');
+
+  fs.rmSync(d, { recursive: true, force: true });
+  console.log('✓ template, --file, list, show y report operativos');
+}
+
 console.log(`\n=== AX-F-023 PASS (${n} comprobaciones) ===`);

@@ -1,6 +1,8 @@
 'use strict';
 
 const assert = require('assert');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const ROOT = path.join(__dirname, '..', '..');
 const { executeHybridWorkflow } = require(path.join(ROOT, 'tools', 'workflow_runner.js'));
@@ -46,33 +48,41 @@ const base = {
   },
 };
 
+// Las misiones CRITICAL sellan su pre-mortem, y una prueba no debe escribir en el arbol
+// de evidencia del proyecto: ademas de ensuciarlo, el detector de calco veria registros
+// de corridas anteriores y el resultado dependeria del orden de ejecucion.
+const ARENAL = fs.mkdtempSync(path.join(os.tmpdir(), 'axion-riskgate-'));
+const ctx = { premortemRoot: ARENAL };
+
 const EXIGEN_GATE = ['HIGH', 'CRITICAL', 'high', 'critical', 'Critical', 'HIGH ', ' high', 'High'];
 const FUERA_DE_DOMINIO = ['SEVERE', 'CATASTROPHIC', 'ALTO', '', 999, undefined, null, {}];
 const fallos = [];
 
 for (const risk of EXIGEN_GATE) {
-  const result = executeHybridWorkflow({ ...base, risk });
+  const result = executeHybridWorkflow({ ...base, risk }, ctx);
   if (result.status !== 'BLOCKED_APPROVAL_MISSING') {
     fallos.push(`risk=${JSON.stringify(risk)} debia exigir firma y devolvio ${result.status}`);
   }
 }
 
 for (const risk of FUERA_DE_DOMINIO) {
-  const result = executeHybridWorkflow({ ...base, risk });
+  const result = executeHybridWorkflow({ ...base, risk }, ctx);
   if (result.status !== 'BLOCKED_INVALID_RISK') {
     fallos.push(`risk=${JSON.stringify(risk)} debia bloquear identidad y devolvio ${result.status}`);
   }
 }
 
-const fabricated = executeHybridWorkflow({ ...base, risk: 'HIGH', humanApproval: true });
+const fabricated = executeHybridWorkflow({ ...base, risk: 'HIGH', humanApproval: true }, ctx);
 if (fabricated.status !== 'BLOCKED_APPROVAL_MISSING') {
   fallos.push(`humanApproval:true no puede sustituir una firma: ${fabricated.status}`);
 }
 
-const low = executeHybridWorkflow({ ...base, risk: 'low', rollbackPlan: undefined });
+const low = executeHybridWorkflow({ ...base, risk: 'low', rollbackPlan: undefined }, ctx);
 if (low.status === 'BLOCKED_INVALID_RISK' || low.status === 'BLOCKED_APPROVAL_MISSING') {
   fallos.push(`risk='low' no debe exigir gate HIGH/CRITICAL: ${low.status}`);
 }
+
+fs.rmSync(ARENAL, { recursive: true, force: true });
 
 assert.deepStrictEqual(fallos, [], `el gate no falla cerrado:\n  - ${fallos.join('\n  - ')}`);
 console.log(`PASS AX-F-002 — ${EXIGEN_GATE.length} grafias exigen firma, ${FUERA_DE_DOMINIO.length} valores bloquean`);

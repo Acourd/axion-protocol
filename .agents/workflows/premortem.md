@@ -89,11 +89,26 @@ acto humano deliberado.
 
 ## 💻 Registro de Evaluación por Herramienta
 
-Para registrar formalmente el pre-mortem en el árbol de estados `.axion/state/`:
+El recorrido normal es de tres pasos, y **no requiere pelearse con las comillas del shell**:
+
 ```bash
-node tools/premortem.js evaluate '<json_payload>'
-node tools/premortem.js verdicts        # el contrato de veredictos, en JSON
+node tools/premortem.js template --out premortem.json   # 1. esqueleto rellenable
+node tools/premortem.js evaluate --file premortem.json  # 2. sella y dictamina
+node tools/premortem.js report latest                   # 3. el informe en markdown
 ```
+
+Un payload de siete campos en una sola línea de shell es una forma segura de perder media
+hora escapando apóstrofos, sobre todo en Windows. Usa `--file`.
+
+```bash
+node tools/premortem.js list             # los pre-mortems sellados, con su veredicto
+node tools/premortem.js show <id>        # el registro completo, con digest y payload
+node tools/premortem.js verdicts         # el contrato de veredictos, en JSON
+node tools/premortem.js evaluate '<json>'  # sigue valiendo, si el payload es corto
+```
+
+El informe de `report` se genera **desde el registro sellado**, no desde lo que alguien
+recuerde haber escrito: el markdown y la evidencia cuentan la misma historia o no sirven.
 
 ### Lo que el motor exige, y por qué
 
@@ -106,6 +121,16 @@ node tools/premortem.js verdicts        # el contrato de veredictos, en JSON
 - **El nivel se deriva del contenido, no se declara.** Puedes declarar menos del que
   alcanzas; declarar más se rechaza. El nivel 3 exige `mitigation_stress_test` con
   `has_critical_weakness` booleano y una auto-crítica escrita de verdad.
+- **≥ 6 palabras distintas por frase**, además de los 40 caracteres. Cuarenta y cuatro
+  letras iguales superaban el suelo de longitud: contar caracteres mide el esfuerzo de
+  teclear, no el de pensar.
+- **Nada de autopsias recicladas.** Si reutilizas literalmente el 70% o más de las frases
+  de otro pre-mortem cambiando solo el título, se rechaza con `PREMORTEM_BOILERPLATE` y se
+  te dice con cuál choca. Una plantilla pegada en cada misión hace que la puerta apruebe el
+  cien por cien sin detectar nada, con luz verde certificando que hubo análisis.
+  Parecerse **sí** vale: dos migraciones que de verdad se parecen se describen con frases
+  distintas, porque los riesgos concretos difieren. Reevaluar la misma característica
+  tampoco es calco: es corregirla.
 - **Las salvaguardas aprobadas se persisten en `.axion/memory`** vía la API de memoria,
   así que sobreviven a la regeneración del índice y viajan al ancla de `/compact`. Un
   pre-mortem rechazado no deja convenciones: no hay nada que comprometer.
