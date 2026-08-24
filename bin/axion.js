@@ -22,7 +22,7 @@ const version = require(path.join(RAIZ, 'package.json')).version;
 // Cada subcomando es un modulo de tools/ invocado como proceso hijo. Se hace asi, y no
 // con require, para heredar sin traducciones sus codigos de salida y su salida estandar.
 const SUBCOMANDOS = {
-  init: { script: 'install.js', ayuda: 'inyecta las reglas de gobernanza en un proyecto' },
+  init: { script: 'install.js', ayuda: 'inyecta las reglas de gobernanza en un proyecto (--user para ~/.claude)' },
   wizard: { script: 'tools/wizard.js', ayuda: 'asistente interactivo de configuración y perfil' },
   check: { script: 'tools/health_check.js', ayuda: 'auditoría de salud y sincronización del proyecto' },
   update: { script: 'tools/updater.js', ayuda: 'actualiza reglas y herramientas preservando configuración' },
@@ -58,6 +58,7 @@ const USO = [
   '',
   'Ejemplos:',
   '  axion init --target ./mi-proyecto',
+  '  axion init --user                    comandos alcanzables desde cualquier directorio',
   '  axion preflight "git commit -m mensaje"',
   '  axion preflight --json \'{"executable":"git","args":["status"],"cwd":".","shell":false}\'',
   '  axion halt "el agente esta tocando produccion"',

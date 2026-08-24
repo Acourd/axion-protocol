@@ -53,6 +53,21 @@ npx axion check
 claim success on an incomplete payload, and it leaves an existing `.claude/settings.json`
 untouched — telling you what to add instead.
 
+### Commands not showing up?
+
+Claude Code reads project commands from the **session root**. If you launched it one
+directory above the project, none of the 16 will appear — the files are fine, the scope
+isn't. Either start Claude Code inside the project, or install them once for every
+directory:
+
+```bash
+npx axion init --user
+```
+
+That writes the commands to `~/.claude/commands`, backing up anything it replaces. The
+prompts load anywhere; the tools they cite only resolve inside a project that has Axion
+installed.
+
 ---
 
 ## 🎮 Core Slash Commands
@@ -90,15 +105,15 @@ Axion commands are designed for **zero-collision synergy** with Antigravity, Cla
 
 ## 🧪 Verification & Test Suite
 
-Axion Protocol includes **49 deterministic test suites** out of the box with zero external dependencies:
+Axion Protocol includes **50 deterministic test suites** out of the box with zero external dependencies:
 
 ```bash
-# Run all 49 test suites
+# Run all 50 test suites
 node tests/run_all.js
 ```
 
 <details>
-<summary><strong>📋 View all 49 Test Suites Included</strong></summary>
+<summary><strong>📋 View all 50 Test Suites Included</strong></summary>
 
 ### Funcional
 - `adversarial.test.js`
@@ -130,6 +145,7 @@ node tests/run_all.js
 - `ax_f_021_memory_guard.test.js`
 - `ax_f_022_deep_reasoning_robustness.test.js`
 - `ax_f_023_premortem.test.js`
+- `ax_f_024_command_scope.test.js`
 
 ### Phase E (Criptografía y Gobernanza)
 - `approval_ed25519.test.js`

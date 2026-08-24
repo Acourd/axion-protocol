@@ -11,9 +11,19 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 const process = require('process');
+
+// Fuente única de la lista de comandos: se lee del directorio en vez de escribirse a mano.
+// Tenerla duplicada garantizaba que el ámbito de usuario y el de proyecto acabaran
+// instalando conjuntos distintos, y que añadir un comando nuevo se olvidara en uno de los dos.
+const WORKFLOWS = Object.freeze(
+  fs.readdirSync(path.join(__dirname, '.agents', 'workflows'))
+    .filter((f) => f.endsWith('.md'))
+    .sort(),
+);
 
 function hashDe(filePath) {
   return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
@@ -52,6 +62,53 @@ function copiarProtegido(src, dest, ausentes) {
   return respaldo;
 }
 
+/**
+ * Instala los slash commands en el ámbito de USUARIO (~/.claude/commands).
+ *
+ * Por qué existe: Claude Code lee los comandos de proyecto desde la raíz de la sesión.
+ * Quien arranca Claude Code un directorio más arriba del proyecto —o trabaja con varios
+ * proyectos Axion— no ve ni un comando, y el chequeo de salud le da verde igualmente,
+ * porque audita el proyecto y no el sitio donde el runtime los busca de verdad.
+ *
+ * Solo viajan los comandos. Las herramientas, políticas y esquemas se quedan en el
+ * proyecto: son código con rutas relativas, y el directorio personal de alguien no es
+ * sitio para desplegar un runtime. Eso implica un límite que conviene decir en voz alta:
+ * un comando de usuario invocado FUERA de un proyecto Axion cargará el prompt, pero los
+ * "node tools/..." que cita no resolverán. Sirve para alcanzar tus proyectos Axion desde
+ * cualquier directorio, no para llevarte la gobernanza a proyectos que no la tienen.
+ */
+function runUserInstallation(homeDir) {
+  const home = path.resolve(homeDir || os.homedir());
+  const destino = path.join(home, '.claude', 'commands');
+  console.log(`[Axion Installer] Instalando slash commands de usuario en: ${destino}\n`);
+
+  fs.mkdirSync(destino, { recursive: true });
+  const respaldos = [];
+  const ausentes = [];
+
+  for (const wf of WORKFLOWS) {
+    const r = copiarProtegido(path.join(__dirname, '.agents', 'workflows', wf), path.join(destino, wf), ausentes);
+    if (r) respaldos.push(r);
+  }
+
+  const faltantes = [...new Set(ausentes)];
+  if (faltantes.length > 0) {
+    console.log(`\n❌ [Axion Protocol] Faltan ${faltantes.length} comando(s) en el paquete de origen:`);
+    faltantes.forEach((a) => console.log(`   - ${a}`));
+    return { status: 'INCOMPLETE', target: destino, backups: respaldos, missing: faltantes };
+  }
+
+  console.log(`  ✓ ${WORKFLOWS.length} slash commands disponibles desde cualquier directorio.`);
+  if (respaldos.length > 0) {
+    console.log(`  🛡️ ${respaldos.length} archivo(s) preexistente(s) respaldado(s) antes de sobrescribir.`);
+  }
+  console.log('');
+  console.log('  Límite declarado: el prompt se cargará en cualquier proyecto, pero las');
+  console.log('  herramientas que cita solo resuelven dentro de un proyecto con Axion instalado.');
+  console.log('');
+  return { status: 'SUCCESS', target: destino, backups: respaldos, missing: [] };
+}
+
 function runInstallation(targetDir) {
   const rootDir = path.resolve(targetDir || process.cwd());
   console.log(`[Axion Installer] Iniciando instalación universal en: ${rootDir}\n`);
@@ -82,12 +139,10 @@ function runInstallation(targetDir) {
   anotar(copiarProtegido(path.join(sourceRoot, '.agents', 'hooks', 'validate-tool-call.mjs'), path.join(rootDir, '.agents', 'hooks', 'validate-tool-call.mjs'), ausentes));
   anotar(copiarProtegido(path.join(sourceRoot, '.agents', 'rules', 'axion-governance.md'), path.join(rootDir, '.agents', 'rules', 'axion-governance.md'), ausentes));
 
-  // Slash commands en .agents/workflows
-  const workflows = [
-    'clarify.md', 'profile.md', 'rollback.md', 'preflight.md',
-    'halt.md', 'unhalt.md', 'attest.md', 'review.md',
-    'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md', 'remember.md', 'deep.md', 'premortem.md'
-  ];
+  // La lista sale de WORKFLOWS, no de una copia escrita a mano: los dos ámbitos tienen
+  // que instalar exactamente el mismo conjunto, y una lista duplicada se olvida de la
+  // mitad el día que se añade un comando.
+  const workflows = WORKFLOWS;
   workflows.forEach(wf => {
     anotar(copiarProtegido(path.join(sourceRoot, '.agents', 'workflows', wf), path.join(rootDir, '.agents', 'workflows', wf), ausentes));
   });
@@ -211,6 +266,14 @@ function main() {
     }
   }
 
+  // El ambito de usuario es una instalacion distinta, no una variante de la de proyecto:
+  // escribe fuera del arbol y solo lleva los comandos.
+  if (args.includes('--user')) {
+    const iHome = args.indexOf('--home');
+    const r = runUserInstallation(iHome !== -1 ? args[iHome + 1] : null);
+    process.exit(r.status === 'SUCCESS' ? 0 : 1);
+  }
+
   const r = runInstallation(target);
   // Salir con 0 tras una instalacion incompleta la haria pasar por buena en cualquier CI.
   process.exit(r.status === 'SUCCESS' ? 0 : 1);
@@ -220,4 +283,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { runInstallation };
+module.exports = { runInstallation, runUserInstallation, WORKFLOWS };

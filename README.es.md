@@ -53,6 +53,21 @@ npx axion check
 éxito sobre un paquete incompleto, y si ya tienes un `.claude/settings.json` no lo toca:
 te dice qué añadirle.
 
+### ¿No te aparecen los comandos?
+
+Claude Code lee los comandos de proyecto desde la **raíz de la sesión**. Si lo arrancaste
+un directorio más arriba del proyecto, no verás ninguno de los 16: los archivos están
+bien, lo que falla es el alcance. O arrancas Claude Code dentro del proyecto, o los
+instalas una vez para todos los directorios:
+
+```bash
+npx axion init --user
+```
+
+Escribe los comandos en `~/.claude/commands` y respalda lo que sustituya. Los prompts
+cargan en cualquier sitio; las herramientas que citan solo resuelven dentro de un
+proyecto con Axion instalado.
+
 ---
 
 ## 🎮 Slash Commands Esenciales
@@ -90,10 +105,10 @@ Diseñados para coexistir **sin colisiones** con Antigravity, Claude Code y AG-K
 
 ## 🧪 Verificación y Suite de Pruebas
 
-Axion Protocol incluye **49 suites de prueba deterministas** listas para ejecutarse sin dependencias externas:
+Axion Protocol incluye **50 suites de prueba deterministas** listas para ejecutarse sin dependencias externas:
 
 ```bash
-# Ejecutar las 49 suites de prueba
+# Ejecutar las 50 suites de prueba
 node tests/run_all.js
 ```
 

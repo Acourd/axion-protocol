@@ -18,6 +18,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -167,6 +168,32 @@ function runHealthCheck(targetDir) {
     ausentes.length === 0
       ? `${citadas.size} herramientas referenciadas, todas presentes`
       : `faltan ${ausentes.join(', ')} (citadas en ${ausentes.map((a) => citadas.get(a).join('/')).join('; ')})`);
+
+  // 8b. Alcance real de los comandos. El chequeo decia "16/16" mirando el proyecto, y un
+  //     usuario cuya sesion de Claude Code arranca un directorio mas arriba no veia ni
+  //     uno: los comandos de proyecto se leen desde la raiz de la sesion. Verde sobre una
+  //     superficie inalcanzable es el mismo defecto que un hook registrado y muerto.
+  const dirUsuario = path.join(os.homedir(), '.claude', 'commands');
+  const enUsuario = WORKFLOWS.filter((w) => fs.existsSync(path.join(dirUsuario, w)));
+  const hayUsuario = enUsuario.length > 0;
+
+  // Divergir es peor que faltar: dos copias que dicen cosas distintas hacen que el agente
+  // obedezca una u otra segun desde donde se le invoque, y nadie sabe cual se aplico.
+  const divergentesUsuario = hayUsuario ? WORKFLOWS.filter((w) => {
+    const a = leer(path.join(dirComandos, w));
+    const b = leer(path.join(dirUsuario, w));
+    return a !== null && b !== null && a !== b;
+  }) : [];
+
+  const alcanceOk = divergentesUsuario.length === 0
+    && (!hayUsuario || enUsuario.length === WORKFLOWS.length);
+  addCheck('Alcance de los Comandos', alcanceOk, divergentesUsuario.length > 0
+    ? `${divergentesUsuario.length} comando(s) divergen entre usuario y proyecto: ${divergentesUsuario.slice(0, 3).join(', ')}${divergentesUsuario.length > 3 ? '…' : ''}. Resincroniza con \`axion init --user\`.`
+    : hayUsuario
+      ? (enUsuario.length === WORKFLOWS.length
+        ? `${enUsuario.length}/${WORKFLOWS.length} también en ~/.claude/commands: alcanzables desde cualquier directorio`
+        : `solo ${enUsuario.length}/${WORKFLOWS.length} en ~/.claude/commands; completa con \`axion init --user\``)
+      : 'solo ámbito de proyecto: Claude Code los verá si su raíz de sesión es este directorio (si no, `axion init --user`)');
 
   // 9. Puente con Claude Code
   const claudeMd = path.join(target, 'CLAUDE.md');
