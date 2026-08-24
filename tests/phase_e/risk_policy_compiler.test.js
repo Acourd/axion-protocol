@@ -19,15 +19,21 @@ const required = [
   'independent_audit',
 ];
 
+// CRITICAL suma los requisitos exclusivos de su nivel. La politica declara por separado
+// lo que pesa sobre HIGH y CRITICAL y lo que pesa solo sobre CRITICAL, para que subir el
+// liston de un nivel sea editar la politica y no tocar el runtime.
+const soloCritical = ['adversarial_premortem'];
+
 assert.deepStrictEqual(compiled.levels.HIGH.requirements, required);
-assert.deepStrictEqual(compiled.levels.CRITICAL.requirements, required);
+assert.deepStrictEqual(compiled.levels.CRITICAL.requirements, [...required, ...soloCritical]);
+assert.deepStrictEqual(compiled.levels.LOW.requirements, [], 'los niveles bajos no heredan requisitos');
 assert.strictEqual(compiled.levels.HIGH.humanGateRequired, true);
 assert.strictEqual(compiled.levels.CRITICAL.humanGateRequired, true);
 
 const missing = evaluateRiskRequirements(compiled, 'CRITICAL', {
   scope: [],
 });
-assert.deepStrictEqual(missing.missing, required);
+assert.deepStrictEqual(missing.missing, [...required, ...soloCritical]);
 assert.strictEqual(missing.satisfied, false);
 
 assert.throws(

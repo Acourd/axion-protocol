@@ -22,6 +22,28 @@ const base = {
     verification: ['comparar manifest SHA-256'],
   },
   testAssertions: ['comprobacion'],
+  // CRITICAL exige ademas pre-mortem adversarial, que el runner comprueba en PLANIFICAR,
+  // antes del GATE. Sin este payload una mision CRITICAL se detendria una fase antes y
+  // esta suite dejaria de medir lo que vino a medir: que la puerta de FIRMA falla cerrada.
+  // La autopsia va delante a proposito: pregunta si la cosa deberia existir, y esa
+  // pregunta no tiene sentido despues de que un humano ya haya firmado que si.
+  premortem: {
+    feature_name: 'Migracion masiva de la capa de persistencia',
+    competence_check: { justified: true, rationale: 'La migracion es inevitable para el contrato nuevo' },
+    anchors: {
+      security: ['Una migracion con credenciales de produccion expone la base entera si el script se equivoca de entorno'],
+      performance: ['El bloqueo de tabla durante la migracion detiene la escritura de toda la aplicacion en caliente'],
+      architecture: ['El esquema nuevo rompe el contrato con los consumidores que aun leen las columnas viejas'],
+      ux: ['Una migracion a medias deja al usuario viendo datos incoherentes sin explicacion ninguna'],
+    },
+    worst_case_scenarios: [
+      'La migracion falla a mitad y deja filas convertidas y sin convertir en la misma tabla',
+      'El snapshot de reversion resulta ilegible justo cuando hace falta restaurarlo de urgencia',
+    ],
+    mandatory_mitigations: [
+      'Verificar el snapshot de reversion antes de tocar una sola fila de la tabla original',
+    ],
+  },
 };
 
 const EXIGEN_GATE = ['HIGH', 'CRITICAL', 'high', 'critical', 'Critical', 'HIGH ', ' high', 'High'];

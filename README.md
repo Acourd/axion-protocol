@@ -90,15 +90,15 @@ Axion commands are designed for **zero-collision synergy** with Antigravity, Cla
 
 ## 🧪 Verification & Test Suite
 
-Axion Protocol includes **43 deterministic test suites** out of the box with zero external dependencies:
+Axion Protocol includes **49 deterministic test suites** out of the box with zero external dependencies:
 
 ```bash
-# Run all 43 test suites
+# Run all 49 test suites
 node tests/run_all.js
 ```
 
 <details>
-<summary><strong>📋 View all 43 Test Suites Included</strong></summary>
+<summary><strong>📋 View all 49 Test Suites Included</strong></summary>
 
 ### Funcional
 - `adversarial.test.js`
@@ -145,6 +145,7 @@ node tests/run_all.js
 - `evidence_binding.test.js`
 - `killswitch.test.js`
 - `payload_reread.test.js`
+- `premortem_gate.test.js`
 - `principal_alias.test.js`
 - `revocation.test.js`
 - `risk_policy_compiler.test.js`

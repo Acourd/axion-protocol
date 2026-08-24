@@ -45,3 +45,9 @@ required_for_high_or_critical:
   - executable_check
   - rollback_plan
   - independent_audit
+# Exigido solo en CRITICAL, que es la clase donde "asume que fracaso en 6 meses" mas
+# paga: acciones destructivas, de seguridad, despliegues, migraciones e irreversibles.
+# Para exigirlo tambien en HIGH basta mover esta linea al bloque de arriba; el runner
+# no necesita cambiar.
+required_for_critical_only:
+  - adversarial_premortem

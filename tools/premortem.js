@@ -311,6 +311,62 @@ class PreMortemEngine {
     return guardadas;
   }
 
+  /**
+   * Recupera un pre-mortem sellado y lo re-evalúa desde su payload.
+   *
+   * No se lee `record.verdict`. El registro es un fichero que cualquiera con permiso de
+   * escritura puede editar, así que confiar en el veredicto guardado devolvería por la
+   * puerta de atrás la autocertificación que se cerró por la de delante: bastaría abrir
+   * el JSON y cambiar una palabra. Se recalcula el digest, se comprueba que coincide con
+   * el que el registro declara, y el veredicto se vuelve a derivar del contenido.
+   *
+   * `missionId` ata el pre-mortem a la misión que lo invoca. Sin ese vínculo, una
+   * autopsia aprobada para una cosa serviría de salvoconducto para cualquier otra.
+   */
+  loadRecord(premortemId, missionId) {
+    const ruta = path.join(this.stateDir, `premortem-${String(premortemId || '').replace(/[^a-f0-9]/gi, '')}.json`);
+    if (!premortemId || !fs.existsSync(ruta)) {
+      return { pass: false, status: 'PREMORTEM_NOT_FOUND', premortem_id: premortemId || null };
+    }
+
+    let registro;
+    try {
+      registro = JSON.parse(fs.readFileSync(ruta, 'utf8'));
+    } catch (e) {
+      return { pass: false, status: 'PREMORTEM_UNREADABLE', message: e.message };
+    }
+
+    if (!registro || typeof registro.payload !== 'object' || registro.payload === null) {
+      return { pass: false, status: 'PREMORTEM_MALFORMED' };
+    }
+
+    const recalculado = hashCanonical(registro.payload);
+    if (recalculado !== registro.digest) {
+      return { pass: false, status: 'PREMORTEM_TAMPERED', expected: registro.digest, actual: recalculado };
+    }
+
+    if (missionId) {
+      const atado = texto(registro.payload.mission_id);
+      if (!atado) return { pass: false, status: 'PREMORTEM_UNBOUND', premortem_id: registro.premortem_id };
+      if (atado !== missionId) {
+        return { pass: false, status: 'PREMORTEM_BINDING_MISMATCH', boundTo: atado, missionId };
+      }
+    }
+
+    // Se re-deriva en vez de leerse: el veredicto sale del analisis, tambien al releerlo.
+    const reevaluado = this.evaluateAssessment(registro.payload);
+    return {
+      pass: reevaluado.status === 'APPROVED',
+      status: reevaluado.status === 'APPROVED' ? 'PREMORTEM_VALID' : `PREMORTEM_${reevaluado.status}`,
+      premortem_id: registro.premortem_id,
+      digest: registro.digest,
+      verdict: reevaluado.verdict || null,
+      verdict_rationale: reevaluado.verdict_rationale || null,
+      depth_level: reevaluado.depth_level || null,
+      errors: reevaluado.errors || [],
+    };
+  }
+
   static formatReport({ featureName, anchors, worstCases, mitigations, solutionStress, verdict = 'APPROVED_WITH_SAFEGUARDS', depth = 1 }) {
     const glosa = VEREDICTOS[verdict] ? VEREDICTOS[verdict].glosa : '';
     let md = `# 🌪️ Reporte Pre-Mortem Adversarial: ${featureName}\n\n`;

@@ -15,6 +15,7 @@ const { createWorkflowStateMachine } = require('./workflow_state_machine.js');
 const { classifyCommand, executeStructuredCommand, COMMAND_DECISION } = require('./structured_command.js');
 const { validateRollbackPlan, ROLLBACK_STATUS } = require('./rollback_plan.js');
 const { createBoundEvidenceManifest } = require('./evidence_hasher.js');
+const PreMortemEngine = require('./premortem.js');
 
 const POLICY_PATH = path.resolve(__dirname, '..', 'policies', 'risk.yaml');
 
@@ -122,13 +123,58 @@ function executeHybridWorkflow(taskPayload = {}, runtimeContext = {}) {
     }
   }
 
+  // Pre-mortem adversarial. Se exige aqui, en PLANIFICAR, y no en TEST junto a los demas
+  // requisitos, porque es el unico que pregunta si la cosa DEBERIA existir en vez de si se
+  // construyo bien: comprobarlo despues de construir seria una autopsia sobre el cadaver.
+  //
+  // Solo APPROVED_WITH_SAFEGUARDS deja pasar. Un CONDITIONAL_TDD dice que hay una
+  // debilidad critica en las mitigaciones y que solo se sigue con una prueba que falle
+  // primero; el runner no puede comprobar que la prueba ataque ESA debilidad, asi que no
+  // puede declarar cumplida la condicion. Lo honesto es detenerse y que la persona arregle
+  // la mitigacion o vuelva a pasar la autopsia.
+  const premortemRequerido = compiledPolicy.levels[risk].requirements.includes('adversarial_premortem');
+  let premortemResult = null;
+  if (premortemRequerido || taskPayload.premortem !== undefined || taskPayload.premortemId !== undefined) {
+    const motor = new PreMortemEngine(runtimeContext.premortemRoot || path.resolve(__dirname, '..'));
+
+    if (taskPayload.premortem !== undefined) {
+      const evaluado = motor.evaluateAssessment(taskPayload.premortem);
+      premortemResult = {
+        pass: evaluado.status === 'APPROVED',
+        status: evaluado.status === 'APPROVED' ? 'PREMORTEM_VALID' : `PREMORTEM_${evaluado.status}`,
+        premortem_id: evaluado.premortem_id || null,
+        digest: evaluado.digest || null,
+        verdict: evaluado.verdict || null,
+        verdict_rationale: evaluado.verdict_rationale || null,
+        depth_level: evaluado.depth_level || null,
+        errors: evaluado.errors || [],
+      };
+    } else if (taskPayload.premortemId !== undefined) {
+      premortemResult = motor.loadRecord(taskPayload.premortemId, missionId);
+    } else {
+      premortemResult = { pass: false, status: 'PREMORTEM_MISSING' };
+    }
+
+    if (!premortemResult.pass) {
+      return block(`BLOCKED_${premortemResult.status}`,
+        `[2. PLANIFICAR] Pre-mortem no superado: ${premortemResult.verdict || premortemResult.status}.`,
+        { premortem: premortemResult });
+    }
+    log.push(`[2. PLANIFICAR] Pre-mortem ${premortemResult.premortem_id} nivel ${premortemResult.depth_level}: ${premortemResult.verdict}.`);
+  }
+
   const requirements = compiledPolicy.levels[risk].requirements;
   const requirementsHash = hashCanonical(requirements);
   const policyHash = crypto.createHash('sha256').update(policySource, 'utf8').digest('hex');
   const rollbackHash = rollbackResult.status === ROLLBACK_STATUS.ROLLBACK_VALID
     ? rollbackResult.rollbackHash
     : hashCanonical(null);
-  machine.advance('PLANIFICAR', 'PASS', hashCanonical({ risk, requirementsHash, policyHash, rollbackHash }));
+  machine.advance('PLANIFICAR', 'PASS', hashCanonical({
+    risk, requirementsHash, policyHash, rollbackHash,
+    // Entra en el digest de la fase para que la autopsia quede atada a la cadena: sin
+    // esto, cambiar de pre-mortem no alteraria una sola huella del recorrido.
+    premortemDigest: premortemResult ? premortemResult.digest : null,
+  }));
   log.push(`[2. PLANIFICAR] Política compilada para ${risk}; requisitos vinculados.`);
 
   if (approvalRequired || taskPayload.approvalEnvelope !== undefined) {
@@ -206,6 +252,9 @@ function executeHybridWorkflow(taskPayload = {}, runtimeContext = {}) {
   }
   satisfiedRequirements.add('executable_check');
   satisfiedRequirements.add('independent_audit');
+  if (premortemResult && premortemResult.pass) {
+    satisfiedRequirements.add('adversarial_premortem');
+  }
   const requirementResult = evaluateRiskRequirements(compiledPolicy, risk, {
     scope,
     satisfiedRequirements,
@@ -237,6 +286,9 @@ function executeHybridWorkflow(taskPayload = {}, runtimeContext = {}) {
     id: rollbackResult.planId || null,
     digest: rollbackHash,
   };
+  const premortemBinding = premortemResult
+    ? { id: premortemResult.premortem_id, digest: premortemResult.digest, verdict: premortemResult.verdict, depthLevel: premortemResult.depth_level }
+    : null;
   const checkBinding = {
     id: checkResult.checkId,
     keyId: checkResult.keyId,
@@ -286,6 +338,7 @@ function executeHybridWorkflow(taskPayload = {}, runtimeContext = {}) {
     approval: approvalResult,
     check: checkResult,
     rollback: rollbackResult,
+    premortem: premortemBinding,
     commandClassification,
     execution: executionResult,
     evidenceManifest,

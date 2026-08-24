@@ -11,6 +11,10 @@ const SUPPORTED_REQUIREMENTS = Object.freeze([
   'executable_check',
   'rollback_plan',
   'independent_audit',
+  // Autopsia anticipada obligatoria. Es el unico requisito que se satisface ANTES de
+  // planificar y no despues de construir: pregunta si la cosa deberia existir, no si se
+  // construyo bien. Por eso el runner lo exige en PLANIFICAR y no en TEST.
+  'adversarial_premortem',
 ]);
 
 function indentation(line) {
@@ -24,6 +28,10 @@ function compileRiskPolicy(source) {
 
   const gates = Object.create(null);
   const declaredRequirements = [];
+  // Requisitos que solo pesan sobre CRITICAL. Existen para que subir el liston de un
+  // nivel sea editar una linea de politica y no tocar el runtime: la politica es el dato,
+  // el runner es el mecanismo, y confundirlos obliga a un despliegue por cada matiz.
+  const criticalOnlyRequirements = [];
   let enforcement = null;
   let section = null;
   let currentLevel = null;
@@ -43,7 +51,9 @@ function compileRiskPolicy(source) {
         ? 'levels'
         : trimmed === 'required_for_high_or_critical:'
           ? 'required'
-          : null;
+          : trimmed === 'required_for_critical_only:'
+            ? 'requiredCritical'
+            : null;
       continue;
     }
 
@@ -67,6 +77,10 @@ function compileRiskPolicy(source) {
     if (section === 'required' && indent === 2 && trimmed.startsWith('- ')) {
       declaredRequirements.push(trimmed.slice(2).trim());
     }
+
+    if (section === 'requiredCritical' && indent === 2 && trimmed.startsWith('- ')) {
+      criticalOnlyRequirements.push(trimmed.slice(2).trim());
+    }
   }
 
   for (const level of RISK_DOMAIN) {
@@ -85,8 +99,10 @@ function compileRiskPolicy(source) {
     throw new Error('La política no declara requisitos HIGH/CRITICAL.');
   }
 
+  // Un requisito que el runtime no sabe exigir es una promesa que nadie puede cumplir:
+  // se rechaza la politica entera en vez de ignorar la linea en silencio.
   const seen = new Set();
-  for (const requirement of declaredRequirements) {
+  for (const requirement of [...declaredRequirements, ...criticalOnlyRequirements]) {
     if (!SUPPORTED_REQUIREMENTS.includes(requirement)) {
       throw new Error(`Requisito no soportado por el runtime: ${requirement}.`);
     }
@@ -104,9 +120,11 @@ function compileRiskPolicy(source) {
       Object.freeze({
         humanGateRequired: gates[level],
         requirements: Object.freeze(
-          level === 'HIGH' || level === 'CRITICAL'
-            ? [...declaredRequirements]
-            : [],
+          level === 'CRITICAL'
+            ? [...declaredRequirements, ...criticalOnlyRequirements]
+            : level === 'HIGH'
+              ? [...declaredRequirements]
+              : [],
         ),
       }),
     ]))),

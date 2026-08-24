@@ -109,3 +109,61 @@ node tools/premortem.js verdicts        # el contrato de veredictos, en JSON
 - **Las salvaguardas aprobadas se persisten en `.axion/memory`** vía la API de memoria,
   así que sobreviven a la regeneración del índice y viajan al ancla de `/compact`. Un
   pre-mortem rechazado no deja convenciones: no hay nada que comprometer.
+
+
+---
+
+## 🔗 Puerta de la Fase 2 (PLANIFICAR), no recordatorio
+
+`/premortem` dejó de depender de que alguien se acuerde de usarlo. La política
+(`policies/risk.yaml`) declara `adversarial_premortem` y `tools/workflow_runner.js` lo
+**exige en PLANIFICAR** para las misiones que lo requieren.
+
+**Va delante del GATE a propósito.** La autopsia pregunta si la cosa *debería* existir, y
+esa pregunta pierde el sentido una vez que un humano ya ha firmado que sí.
+
+### Cómo se aporta a una misión
+
+```jsonc
+// (a) en línea: el runner lo evalúa al vuelo
+{ "risk": "CRITICAL", "premortem": { /* payload completo */ } }
+
+// (b) por referencia a un registro ya sellado en .axion/state/
+{ "risk": "CRITICAL", "premortemId": "6b3b4387f258ea1b" }
+```
+
+Por referencia, el payload sellado debe llevar **`mission_id`** igual al de la misión. Sin
+ese vínculo el runner devuelve `PREMORTEM_UNBOUND`: una autopsia aprobada para algo
+inocuo no puede servir de salvoconducto para cualquier otra cosa, igual que una aprobación
+Ed25519 va atada a su misión.
+
+### Qué deja pasar y qué no
+
+| Situación | Estado del runner |
+|---|---|
+| `APPROVED_WITH_SAFEGUARDS` | Pasa a GATE. |
+| `CONDITIONAL_TDD` / `PIVOT_REQUIRED` | `BLOCKED_PREMORTEM_CONDITIONAL` |
+| `REJECTED_*` | `BLOCKED_PREMORTEM_DENIED` |
+| Falta y es obligatorio | `BLOCKED_PREMORTEM_MISSING` |
+| Registro editado a mano | `BLOCKED_PREMORTEM_TAMPERED` |
+| Registro de otra misión | `BLOCKED_PREMORTEM_BINDING_MISMATCH` |
+
+Un `CONDITIONAL_TDD` **no** es vía libre: dice que hay una debilidad crítica en las
+mitigaciones y que solo se sigue con una prueba que falle primero. El runner no puede
+comprobar que esa prueba ataque *esa* debilidad, así que no puede declarar cumplida la
+condición. Arregla la mitigación y vuelve a pasar la autopsia.
+
+**El registro se re-verifica, no se cree.** Al citarlo por id se recalcula su digest
+canónico y se vuelve a derivar el veredicto desde el contenido. Leer el veredicto guardado
+devolvería por la puerta de atrás la autocertificación que se cerró por la de delante:
+bastaría abrir el JSON y cambiar una palabra.
+
+### Alcance actual
+
+Obligatorio en **CRITICAL** — acciones destructivas, de seguridad, despliegues,
+migraciones e irreversibles. Para exigirlo también en HIGH, mueve `adversarial_premortem`
+de `required_for_critical_only` a `required_for_high_or_critical` en la política: el
+runtime no necesita cambiar. En los niveles bajos no es obligatorio —exigir una autopsia
+para cambiar una constante la convertiría en trámite, y un trámite se rellena sin leerlo—
+pero **si se aporta una, se valida igual**: no hay vía por la que un pre-mortem
+suministrado se ignore.
