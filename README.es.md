@@ -36,7 +36,7 @@ Requiere **Node.js 20+**. Cero dependencias: solo módulos integrados de Node.
 /plugin install axion-protocol
 ```
 
-Los 14 comandos y la puerta `PreToolUse` quedan disponibles al instante.
+Los 16 comandos y la puerta `PreToolUse` quedan disponibles al instante.
 
 ### Como paquete npm (Antigravity, Cursor, VS Code, Codex, CI)
 
@@ -77,6 +77,8 @@ Diseñados para coexistir **sin colisiones** con Antigravity, Claude Code y AG-K
 | Comando | Propósito | Cuándo usarlo |
 | :--- | :--- | :--- |
 | **`/clarify`** | Freno socrático: exactamente 2 preguntas humanas con opciones A/B/C. | Antes de planificar, ante peticiones difusas. |
+| **`/premortem`** | Autopsia adversarial de fracaso a 6 meses a través de 4 anclas ortogonales. | Antes de construir cualquier función nueva o idea arquitectónica. |
+| **`/deep`** | Motor de deliberación estructurada de 4 fases con cálculo de radio de impacto. | Antes de refactors de alto riesgo o cambios estructurales. |
 | **`/profile`** | Calibra 5 dimensiones (profundidad, entrada, entorno, cadencia, autonomía) y las persiste. | Una vez por proyecto; ajústalo cuando quieras. |
 | **`/onboard`** | Indexa un repositorio: stack, puntos de entrada, cómo se prueba, qué no tocar. | Primer contacto con un código ajeno. |
 | **`/checkpoint`** | Sella un snapshot del árbol verificable con SHA-256. | Antes de refactors, migraciones o borrados masivos. |

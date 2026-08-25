@@ -36,7 +36,7 @@ Requires **Node.js 20+**. Zero dependencies — only Node built-ins.
 /plugin install axion-protocol
 ```
 
-The 14 commands and the `PreToolUse` gate become available immediately.
+The 16 commands and the `PreToolUse` gate become available immediately.
 
 ### As an npm package (Antigravity, Cursor, VS Code, Codex, CI)
 
@@ -77,6 +77,8 @@ Axion commands are designed for **zero-collision synergy** with Antigravity, Cla
 | Command | Purpose | When to use |
 | :--- | :--- | :--- |
 | **`/clarify`** | Socratic intent gate: exactly 2 plain questions with A/B/C options. | Before planning, on vague requests. |
+| **`/premortem`** | 3-tier adversarial failure simulation across 4 orthogonal anchors. | Before building any new feature or architectural idea. |
+| **`/deep`** | 4-phase structured deliberation engine with blast-radius calculation. | Before high-risk refactors or complex structural changes. |
 | **`/profile`** | Calibrates 5 dimensions (depth, input, environment, cadence, autonomy) and persists them. | Once per project; adjust anytime. |
 | **`/onboard`** | Indexes a repository: stack, entry points, how it is tested, what not to touch. | First contact with a codebase. |
 | **`/checkpoint`** | Seals a SHA-256 verifiable snapshot of the tree. | Before refactors, migrations, mass deletes. |
