@@ -21,7 +21,7 @@ function classifyFeedbackCategory(feedbackText) {
   }
 
   // 2. Reglas de seguridad, prevención de riesgos y protección
-  if (/seguridad|cuidado|riesgo|no borres|inseguro|bloquea|permiso|secreto|sensible|precaución|destructivo/i.test(lower)) {
+  if (/seguridad|cuidado|riesgo|no borres|inseguro|bloquea|permiso|secreto|sensible|precaución|destructivo|peligro|vulnerabilidad|eval|inyección|prohibido/i.test(lower)) {
     return 'SAFETY_RULE';
   }
 
