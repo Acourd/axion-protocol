@@ -424,4 +424,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { CONTRATO, MAX_CHECKPOINTS, crear, listar, resolver, verificar, restaurar, USO };
+module.exports = { CONTRATO, MAX_CHECKPOINTS, crear, listar, resolver, verificar, restaurar, rutaContenida, USO };
