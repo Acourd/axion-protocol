@@ -56,10 +56,16 @@ function createEvidenceManifest(options) {
 
   const fileEntries = [];
   let complete = true;
+  const seenPaths = new Set();
 
   for (const fPath of files) {
     const absPath = path.resolve(fPath);
     const relPath = path.relative(process.cwd(), absPath).split(path.sep).join('/');
+
+    if (seenPaths.has(relPath)) {
+      continue;
+    }
+    seenPaths.add(relPath);
 
     if (!fs.existsSync(absPath)) {
       fileEntries.push({ path: relPath, status: 'MISSING', size_bytes: null, sha256: null });
