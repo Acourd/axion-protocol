@@ -133,7 +133,14 @@ function verifyEnvelope({ envelope, publicKeys, expectedPayloadType = null }) {
     return Object.freeze({ status: DSSE_STATUS.MALFORMED });
   }
 
-  const claves = Array.isArray(publicKeys) ? publicKeys : [publicKeys];
+  let claves = [];
+  if (Array.isArray(publicKeys)) {
+    claves = publicKeys;
+  } else if (publicKeys && typeof publicKeys === 'object' && !(publicKeys instanceof crypto.KeyObject) && !Buffer.isBuffer(publicKeys)) {
+    claves = Object.values(publicKeys);
+  } else if (publicKeys) {
+    claves = [publicKeys];
+  }
   if (claves.length === 0) return Object.freeze({ status: DSSE_STATUS.UNKNOWN_KEY });
 
   const mensaje = pae(envelope.payloadType, cuerpo);
