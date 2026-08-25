@@ -38,6 +38,8 @@ const SUBCOMANDOS = {
   status: { script: 'tools/killswitch.js', ayuda: 'consulta si hay una parada activa', fijo: ['status'] },
   attest: { script: 'tools/attestation.js', ayuda: 'verifica una atestacion in-toto' },
   clarify: { script: 'tools/intent_clarifier.js', ayuda: 'aclara una peticion vaga' },
+  premortem: { script: 'tools/premortem.js', ayuda: 'autopsia adversarial de fracaso a 6 meses (4 anclas y 3 niveles)' },
+  deep: { script: 'tools/deep_reasoning.js', ayuda: 'deliberación profunda y cálculo de blast radius' },
   compact: { script: 'tools/context_shield.js', ayuda: 'compacta el contexto y ancla el estado' },
   memory: { script: 'tools/memory.js', ayuda: 'memoria persistente del proyecto entre sesiones' },
   verify: { script: 'tools/verify_changes.js', ayuda: 'ejecuta verificación determinista con código 0' },
