@@ -45,6 +45,26 @@ function dirCheckpoints(raiz) {
   return path.join(raiz, '.axion', 'checkpoints');
 }
 
+/**
+ * ¿La ruta relativa de un manifiesto se queda dentro del arbol?
+ *
+ * Sin esto, una entrada con `../` convertia la reversion en escritura arbitraria en
+ * cualquier punto del disco alcanzable, y el digest no lo impedia: nadie firma el
+ * manifiesto, asi que quien lo edita tambien puede recalcularlo. El agravante es que la
+ * red de seguridad previa se sella desde el arbol de trabajo y NO contiene el fichero de
+ * fuera, de modo que lo que se pisa ahi se pierde sin vuelta.
+ *
+ * Se comprueba al restaurar y tambien al sellar: un manifiesto con rutas invalidas no
+ * deberia llegar siquiera a existir.
+ */
+function rutaContenida(raiz, relativa) {
+  if (typeof relativa !== 'string' || relativa.trim() === '') return false;
+  if (path.isAbsolute(relativa) || /^[A-Za-z]:/.test(relativa)) return false;
+  const destino = path.resolve(raiz, relativa);
+  const base = path.resolve(raiz);
+  return destino !== base && destino.startsWith(base + path.sep);
+}
+
 // El id ordena lexicograficamente igual que cronologicamente, asi que "el ultimo"
 // es el ultimo del listado ordenado y no hace falta leer metadatos para saberlo.
 // El sufijo numerico solo aparece si dos sellados caen en el mismo milisegundo, para
@@ -95,6 +115,12 @@ function crear(raiz, etiqueta, kind) {
   let total = 0;
 
   for (const rel of recorrer(raiz)) {
+    // Defensa en el origen: recorrer() no deberia producir rutas que escapen, pero si
+    // algun dia lo hiciera -un enlace, un nombre raro- el manifiesto no debe recogerlas.
+    if (!rutaContenida(raiz, rel)) {
+      omitidos.push({ path: rel, reason: 'RUTA_FUERA_DE_RAIZ' });
+      continue;
+    }
     const origen = path.join(raiz, rel);
     let st;
     try {
@@ -224,6 +250,17 @@ function verificar(raiz, manifiesto) {
   const dirDatos = path.join(dirCheckpoints(raiz), manifiesto.checkpointId, 'files');
   const problemas = [];
   for (const f of manifiesto.files) {
+    // La ruta se valida antes que nada: si escapa del arbol, ni siquiera se mira si la
+    // copia existe. Un checkpoint con una sola ruta fuera se descarta entero, porque el
+    // resto del manifiesto ya no merece confianza.
+    if (!rutaContenida(raiz, f.path)) {
+      problemas.push('la ruta ' + JSON.stringify(f.path) + ' escapa de la raiz del proyecto');
+      continue;
+    }
+    if (!rutaContenida(dirDatos, f.path)) {
+      problemas.push('la ruta ' + JSON.stringify(f.path) + ' escapa del almacen del checkpoint');
+      continue;
+    }
     const copia = path.join(dirDatos, f.path);
     if (!fs.existsSync(copia)) {
       problemas.push('falta la copia de ' + f.path);

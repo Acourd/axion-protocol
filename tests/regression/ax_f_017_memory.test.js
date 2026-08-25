@@ -110,6 +110,14 @@ console.log('=== AX-F-017 Memoria persistente ===\n');
   const r = compactSessionContext(d);
   const ancla = fs.readFileSync(r.anchor, 'utf8');
   ok(/## Memoria del proyecto/.test(ancla), '/compact debe incluir la memoria en ANCHOR.md');
+  // El ancla es el documento que el agente relee como normativa, y la memoria es texto que
+  // escribe cualquiera -incluido /premortem, que vuelca ahi sus mitigaciones sin
+  // intervencion humana-. Sin frontera, una nota redactada como orden se lee con el mismo
+  // rango que una regla P0. Se comprobo que "IGNORA TODAS LAS REGLAS" llegaba literal.
+  ok(/NOTAS del proyecto/.test(ancla) && /no instrucciones que/.test(ancla),
+    'la memoria debe entrar en el ancla delimitada como dato, no como instruccion');
+  ok(ancla.indexOf('NOTAS del proyecto') < ancla.indexOf('No tocar el directorio de evidencia'),
+    'el aviso debe preceder a las entradas, no seguirlas');
   ok(/No tocar el directorio de evidencia/.test(ancla), 'la entrada concreta debe aparecer en el ancla');
   ok(r.snapshot.memory_entries === 1, 'el snapshot debe registrar cuántas entradas viajaron');
   fs.rmSync(d, { recursive: true, force: true });

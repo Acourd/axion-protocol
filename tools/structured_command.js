@@ -28,7 +28,17 @@ function executableName(executable) {
 
 function rawLooksDestructive(command) {
   const normalized = command.toLowerCase().replace(/["'`]/g, ' ');
-  return /(^|\s)(rm|rmdir|unlink|shred|srm|mkfs|dd|remove-item|ri|clear-content|clc|clear-item|cli|remove-itemproperty|rp|format-volume|clear-disk|initialize-disk|remove-partition|reset-physicaldisk|del|erase|diskpart|fdisk)(\s|$)/i.test(normalized)
+  // El separador previo admite barra y contrabarra, no solo espacio o inicio de linea:
+  // `/bin/rm -rf /` evadia el DENY y se degradaba a revision humana, que el hook traduce
+  // a preguntar. Trasladar esa decision a quien lleva veinte confirmaciones seguidas es
+  // como no tenerla. Puede denegar alguna cadena inocente que mencione un nombre parecido
+  // dentro de una carpeta; se acepta, porque una cadena cruda nunca alcanza permiso y en
+  // la duda denegar cuesta menos que continuar.
+  return /(^|[\s/\\])(rm|rmdir|unlink|shred|srm|mkfs|dd|remove-item|ri|clear-content|clc|clear-item|cli|remove-itemproperty|rp|format-volume|clear-disk|initialize-disk|remove-partition|reset-physicaldisk|del|erase|diskpart|fdisk)(\s|$)/i.test(normalized)
+    // Tuberia hacia un interprete: es descargar y ejecutar en un solo gesto, y el prompt
+    // de /preflight ya lo daba por bloqueado. La doc y el motor llevaban versiones
+    // distintas del contrato, y la que mandaba era la que no protegia.
+    || /\|\s*(sudo\s+)?(\S*[/\\])?(sh|bash|zsh|fish|dash|ksh|powershell|pwsh|cmd)(\s|$)/i.test(normalized)
     || /\bfind\b[\s\S]*(-delete|-exec)\b/i.test(normalized)
     || /\btruncate\s+-s\s+0\b/i.test(normalized)
     || /\bcp\s+\/dev\/null\b/i.test(normalized)

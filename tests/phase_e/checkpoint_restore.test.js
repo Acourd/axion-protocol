@@ -146,4 +146,62 @@ console.log('=== Phase E: checkpoint / restore ===\n');
   console.log('✓ excluye .git y node_modules del snapshot');
 }
 
+// --- 9. Una ruta del manifiesto no puede escapar del árbol ---
+// Encontrado atacando el motor: un manifiesto con `../` convertía la reversión en
+// escritura arbitraria fuera del proyecto. El digest no lo impedía, porque nadie firma el
+// manifiesto: quien lo edita también recalcula el digest. El agravante es que la red de
+// seguridad previa se sella desde el árbol de trabajo y NO contiene el fichero de fuera,
+// así que lo que se pisa ahí se pierde sin vuelta.
+{
+  const crypto = require('crypto');
+  const d = arenal();
+  const fuera = path.join(d, '..', `victima-${path.basename(d)}.txt`);
+  fs.writeFileSync(fuera, 'contenido original de fuera');
+
+  const m = cp.crear(d, 'base');
+  const dirCp = path.join(d, '.axion', 'checkpoints', m.checkpointId);
+  const carga = Buffer.from('sobrescrito desde el manifiesto');
+  const alterado = JSON.parse(fs.readFileSync(path.join(dirCp, 'manifest.json'), 'utf8'));
+  alterado.files = [{
+    path: `../${path.basename(fuera)}`,
+    sha256: crypto.createHash('sha256').update(carga).digest('hex'),
+    size: carga.length,
+  }];
+  // El atacante controla el manifiesto Y su digest: por eso el digest solo no basta.
+  alterado.digest = crypto.createHash('sha256').update(JSON.stringify(alterado.files)).digest('hex');
+  fs.writeFileSync(path.join(dirCp, 'manifest.json'), JSON.stringify(alterado, null, 2));
+  fs.writeFileSync(path.join(dirCp, 'files', path.basename(fuera)), carga);
+
+  const r = cp.restaurar(d, m.checkpointId);
+  ok(!r.pass, 'una ruta que escapa de la raíz no puede restaurarse');
+  ok(r.problemas.some((p) => /escapa de la raiz/.test(p)), 'debe decir cuál es la ruta culpable');
+  ok(fs.readFileSync(fuera, 'utf8') === 'contenido original de fuera',
+    'el fichero de fuera del proyecto no puede haberse tocado');
+
+  fs.rmSync(fuera, { force: true });
+  fs.rmSync(d, { recursive: true, force: true });
+  console.log('✓ rechaza rutas que escapan del árbol y no toca nada fuera');
+}
+
+// --- 10. Tampoco por ruta absoluta ---
+{
+  const crypto = require('crypto');
+  const d = arenal();
+  const m = cp.crear(d, 'base');
+  const rutaMan = path.join(d, '.axion', 'checkpoints', m.checkpointId, 'manifest.json');
+  const alterado = JSON.parse(fs.readFileSync(rutaMan, 'utf8'));
+  alterado.files = [{
+    path: process.platform === 'win32' ? 'C:/Windows/axion.txt' : '/tmp/axion.txt',
+    sha256: 'a'.repeat(64),
+    size: 1,
+  }];
+  alterado.digest = crypto.createHash('sha256').update(JSON.stringify(alterado.files)).digest('hex');
+  fs.writeFileSync(rutaMan, JSON.stringify(alterado, null, 2));
+
+  const r = cp.restaurar(d, m.checkpointId);
+  ok(!r.pass && r.problemas.some((p) => /escapa/.test(p)), 'una ruta absoluta debe rechazarse igual');
+  fs.rmSync(d, { recursive: true, force: true });
+  console.log('✓ una ruta absoluta tampoco pasa');
+}
+
 console.log(`\n=== Phase E checkpoint/restore PASS (${n} comprobaciones) ===`);
