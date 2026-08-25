@@ -114,22 +114,31 @@ function saveCustomProfile(profileData, raiz) {
  */
 function parseAnswers(tokens) {
   const texto = (Array.isArray(tokens) ? tokens.join(' ') : String(tokens || '')).toUpperCase();
-  const pares = texto.match(/([1-5])\s*([A-C])/g) || [];
+  const pares = texto.match(/([0-9])\s*([A-Z])/g) || [];
   const cambios = {};
   const aplicadas = [];
   const errores = [];
 
   for (const par of pares) {
-    const m = par.match(/([1-5])\s*([A-C])/);
-    const dim = DIMENSIONES.find((d) => d.n === Number(m[1]));
-    const opcion = dim && dim.opciones[m[2]];
+    const m = par.match(/([0-9])\s*([A-Z])/);
+    const n = Number(m[1]);
+    const dim = DIMENSIONES.find((d) => d.n === n);
+    if (!dim) {
+      errores.push(`la pregunta ${n} no existe (las dimensiones van de 1 a ${DIMENSIONES.length})`);
+      continue;
+    }
+    const opcion = dim.opciones[m[2]];
     if (!opcion) {
-      errores.push(`la pregunta ${m[1]} no admite la opcion ${m[2]}`);
+      errores.push(`la pregunta ${n} no admite la opcion ${m[2]}`);
       continue;
     }
     cambios[dim.campo] = opcion[0];
     cambios[dim.etiqueta] = opcion[1];
-    aplicadas.push(`${m[1]}${m[2]} -> ${dim.campo}=${opcion[0]}`);
+    aplicadas.push(`${n}${m[2]} -> ${dim.campo}=${opcion[0]}`);
+  }
+
+  if (texto.trim() && pares.length === 0) {
+    errores.push('No se reconoció ninguna respuesta con el formato <pregunta><opcion>, por ejemplo 1A.');
   }
 
   return { cambios, aplicadas, errores };
