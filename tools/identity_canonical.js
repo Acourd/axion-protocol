@@ -101,7 +101,7 @@ function buscarAlias(actorIds) {
     if (!c.ok) return { reason: c.reason, actorId: bruto };
     const previo = vistos.get(c.canonical);
     if (previo !== undefined && previo !== bruto) {
-      return { reason: 'IDENTITY_ALIAS_COLLISION', actorId: bruto, colisionaCon: previo };
+      return { reason: 'IDENTITY_ALIAS_COLLISION', actorId: bruto, colisionaCon: previo, canonical: c.canonical };
     }
     vistos.set(c.canonical, bruto);
   }
