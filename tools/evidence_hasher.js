@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+'use strict';
 
 /**
  * Axion Protocol - Evidence Cryptographic Hasher (SHA-256)
@@ -44,7 +45,7 @@ function hashString(content) {
  * El generador NO aprueba su propia evidencia (policies/authority.yaml:
  * executor may_not approve_own_result); el manifiesto nace en estado WAITING.
  */
-function createEvidenceManifest(options) {
+function createEvidenceManifest(options = {}) {
   const {
     taskId = 'AX-TASK-0001',
     subject = 'Inspección de evidencias',
@@ -160,8 +161,10 @@ function main() {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {
+    // Uso incorrecto sale con 2, no con 0: un manifiesto que nadie pidio no es un
+    // manifiesto emitido, y encadenarlo con && dejaria pasar la mision sin evidencia.
     console.log('Uso: node tools/evidence_hasher.js <archivo_1> [archivo_2 ...]');
-    process.exit(0);
+    process.exit(2);
   }
 
   const manifest = createEvidenceManifest({

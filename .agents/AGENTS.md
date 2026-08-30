@@ -10,16 +10,22 @@
 
 ## Slash Commands de Gobernanza (Sinergia Cero-Colisión)
 
-Axion Protocol incorpora comandos de gobernanza diseñados para coexistir sin conflicto con Antigravity, Claude Code y AG-Kit:
+Axion Protocol incorpora 12 comandos de gobernanza diseñados para coexistir sin conflicto con Antigravity, Claude Code y AG-Kit. En Antigravity se montan como skills desde `.agents/skills/<nombre>/SKILL.md`; en Claude Code desde `.claude/commands/<nombre>.md`:
 
-| Comando | Función Principal | Cuándo se Invoca |
-| :--- | :--- | :--- |
-| **`/clarify`** | Aclaración socrática en 2 preguntas humanas (A/B/C). | Antes de `/plan` o ante solicitudes vagas. |
-| **`/preflight`** | Validador léxico de sintaxis y clasificador de riesgo. | Hook automático previo a ejecutar comandos de terminal. |
-| **`/rollback`** | Reversión de código y archivos al último snapshot verificado. | Cuando se solicita deshacer cambios en disco. |
-| **`/halt`** | Parada de emergencia inmediata (*Killswitch fail-closed*). | Ante desvíos del agente o petición del usuario. |
-| **`/unhalt`** | Levantamiento consciente de la parada de emergencia. | Requiere autorización humana justificada. |
-| **`/attest`** | Emisión de atestación formal in-toto Statement v1 / DSSE. | Al finalizar y certificar una misión completada. |
+| Comando | Qué hace |
+| :--- | :--- |
+| **`/attest`** | Emite y verifica atestaciones in-toto Statement v1 en sobre DSSE con firma Ed25519, compatibles con SLSA y cosign. |
+| **`/clarify`** | Aclara peticiones ambiguas mediante exactamente 2 preguntas humanas con opciones A/B/C antes de tocar código. |
+| **`/debug`** | Ciclo sistemático de depuración en 4 fases con causa raíz y verificación por evidencia, sin parches ciegos. |
+| **`/drive`** | Meta-orquestador autónomo universal de alta densidad cognitiva en bucle cerrado. |
+| **`/halt`** | Parada de emergencia inmediata (killswitch) y reanudación deliberada en modo fail-closed (absorbe /unhalt). |
+| **`/memory`** | Memoria persistente del proyecto y anclaje de contexto anti-deriva entre sesiones (absorbe /remember y /compact). |
+| **`/preflight`** | Clasifica el riesgo de un comando de terminal antes de ejecutarlo. Veredictos ALLOW / NEEDS_HUMAN_REVIEW / DENY. |
+| **`/premortem`** | Simulación de fracaso, autopsia adversarial a 6 meses y cálculo de blast radius antes de programar (absorbe /deep). |
+| **`/profile`** | Calibra y persiste el perfil del usuario en 5 dimensiones (profundidad técnica, entrada, entorno, cadencia y autonomía). |
+| **`/review`** | Auditoría de cambios por 4 lentes (Técnica, Funcional, UX/Producto, Arquitectura) aplicando solo las pertinentes. |
+| **`/snapshot`** | Guarda y restaura puntos de control deterministas verificados con SHA-256 independientes de Git (absorbe /checkpoint y /rollback). |
+| **`/verify`** | Verificación determinista por ejecución real de la suite, con exigencia de exit code 0. |
 
 ---
 

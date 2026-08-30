@@ -77,6 +77,14 @@ const DIMENSIONES = [
   },
 ];
 
+function escribirAtomico(rutaDestino, contenido) {
+  const dir = path.dirname(rutaDestino);
+  fs.mkdirSync(dir, { recursive: true });
+  const tmp = `${rutaDestino}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  fs.writeFileSync(tmp, contenido, 'utf8');
+  fs.renameSync(tmp, rutaDestino);
+}
+
 function rutaPerfil(raiz) {
   return path.join(raiz || ROOT, '.axion', 'PROFILE.json');
 }
@@ -97,13 +105,10 @@ function getProfile(raiz) {
 
 function saveCustomProfile(profileData, raiz) {
   const base = raiz || ROOT;
-  const dir = path.join(base, '.axion');
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
   const actual = getProfile(base);
   delete actual.profile_read_error;
   const fusionado = { ...actual, ...profileData, updated_at: new Date().toISOString() };
-  fs.writeFileSync(rutaPerfil(base), JSON.stringify(fusionado, null, 2), 'utf8');
+  escribirAtomico(rutaPerfil(base), JSON.stringify(fusionado, null, 2) + '\n');
   return fusionado;
 }
 
@@ -217,6 +222,23 @@ function main() {
   process.exit(0);
 }
 
+function applyAnswers(tokens, raiz) {
+  const { cambios, aplicadas, errores } = parseAnswers(tokens);
+  if (errores.length > 0) {
+    return { pass: false, errores, aplicadas };
+  }
+  const guardado = saveCustomProfile(cambios, raiz);
+  return { pass: true, profile: guardado, aplicadas, errores: [] };
+}
+
 if (require.main === module) main();
 
-module.exports = { getProfile, saveCustomProfile, parseAnswers, DIMENSIONES, DEFAULT_PROFILE, USO };
+module.exports = {
+  getProfile,
+  saveCustomProfile,
+  parseAnswers,
+  applyAnswers,
+  DIMENSIONES,
+  DEFAULT_PROFILE,
+  USO,
+};

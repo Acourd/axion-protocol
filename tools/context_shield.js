@@ -46,9 +46,30 @@ function ficherosDe(dir, ext) {
   }
 }
 
+function skillsDe(dir) {
+  try {
+    return fs.readdirSync(dir, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => path.join(dir, e.name, 'SKILL.md'))
+      .filter((p) => fs.existsSync(p))
+      .sort();
+  } catch (_) {
+    return [];
+  }
+}
+
+function escribirAtomico(rutaDestino, contenido) {
+  const dir = path.dirname(rutaDestino);
+  fs.mkdirSync(dir, { recursive: true });
+  const tmp = `${rutaDestino}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  fs.writeFileSync(tmp, contenido, 'utf8');
+  fs.renameSync(tmp, rutaDestino);
+}
+
 /**
  * Digest de contenido sobre todo lo que gobierna al agente. Se ordena por ruta relativa
  * para que dos maquinas con el mismo arbol obtengan el mismo digest.
+ * Cubre simétricamente Antigravity (.agents/skills, .agents/rules) y Claude Code (.claude/commands, CLAUDE.md).
  */
 function digestGobernanza(raiz) {
   const objetivos = [
@@ -56,7 +77,7 @@ function digestGobernanza(raiz) {
     path.join(raiz, '.agents', 'AGENTS.md'),
     path.join(raiz, '.axion', 'PROFILE.json'),
     ...ficherosDe(path.join(raiz, '.agents', 'rules'), '.md'),
-    ...ficherosDe(path.join(raiz, '.agents', 'workflows'), '.md'),
+    ...skillsDe(path.join(raiz, '.agents', 'skills')),
     ...ficherosDe(path.join(raiz, '.claude', 'commands'), '.md'),
   ];
 
@@ -154,7 +175,7 @@ function compactSessionContext(targetDir) {
   };
 
   const ficheroSnapshot = path.join(dirEstado, `context-snapshot-${marca.replace(/[:.]/g, '-')}.json`);
-  fs.writeFileSync(ficheroSnapshot, JSON.stringify(snapshot, null, 2), 'utf8');
+  escribirAtomico(ficheroSnapshot, JSON.stringify(snapshot, null, 2));
 
   // El ancla es lo que el agente relee. Corta a proposito: si ocupa una pantalla, vuelve
   // a ser contexto que se ignora.
@@ -197,7 +218,7 @@ function compactSessionContext(targetDir) {
     '',
   ].join('\n');
   const ficheroAncla = path.join(dirEstado, 'ANCHOR.md');
-  fs.writeFileSync(ficheroAncla, ancla, 'utf8');
+  escribirAtomico(ficheroAncla, ancla);
 
   const purgados = purgarAntiguos(dirEstado);
 

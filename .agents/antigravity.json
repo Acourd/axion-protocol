@@ -6,7 +6,7 @@
   "phases": {
     "discovery": {
       "rules": ".agents/rules",
-      "workflows": ".agents/workflows"
+      "skills": ".agents/skills"
     },
     "hooks": {
       "config": ".agents/hooks.json",
@@ -14,37 +14,58 @@
     },
     "orchestration": {
       "workflows": [
+        "attest",
+        "checkpoint",
         "clarify",
-        "profile",
+        "compact",
+        "debug",
+        "deep",
+        "drive",
+        "halt",
         "onboard",
         "preflight",
-        "checkpoint",
-        "rollback",
-        "verify",
-        "debug",
+        "premortem",
+        "profile",
+        "remember",
         "review",
-        "compact",
-        "attest",
-        "halt",
+        "rollback",
         "unhalt",
-        "remember"
+        "verify"
       ],
       "tools": [
-        "preflight.js",
-        "structured_command.js",
-        "risk_policy_compiler.js",
         "approval_ed25519.js",
+        "assurance.js",
+        "attestation.js",
+        "canonical_json.js",
         "check_ed25519.js",
-        "evidence_hasher.js",
-        "killswitch.js",
         "checkpoint.js",
         "context_shield.js",
-        "verify_changes.js",
-        "attestation.js",
+        "deep_reasoning.js",
+        "dsse.js",
+        "emit_attestation.js",
+        "evidence_hasher.js",
+        "fuzzer.js",
+        "git_assistant.js",
         "health_check.js",
-        "profile_adapter.js",
+        "identity_canonical.js",
         "intent_clarifier.js",
-        "memory.js"
+        "killswitch.js",
+        "learning_engine.js",
+        "memory.js",
+        "preflight.js",
+        "premortem.js",
+        "profile_adapter.js",
+        "risk_policy_compiler.js",
+        "rollback_plan.js",
+        "structured_command.js",
+        "sync_doc_stats.js",
+        "updater.js",
+        "verify_changes.js",
+        "vibeguard.js",
+        "vibeguard_gate.js",
+        "wizard.js",
+        "workflow_runner.js",
+        "workflow_state_machine.js"
       ]
     }
   }

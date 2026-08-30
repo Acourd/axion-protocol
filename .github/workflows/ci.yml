@@ -137,16 +137,19 @@ jobs:
         working-directory: /tmp/axion-consumer
         run: npx axion test
 
-      - name: Los 16 comandos llegaron a las dos superficies
+      - name: Los comandos llegaron a las dos superficies que los agentes leen
         shell: bash
         working-directory: /tmp/axion-consumer
         run: |
           set -e
-          for d in .agents/workflows .claude/commands; do
-            n=$(ls "$d"/*.md | wc -l)
-            test "$n" -eq 16 || { echo "FALLO: $d tiene $n comandos, esperaba 16"; exit 1; }
-            echo "OK: $d -> $n comandos"
-          done
+          esperados=$(ls -d .agents/skills/*/ | wc -l)
+          test "$esperados" -ge 16 || { echo "FALLO: solo $esperados skills"; exit 1; }
+          sk=$(find .agents/skills -name SKILL.md | wc -l)
+          test "$sk" -eq "$esperados" || { echo "FALLO: $sk SKILL.md para $esperados directorios"; exit 1; }
+          cc=$(ls .claude/commands/*.md | wc -l)
+          test "$cc" -eq "$esperados" || { echo "FALLO: .claude/commands tiene $cc, esperaba $esperados"; exit 1; }
+          test ! -d .agents/workflows || { echo "FALLO: sobrevive .agents/workflows obsoleto"; exit 1; }
+          echo "OK: $esperados skills en .agents/skills y $cc comandos en .claude/commands"
           grep -q validate-tool-call.mjs .claude/settings.json
 
       - name: Checkpoint y rollback sobre archivos reales

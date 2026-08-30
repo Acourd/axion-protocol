@@ -180,6 +180,12 @@ function main() {
   process.exit(2);
 }
 
+function isHalted(opciones = {}) {
+  return readHaltState(opciones).halted;
+}
+
+const resume = clearHalt;
+
 if (require.main === module) main();
 
-module.exports = { HALT_STATUS, readHaltState, halt, clearHalt, USO };
+module.exports = { HALT_STATUS, readHaltState, isHalted, halt, clearHalt, resume, USO };

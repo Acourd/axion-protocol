@@ -21,6 +21,8 @@ npm-debug.log*
 *.log
 *.tmp
 *.bak
+.env
+.env.*
 
 # Sistema operativo
 Thumbs.db

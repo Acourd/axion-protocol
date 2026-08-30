@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Axion Protocol — Arnés de Gobernanza Determinista para IA</title>
-  <meta name="description" content="Arnés de gobernanza local (118 kB, cero dependencias) para agentes de IA: cristalización de intención, preflight fail-closed, rollback instantáneo y atestaciones in-toto.">
+  <meta name="description" content="Arnés de gobernanza local (123 kB, cero dependencias) para agentes de IA: cristalización de intención, preflight fail-closed, rollback instantáneo y atestaciones in-toto.">
   <meta name="color-scheme" content="dark light">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23090A0E'/><path d='M16 5L27 25H21.5L16 14.5L10.5 25H5L16 5Z' fill='%2310B981'/></svg>">
 
-  <!-- Tipografía Editorial Moderna -->
+  <!-- Tipografía Editorial Moderna y Código Monospaciado -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="style.css">
 </head>
@@ -34,9 +34,8 @@
         <span class="side-label side-title">Axion<span class="emerald-text">.</span></span>
       </a>
 
-      <!-- Secciones de Navegación -->
-      <nav class="side-nav-links">
-        <a href="#pipeline" class="side-item" title="7 Fases de Gobernanza">
+      <nav class="sidebar-nav" aria-label="Navegación de secciones">
+        <a href="#pipeline" class="side-item active" title="7 Fases de Gobernanza">
           <div class="side-icon-box">
             <span class="side-num">01</span>
           </div>
@@ -50,16 +49,23 @@
           <span class="side-label">Capacidades</span>
         </a>
 
-        <a href="#comparativa" class="side-item" title="Comparativa">
+        <a href="#arquitectura" class="side-item" title="Radar de Módulos">
           <div class="side-icon-box">
             <span class="side-num">03</span>
+          </div>
+          <span class="side-label">Radar Grafo</span>
+        </a>
+
+        <a href="#comparativa" class="side-item" title="Comparativa">
+          <div class="side-icon-box">
+            <span class="side-num">04</span>
           </div>
           <span class="side-label">Comparativa</span>
         </a>
 
         <a href="#comandos" class="side-item" title="Slash Commands">
           <div class="side-icon-box">
-            <span class="side-num">04</span>
+            <span class="side-num">05</span>
           </div>
           <span class="side-label">Comandos</span>
         </a>
@@ -73,7 +79,7 @@
               <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
             </svg>
           </div>
-          <span class="side-label">GitHub · 70/70</span>
+          <span class="side-label">GitHub · 152 Suites</span>
         </a>
       </div>
     </div>
@@ -82,7 +88,7 @@
   <!-- ── Contenedor Principal de la Página ─────────────────────────── -->
   <div class="content-wrapper">
 
-    <!-- ── Top Header Minimalista con Switcher de Tema ───────────────── -->
+    <!-- ── Top Header Minimalista con Switcher de Tema y Audio ───────── -->
     <header class="top-nav-bar">
       <div class="top-nav-container">
         <a href="#hero" class="mobile-brand">
@@ -102,9 +108,22 @@
             <button class="btn-lang" data-lang="es" title="Español">ES</button>
           </div>
 
+          <!-- Botón de Sonido Háptico -->
+          <button class="btn-sound-toggle" id="sound-toggle" title="Toggle Sound Feedback" aria-label="Toggle sound feedback">
+            <svg class="sound-icon sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+            <svg class="sound-icon sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <line x1="23" y1="9" x2="17" y2="15"></line>
+              <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+          </button>
+
           <div class="status-indicator-pill">
             <span class="pulse-dot"></span>
-            <span>v1.2.0-beta.1 · 70 Suites PASS</span>
+            <span>v1.2.0-beta.1 · 177 Suites PASS</span>
           </div>
 
           <!-- Botón de Modo Claro / Modo Oscuro -->
@@ -139,7 +158,7 @@
       <section class="hero-block" id="hero">
         <div class="hero-eyebrow">
           <span class="emerald-dot"></span>
-          <span>FAIL-CLOSED GOVERNANCE FOR AI AGENTS</span>
+          <span>FAIL-CLOSED GOVERNANCE FOR AI AGENTS (EXPERIMENTAL)</span>
         </div>
 
         <h1 class="hero-title">
@@ -148,7 +167,7 @@
         </h1>
 
         <p class="hero-lead">
-          Axion Protocol is the zero-bloat deterministic governance harness (123 kB, zero dependencies). Halts hallucinations via 2-question Socratic contracts, monitors terminal tool calls in real time, and guarantees byte-accurate rollback.
+          Axion Protocol is the zero-bloat deterministic governance harness (123 kB, zero dependencies). Clarifies intent via 2-question Socratic contracts, monitors terminal tool calls in real time, and guarantees byte-accurate rollback.
         </p>
 
         <!-- Terminal de Comando Warp-Style -->
@@ -171,6 +190,7 @@
             <div class="warp-prompt">
               <span class="warp-sym">$</span>
               <code id="warp-cmd-text">npx axion-protocol init</code>
+              <span class="warp-cursor"></span>
             </div>
             <button class="btn-warp-copy" id="btn-copy-warp" title="Copy command">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
@@ -186,13 +206,13 @@
         <div class="hero-stats-row">
           <div class="stat-pill"><strong>0</strong> dependencies</div>
           <div class="stat-pill"><strong>123 kB</strong> zero-bloat</div>
-          <div class="stat-pill"><strong>70/70</strong> suites PASS</div>
-          <div class="stat-pill"><strong>16</strong> slash commands</div>
+          <div class="stat-pill"><strong>177/177</strong> suites PASS</div>
+          <div class="stat-pill"><strong>12</strong> slash commands</div>
           <div class="stat-pill"><strong>Fail-Closed</strong> native</div>
         </div>
       </section>
 
-      <!-- ── Pipeline de 7 Fases con Circuito ──────────────────────────── -->
+      <!-- ── 1. Pipeline de 7 Fases con Circuito ────────────────────────── -->
       <section class="pipeline-section" id="pipeline">
         <div class="section-label-group">
           <span class="section-badge-emerald">Flujo Determinista</span>
@@ -229,7 +249,7 @@
               <span class="node-name">CONSTRUIR</span>
             </div>
 
-            <div class="circuit-node" data-phase="06" data-desc="Ejecuta 50 suites de prueba automáticas y comprueba el sello de evidencia SHA-256.">
+            <div class="circuit-node" data-phase="06" data-desc="Ejecuta 152 suites de prueba automáticas, VibeGuard strict y comprueba el sello de evidencia SHA-256.">
               <div class="node-circle">06</div>
               <span class="node-name">AUDITAR</span>
             </div>
@@ -239,396 +259,578 @@
               <span class="node-name">PROMOVER</span>
             </div>
           </div>
+        </div>
 
-          <!-- Tarjeta de Información Dinámica del Circuito -->
-          <div class="circuit-info-card" id="circuit-info-box">
-            <div class="info-header">
-              <span class="info-phase-tag" id="circuit-phase-title">Fase 01: ENTENDER</span>
-              <span class="info-status-badge">PROTECCIÓN ACTIVA</span>
-            </div>
-            <p class="info-text" id="circuit-phase-text">Aclara la intención en 2 preguntas humanas con opciones A/B/C y emite el IntentContract antes de tocar código.</p>
-          </div>
+        <div class="phase-detail-card" id="phase-detail">
+          <div class="detail-badge" id="phase-badge">Fase 01: ENTENDER</div>
+          <p class="detail-text" id="phase-desc">Aclara la intención en 2 preguntas humanas con opciones A/B/C y emite el IntentContract antes de tocar código.</p>
         </div>
       </section>
 
-      <!-- ── Bento Grid de Micro-Demostraciones Visuales ──────────────── -->
+      <!-- ── 4. Bento Grid de Capacidades Clave ────────────────────────── -->
       <section class="bento-section" id="capacidades">
         <div class="section-label-group">
-          <span class="section-badge-emerald">Arquitectura (Experimental)</span>
+          <span class="section-badge-emerald">Arquitectura (Beta)</span>
           <h2 class="section-headline">Capacidades de Alto Impacto</h2>
-          <p class="section-desc">Simulación y demostración visual de cómo opera cada pilar del protocolo:</p>
+          <p class="section-desc">Micro-demostraciones visuales de cómo opera cada pilar del protocolo:</p>
         </div>
 
-        <div class="bento-mosaic">
-          <!-- Tarjeta 1: Intención Socrática (Ancha) -->
-          <div class="bento-box box-wide">
-            <div class="box-badge">Freno Socrático · /clarify</div>
-            <h3>De voz caótica a Contrato Sellado</h3>
-            <p>La IA tiene prohibido programar ante peticiones vagas hasta que tú eliges entre opciones claras (A/B/C) sin tecnicismos.</p>
+        <div class="bento-grid">
+          <!-- Tarjeta 1: Freno Socrático & Intent Contract -->
+          <div class="bento-card card-clarify">
+            <div class="bento-header">
+              <div class="bento-badge-row">
+                <span class="card-badge">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bento-ico">
+                    <line x1="4" y1="21" x2="4" y2="14"></line>
+                    <line x1="4" y1="10" x2="4" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12" y2="3"></line>
+                    <line x1="20" y1="21" x2="20" y2="16"></line>
+                    <line x1="20" y1="12" x2="20" y2="3"></line>
+                    <line x1="1" y1="14" x2="7" y2="14"></line>
+                    <line x1="9" y1="8" x2="15" y2="8"></line>
+                    <line x1="17" y1="16" x2="23" y2="16"></line>
+                  </svg>
+                  <span>Freno Socrático · /clarify</span>
+                </span>
+                <span class="badge-tag green">IntentContract v1.2</span>
+              </div>
+              <h3>De Petición Ambigua a Contrato Sellado</h3>
+              <p>La IA tiene prohibido tocar código hasta resolver la intención con opciones humanas (A/B/C) y emitir un hash inmutable.</p>
+            </div>
             
-            <div class="micro-visual-contract">
-              <div class="stepper-track">
-                <div class="stepper-step">
-                  <div class="step-bullet"><span class="bullet-dot"></span></div>
-                  <div class="step-content">
-                    <div class="step-header-line">
-                      <svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-                      <span class="step-tag">1. Entrada por Voz</span>
+            <div class="bento-demo demo-socratic-pro">
+              <div class="intent-builder-box">
+                <div class="intent-prompt-row">
+                  <span class="intent-label">PROMPT:</span>
+                  <span class="intent-text">"Implementar autenticación segura para el portal de usuarios..."</span>
+                </div>
+                <div class="intent-options-grid">
+                  <div class="intent-opt-card active">
+                    <span class="opt-radio"></span>
+                    <div class="opt-content">
+                      <strong>Opción A · WebAuthn / Passkeys</strong>
+                      <span>Biometría FIDO2 sin contraseñas (Recomendado)</span>
                     </div>
-                    <span class="step-val">"Hazme una app de citas médicas..."</span>
+                  </div>
+                  <div class="intent-opt-card">
+                    <span class="opt-radio"></span>
+                    <div class="opt-content">
+                      <strong>Opción B · TOTP Authenticator</strong>
+                      <span>Doble factor RFC 6238 con Google/Microsoft Auth</span>
+                    </div>
+                  </div>
+                  <div class="intent-opt-card">
+                    <span class="opt-radio"></span>
+                    <div class="opt-content">
+                      <strong>Opción C · Magic Link Criptográfico</strong>
+                      <span>Tokens Ed25519 con expiración de 10 minutos</span>
+                    </div>
                   </div>
                 </div>
+                <div class="intent-seal-footer">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="seal-ico">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                  <span class="seal-text">SHA-256 Intent Contract Sealed: <code class="seal-hash">e8a419c9...f2b4</code></span>
+                  <span class="seal-status">LOCKED & VERIFIED</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                <div class="stepper-step">
-                  <div class="step-bullet"><span class="bullet-dot"></span></div>
-                  <div class="step-content">
-                    <div class="step-header-line">
-                      <svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                      <span class="step-tag">2. Filtro Socrático (2 Preguntas)</span>
-                    </div>
-                    <span class="step-val"><strong>1A)</strong> Paciente web · <strong>2B)</strong> SaaS oscuro</span>
+          <!-- Tarjeta 2: Preflight Léxico Firewall -->
+          <div class="bento-card card-preflight">
+            <div class="bento-header">
+              <div class="bento-badge-row">
+                <span class="card-badge">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bento-ico">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                  <span>Guardarraíl · /preflight</span>
+                </span>
+                <span class="badge-tag red">Fail-Closed Enforcement</span>
+              </div>
+              <h3>Firewall Léxico de Terminal en Tiempo Real</h3>
+              <p>Inspección síncrona previa a la ejecución en el kernel del sistema operativo con intercepción determinista.</p>
+            </div>
+
+            <div class="bento-demo demo-preflight-pro">
+              <div class="firewall-card deny-card">
+                <div class="firewall-icon-box deny-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                </div>
+                <div class="firewall-details">
+                  <div class="firewall-cmd">
+                    <code>rm -rf / --no-preserve-root</code>
+                  </div>
+                  <div class="firewall-verdict-row">
+                    <span class="verdict-pill deny">DENY · PATRÓN DESTRUCTIVO BLOQUEADO</span>
+                    <span class="firewall-meta">0% evasión en sandbox local</span>
                   </div>
                 </div>
+              </div>
 
-                <div class="stepper-step success">
-                  <div class="step-bullet"><span class="bullet-dot green"></span></div>
-                  <div class="step-content">
-                    <div class="step-header-line">
-                      <svg class="svg-ico green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-                      <span class="step-tag green">3. IntentContract Sellado</span>
-                    </div>
-                    <span class="step-val">✓ Hash SHA-256 · Cero alucinaciones</span>
+              <div class="firewall-card allow-card">
+                <div class="firewall-icon-box allow-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </div>
+                <div class="firewall-details">
+                  <div class="firewall-cmd">
+                    <code>git status --short</code>
+                  </div>
+                  <div class="firewall-verdict-row">
+                    <span class="verdict-pill allow">ALLOW · OPERACIÓN IDEMPOTENTE PERMITIDA</span>
+                    <span class="firewall-meta">shell: false · aislamiento estricto</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Tarjeta 2: Preflight Léxico -->
-          <div class="bento-box">
-            <div class="box-badge">Guardarraíl · /preflight</div>
-            <h3>Preflight Léxico Real</h3>
-            <p>Supervisa cada llamada de terminal antes de tocar el sistema operativo, bloqueando comandos destructivos.</p>
-            
-            <div class="micro-visual-preflight">
-              <div class="pf-row blocked">
-                <div class="pf-cmd-left">
-                  <svg class="svg-ico red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  <code>rm -rf /</code>
-                </div>
-                <span class="pf-tag red">BLOCKED</span>
+          <!-- Tarjeta 3: Reversión Determinista -->
+          <div class="bento-card card-rollback">
+            <div class="bento-header">
+              <div class="bento-badge-row">
+                <span class="card-badge">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bento-ico">
+                    <polyline points="1 4 1 10 7 10"></polyline>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                  </svg>
+                  <span>Reversión · /rollback</span>
+                </span>
+                <span class="badge-tag blue">Merkle Integrity</span>
               </div>
+              <h3>Rollback Atómico sin Depender de Git</h3>
+              <p>Restaura instantáneamente el estado exacto del repositorio verificado contra el árbol Merkle SHA-256.</p>
+            </div>
 
-              <div class="pf-row pass">
-                <div class="pf-cmd-left">
-                  <svg class="svg-ico green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-                  <code>git status</code>
+            <div class="bento-demo demo-rollback-pro">
+              <div class="merkle-step-row">
+                <div class="merkle-node">
+                  <span class="node-idx">01</span>
+                  <div class="node-meta">
+                    <strong>Checkpoint Atómico Creado</strong>
+                    <code>merkle: 7f8a92b...</code>
+                  </div>
                 </div>
-                <span class="pf-tag green">PASS</span>
+                <div class="merkle-arrow">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </div>
+                <div class="merkle-node restored">
+                  <span class="node-idx">02</span>
+                  <div class="node-meta">
+                    <strong>Reversión Byte-Accurate</strong>
+                    <span class="time-badge">14 ms · 0 huérfanos</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Tarjeta 3: Rollback Semántico -->
-          <div class="bento-box">
-            <div class="box-badge">Reversión · /rollback</div>
-            <h3>Rollback sin Git</h3>
-            <p>Di simplemente <em>"no me gustó, deshazlo"</em> y Axion restaura el código exacto al snapshot SHA-256 previo.</p>
+          <!-- Tarjeta 4: Atestación in-toto -->
+          <div class="bento-card card-attest">
+            <div class="bento-header">
+              <div class="bento-badge-row">
+                <span class="card-badge">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bento-ico">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                  <span>Cadena de Suministro</span>
+                </span>
+                <span class="badge-tag gold">SLSA & Cosign</span>
+              </div>
+              <h3>in-toto Statement v1 & DSSE</h3>
+              <p>Atestaciones criptográficas con firma asimétrica Ed25519 para cumplimiento formal y auditorías de seguridad.</p>
+            </div>
 
-            <div class="micro-visual-rollback">
-              <div class="rb-state">
-                <span class="rb-dot red"></span>
-                <span>Error en código</span>
+            <div class="bento-demo demo-code-pro">
+              <div class="code-preview-header">
+                <span class="code-lang">DSSE in-toto v1 Envelope</span>
+                <span class="sig-status">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  <span>Ed25519 Valid</span>
+                </span>
               </div>
-              <div class="rb-switch">
-                <svg class="svg-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                <span>Voz: "Reviértelo"</span>
-              </div>
-              <div class="rb-state">
-                <span class="rb-dot green"></span>
-                <span>100% Restaurado</span>
-              </div>
+              <pre><code>{
+  "_type": "https://in-toto.io/Statement/v1",
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "subject": [{ "name": "axion.runtime", "digest": { "sha256": "4b2e..." } }],
+  "signatures": [{ "keyid": "axion-ed25519", "sig": "MEYCIQ..." }]
+}</code></pre>
             </div>
           </div>
 
-          <!-- Tarjeta 4: Sobres in-toto DSSE -->
-          <div class="bento-box">
-            <div class="box-badge">Cadena de Suministro</div>
-            <h3>Atestaciones in-toto DSSE</h3>
-            <p>Comprobantes criptográficos compatibles con SLSA, Cosign y GitHub Attestations para auditorías y cumplimiento normativo.</p>
-            
-            <div class="micro-visual-dsse">
-              <div class="dsse-badge-box">
-                <span class="dsse-pill">
-                  <svg class="svg-ico green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  in-toto Statement v1
+          <!-- Tarjeta 5: Zero-Bloat & Rendimiento -->
+          <div class="bento-card card-zerobloat">
+            <div class="bento-header">
+              <div class="bento-badge-row">
+                <span class="card-badge">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bento-ico">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  </svg>
+                  <span>Rendimiento Nativo</span>
                 </span>
-                <span class="dsse-pill">
-                  <svg class="svg-ico green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
-                  DSSE Envelope
-                </span>
-                <span class="dsse-pill">
-                  <svg class="svg-ico green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-                  Ed25519 Signed
-                </span>
+                <span class="badge-tag green">Zero Dependencies</span>
               </div>
+              <h3>123 kB · Motor Nativo Asintótico</h3>
+              <p>Construido 100% sobre primitivas internas de Node.js (fs, crypto, path, child_process). Sin pesadez ni containers.</p>
             </div>
-          </div>
 
-          <!-- Tarjeta 5: Zero-Bloat (Ancha) -->
-          <div class="bento-box box-wide">
-            <div class="box-badge">Zero-Bloat</div>
-            <h3>123 kB · Cero Dependencias</h3>
-            <p>Construido exclusivamente con módulos nativos de Node.js (<code>fs</code>, <code>crypto</code>, <code>path</code>, <code>child_process</code>). No requiere <code>npm install</code> de librerías externas ni contenedores pesados de Docker.</p>
-            
-            <div class="micro-visual-size">
-              <div class="size-bar-group">
-                <div class="size-row axion-bar">
-                  <span class="size-name">Axion Protocol</span>
-                  <div class="bar-fill axion"><span class="bar-label">123 kB (Nativo)</span></div>
-                </div>
-                <div class="size-row heavy-bar">
-                  <span class="size-name">Frameworks en Python/Docker</span>
-                  <div class="bar-fill heavy"><span class="bar-label">500+ MB</span></div>
-                </div>
+            <div class="bento-demo demo-telemetry-pro">
+              <div class="telemetry-stat-card">
+                <span class="tel-number">123 kB</span>
+                <span class="tel-label">Huella en Disco</span>
+              </div>
+              <div class="telemetry-stat-card">
+                <span class="tel-number">0</span>
+                <span class="tel-label">node_modules</span>
+              </div>
+              <div class="telemetry-stat-card">
+                <span class="tel-number">152/152</span>
+                <span class="tel-label">Suites PASS</span>
+              </div>
+              <div class="telemetry-stat-card">
+                <span class="tel-number">10.000</span>
+                <span class="tel-label">Vectores Fuzzer 0% Evasión</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ── Tabla Comparativa Multi-Producto ───────────────────────── -->
-      <section class="comparison-section" id="comparativa">
+      <!-- ── 3. Radar de Arquitectura y Grafo de Módulos (Blast Radius) ── -->
+      <section class="radar-section" id="arquitectura">
         <div class="section-label-group">
-          <span class="section-badge-emerald">Benchmark Técnico</span>
-          <h2 class="section-headline">Matriz Comparativa de Arquitectura</h2>
-          <p class="section-desc">Auditoría rigurosa: Axion Protocol frente a los kits y frameworks de referencia del ecosistema:</p>
+          <span class="section-badge-emerald">SIMULACIÓN / Grafo de Módulos</span>
+          <h2 class="section-headline">Radar de Arquitectura y Blast Radius</h2>
+          <p class="section-desc">Explora los 5 dominios y 152 suites en tiempo real. Haz clic en cualquier nodo para calcular su radio de impacto transitivo e inspeccionar sus invariantes:</p>
         </div>
 
-        <div class="clean-table-container">
-          <table class="clean-table">
+        <div class="radar-container">
+          <div class="radar-toolbar">
+            <div class="radar-domain-filters" id="radar-filters">
+              <button class="r-chip active" data-domain="all">Todos los Dominios (152)</button>
+              <button class="r-chip" data-domain="gov">01 Gobernanza (66)</button>
+              <button class="r-chip" data-domain="crypto">02 Criptografía (25)</button>
+              <button class="r-chip" data-domain="intent">03 Intención (22)</button>
+              <button class="r-chip" data-domain="state">04 Estado (22)</button>
+              <button class="r-chip" data-domain="resilience">05 Resiliencia (17)</button>
+            </div>
+            <div class="radar-stats-badge">
+              <span class="radar-pulse"></span>
+              <span id="radar-active-count">152 Nodos Conectados</span>
+            </div>
+          </div>
+
+          <div class="radar-viewport">
+            <canvas id="radar-canvas" width="1040" height="520" aria-label="Visualizador interactivo de grafo de arquitectura"></canvas>
+            
+            <div class="radar-inspector-card" id="radar-inspector">
+              <div class="inspector-header">
+                <span class="insp-domain-tag" id="insp-domain">01_governance_preflight</span>
+                <span class="insp-status-badge">PASS 100%</span>
+              </div>
+              <h3 class="insp-title" id="insp-title">tools/preflight.js</h3>
+              <p class="insp-desc" id="insp-desc">Supervisión síncrona previa a la ejecución de comandos. Intercepta vectores destructivos en modo Fail-Closed.</p>
+              
+              <div class="insp-meta-grid">
+                <div class="insp-meta-item">
+                  <span class="meta-label">Blast Radius</span>
+                  <strong class="meta-val" id="insp-radius">8 módulos dependientes</strong>
+                </div>
+                <div class="insp-meta-item">
+                  <span class="meta-label">Cierre Transitivo</span>
+                  <strong class="meta-val" id="insp-transitive">Atómico (Nivel 2)</strong>
+                </div>
+                <div class="insp-meta-item">
+                  <span class="meta-label">Firma Criptográfica</span>
+                  <strong class="meta-val" id="insp-sig">SHA-256 Validado</strong>
+                </div>
+                <div class="insp-meta-item">
+                  <span class="meta-label">Aislamiento</span>
+                  <strong class="meta-val" id="insp-isolation">shell: false</strong>
+                </div>
+              </div>
+
+              <div class="insp-action-row">
+                <button class="btn-insp-blast" id="btn-highlight-blast">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>
+                  <span>Simular Blast Radius</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 4. Comparativa Técnica ────────────────────────────────────── -->
+      <section class="comparison-section" id="comparativa">
+        <div class="section-label-group">
+          <span class="section-badge-emerald">Benchmark de Arquitectura</span>
+          <h2 class="section-headline">Matriz Comparativa Técnica</h2>
+          <p class="section-desc">Auditoría rigurosa y contrastada frente a las alternativas líderes del ecosistema de agentes de IA:</p>
+        </div>
+
+        <div class="table-responsive">
+          <table class="comp-table" aria-label="Matriz comparativa de Axion Protocol contra alternativas">
             <thead>
               <tr>
-                <th>Capacidad Clave</th>
-                <th class="th-axion">Axion Protocol (v1.2.0-beta.1)</th>
-                <th>Everything Claude Code (ECC)</th>
-                <th>AG-Kit (Antigravity Kit)</th>
-                <th>SuperClaude</th>
+                <th scope="col">Capacidad de Gobernanza</th>
+                <th scope="col" class="th-highlight">
+                  <div class="th-brand-pill">
+                    <span class="brand-glow-dot"></span>
+                    <span>Axion Protocol</span>
+                  </div>
+                </th>
+                <th scope="col">AG Kit</th>
+                <th scope="col">Claude Code (Vanilla)</th>
+                <th scope="col">Aider / Cline</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong>Gobernanza Fail-Closed en Vivo</strong></td>
-                <td class="td-axion"><span class="tbl-badge pass">✓ NATIVO</span> PreToolUse hook ejecutable · Bloquea destructivos</td>
-                <td><span class="tbl-badge fail">✗ NO</span> Solo prompts/reglas de texto</td>
-                <td><span class="tbl-badge fail">✗ NO</span> Solo reglas de texto en markdown</td>
-                <td><span class="tbl-badge fail">✗ NO</span> Solo prompts</td>
+                <td><strong>Supervisión de Terminal</strong></td>
+                <td class="td-highlight"><span class="badge-tag green">Fail-Closed Real (shell: false)</span></td>
+                <td><span class="badge-tag gray">Reglas Markdown (P0)</span></td>
+                <td><span class="badge-tag gray">Prompting defensivo</span></td>
+                <td><span class="badge-tag gray">Confirmación manual</span></td>
               </tr>
               <tr>
-                <td><strong>Reversión y Rollback Determinista</strong></td>
-                <td class="td-axion"><span class="tbl-badge pass">✓ NATIVO</span> Motor real SHA-256 (checkpoint.js) · Restaura al byte</td>
-                <td><span class="tbl-badge fail">✗ NO</span> Sin motor de reversión</td>
-                <td><span class="tbl-badge fail">✗ NO</span> Sin motor de reversión</td>
-                <td><span class="tbl-badge fail">✗ NO</span> Sin motor de reversión</td>
+                <td><strong>Freno de Ambigüedad</strong></td>
+                <td class="td-highlight"><span class="badge-tag green">2 Preguntas Humanas (/clarify)</span></td>
+                <td><span class="badge-tag gray">Protocolo Socrático libre</span></td>
+                <td><span class="badge-tag gray">Pregunta sin opciones</span></td>
+                <td><span class="badge-tag red">A ciegas / sin freno</span></td>
               </tr>
               <tr>
-                <td><strong>Criptografía Ed25519 & in-toto DSSE</strong></td>
-                <td class="td-axion"><span class="tbl-badge pass">✓ NATIVO</span> Firmas asimétricas + Sobres DSSE (SLSA/Cosign)</td>
-                <td><span class="tbl-badge fail">✗ NO</span> No implementado</td>
-                <td><span class="tbl-badge fail">✗ NO</span> No implementado</td>
-                <td><span class="tbl-badge fail">✗ NO</span> No implementado</td>
+                <td><strong>Reversión Determinista</strong></td>
+                <td class="td-highlight"><span class="badge-tag green">Rollback Atómico en 14ms</span></td>
+                <td><span class="badge-tag gray">Checkpoints manuales</span></td>
+                <td><span class="badge-tag gray">Dependiente de Git stash</span></td>
+                <td><span class="badge-tag gray">Git undo manual</span></td>
               </tr>
               <tr>
-                <td><strong>Memoria Persistente & Escudo de Contexto</strong></td>
-                <td class="td-axion"><span class="tbl-badge pass">✓ NATIVO</span> <code>/remember</code> + <code>/compact</code> (Anti 'lost-in-the-middle')</td>
-                <td><span class="tbl-badge warn">⚠️ PARCIAL</span> /compact nativo de Claude</td>
-                <td><span class="tbl-badge warn">⚠️ PARCIAL</span> Archivos markdown dispersos</td>
-                <td><span class="tbl-badge warn">⚠️ PARCIAL</span> Prompts de memoria</td>
+                <td><strong>Atestación Criptográfica</strong></td>
+                <td class="td-highlight"><span class="badge-tag green">Ed25519 DSSE + in-toto v1</span></td>
+                <td><span class="badge-tag red">No disponible</span></td>
+                <td><span class="badge-tag red">No disponible</span></td>
+                <td><span class="badge-tag red">No disponible</span></td>
               </tr>
               <tr>
-                <td><strong>Sinergia Multi-Agente Híbrida</strong></td>
-                <td class="td-axion"><span class="tbl-badge pass">✓ UNIVERSAL</span> Antigravity (.agents/) + Claude Code (.claude/) + Cursor</td>
-                <td><span class="tbl-badge warn">⚠️ LIMITADO</span> Solo Claude Code</td>
-                <td><span class="tbl-badge warn">⚠️ LIMITADO</span> Solo Antigravity</td>
-                <td><span class="tbl-badge warn">⚠️ LIMITADO</span> Solo Claude Code</td>
+                <td><strong>Pruebas Adversariales & Caos</strong></td>
+                <td class="td-highlight"><span class="badge-tag green">10.000 Vectores (0% Evasión)</span></td>
+                <td><span class="badge-tag gray">Pruebas estándar</span></td>
+                <td><span class="badge-tag red">No integrado</span></td>
+                <td><span class="badge-tag red">No integrado</span></td>
               </tr>
               <tr>
-                <td><strong>Calibración de Perfil de Usuario</strong></td>
-                <td class="td-axion"><span class="tbl-badge pass">✓ NATIVO</span> <code>/profile</code> (Voz, GUI, Visionario, cadencia y dirección)</td>
-                <td><span class="tbl-badge fail">✗ NO</span> Sin calibración adaptativa</td>
-                <td><span class="tbl-badge warn">⚠️ PARCIAL</span> Reglas estáticas fijas</td>
-                <td><span class="tbl-badge warn">⚠️ PARCIAL</span> Personalidades predefinidas</td>
+                <td><strong>Integración Cross-Engine</strong></td>
+                <td class="td-highlight"><span class="badge-tag green">Antigravity + Claude Code</span></td>
+                <td><span class="badge-tag gray">Solo Antigravity</span></td>
+                <td><span class="badge-tag gray">Solo Claude Code</span></td>
+                <td><span class="badge-tag gray">CLI propia aislada</span></td>
               </tr>
               <tr>
-                <td><strong>Huella e Instalación (Zero-Bloat)</strong></td>
-                <td class="td-axion"><span class="tbl-badge pass">✓ 123 kB</span> 0 dependencias (Módulos nativos de Node.js)</td>
-                <td><span class="tbl-badge warn">⚠️ MEDIANO</span> Colección de prompts</td>
-                <td><span class="tbl-badge warn">⚠️ 1.2+ MB</span> Cientos de archivos de texto</td>
-                <td><span class="tbl-badge warn">⚠️ MEDIANO</span> Colección de prompts</td>
-              </tr>
-              <tr>
-                <td><strong>Pruebas y Verificación Automatizada</strong></td>
-                <td class="td-axion"><span class="tbl-badge pass">✓ 70/70 PASS</span> 70 suites de prueba + 11 chequeos de salud</td>
-                <td><span class="tbl-badge fail">✗ 0</span> Sin suites de prueba</td>
-                <td><span class="tbl-badge fail">✗ 0</span> Sin suites de prueba</td>
-                <td><span class="tbl-badge fail">✗ 0</span> Sin suites de prueba</td>
+                <td><strong>Dependencias Externas</strong></td>
+                <td class="td-highlight"><span class="badge-tag green">0 (123 kB nativo Node.js)</span></td>
+                <td><span class="badge-tag gray">Archivos Markdown</span></td>
+                <td><span class="badge-tag gray">Node runtime</span></td>
+                <td><span class="badge-tag gray">Python / NPM dependencies</span></td>
               </tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- ── Slash Commands Desplegables ──────────────────────────────── -->
+      <!-- ── 6. Catálogo de Slash Commands con Filtro Interactivo ──────── -->
       <section class="commands-section" id="comandos">
         <div class="section-label-group">
           <span class="section-badge-emerald">Ergonomía</span>
-          <h2 class="section-headline">16 Slash Commands Universales</h2>
-          <p class="section-desc">Diseñados para operar con paridad total en Antigravity (.agents/workflows) y Claude Code (.claude/commands):</p>
+          <h2 class="section-headline">12 Slash Commands Universales</h2>
+          <p class="section-desc">Diseñados con paridad total entre Antigravity (.agents/skills) y Claude Code (.claude/commands):</p>
         </div>
 
-        <div class="commands-grid">
-          <!-- 1. clarify -->
-          <div class="cmd-card">
+        <!-- Filter Chips & Search Bar -->
+        <div class="commands-filter-bar">
+          <div class="cmd-filter-chips" id="cmd-filter-chips">
+            <button class="chip active" data-filter="all">Todos (12)</button>
+            <button class="chip" data-filter="governance">Gobernanza</button>
+            <button class="chip" data-filter="intent">Intención & UX</button>
+            <button class="chip" data-filter="state">Estado & Checkpoints</button>
+            <button class="chip" data-filter="crypto">Criptografía</button>
+          </div>
+          <div class="cmd-search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="cmd-search" placeholder="Buscar comando (/drive, /verify...)" aria-label="Buscar slash command">
+          </div>
+        </div>
+
+        <div class="commands-grid" id="commands-grid">
+          <!-- 1. drive -->
+          <div class="cmd-card" data-cat="governance">
             <div class="cmd-top">
+              <div class="cmd-icon-box emerald">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+              </div>
+              <code class="cmd-code">/drive</code>
+              <span class="cmd-tag green">Meta-Orquestador</span>
+            </div>
+            <p class="cmd-desc">Asume la propiedad total de la tarea, formula misiones proactivas y entrega resultados verificados.</p>
+          </div>
+
+          <!-- 2. clarify -->
+          <div class="cmd-card" data-cat="intent">
+            <div class="cmd-top">
+              <div class="cmd-icon-box blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+              </div>
               <code class="cmd-code">/clarify</code>
-              <span class="cmd-tag">Intención</span>
+              <span class="cmd-tag blue">Socrático</span>
             </div>
-            <p class="cmd-desc">Freno socrático: aclara requerimientos en 2 preguntas (A/B/C) antes de tocar código.</p>
+            <p class="cmd-desc">Aclara peticiones ambiguas en exactamente 2 preguntas con opciones A/B/C antes de tocar código.</p>
           </div>
 
-          <!-- 2. profile -->
-          <div class="cmd-card">
+          <!-- 3. profile -->
+          <div class="cmd-card" data-cat="intent">
             <div class="cmd-top">
+              <div class="cmd-icon-box blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
               <code class="cmd-code">/profile</code>
-              <span class="cmd-tag">Adaptabilidad</span>
+              <span class="cmd-tag blue">Calibración</span>
             </div>
-            <p class="cmd-desc">Calibra tu perfil (Voz, GUI, Visionario, cadencia híbrida y dirección guiada).</p>
+            <p class="cmd-desc">Calibra y persiste el perfil del usuario en 5 dimensiones (profundidad técnica, entorno y cadencia).</p>
           </div>
 
-          <!-- 3. review -->
-          <div class="cmd-card">
+          <!-- 4. review -->
+          <div class="cmd-card" data-cat="governance">
             <div class="cmd-top">
+              <div class="cmd-icon-box emerald">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
               <code class="cmd-code">/review</code>
-              <span class="cmd-tag">Calidad</span>
+              <span class="cmd-tag green">Auditoría</span>
             </div>
-            <p class="cmd-desc">Auditoría selectiva por 4 Lentes: Técnica, Funcional, UX/Producto y Arquitectónica.</p>
+            <p class="cmd-desc">Auditoría de cambios por 4 lentes (Técnica, Funcional, UX y Arquitectura) con evidencia ejecutable.</p>
           </div>
 
-          <!-- 4. onboard -->
-          <div class="cmd-card">
+          <!-- 5. memory -->
+          <div class="cmd-card" data-cat="state">
             <div class="cmd-top">
-              <code class="cmd-code">/onboard</code>
-              <span class="cmd-tag">Contexto</span>
+              <div class="cmd-icon-box gold">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              </div>
+              <code class="cmd-code">/memory</code>
+              <span class="cmd-tag gold">Memoria</span>
             </div>
-            <p class="cmd-desc">Indexa y sintetiza repositorios nuevos o existentes sin sobreescribir memoria.</p>
+            <p class="cmd-desc">Persistencia de decisiones y anclaje de contexto anti-deriva entre sesiones (absorbe /remember y /compact).</p>
           </div>
 
-          <!-- 5. remember -->
-          <div class="cmd-card">
+          <!-- 6. snapshot -->
+          <div class="cmd-card" data-cat="state">
             <div class="cmd-top">
-              <code class="cmd-code">/remember</code>
-              <span class="cmd-tag">Memoria</span>
+              <div class="cmd-icon-box gold">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+              </div>
+              <code class="cmd-code">/snapshot</code>
+              <span class="cmd-tag gold">Checkpoints</span>
             </div>
-            <p class="cmd-desc">Registra decisiones, reglas y hechos durables que persisten entre sesiones.</p>
-          </div>
-
-          <!-- 6. compact -->
-          <div class="cmd-card">
-            <div class="cmd-top">
-              <code class="cmd-code">/compact</code>
-              <span class="cmd-tag">Optimización</span>
-            </div>
-            <p class="cmd-desc">Escudo de contexto: purga logs y sella estado para prevenir pérdida de foco.</p>
+            <p class="cmd-desc">Puntos de control deterministas SHA-256 y reversión atómica instantánea (absorbe /checkpoint y /rollback).</p>
           </div>
 
           <!-- 7. verify -->
-          <div class="cmd-card">
+          <div class="cmd-card" data-cat="governance">
             <div class="cmd-top">
+              <div class="cmd-icon-box emerald">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
               <code class="cmd-code">/verify</code>
-              <span class="cmd-tag">TDD</span>
+              <span class="cmd-tag green">TDD</span>
             </div>
-            <p class="cmd-desc">Bucle determinista: ejecuta pruebas reales y valida código de salida 0.</p>
+            <p class="cmd-desc">Bucle determinista: ejecuta suites de prueba reales y valida código de salida 0.</p>
           </div>
 
-          <!-- 8. rollback -->
-          <div class="cmd-card">
+          <!-- 8. debug -->
+          <div class="cmd-card" data-cat="governance">
             <div class="cmd-top">
-              <code class="cmd-code">/rollback</code>
-              <span class="cmd-tag">Reversión</span>
-            </div>
-            <p class="cmd-desc">Restaura los archivos al último checkpoint verificado en lenguaje natural.</p>
-          </div>
-
-          <!-- 9. checkpoint -->
-          <div class="cmd-card">
-            <div class="cmd-top">
-              <code class="cmd-code">/checkpoint</code>
-              <span class="cmd-tag">Seguridad</span>
-            </div>
-            <p class="cmd-desc">Crea un snapshot manual SHA-256 con etiqueta previa a cambios delicados.</p>
-          </div>
-
-          <!-- 10. debug -->
-          <div class="cmd-card">
-            <div class="cmd-top">
+              <div class="cmd-icon-box emerald">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+              </div>
               <code class="cmd-code">/debug</code>
-              <span class="cmd-tag">Diagnóstico</span>
+              <span class="cmd-tag green">Diagnóstico</span>
             </div>
-            <p class="cmd-desc">Depuración en 4 fases deterministas: Reproducción ➔ Causa Raíz ➔ Fix ➔ Test.</p>
+            <p class="cmd-desc">Depuración sistemática en 4 fases deterministas con causa raíz basada en evidencia.</p>
           </div>
 
-          <!-- 11. preflight -->
-          <div class="cmd-card">
+          <!-- 9. preflight -->
+          <div class="cmd-card" data-cat="governance">
             <div class="cmd-top">
+              <div class="cmd-icon-box emerald">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
               <code class="cmd-code">/preflight</code>
-              <span class="cmd-tag">Inspección</span>
+              <span class="cmd-tag green">Inspección</span>
             </div>
-            <p class="cmd-desc">Supervisa comandos de terminal en modo fail-closed con <code>shell: false</code>.</p>
+            <p class="cmd-desc">Supervisa comandos de terminal en modo fail-closed con <code>shell: false</code> (ALLOW/DENY).</p>
           </div>
 
-          <!-- 12. halt -->
-          <div class="cmd-card">
+          <!-- 10. halt -->
+          <div class="cmd-card" data-cat="governance">
             <div class="cmd-top">
+              <div class="cmd-icon-box red">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
               <code class="cmd-code">/halt</code>
-              <span class="cmd-tag">Killswitch</span>
+              <span class="cmd-tag red">Killswitch</span>
             </div>
-            <p class="cmd-desc">Parada de emergencia inmediata que congela cualquier acción en curso.</p>
+            <p class="cmd-desc">Parada de emergencia inmediata y reanudación deliberada en modo fail-closed (absorbe /unhalt).</p>
           </div>
 
-          <!-- 13. unhalt -->
-          <div class="cmd-card">
+          <!-- 11. premortem -->
+          <div class="cmd-card" data-cat="governance">
             <div class="cmd-top">
-              <code class="cmd-code">/unhalt</code>
-              <span class="cmd-tag">Reanudación</span>
-            </div>
-            <p class="cmd-desc">Desbloqueo humano deliberado de la parada de emergencia.</p>
-          </div>
-
-          <!-- 14. attest -->
-          <div class="cmd-card">
-            <div class="cmd-top">
-              <code class="cmd-code">/attest</code>
-              <span class="cmd-tag">Atestación</span>
-            </div>
-            <p class="cmd-desc">Emite el certificado formal in-toto Statement v1 / DSSE firmado con Ed25519.</p>
-          </div>
-
-          <!-- 15. deep -->
-          <div class="cmd-card">
-            <div class="cmd-top">
-              <code class="cmd-code">/deep</code>
-              <span class="cmd-tag">Alta Exigencia</span>
-            </div>
-            <p class="cmd-desc">Freno deliberativo: evalúa radio de impacto, 3 fallas pre-mortem y pruebas antes de actuar.</p>
-          </div>
-
-          <!-- 16. premortem -->
-          <div class="cmd-card">
-            <div class="cmd-top">
+              <div class="cmd-icon-box red">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
               <code class="cmd-code">/premortem</code>
-              <span class="cmd-tag">Resiliencia</span>
+              <span class="cmd-tag red">Resiliencia</span>
             </div>
-            <p class="cmd-desc">Simulador de fracaso: autopsia prematura de ideas y peores escenarios antes de programar.</p>
+            <p class="cmd-desc">Simulación de fracaso a 6 meses, cálculo de blast radius y 3 fallas adversariales (absorbe /deep).</p>
+          </div>
+
+          <!-- 12. attest -->
+          <div class="cmd-card" data-cat="crypto">
+            <div class="cmd-top">
+              <div class="cmd-icon-box purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <code class="cmd-code">/attest</code>
+              <span class="cmd-tag purple">Atestación</span>
+            </div>
+            <p class="cmd-desc">Emite y verifica atestaciones in-toto Statement v1 sobre DSSE con firmas asimétricas Ed25519.</p>
           </div>
         </div>
       </section>

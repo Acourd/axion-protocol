@@ -36,7 +36,7 @@ Requiere **Node.js 20+**. Cero dependencias: solo módulos integrados de Node.
 /plugin install axion-protocol
 ```
 
-Los 16 comandos y la puerta `PreToolUse` quedan disponibles al instante.
+Los 17 comandos y la puerta `PreToolUse` quedan disponibles al instante.
 
 ### Como paquete npm (Antigravity, Cursor, VS Code, Codex, CI)
 
@@ -107,10 +107,10 @@ Diseñados para coexistir **sin colisiones** con Antigravity, Claude Code y AG-K
 
 ## 🧪 Verificación y Suite de Pruebas
 
-Axion Protocol incluye **50 suites de prueba deterministas** listas para ejecutarse sin dependencias externas:
+Axion Protocol incluye **177 suites de prueba deterministas** listas para ejecutarse sin dependencias externas:
 
 ```bash
-# Ejecutar las 50 suites de prueba
+# Ejecutar las 177 suites de prueba
 node tests/run_all.js
 ```
 

@@ -234,6 +234,21 @@ if (require.main === module) {
 
   if (command === 'evaluate') {
     let rawInput = args[1];
+    if (args[1] === '--file' && args[2]) {
+      try {
+        rawInput = fs.readFileSync(path.resolve(args[2]), 'utf8');
+      } catch (err) {
+        console.error(JSON.stringify({ status: 'DENIED', reason: 'FILE_READ_ERROR', message: err.message }, null, 2));
+        process.exit(1);
+      }
+    } else if (typeof rawInput === 'string' && rawInput.startsWith('@')) {
+      try {
+        rawInput = fs.readFileSync(path.resolve(rawInput.slice(1)), 'utf8');
+      } catch (err) {
+        console.error(JSON.stringify({ status: 'DENIED', reason: 'FILE_READ_ERROR', message: err.message }, null, 2));
+        process.exit(1);
+      }
+    }
     if (!rawInput) {
       console.error(JSON.stringify({ status: 'DENIED', reason: 'MISSING_PAYLOAD' }, null, 2));
       process.exit(1);
@@ -250,7 +265,11 @@ if (require.main === module) {
   } else if (command === 'template') {
     console.log(DeepReasoningEngine.getProtocolTemplate());
   } else {
+    // Uso incorrecto sale con 2, igual que preflight, premortem, checkpoint, memory y
+    // attestation. Saliendo con 0 se imprimia el uso y cualquier CI encadenaba el && como
+    // si la deliberacion hubiera ocurrido: un mensaje de error con codigo de exito.
     console.log('Uso: node tools/deep_reasoning.js evaluate <json_payload> | template');
+    process.exit(2);
   }
 }
 

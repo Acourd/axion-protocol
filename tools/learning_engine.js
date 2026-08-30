@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+'use strict';
+
 
 /**
  * Axion Protocol - Multi-Domain Structured Human Feedback Learning Engine
@@ -21,7 +23,7 @@ function classifyFeedbackCategory(feedbackText) {
   }
 
   // 2. Reglas de seguridad, prevención de riesgos y protección
-  if (/seguridad|cuidado|riesgo|no borres|inseguro|bloquea|permiso|secreto|sensible|precaución|destructivo|peligro|vulnerabilidad|eval|inyección|prohibido/i.test(lower)) {
+  if (/seguridad|cuidado|riesgo|no borres|inseguro|bloquea|permiso|autorizaci|push|secreto|sensible|precaución|destructivo|peligro|vulnerabilidad|eval|inyección|prohibido/i.test(lower)) {
     return 'SAFETY_RULE';
   }
 
@@ -87,8 +89,9 @@ function captureHumanFeedback(feedbackText, options = {}) {
 function main() {
   const args = process.argv.slice(2);
   if (args.length === 0) {
+    // Uso incorrecto sale con 2: una lección que nadie dictó no es una lección capturada.
     console.log('Uso: node tools/learning_engine.js "<comentario_o_retroalimentacion_del_humano>"');
-    process.exit(0);
+    process.exit(2);
   }
 
   const feedback = args.join(' ');

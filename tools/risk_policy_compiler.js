@@ -132,6 +132,13 @@ function compileRiskPolicy(source) {
 }
 
 function evaluateRiskRequirements(compiledPolicy, risk, facts = {}) {
+  if (!compiledPolicy || typeof compiledPolicy !== 'object' || !Array.isArray(compiledPolicy.domain) || !compiledPolicy.levels) {
+    return Object.freeze({
+      risk: null,
+      satisfied: false,
+      missing: Object.freeze(['invalid_compiled_policy']),
+    });
+  }
   const normalizedRisk = typeof risk === 'string' ? risk.trim().toUpperCase() : null;
   if (!normalizedRisk || !compiledPolicy.domain.includes(normalizedRisk)) {
     return Object.freeze({

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+'use strict';
+
 
 /**
  * Axion Protocol - Non-Technical Git Assistant Tool

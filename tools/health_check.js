@@ -35,9 +35,8 @@ function versionInstalada() {
 }
 
 const WORKFLOWS = [
-  'clarify.md', 'profile.md', 'rollback.md', 'preflight.md',
-  'halt.md', 'unhalt.md', 'attest.md', 'review.md',
-  'onboard.md', 'checkpoint.md', 'debug.md', 'compact.md', 'verify.md', 'remember.md', 'deep.md', 'premortem.md'
+  'drive.md', 'premortem.md', 'snapshot.md', 'halt.md', 'clarify.md', 'memory.md',
+  'verify.md', 'review.md', 'debug.md', 'attest.md', 'profile.md', 'preflight.md'
 ];
 
 const leer = (p) => {
@@ -53,11 +52,19 @@ const leer = (p) => {
  * detectar que un prompt manda ejecutar una herramienta que el instalador no copia:
  * el comando existe, el archivo no, y el fallo solo aparece en casa del usuario.
  */
+// Acepta las dos formas: el directorio plano de workflows heredado (<dir>/<nombre>.md) y
+// la estructura de skills que monta Antigravity (<dir>/<nombre>/SKILL.md). Fijarla a una
+// sola habría dejado de ver los prompts en cuanto la otra pasara a ser la fuente.
 function herramientasCitadas(dirWorkflows) {
   const citadas = new Map();
-  let ficheros = [];
+  const ficheros = [];
   try {
-    ficheros = fs.readdirSync(dirWorkflows).filter((f) => f.endsWith('.md'));
+    for (const e of fs.readdirSync(dirWorkflows, { withFileTypes: true })) {
+      if (e.isFile() && e.name.endsWith('.md')) ficheros.push(e.name);
+      else if (e.isDirectory() && fs.existsSync(path.join(dirWorkflows, e.name, 'SKILL.md'))) {
+        ficheros.push(path.join(e.name, 'SKILL.md'));
+      }
+    }
   } catch (_) {
     return citadas;
   }
@@ -144,17 +151,37 @@ function runHealthCheck(targetDir) {
   }
   addCheck('Perfil Calibrado', perfilOk, etiquetaPerfil);
 
-  // 6. Los 14 comandos, en las dos superficies.
-  const dirWorkflows = path.join(target, '.agents', 'workflows');
+  // 6. Los comandos, en las dos superficies que los agentes leen de verdad.
+  //
+  // Antigravity dejó de descubrir .agents/workflows/: su propia guía los declara obsoletos
+  // y monta las skills desde .agents/skills/<nombre>/SKILL.md, que es lo único que da
+  // slash command de primera clase y descubrimiento semántico. Mientras este chequeo miró
+  // a workflows/ decía 16/16 en verde sobre una superficie que el agente ya no leía —el
+  // mismo defecto que un hook registrado y muerto—, y por eso el protocolo no arrancaba
+  // solo en los chats de Antigravity aunque la auditoría diera todo correcto.
+  const dirSkills = path.join(target, '.agents', 'skills');
   const dirComandos = path.join(target, '.claude', 'commands');
-  const enWf = WORKFLOWS.filter((w) => fs.existsSync(path.join(dirWorkflows, w)));
+  const rutaSkill = (w) => path.join(dirSkills, w.replace(/\.md$/, ''), 'SKILL.md');
+  const enSk = WORKFLOWS.filter((w) => fs.existsSync(rutaSkill(w)));
   const enCc = WORKFLOWS.filter((w) => fs.existsSync(path.join(dirComandos, w)));
-  addCheck('Slash Commands', enWf.length === WORKFLOWS.length && enCc.length === WORKFLOWS.length,
-    `${enWf.length}/${WORKFLOWS.length} en .agents/workflows · ${enCc.length}/${WORKFLOWS.length} en .claude/commands`);
+  addCheck('Slash Commands', enSk.length === WORKFLOWS.length && enCc.length === WORKFLOWS.length,
+    `${enSk.length}/${WORKFLOWS.length} en .agents/skills · ${enCc.length}/${WORKFLOWS.length} en .claude/commands`);
+
+  // 6b. Y ningún workflow obsoleto sobreviviendo junto a su skill: si ambos existen, el
+  //     agente puede montar el comando dos veces y nadie sabe cuál de los dos obedeció.
+  const dirWorkflows = path.join(target, '.agents', 'workflows');
+  const legado = fs.existsSync(dirWorkflows)
+    ? fs.readdirSync(dirWorkflows).filter((f) => f.endsWith('.md'))
+    : [];
+  addCheck('Formato Antigravity', legado.length === 0, legado.length === 0
+    ? 'sin workflows obsoletos: las skills son la única fuente'
+    : `${legado.length} workflow(s) obsoletos conviven con sus skills: ${legado.slice(0, 3).join(', ')}${legado.length > 3 ? '…' : ''}. Migra con /onboard o retíralos.`);
 
   // 7. Deriva entre superficies: dos copias que dicen cosas distintas es peor que una sola.
+  //    La skill es la fuente y .claude/commands su espejo; comparar contra el workflow
+  //    obsoleto habría dejado de detectar la deriva en cuanto se retiró.
   const divergentes = WORKFLOWS.filter((w) => {
-    const a = leer(path.join(dirWorkflows, w));
+    const a = leer(rutaSkill(w));
     const b = leer(path.join(dirComandos, w));
     return a !== null && b !== null && a !== b;
   });
@@ -162,7 +189,7 @@ function runHealthCheck(targetDir) {
     divergentes.length === 0 ? 'ambas superficies idénticas' : `divergen: ${divergentes.join(', ')}`);
 
   // 8. Toda herramienta citada por un prompt tiene que existir.
-  const citadas = herramientasCitadas(dirWorkflows);
+  const citadas = herramientasCitadas(dirSkills);
   const ausentes = [...citadas.keys()].filter((rel) => !fs.existsSync(path.join(target, rel)));
   addCheck('Herramientas Citadas', ausentes.length === 0,
     ausentes.length === 0

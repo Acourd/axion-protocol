@@ -47,7 +47,7 @@ const SEPARATION = Object.freeze({
  * @param {boolean} entrada.approvalVerified  el GATE verifico una aprobacion firmada
  * @param {boolean} entrada.checkVerified     el CHECK se verifico contra el registro
  */
-function assessAssurance({ approvalVerified, checkVerified }) {
+function assessAssurance({ approvalVerified = false, checkVerified = false } = {}) {
   const identities = {
     // Siempre autodeclarada mientras no exista el servicio de confianza (Fase H-2/H-3).
     executor: IDENTITY_ASSURANCE.SELF_DECLARED,

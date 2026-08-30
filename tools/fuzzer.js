@@ -159,6 +159,9 @@ class AdversarialFuzzer {
    * Tests a single attack payload against preflight in memory.
    */
   testPreflight(cmd) {
+    if (!cmd || (typeof cmd === 'string' && cmd.trim() === '')) {
+      return { cmd, exitCode: 1, decision: 'DENY', blocked: true };
+    }
     const { classifyCommand } = require('./structured_command.js');
     const classification = classifyCommand(cmd);
     const decision = classification.decision;

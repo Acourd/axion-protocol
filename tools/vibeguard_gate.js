@@ -21,6 +21,7 @@
 const fs = require('fs');
 const path = require('path');
 const { inspectFileContent } = require('./vibeguard.js');
+const VibeGuardStorageHook = require('./vibeguard_storage_hook.js');
 
 // `tests` queda fuera porque sus fixtures contienen antipatrones a propósito: son el
 // material con el que se comprueba que el detector detecta.
@@ -59,10 +60,14 @@ function recorrer(dir, encontrados) {
   return encontrados;
 }
 
-function runVibeGuardGate(targetDir, opciones) {
-  const estricto = Boolean(opciones && opciones.strict);
+function runVibeGuardGate(targetDir, opciones = {}) {
   const raiz = path.resolve(targetDir || process.cwd());
+  const estricto = Boolean(opciones.strict);
   console.log(`[VibeGuard] Escaneando calidad de código en: ${raiz}\n`);
+
+  // Hook preventivo de almacenamiento
+  const storageHook = new VibeGuardStorageHook(raiz);
+  storageHook.preScan();
 
   const archivos = recorrer(raiz, []);
   const findings = [];
@@ -121,6 +126,9 @@ function runVibeGuardGate(targetDir, opciones) {
   console.log(pass
     ? `✓ VibeGuard PASS con ${findings.length} aviso(s) de severidad LOW: no bloquean la promocion. Usa --strict para exigirlos.`
     : `✗ VibeGuard FAIL: ${bloqueantes.length} hallazgo(s) bloqueante(s)${ilegibles.length ? ` y ${ilegibles.length} archivo(s) ilegible(s)` : ''}.`);
+
+  // Hook post-escaneo para purga atómica
+  storageHook.postScan();
 
   return { pass, findings, blocking: bloqueantes, scanned: archivos.length, unreadable: ilegibles };
 }

@@ -11,7 +11,7 @@
     {
       "name": "axion-protocol",
       "source": "./",
-      "description": "14 comandos de gobernanza, puerta PreToolUse fail-closed, reversion determinista verificada antes de escribir, y atestaciones in-toto v1 comprobables con cosign o cualquier herramienta SLSA. Sin dependencias externas.",
+      "description": "12 comandos de gobernanza, puerta PreToolUse fail-closed, reversion determinista verificada antes de escribir, y atestaciones in-toto v1 comprobables con cosign o cualquier herramienta SLSA. Sin dependencias externas.",
       "version": "1.2.0-beta.1",
       "author": {
         "name": "Adria",

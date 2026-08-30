@@ -20,10 +20,16 @@ const process = require('process');
 // Tenerla duplicada garantizaba que el ámbito de usuario y el de proyecto acabaran
 // instalando conjuntos distintos, y que añadir un comando nuevo se olvidara en uno de los dos.
 const WORKFLOWS = Object.freeze(
-  fs.readdirSync(path.join(__dirname, '.agents', 'workflows'))
-    .filter((f) => f.endsWith('.md'))
+  fs.readdirSync(path.join(__dirname, '.agents', 'skills'), { withFileTypes: true })
+    .filter((e) => e.isDirectory() && fs.existsSync(path.join(__dirname, '.agents', 'skills', e.name, 'SKILL.md')))
+    .map((e) => e.name + '.md')
     .sort(),
 );
+
+// Antigravity monta las skills desde .agents/skills/<nombre>/SKILL.md; Claude Code lee
+// .claude/commands/<nombre>.md. Es el mismo contenido en dos formas, y esta funcion es el
+// unico sitio que conoce la traduccion entre ambas.
+const origenSkill = (raiz, wf) => path.join(raiz, '.agents', 'skills', wf.replace(/\.md$/, ''), 'SKILL.md');
 
 function hashDe(filePath) {
   return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
@@ -87,8 +93,25 @@ function runUserInstallation(homeDir) {
   const ausentes = [];
 
   for (const wf of WORKFLOWS) {
-    const r = copiarProtegido(path.join(__dirname, '.agents', 'workflows', wf), path.join(destino, wf), ausentes);
+    const r = copiarProtegido(origenSkill(__dirname, wf), path.join(destino, wf), ausentes);
     if (r) respaldos.push(r);
+  }
+
+  // Antigravity tiene su propio ambito global, y no es este. Mientras solo se instalo en
+  // ~/.claude/commands, quien abria un chat de Antigravity fuera de un proyecto con Axion
+  // no veia ni un comando —ni el protocolo arrancaba solo— aunque la auditoria diera todo
+  // en verde: el chequeo miraba la superficie de Claude Code y daba por cubierta la otra.
+  const destinoAgy = path.join(home, '.gemini', 'config', 'skills');
+  if (fs.existsSync(path.join(home, '.gemini'))) {
+    fs.mkdirSync(destinoAgy, { recursive: true });
+    for (const wf of WORKFLOWS) {
+      const nombre = wf.replace(/\.md$/, '');
+      const r = copiarProtegido(origenSkill(__dirname, wf), path.join(destinoAgy, nombre, 'SKILL.md'), ausentes);
+      if (r) respaldos.push(r);
+    }
+    console.log(`  ✓ ${WORKFLOWS.length} skills instaladas en ${destinoAgy}`);
+  } else {
+    console.log('  · Antigravity no detectado (~/.gemini ausente): se omite su ambito global.');
   }
 
   const faltantes = [...new Set(ausentes)];
@@ -121,7 +144,7 @@ function runInstallation(targetDir) {
   // Directorios objetivo
   const dirs = [
     '.agents/rules',
-    '.agents/workflows',
+    '.agents/skills',
     '.agents/hooks',
     '.claude/commands',
     'tools',
@@ -144,7 +167,9 @@ function runInstallation(targetDir) {
   // mitad el día que se añade un comando.
   const workflows = WORKFLOWS;
   workflows.forEach(wf => {
-    anotar(copiarProtegido(path.join(sourceRoot, '.agents', 'workflows', wf), path.join(rootDir, '.agents', 'workflows', wf), ausentes));
+    const destinoSkill = origenSkill(rootDir, wf);
+    fs.mkdirSync(path.dirname(destinoSkill), { recursive: true });
+    anotar(copiarProtegido(origenSkill(sourceRoot, wf), destinoSkill, ausentes));
   });
   console.log(`  ✓ ${workflows.length} Slash commands y reglas P0 inyectados en .agents/`);
 
@@ -153,7 +178,7 @@ function runInstallation(targetDir) {
   anotar(copiarProtegido(path.join(sourceRoot, 'CLAUDE.md'), path.join(rootDir, 'CLAUDE.md'), ausentes));
   anotar(copiarProtegido(path.join(sourceRoot, 'CLAUDE.md'), path.join(rootDir, '.claude', 'CLAUDE.md'), ausentes));
   workflows.forEach(wf => {
-    anotar(copiarProtegido(path.join(sourceRoot, '.agents', 'workflows', wf), path.join(rootDir, '.claude', 'commands', wf), ausentes));
+    anotar(copiarProtegido(origenSkill(sourceRoot, wf), path.join(rootDir, '.claude', 'commands', wf), ausentes));
   });
   console.log(`  ✓ CLAUDE.md y ${workflows.length} slash commands inyectados en .claude/commands/`);
 
@@ -205,10 +230,19 @@ function runInstallation(targetDir) {
     'health_check.js',
     'emit_attestation.js',
     'vibeguard_gate.js',
+    'vibeguard_storage_hook.js',
+    'disk_pressure_guard.js',
+    'auto_compacting_checkpoint.js',
+    'workspace_debloater.js',
     'memory.js',
     'deep_reasoning.js',
     'fuzzer.js',
-    'premortem.js'
+    'premortem.js',
+    // El README del proyecto instalado manda ejecutarla tras añadir suites, y /drive la
+    // cita en su fase de Release Loop. Una herramienta que la documentación entregada
+    // promete y el paquete no trae es la misma deuda que un prompt citando una ruta que
+    // no existe: el chequeo de salud lo detecta en el proyecto instalado, no aquí.
+    'sync_doc_stats.js'
   ];
   tools.forEach(t => {
     anotar(copiarProtegido(path.join(sourceRoot, 'tools', t), path.join(rootDir, 'tools', t), ausentes));

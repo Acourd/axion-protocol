@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+'use strict';
+
 
 /**
  * Axion Protocol — VibeGuard Static Inspector Tool
@@ -15,6 +17,15 @@ const path = require('path');
 const process = require('process');
 
 function inspectFileContent(content, filePath = 'snippet') {
+  if (typeof content !== 'string') {
+    return {
+      filePath,
+      totalIssues: 0,
+      status: 'ERROR',
+      reason: 'El contenido debe ser texto no nulo.',
+      issues: []
+    };
+  }
   const issues = [];
   
   // Lexical Stripper: una sola pasada produce tres vistas del archivo, alineadas línea a

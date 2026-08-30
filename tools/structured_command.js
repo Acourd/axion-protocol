@@ -34,7 +34,7 @@ function rawLooksDestructive(command) {
   // como no tenerla. Puede denegar alguna cadena inocente que mencione un nombre parecido
   // dentro de una carpeta; se acepta, porque una cadena cruda nunca alcanza permiso y en
   // la duda denegar cuesta menos que continuar.
-  return /(^|[\s/\\])(rm|rmdir|unlink|shred|srm|mkfs|dd|remove-item|ri|clear-content|clc|clear-item|cli|remove-itemproperty|rp|format-volume|clear-disk|initialize-disk|remove-partition|reset-physicaldisk|del|erase|diskpart|fdisk)(\s|$)/i.test(normalized)
+  return /(^|[\s/\\])(rm|rmdir|rd|unlink|shred|srm|mkfs|dd|format|remove-item|ri|clear-content|clc|clear-item|cli|remove-itemproperty|rp|format-volume|clear-disk|initialize-disk|remove-partition|reset-physicaldisk|del|erase|diskpart|fdisk)(\.(exe|cmd|bat|ps1))?(\s|$)/i.test(normalized)
     // Tuberia hacia un interprete: es descargar y ejecutar en un solo gesto, y el prompt
     // de /preflight ya lo daba por bloqueado. La doc y el motor llevaban versiones
     // distintas del contrato, y la que mandaba era la que no protegia.

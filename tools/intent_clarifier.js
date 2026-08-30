@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+'use strict';
+
 
 /**
  * Axion Protocol - Intent Clarifier & Sealed Contract Engine (Fase 1: ENTENDER)
@@ -14,8 +16,17 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { hashCanonical } = require('./canonical_json.js');
 
 const ROOT = path.resolve(__dirname, '..');
+
+function escribirAtomico(rutaDestino, contenido) {
+  const dir = path.dirname(rutaDestino);
+  fs.mkdirSync(dir, { recursive: true });
+  const tmp = `${rutaDestino}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  fs.writeFileSync(tmp, contenido, 'utf8');
+  fs.renameSync(tmp, rutaDestino);
+}
 
 function appendCustomOption(optionsList) {
   const customOption = {
@@ -209,20 +220,17 @@ function analyzeUserIntent(requestText, options = {}) {
 function persistContract(contract, rawRequest, projectRoot = ROOT) {
   try {
     const stateDir = path.join(projectRoot, '.axion', 'state');
-    if (!fs.existsSync(stateDir)) {
-      fs.mkdirSync(stateDir, { recursive: true });
-    }
+    const targetPath = path.join(stateDir, 'intent-contract.json');
 
     const payload = {
       ...contract,
       rawRequest,
       signed_at: new Date().toISOString()
     };
-    const digest = crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+    const digest = hashCanonical(payload);
     payload.digest = digest;
 
-    const targetPath = path.join(stateDir, 'intent-contract.json');
-    fs.writeFileSync(targetPath, JSON.stringify(payload, null, 2), 'utf8');
+    escribirAtomico(targetPath, JSON.stringify(payload, null, 2) + '\n');
     return { success: true, targetPath, digest };
   } catch (err) {
     return { success: false, error: err.message };
@@ -241,11 +249,37 @@ function sealIntent(requestText, selectedOptions, projectRoot = ROOT) {
   });
 }
 
+/**
+ * Convierte el resultado de clarificación en el formato interactivo de selección UI (ask_question).
+ */
+function toInteractiveModalFormat(clarificationResult) {
+  if (!clarificationResult || clarificationResult.status !== 'NEEDS_CLARIFICATION') {
+    return null;
+  }
+  const qList = clarificationResult.questions || ['¿Qué dirección prefieres seguir?'];
+  const opts = (clarificationResult.options || []).map((o, idx) => {
+    const isFirst = idx === 0 ? '(Recomendado) ' : '';
+    const desc = o.description ? ` — ${o.description}` : '';
+    return `${isFirst}${o.name}${desc}`.trim();
+  });
+
+  return {
+    questions: [
+      {
+        question: qList[0] || 'Selecciona la dirección o enfoque preferido:',
+        options: opts.length >= 2 ? opts : ['(Recomendado) Opción A', 'Opción B'],
+        is_multi_select: false
+      }
+    ]
+  };
+}
+
 function main() {
   const args = process.argv.slice(2);
   if (args.length === 0) {
+    // Uso incorrecto sale con 2, igual que preflight, premortem, checkpoint y memory.
     console.log('Uso:\n  node tools/intent_clarifier.js "<solicitud_del_usuario>"\n  node tools/intent_clarifier.js seal --request "<solicitud>" --selected "<opciones>"\n  node tools/intent_clarifier.js current');
-    process.exit(0);
+    process.exit(2);
   }
 
   if (args[0] === 'current') {
@@ -254,8 +288,12 @@ function main() {
       console.log(fs.readFileSync(statePath, 'utf8'));
       process.exit(0);
     } else {
+      // CLAUDE.md convierte /clarify en puerta dura: no se escribe codigo hasta que exista
+      // un IntentContract. Saliendo con 0 tanto si lo hay como si no, esa puerta no se
+      // podia comprobar desde ningun script: la respuesta "no hay contrato" llegaba con
+      // codigo de exito. Ahora sigue el contrato del proyecto — 0 adelante, 1 no.
       console.log(JSON.stringify({ status: 'NO_ACTIVE_CONTRACT', message: 'No hay contrato de intención activo en disco.' }, null, 2));
-      process.exit(0);
+      process.exit(1);
     }
   }
 
@@ -280,4 +318,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { analyzeUserIntent, getTailoredStyleOptions, hasTechnicalSpecificity, sealIntent, persistContract };
+module.exports = { analyzeUserIntent, getTailoredStyleOptions, hasTechnicalSpecificity, sealIntent, persistContract, toInteractiveModalFormat };

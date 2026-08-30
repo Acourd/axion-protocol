@@ -33,11 +33,8 @@ const DIR_EXCLUIDOS = new Set([
 const LIMITE_FICHERO = 5 * 1024 * 1024;
 const LIMITE_TOTAL = 200 * 1024 * 1024;
 
-// Un snapshot guarda contenido, no huellas, asi que pesa lo que pesa el arbol. En este
-// mismo repositorio son 17 MiB por punto de control. Sin techo, sellar antes de cada
-// paso delicado convertiria .axion/ en el objeto mas grande del proyecto y acabaria con
-// alguien borrando la carpeta entera, que es perder la red justo cuando hace falta.
-const MAX_CHECKPOINTS = 10;
+// Cap MAX_CHECKPOINTS a 3 para mantener el proyecto ligero y prevenir inflación de I/O en disco.
+const MAX_CHECKPOINTS = 3;
 
 const sha256 = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
 
@@ -185,8 +182,9 @@ function crear(raiz, etiqueta, kind) {
 function purgarExcedente(raiz, idProtegido, kindProtegido) {
   const base = dirCheckpoints(raiz);
   const retirados = [];
+  const todos = listar(raiz);
   for (const tipo of ['user', 'safety']) {
-    const delTipo = listar(raiz)
+    const delTipo = todos
       .filter((m) => (m.kind || 'user') === tipo && m.checkpointId !== idProtegido)
       .map((m) => m.checkpointId)
       .sort();
