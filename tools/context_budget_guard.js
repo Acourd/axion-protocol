@@ -87,6 +87,90 @@ class ContextBudgetGuard {
   }
 
   /**
+   * Predice el crecimiento de tokens y calcula a cuántos turnos está de saturar la ventana.
+   */
+  predictTokenGrowth(turnHistory = []) {
+    if (!Array.isArray(turnHistory) || turnHistory.length === 0) {
+      return {
+        currentTokens: 0,
+        averageGrowthPerTurn: 0,
+        turnsUntilPressure: Infinity,
+        turnsUntilCritical: Infinity,
+        growthRate: 'STABLE',
+        recommendation: 'CONTINUE'
+      };
+    }
+
+    const tokenCounts = turnHistory.map(t => (typeof t === 'number' ? t : (t.tokens || 0)));
+    const currentTokens = tokenCounts[tokenCounts.length - 1] || 0;
+
+    let totalDelta = 0;
+    let deltasCount = 0;
+    for (let i = 1; i < tokenCounts.length; i++) {
+      const delta = Math.max(0, tokenCounts[i] - tokenCounts[i - 1]);
+      totalDelta += delta;
+      deltasCount++;
+    }
+
+    const avgGrowth = deltasCount > 0 ? Math.round(totalDelta / deltasCount) : 2500;
+    const pressureTokens = this.budgetTokens * 0.70;
+    const criticalTokens = this.budgetTokens * 0.85;
+
+    const remainingToPressure = Math.max(0, pressureTokens - currentTokens);
+    const remainingToCritical = Math.max(0, criticalTokens - currentTokens);
+
+    const turnsUntilPressure = avgGrowth > 0 ? Math.floor(remainingToPressure / avgGrowth) : Infinity;
+    const turnsUntilCritical = avgGrowth > 0 ? Math.floor(remainingToCritical / avgGrowth) : Infinity;
+
+    let growthRate = 'STABLE';
+    if (avgGrowth > 8000) {
+      growthRate = 'CRITICAL_SPIKE';
+    } else if (avgGrowth > 4000) {
+      growthRate = 'ACCELERATING';
+    }
+
+    let recommendation = 'CONTINUE';
+    if (turnsUntilCritical <= 2 || currentTokens >= criticalTokens) {
+      recommendation = 'COMPACT_NOW';
+    } else if (turnsUntilPressure <= 3 || currentTokens >= pressureTokens) {
+      recommendation = 'PREPARE_COMPACTION';
+    }
+
+    return {
+      currentTokens,
+      budgetTokens: this.budgetTokens,
+      averageGrowthPerTurn: avgGrowth,
+      turnsUntilPressure,
+      turnsUntilCritical,
+      growthRate,
+      recommendation
+    };
+  }
+
+  /**
+   * Calcula la entropía léxica (diversidad de vocabulario) para detectar deriva o texto inflado de IA.
+   */
+  calculateEntropyScore(text = '') {
+    if (!text || typeof text !== 'string' || text.trim() === '') return 0;
+    const words = text.toLowerCase().match(/\b[a-z0-9_]{2,}\b/g) || [];
+    if (words.length === 0) return 0;
+
+    const freqMap = {};
+    for (const w of words) {
+      freqMap[w] = (freqMap[w] || 0) + 1;
+    }
+
+    let entropy = 0;
+    const totalWords = words.length;
+    for (const count of Object.values(freqMap)) {
+      const p = count / totalWords;
+      entropy -= p * Math.log2(p);
+    }
+
+    return parseFloat(entropy.toFixed(3));
+  }
+
+  /**
    * Evalúa la presión de contexto a partir de un conjunto de strings o archivos.
    */
   evaluatePressure(contextItems = []) {
