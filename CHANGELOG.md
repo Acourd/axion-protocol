@@ -2,6 +2,22 @@
 
 Todos los cambios relevantes de Axion Protocol se documentarán aquí.
 
+## [1.3.1-rc.1] — 2026-09-01 · Experiencia de Usuario, Recetas Operativas y Documentación Modular
+
+Refactorización orientada a producto y experiencia de primer contacto (Onboarding). Compactación de portadas principales, extracción del manual de comandos y recetas operativas.
+
+### Added
+
+- **Manual Canónico de Comandos y Recetas (`docs/COMMANDS.md` y `docs/COMMANDS.es.md`)**: Documentación exhaustiva desacoplada del README principal con recetas operativas por objetivo (Estrategia `/drive /premortem /critic`, Fix ágil `/drive`, Depuración `/debug /verify`, Rollback `/snapshot`).
+- **Sandbox Hashgraph Oficial (`SANDBOX.md`)**: Entorno de incubación y prototipado experimental con paridad determinista vía `sync_mirror_gate`.
+
+### Changed
+
+- **READMEs Compactos y Profesionales**: Eliminación de emojis informales de chat en favor de badges SVG minimalistas, tablas estructuradas de valor de producto y enlace directo al manual técnico.
+- **Paridad Lingüística Total**: Sincronización exacta de `README.md` y `README.es.md` con enfoque en mitigación de riesgos de IA agentiva y cero dependencias.
+
+---
+
 ## [1.3.0-rc.1] — 2026-09-01 · Versión Soberana & Ecosistema en Vivo
 
 Lanzamiento oficial de la arquitectura de gobernanza soberana. Cierre completo de los 5 Dominios Fundamentales con 182 suites deterministas, sincronización espejo determinista y arnés de síntesis TDD.

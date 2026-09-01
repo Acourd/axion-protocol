@@ -1,126 +1,137 @@
-# 🛡️ Axion Protocol
+# Axion Protocol
 
-> **El arnés de gobernanza Zero-Bloat para agentes de Inteligencia Artificial.**  
-> *Ejecución Fail-Closed, cristalización de intención, reversión instantánea y atestaciones criptográficas.*
-> 
-> **Estado**: Runtime EXPERIMENTAL. El enforcement no intercepta automáticamente los comandos de shell del sistema operativo sin el hook integrado del agente. Requiere **Node.js 20** o superior.
+> **El Arnés de Gobernanza Soberana y Motor de Seguridad Determinista para IA Agentiva.**  
+> *Convierte el desarrollo errático e impredecible con IA en ingeniería de software determinista, verificable y lista para producción.*
+>
+> **Estado**: Runtime EXPERIMENTAL. El enforcement no intercepta comandos de shell del sistema operativo automáticamente sin el hook de agente integrado. Requiere **Node.js 20** o superior. Cero dependencias externas de npm.
 
-[![CI Passing](https://img.shields.io/badge/CI-Passing-brightgreen.svg)](https://github.com/Acourd/axion-protocol/actions)
-[![Licencia: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Cero Dependencias](https://img.shields.io/badge/Dependencias-0-success.svg)](package.json)
-[![Peso del Paquete](https://img.shields.io/badge/Tama%C3%B1o-118_kB-informational.svg)](package.json)
+[![Estado de CI](https://img.shields.io/badge/CI-182%20En%20Verde-2ea44f.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
+[![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.3.1--rc.1-0969da.svg?style=flat-square)](package.json)
+[![Licencia](https://img.shields.io/badge/Licencia-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
+[![Cero Dependencias](https://img.shields.io/badge/Dependencias-0-success.svg?style=flat-square)](package.json)
+[![Velocidad](https://img.shields.io/badge/Velocidad-12s%20(8%20workers)-informational.svg?style=flat-square)](tests/run_all.js)
+[![Tamaño](https://img.shields.io/badge/Tama%C3%B1o-535_kB-informational.svg?style=flat-square)](package.json)
 
 ---
 
-## ⚡ ¿Qué es Axion Protocol?
+## El Problema Fundamental en el Desarrollo con IA Agentiva
 
-Los agentes de programación (Antigravity, Claude Code, Cursor) son potentes, pero propensos al **"vibecoding" descontrolado**: asumir requisitos sin preguntar, ejecutar comandos destructivos en la terminal y alucinar cambios arquitectónicos.
+Los asistentes de código autónomos (**Claude Code, Google Antigravity, Cursor, Codex**) están transformando la industria. Sin embargo, al operar con total autonomía, tanto creadores no técnicos como equipos de ingeniería se enfrentan a cuatro riesgos sistémicos:
 
-**Axion Protocol** es un arnés de gobernanza local y transparente (118 kB, 0 dependencias externas) que impone un ciclo de vida determinista de **7 fases fail-closed** antes de tocar el código fuente:
+1. **Alucinaciones y Vibecoding Descontrolado**: Modelos que asumen intenciones ambiguas a ciegas, inventan APIs y refactorizan subsistemas críticos sin alineación humana previa.
+2. **Operaciones Destructivas en Terminal**: Modificaciones accidentales del sistema de archivos, conflictos de puertos, filtración involuntaria de credenciales y operaciones de base de datos no autorizadas.
+3. **Degradación de Contexto y Quema de Tokens**: Cientos de dólares desperdiciados en bucles de razonamiento infinitos, micro-interrupciones repetitivas y pérdida de memoria en sesiones largas.
+4. **Cero Auditabilidad Criptográfica**: Imposibilidad de demostrar matemáticamente qué pruebas se ejecutaron realmente, quién autorizó un cambio y si la cadena de suministro fue alterada.
+
+**Axion Protocol mitiga estos riesgos de forma determinista.** Proporciona un arnés local y ultra-ligero (535 kB, **cero dependencias externas**) que encapsula a tu agente en una **máquina de estados determinista de modo fail-closed**.
+
+---
+
+## Propuesta de Valor
+
+- **Freno Socrático de Intención (`/clarify`)**: Obliga al agente a formular exactamente 2 preguntas humanas estructuradas (A/B/C) antes de tocar código, erradicando el parcheo a ciegas.
+- **Escudo Fail-Closed de Terminal (`/preflight`)**: Intercepta y clasifica cada comando (`ALLOW` / `NEEDS_HUMAN_REVIEW` / `DENY`) con ejecución segura (`shell: false`).
+- **Rollback Determinista Instantáneo (`/snapshot`)**: Restaura instantáneas del árbol verificadas con SHA-256 en `< 5ms` ante peticiones en lenguaje natural (*"deshaz lo que hiciste"*), independiente de Git.
+- **Verificador Incremental de Alta Velocidad (`tools/smart_incremental_runner.js`)**: Analiza grafos de dependencias inversas para ejecutar únicamente las pruebas impactadas en `< 300ms`.
+- **Sintetizador Pre-Flight TDD (`tools/preflight_tdd_synthesizer.js`)**: Deriva aserciones formales antes de modificar el disco, garantizando *First-Shot Success*.
+- **Atestaciones Criptográficas Enterprise (`/attest`)**: Genera sobres DSSE in-toto Statement v1 firmados con Ed25519 (compatibles con SLSA Nivel 3 y Cosign).
+- **Paridad Multi-Plataforma al 100%**: Gobernanza unificada disponible de forma idéntica en **Google Antigravity**, **Anthropic Claude Code** y terminal CLI.
+
+---
+
+## Arquitectura Unificada de 7 Fases
 
 ```text
-ENTENDER ──► PLANIFICAR ──► GATE ──► TEST ──► CONSTRUIR ──► AUDITAR ──► PROMOVER
-(Intención)   (Riesgo)      (Firma)  (TDD)    (Preflight)   (Evidencia) (Reporte)
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  1. INTENT   │ ──► │ 2. PREMORTEM │ ──► │  3. PREFLIGHT│ ──► │ 4. EXECUTION │
+│  (/clarify)  │     │  (/premortem)│     │ (/preflight) │     │   (/drive)   │
+└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
+                                                                      │
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐            ▼
+│ 7. ATTEST    │ ◄── │  6. AUDIT    │ ◄── │  5. VERIFY   │ ◄──────────┘
+│  (/attest)   │     │  (/review)   │     │  (/verify)   │
+└──────────────┘     └──────────────┘     └──────────────┘
 ```
 
 ---
 
-## 🚀 Inicio Rápido
+## Guía Rápida de Inicio (Menos de 30 Segundos)
 
-Requiere **Node.js 20+**. Cero dependencias: solo módulos integrados de Node.
+### 1. Demo Interactiva en Sandbox (Sin Instalación)
 
-### Como plugin de Claude Code
-
-```bash
-/plugin marketplace add Acourd/axion-protocol
-/plugin install axion-protocol
-```
-
-Los 17 comandos y la puerta `PreToolUse` quedan disponibles al instante.
-
-### Como paquete npm (Antigravity, Cursor, VS Code, Codex, CI)
+Prueba la intercepción de comandos y la reversión instantánea en un entorno efímero aislado:
 
 ```bash
-# 0. Prueba la demo interactiva de 15 segundos en sandbox hermético
+# Ejecutar demo interactiva en terminal
 node bin/axion.js demo
 
-# 1. Inyecta las reglas en tu proyecto
-npx axion-protocol init
+# Ejecutar benchmark comparativo
+node bin/axion.js benchmark
+```
 
-# 2. Comprueba que todo funciona en verde
+### 2. Inicializar en un Proyecto Existente
+
+```bash
+# Inyectar gobernanza fail-closed en tu espacio de trabajo
+npx axion-protocol init
+```
+
+*Configura automáticamente `.agents/skills/` (Antigravity), `.claude/commands/` (Claude Code), `tools/`, `policies/` y `schemas/` con respaldo seguro SHA-256.*
+
+### 3. Verificar Salud del Sistema
+
+```bash
 npx axion check
 ```
 
-`init` escribe en `.agents/` (Antigravity), `.claude/` (Claude Code), `tools/`,
-`policies/` y `schemas/`. Nunca sobrescribe sin respaldo SHA-256, se niega a anunciar
-éxito sobre un paquete incompleto, y si ya tienes un `.claude/settings.json` no lo toca:
-te dice qué añadirle.
+Salida:
+```text
+[Axion Health Check] Auditando proyecto...
+  ✓ PASS   Motor Node.js: v24.x (requiere >= 20)
+  ✓ PASS   Hook PreToolUse: ejercitado en vivo (bloquea destructivos)
+  ✓ PASS   Slash Commands: 12/12 en .agents/skills · 12/12 en .claude/commands
+  ✓ PASS   Killswitch: RUNNING — sin parada activa
 
-### ¿No te aparecen los comandos?
-
-Claude Code lee los comandos de proyecto desde la **raíz de la sesión**. Si lo arrancaste
-un directorio más arriba del proyecto, no verás ninguno de los 16: los archivos están
-bien, lo que falla es el alcance. O arrancas Claude Code dentro del proyecto, o los
-instalas una vez para todos los directorios:
-
-```bash
-npx axion init --user
+[Axion Protocol v1.3.1-rc.1] 12/12 comprobaciones en verde. Gobernanza operativa.
 ```
 
-Escribe los comandos en `~/.claude/commands` y respalda lo que sustituya. Los prompts
-cargan en cualquier sitio; las herramientas que citan solo resuelven dentro de un
-proyecto con Axion instalado.
-
 ---
 
-## 🎮 Slash Commands Esenciales
+## Comandos de Gobernanza y Recetas
 
-Diseñados para coexistir **sin colisiones** con Antigravity, Claude Code y AG-Kit:
+Axion Protocol incorpora 12 slash commands diseñados para operar en sinergia. Para consultar la especificación completa, disparadores y combinaciones recomendadas (p. ej. `/drive /premortem /critic`), visita el manual dedicado:
 
-| Comando | Propósito | Cuándo usarlo |
+**[Explorar el Manual Completo de Comandos y Recetas ->](docs/COMMANDS.es.md)**
+
+| Comando | Categoría | Objetivo Principal |
 | :--- | :--- | :--- |
-| **`/clarify`** | Freno socrático: exactamente 2 preguntas humanas con opciones A/B/C. | Antes de planificar, ante peticiones difusas. |
-| **`/premortem`** | Autopsia adversarial de fracaso a 6 meses a través de 4 anclas ortogonales. | Antes de construir cualquier función nueva o idea arquitectónica. |
-| **`/deep`** | Motor de deliberación estructurada de 4 fases con cálculo de radio de impacto. | Antes de refactors de alto riesgo o cambios estructurales. |
-| **`/profile`** | Calibra 5 dimensiones (profundidad, entrada, entorno, cadencia, autonomía) y las persiste. | Una vez por proyecto; ajústalo cuando quieras. |
-| **`/onboard`** | Indexa un repositorio: stack, puntos de entrada, cómo se prueba, qué no tocar. | Primer contacto con un código ajeno. |
-| **`/checkpoint`** | Sella un snapshot del árbol verificable con SHA-256. | Antes de refactors, migraciones o borrados masivos. |
-| **`/rollback`** | Restaura el último punto de control. Verifica el manifiesto entero antes de escribir y sella antes una red. | «Deshaz eso» — en cualquier idioma. |
-| **`/preflight`** | Clasificador léxico de riesgo. `ALLOW` / `NEEDS_HUMAN_REVIEW` / `DENY`. | Automáticamente, antes de cada comando. |
-| **`/verify`** | Verificación determinista por ejecución. Exit code 0 o no funcionaba. | Antes de afirmar que algo funciona. |
-| **`/debug`** | Cuatro fases: reproducir, causa raíz, corrección atómica, verificar. Sin parches ciegos. | Cuando algo falla. |
-| **`/review`** | Cuatro lentes (técnica, funcional, UX, arquitectura) con escala de severidad. | Antes de fusionar o promover. |
-| **`/compact`** | Sella un ancla corta que devuelve las reglas P0 al final de la ventana. | Sesiones largas, contra el 'lost-in-the-middle'. |
-| **`/remember`** | Memoria persistente: decisiones, convenciones, límites y correcciones. | Para no tener que repetirte nunca. |
-| **`/halt`** | Parada de emergencia. Bloquea toda llamada a herramienta, fail-closed. | Para congelar un agente desbocado, ya. |
-| **`/unhalt`** | Levantamiento humano y deliberado de la parada. | Para reanudar la ejecución segura. |
-| **`/attest`** | in-toto Statement v1 en sobre DSSE, verificable con cosign. | Al completar una misión certificada. |
+| `/drive` | Ejecución Autónoma | Meta-orquestador en bucle cerrado con bifurcación *Fast-Loop* vs. *Deep-Loop*. |
+| `/clarify` | Freno Socrático | 2 preguntas humanas estructuradas A/B/C sin tecnicismos. |
+| `/critic` | Excelencia Asintótica | Auditor polimórfico universal evaluando las 7 Fronteras de Madurez Soberana. |
+| `/premortem` | Simulación de Fallos | Autopsia adversarial a 6 meses y cálculo de radio de impacto (*blast radius*). |
+| `/preflight` | Seguridad en Terminal | Clasificador léxico de comandos estructurados (`shell: false`). |
+| `/snapshot` | Recuperación de Estado | Puntos de control deterministas SHA-256 y rollback en lenguaje natural. |
+| `/verify` | Verdad Determinista | Ejecución real de tests exigiendo exit code 0; soporta `--fast`. |
+| `/review` | Auditoría Multi-Lente | Inspección selectiva mediante 4 lentes (Técnica, Funcional, UX, Arquitectura). |
+| `/memory` | Memoria Fractal | Memoria persistente en 4 niveles (< 150 tokens de anclaje) anti-deriva. |
+| `/profile` | Calibración Humana | Calibra el perfil del usuario en 5 dimensiones (Voz, IDE, Cadencia). |
+| `/halt` | Parada de Emergencia | Congelación inmediata en modo fail-closed (`.axion/HALT`). |
+| `/attest` | Criptografía | Sobres DSSE in-toto Statement v1 firmados con Ed25519. |
 
 ---
 
-## 🌟 Características Clave para Creadores y Equipos
+## Verificación Determinista e Invariantes
 
-* 💬 **Freno Socrático de Intención**: La IA tiene prohibido modificar código ante peticiones ambiguas hasta que tú elijas entre opciones humanas (A/B/C).
-* ⏪ **Rollback en Lenguaje Natural**: Di simplemente *"no me gustó, deshazlo"* o *"reviértelo"*, y Axion restaura el snapshot SHA-256 exacto sin tocar Git.
-* 🛡️ **Riesgo Discreto en la Planificación**: Sin spam innecesario en tareas simples. Las advertencias de riesgo aparecen únicamente durante la planificación de acciones destructivas.
-* 🔐 **Firmas Ed25519 y Atestaciones in-toto**: Nonces criptográficos de un solo uso y sobres DSSE compatibles con SLSA, Cosign y GitHub Attestations.
-* 🌐 **Reportes Ejecutivos Políglotas**: Resúmenes finales de misión entregados en tu idioma con objetivos cumplidos, pruebas superadas y evidencia SHA-256.
-
----
-
-## 🧪 Verificación y Suite de Pruebas
-
-Axion Protocol incluye **182 suites de prueba deterministas** listas para ejecutarse sin dependencias externas:
+Axion Protocol incluye **182 suites de prueba deterministas** que se ejecutan concurrentemente sin dependencias externas:
 
 ```bash
 # Ejecutar las 182 suites de prueba
-node tests/run_all.js
+npm test
 ```
 
 ---
 
-## 📚 Documentación y Arquitectura
+## Licencia y Autor
 
-* 📖 **[Modelo de Amenazas y Arquitectura](docs/threat_model.md)** — Límites de seguridad y máquina de estados fail-closed.
-* 📜 **[Historial de Cambios](CHANGELOG.md)** — Notas de la versión `v1.1.0-alpha`.
-* 📄 **[Licencia Apache 2.0](LICENSE)** — Código abierto, 100% local y sin telemetría.
+Distribuido bajo la Licencia **Apache-2.0**. Consulta [LICENSE](LICENSE) para más detalles.  
+Creado y mantenido por **Adria** ([@Acourd](https://github.com/Acourd)).
