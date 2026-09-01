@@ -122,10 +122,10 @@ Axion Protocol incorpora 12 slash commands diseñados para operar en sinergia. P
 
 ## Verificación Determinista e Invariantes
 
-Axion Protocol incluye **184 suites de prueba deterministas** que se ejecutan concurrentemente sin dependencias externas:
+Axion Protocol incluye **185 suites de prueba deterministas** que se ejecutan concurrentemente sin dependencias externas:
 
 ```bash
-# Ejecutar las 184 suites de prueba
+# Ejecutar las 185 suites de prueba
 npm test
 ```
 
