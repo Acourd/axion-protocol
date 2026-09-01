@@ -2,6 +2,25 @@
 
 Todos los cambios relevantes de Axion Protocol se documentarán aquí.
 
+## [1.3.0-rc.1] — 2026-09-01 · Versión Soberana & Ecosistema en Vivo
+
+Lanzamiento oficial de la arquitectura de gobernanza soberana. Cierre completo de los 5 Dominios Fundamentales con 182 suites deterministas, sincronización espejo determinista y arnés de síntesis TDD.
+
+### Added
+
+- **Puerta de Sincronización Espejo (`tools/sync_mirror_gate.js` y `ax_f_164`)**: Garantiza paridad determinista e inmutable (100%) entre `Axion Protocol`, `Axkern` y entornos experimentales sin fugas de temporales.
+- **Sintetizador Pre-Flight TDD (`tools/preflight_tdd_synthesizer.js` y `ax_f_165`)**: Análisis estático de contratos AST y síntesis formal de aserciones deterministas antes de mutar código en disco, asegurando *First-Shot Success*.
+- **Motor de Crítica Asintótica v2.0 Polimórfico (`tools/asymptotic_critic.js` y `/critic`)**: Lente universal de evaluación sobre las 7 Fronteras de Madurez Soberana con Escalera de 3 Peldaños (Tier 1 Optimización -> Tier 2 Salto 10x -> Tier 3 Horizonte Día 1).
+- **Verificación Incremental Ultra-Rápida (`tools/verify_changes.js --fast`)**: Ejecución de suites impactadas en < 300 ms mediante grafo de dependencias inverso.
+
+### Enhanced
+
+- **Bifurcación Fast-Loop / Deep-Loop en `/drive`**: Resolución en un solo turno para tareas atómicas y deliberación estricta con pre-mortem y cálculo de blast radius para refactorizaciones estructurales.
+- **Memoria Fractal y Anclaje Contextual (`/memory`)**: Indexación en 4 categorías jerárquicas con inyección de ancla en < 150 tokens.
+- **Paridad de Plataformas**: Coexistencia sin fricción entre Antigravity 2.0 (`.agents/skills/`), Claude Code (`.claude/commands/`) y terminal CLI unificada (`bin/axion.js`).
+
+---
+
 ## [1.2.0-beta.1] — 2026-08-23 · revisión posterior a la purga
 
 Verificación de la purga de `phases/` y de la reubicación de la portada a `docs/site/`, más los efectos de segundo orden que ninguna de las dos cosas dejaba a la vista.

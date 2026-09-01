@@ -23,7 +23,14 @@ const TIMEOUT_MS = 10 * 60 * 1000;
  * Elige que ejecutar, en orden de preferencia y sin adivinar:
  * el runner propio del proyecto, y si no lo hay, el script `test` de package.json.
  */
-function detectarVerificador(raiz) {
+function detectarVerificador(raiz, options = {}) {
+  if (options.incremental || options.fast) {
+    const incrementalRunner = path.join(raiz, 'tools', 'smart_incremental_runner.js');
+    if (fs.existsSync(incrementalRunner)) {
+      return { executable: process.execPath, args: [incrementalRunner], etiqueta: 'node tools/smart_incremental_runner.js' };
+    }
+  }
+
   const runnerPropio = path.join(raiz, 'tests', 'run_all.js');
   if (fs.existsSync(runnerPropio)) {
     return { executable: process.execPath, args: [runnerPropio], etiqueta: 'node tests/run_all.js' };
@@ -47,11 +54,11 @@ function detectarVerificador(raiz) {
   return null;
 }
 
-function runVerificationLoop(targetDir) {
+function runVerificationLoop(targetDir, options = {}) {
   const raiz = path.resolve(targetDir || process.cwd());
   console.log(`[Verify-Changes] Ciclo de verificacion determinista en: ${raiz}\n`);
 
-  const v = detectarVerificador(raiz);
+  const v = detectarVerificador(raiz, options);
   if (!v) {
     console.error('FALLO No hay suite de pruebas que ejecutar (ni tests/run_all.js ni script `test`).');
     console.error('  Sin verificador no se puede afirmar que el cambio funciona, asi que no se afirma.');
@@ -89,9 +96,10 @@ function runVerificationLoop(targetDir) {
 
 function main() {
   const args = process.argv.slice(2);
+  const fast = args.includes('--fast') || args.includes('--incremental');
   const iTarget = args.indexOf('--target');
   const objetivo = iTarget !== -1 ? args[iTarget + 1] : args.find((a) => !a.startsWith('--'));
-  const res = runVerificationLoop(objetivo);
+  const res = runVerificationLoop(objetivo, { fast, incremental: fast });
   process.exit(res.pass ? 0 : 1);
 }
 

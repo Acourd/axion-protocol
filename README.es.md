@@ -41,10 +41,13 @@ Los 17 comandos y la puerta `PreToolUse` quedan disponibles al instante.
 ### Como paquete npm (Antigravity, Cursor, VS Code, Codex, CI)
 
 ```bash
-# Inyecta la gobernanza en el proyecto actual
+# 0. Prueba la demo interactiva de 15 segundos en sandbox hermético
+node bin/axion.js demo
+
+# 1. Inyecta las reglas en tu proyecto
 npx axion-protocol init
 
-# Comprueba que llegó de verdad
+# 2. Comprueba que todo funciona en verde
 npx axion check
 ```
 
@@ -107,10 +110,10 @@ Diseñados para coexistir **sin colisiones** con Antigravity, Claude Code y AG-K
 
 ## 🧪 Verificación y Suite de Pruebas
 
-Axion Protocol incluye **177 suites de prueba deterministas** listas para ejecutarse sin dependencias externas:
+Axion Protocol incluye **182 suites de prueba deterministas** listas para ejecutarse sin dependencias externas:
 
 ```bash
-# Ejecutar las 177 suites de prueba
+# Ejecutar las 182 suites de prueba
 node tests/run_all.js
 ```
 

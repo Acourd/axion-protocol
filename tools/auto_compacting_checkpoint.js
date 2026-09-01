@@ -56,33 +56,42 @@ class AutoCompactingCheckpointEngine {
     }
 
     // 2. Poda de estados efímeros
-    if (fs.existsSync(this.stateDir)) {
-      const prefixes = [
-        'deep-deliberation-', 'mission-execution-', 'drive-telemetry-',
-        'drive-dashboard-', 'worker-telemetry-', 'memory-graph-',
-        'resilience-', 'chaos-report-', 'tx_invariants_'
-      ];
+    prunedStateFiles = this.pruneEphemeralStates();
 
+    return { prunedCheckpoints, prunedStateFiles };
+  }
+
+  pruneEphemeralStates() {
+    let pruned = 0;
+    if (!fs.existsSync(this.stateDir)) return 0;
+
+    const prefixes = [
+      'deep-deliberation-', 'mission-execution-', 'drive-telemetry-',
+      'drive-dashboard-', 'worker-telemetry-', 'memory-graph-',
+      'resilience-', 'chaos-report-', 'tx_invariants_'
+    ];
+
+    try {
+      const stateFiles = fs.readdirSync(this.stateDir);
       for (const prefix of prefixes) {
-        const matching = fs.readdirSync(this.stateDir)
-          .filter(f => f.startsWith(prefix))
-          .sort();
-        const excessState = matching.length - this.maxStateFiles;
-        if (excessState > 0) {
-          const toDeleteState = matching.slice(0, excessState);
-          for (const sf of toDeleteState) {
-            try {
-              fs.rmSync(path.join(this.stateDir, sf), { force: true });
-              prunedStateFiles++;
-            } catch (sfErr) {
-              // Ignorar
-            }
+        const matching = stateFiles.filter(f => f.startsWith(prefix)).sort();
+        const excess = matching.length - this.maxStateFiles;
+        if (excess <= 0) continue;
+
+        for (const file of matching.slice(0, excess)) {
+          try {
+            fs.rmSync(path.join(this.stateDir, file), { force: true });
+            pruned++;
+          } catch (err) {
+            if (process.env.DEBUG) console.error(`[Compact] Prune error: ${err.message}`);
           }
         }
       }
+    } catch (err) {
+      if (process.env.DEBUG) console.error(`[Compact] State dir error: ${err.message}`);
     }
 
-    return { prunedCheckpoints, prunedStateFiles };
+    return pruned;
   }
 
   /**

@@ -14,6 +14,7 @@ function createLowRiskFixture({ missionId, assertions, modifiedFiles = [] }) {
   const auditorKeys = crypto.generateKeyPairSync('ed25519');
   const keyId = computePublicKeyId(auditorKeys.publicKey);
   const registryPath = path.join(runtimeDir, 'public-authorities.json');
+  fs.mkdirSync(path.dirname(registryPath), { recursive: true });
   fs.writeFileSync(registryPath, JSON.stringify({
     version: '1.0.0',
     authorities: [{

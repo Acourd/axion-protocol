@@ -74,6 +74,9 @@ const SUBCOMANDOS = {
   sbom: { script: 'tools/provenance_sbom_generator.js', ayuda: 'genera SBOM estándar CycloneDX v1.5 y procedencia in-toto SLSA v1.0' },
   record: { script: 'tools/flight_recorder.js', ayuda: 'caja negra agéntica forense y reproductor determinista de sesiones' },
   merkle: { script: 'tools/merkle_integrity_ledger.js', ayuda: 'árbol Merkle criptográfico con pruebas de inclusión y no-repudio' },
+  demo: { script: 'tools/quickstart_interactive.js', ayuda: 'onboarding interactivo de 15 segundos y demo en vivo de protección fail-closed' },
+  benchmark: { script: 'tools/competitive_benchmark.js', ayuda: 'ejecuta la suite de benchmarking y métricas competitivas reproducibles' },
+  critic: { script: 'tools/asymptotic_critic.js', ayuda: 'evaluación asintótica dinámica y auditoría de madurez soberana' },
   drive: { script: 'tools/drive_engine.js', ayuda: 'meta-orquestador autónomo con deliberación profunda adaptativa' },
   test: { script: 'tests/run_all.js', ayuda: 'ejecuta la suite completa' },
 };

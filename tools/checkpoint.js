@@ -68,7 +68,10 @@ function rutaContenida(raiz, relativa) {
 // que uno no pise al otro en silencio.
 function nuevoId(raiz, etiqueta) {
   const marca = new Date().toISOString().replace(/[:.]/g, '-');
-  const limpia = String(etiqueta || 'checkpoint')
+  const etiquetaStr = (etiqueta && typeof etiqueta === 'object')
+    ? (etiqueta.label || etiqueta.etiqueta || etiqueta.name || 'checkpoint')
+    : String(etiqueta || 'checkpoint');
+  const limpia = etiquetaStr
     .toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
   const base = marca + '__' + (limpia || 'checkpoint');
   let id = base;

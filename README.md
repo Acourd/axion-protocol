@@ -5,7 +5,7 @@
 >
 > **Status**: EXPERIMENTAL runtime. Enforcement does not intercept arbitrary OS-level shell commands automatically without the integrated agent hook. Requires **Node.js 20** or later.
 
-[![CI Passing](https://img.shields.io/badge/CI-177%20Passing-brightgreen.svg)](https://github.com/Acourd/axion-protocol/actions)
+[![CI Passing](https://img.shields.io/badge/CI-180%20Passing-brightgreen.svg)](https://github.com/Acourd/axion-protocol/actions)
 [![Version](https://img.shields.io/badge/Version-v1.2.0--beta.1-blue.svg)](package.json)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0-success.svg)](package.json)
@@ -52,7 +52,17 @@ AI coding assistants (**Claude Code, Google Antigravity, Cursor, Aider**) are re
 
 ## 🚀 Quick Start (Under 30 Seconds)
 
-Requires **Node.js 20+**. Zero external dependencies — built strictly on Node.js native primitives.
+### 0. Try the 15-Second Live Interactive Sandbox Demo
+
+Experience fail-closed terminal interception, mathematical invariant correction, and instant < 5ms rollback in an ephemeral memory sandbox:
+
+```bash
+# Run the live interactive demo
+node bin/axion.js demo
+
+# Or run the reproducible competitive benchmark suite
+node bin/axion.js benchmark
+```
 
 ### 1. Initialize Axion in your project
 
@@ -116,10 +126,10 @@ Output:
 
 ## 🧪 Verification & Test Suite
 
-Axion Protocol includes **177 deterministic test suites** out of the box with zero external dependencies:
+Axion Protocol includes **182 deterministic test suites** out of the box with zero external dependencies:
 
 ```bash
-# Run all 177 test suites concurrently (8 workers)
+# Run all 180 test suites concurrently (8 workers)
 node tests/run_all.js
 
 # Run incremental tests for only modified files (< 300ms)
@@ -136,13 +146,13 @@ node bin/axion.js merkle
 
 | Domain | What it proves | Suites |
 |--------|---------------|--------|
-| 🛡️ **Governance & Preflight** | PreToolUse hooks, lexical preflight, killswitch, risk policy compiler, structured commands, workflow state machine, drive engine | 86 |
+| 🛡️ **Governance & Preflight** | PreToolUse hooks, lexical preflight, killswitch, risk policy compiler, structured commands, workflow state machine, drive engine | 91 |
 | 🔐 **Cryptography & Attestation** | DSSE/PAE envelopes, RFC 8785 canonical JSON, in-toto Statement v1, Ed25519 signatures, evidence binding, revocation | 27 |
 | 🧭 **Intent & Socratic UX** | 2-question clarifier, A/B/C contracts, SHA-256 intent sealing, profile calibration, interactive wizard, deep reasoning | 23 |
 | 💾 **State, Checkpoints & Recovery** | Atomic snapshots, rollback plan validation, memory guard limits, context shield anchoring, evidence hasher, governance drift detection | 23 |
 | ⚡ **Adversarial Resilience** | 100+ mutation vectors, pre-mortem verdict derivation, VibeGuard lexical gate, boilerplate detection, fuzzer burst resilience | 18 |
 
-> **Total: 177 suites · 0 dependencies · ~4s execution time**
+> **Total: 182 suites · 0 dependencies · ~4s execution time**
 
 ---
 

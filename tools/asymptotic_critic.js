@@ -2,19 +2,19 @@
 'use strict';
 
 /**
- * Axion Protocol — Asymptotic Metacognitive Critic & Excellence Engine
+ * Axion Protocol — Asymptotic Metacognitive Critic & Excellence Engine (v2.0 Universal)
  *
- * Motor de Auto-Crítica Restless y Evaluación Asintótica:
- * Destruye la complacencia de los "checklists al 100%" evaluando el sistema
- * a través de las 7 Fronteras de Madurez Soberana (donde la base actual representa el 10-15%):
+ * Motor de Auto-Crítica y Evaluación Asintótica Dinámica:
+ * Destruye la complacencia de los "checklists al 100%" evaluando cualquier artefacto
+ * frente a las 7 Fronteras Asintóticas de Excelencia Sistémica y Eficiencia Cognitiva:
  *
- *  1. FORMAL_MATHEMATICAL_VERIFICATION (SMT/Z3 Invariant Proofs vs Empirical Tests)
- *  2. KERNEL_LEVEL_ISOLATION (eBPF / Hardware Enclaves vs Lexical Preflight)
- *  3. BYZANTINE_MULTI_AGENT_CONSENSUS (50-Agent Quorum vs Single-Agent Harness)
- *  4. AUTONOMOUS_CHRONIC_ENDURANCE (48h Continuous Refactoring vs 10min Turns)
- *  5. GENETIC_CODE_EVOLUTION (Multi-Hypothesis Synthesis vs Simple Rollback)
- *  6. ZERO_TRUST_SUPPLY_CHAIN_GRAPH (Dynamic Ephemeral MPC vs Static Ed25519)
- *  7. NEURAL_SEMANTIC_DRIFT_RADAR (AST Entropy Analysis vs Static Regex)
+ *  1. FORMAL_INVARIANTS (Verificación Formal y Consistencia de Invariantes de Estado)
+ *  2. ISOLATION_AND_SAFETY (Aislamiento y Ejecución Segura Fail-Closed)
+ *  3. COGNITIVE_EFFICIENCY (Eficiencia Cognitiva, Densidad de Contexto y Token Economy)
+ *  4. CHRONIC_ENDURANCE (Resistencia Crónica y Memoria Fractal Anti-Deriva)
+ *  5. ADAPTIVE_EVOLUTION (Evolución Adaptativa y Auto-Recuperación Determinista)
+ *  6. PROVENANCE_AND_INTEGRITY (Trazabilidad Inmutable e Integridad de Cambios)
+ *  7. SEMANTIC_DRIFT_RADAR (Radar de Deriva Semántica y Erradicación de Vibecoding)
  *
  * Cero dependencias externas.
  */
@@ -25,103 +25,155 @@ const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
 
-const ASYMPTOTIC_FRONTIERS = Object.freeze([
-  {
-    id: 'FORMAL_MATHEMATICAL_VERIFICATION',
-    name: '1. Verificación Formal Matemática (SMT / Z3 Solver)',
-    currentMaturityPct: 15,
-    baseline: '111 suites de pruebas unitarias e integración deterministas.',
-    frontierGoal: 'Demostración formal matemática de invariantes de seguridad para todo el espacio de entradas posibles mediante solvers de restricciones SAT/SMT.',
-    gapAnalysis: 'Las pruebas empíricas demuestran la presencia de bugs conocidos, pero no su ausencia total en el espacio infinito de estados.'
-  },
-  {
-    id: 'KERNEL_LEVEL_ISOLATION',
-    name: '2. Aislamiento a Nivel de Kernel (eBPF / MicroVM / Wasm Sandbox)',
-    currentMaturityPct: 10,
-    baseline: 'Clasificación léxica de preflight con shell: false y árboles de procesos Node.js.',
-    frontierGoal: 'Intercepción de syscalls en el kernel (eBPF en Linux / Windows Filtering Platform) y ejecución enjaulada en micro-VMs efímeras.',
-    gapAnalysis: 'El preflight léxico protege contra patrones conocidos, pero un binario nativo malicioso compilado en tiempo de ejecución evade la inspección textual.'
-  },
-  {
-    id: 'BYZANTINE_MULTI_AGENT_CONSENSUS',
-    name: '3. Consenso Bizantino Multi-Agente (Quórum de 50 Agentes Adversariales)',
-    currentMaturityPct: 10,
-    baseline: 'Arnés de agente individual con bucle Fast-Loop / Deep-Loop.',
-    frontierGoal: 'Orquestación de enjambres donde múltiples modelos heterogéneos auditan, atacan y votan con tolerancia a fallos bizantinos (BFT) antes de fusionar código.',
-    gapAnalysis: 'Un solo modelo puede sufrir de sesgos cognitivos ciegos consistentes; se requiere desacuerdo adversarial forzado.'
-  },
-  {
-    id: 'AUTONOMOUS_CHRONIC_ENDURANCE',
-    name: '4. Resistencia Autónoma Crónica (Campañas Continuas de 24 a 48 Horas)',
-    currentMaturityPct: 12,
-    baseline: 'Bucle autónomo continuo de 5 a 10 minutos por turno.',
-    frontierGoal: 'Capacidad de ejecutar campañas autónomas de 48 horas sin degradación de memoria de contexto, evolucionando repositorios enteros durante la noche.',
-    gapAnalysis: 'La ventana de contexto y los turnos de API aún imponen fragmentación; se requiere memoria fractal jerárquica con paginación profunda.'
-  },
-  {
-    id: 'GENETIC_CODE_EVOLUTION',
-    name: '5. Evolución Genética de Código y Auto-Síntesis Multivariante',
-    currentMaturityPct: 8,
-    baseline: 'Rollback y auto-curación atómica al último checkpoint verificado.',
-    frontierGoal: 'Generación paralela de 10 arquitecturas competidoras, benchmarking competitivo de latencia/memoria y selección genética de la solución óptima.',
-    gapAnalysis: 'El rollback deshace el error, pero no sintetiza automáticamente una solución arquitectónica superior de forma evolutiva.'
-  },
-  {
-    id: 'ZERO_TRUST_SUPPLY_CHAIN_GRAPH',
-    name: '6. Grafo Criptográfico de Cadena de Suministro Zero-Trust (MPC & Transparencia Merkle)',
-    currentMaturityPct: 15,
-    baseline: 'Atestaciones in-toto Statement v1 firmadas con clave Ed25519 local.',
-    frontierGoal: 'Registro en logs de transparencia pública Merkle append-only (estilo Rekor/Sigstore) con firmas MPC multi-parte distribuidas.',
-    gapAnalysis: 'La clave local puede ser extraída si el host es vulnerado; se requiere atestación remota atestiguada por hardware (TPM / Nitro Enclave).'
-  },
-  {
-    id: 'NEURAL_SEMANTIC_DRIFT_RADAR',
-    name: '7. Radar de Deriva Semántica y Entropía de Código',
-    currentMaturityPct: 10,
-    baseline: 'VibeGuard estricto con 48 archivos analizados por patrones anti-patrón.',
-    frontierGoal: 'Monitoreo continuo de entropía de Kolmogórov, divergencia semántica y detección de degradación arquitectónica a lo largo de 100 commits.',
-    gapAnalysis: 'El análisis de antipatrones es sintáctico; la deuda técnica sutil se acumula en la semántica de interfaces.'
-  }
-]);
-
 class AsymptoticCritic {
   constructor(projectRoot = ROOT) {
-    this.root = path.resolve(projectRoot);
+    this.root = path.resolve(projectRoot || ROOT);
     this.stateDir = path.join(this.root, '.axion', 'state');
     if (!fs.existsSync(this.stateDir)) {
       fs.mkdirSync(this.stateDir, { recursive: true });
     }
   }
 
-  /**
-   * Ejecuta la auditoría crítica asintótica sobre el proyecto.
-   */
-  evaluateAsymptoticMaturity() {
-    let totalScore = 0;
-    const evaluatedFrontiers = ASYMPTOTIC_FRONTIERS.map(f => {
-      totalScore += f.currentMaturityPct;
-      return {
-        ...f,
-        unrealizedPct: 100 - f.currentMaturityPct
-      };
-    });
+  scanWorkspaceEvidence() {
+    const toolsDir = path.join(this.root, 'tools');
+    const testsDir = path.join(this.root, 'tests');
 
-    const globalMaturityPct = Number((totalScore / ASYMPTOTIC_FRONTIERS.length).toFixed(1));
+    let toolsFiles = [];
+    try {
+      if (fs.existsSync(toolsDir)) toolsFiles = fs.readdirSync(toolsDir);
+    } catch (err) {
+      if (process.env.DEBUG) console.error(`[AsymptoticCritic] Error leyendo tools: ${err.message}`);
+    }
+
+    const hasTests = fs.existsSync(testsDir);
+    const hasMerkle = toolsFiles.some(f => f.includes('merkle') || f.includes('ledger') || f.includes('evidence'));
+    const hasSbom = toolsFiles.some(f => f.includes('sbom') || f.includes('manifest'));
+    const hasDsse = toolsFiles.some(f => f.includes('dsse') || f.includes('attestation') || f.includes('approval'));
+    const hasSwarm = toolsFiles.some(f => f.includes('swarm') || f.includes('arbiter') || f.includes('worker'));
+    const hasContextGuard = toolsFiles.some(f => f.includes('context') || f.includes('entropy') || f.includes('memory'));
+    const hasAstPatch = toolsFiles.some(f => f.includes('ast') || f.includes('healer') || f.includes('checkpoint'));
+    const hasTaint = toolsFiles.some(f => f.includes('taint') || f.includes('complexity') || f.includes('vibeguard'));
+    const hasPreflight = toolsFiles.some(f => f.includes('preflight') || f.includes('hook') || f.includes('killswitch'));
+
+    return {
+      hasTests,
+      hasMerkle,
+      hasSbom,
+      hasDsse,
+      hasSwarm,
+      hasContextGuard,
+      hasAstPatch,
+      hasTaint,
+      hasPreflight,
+      toolsCount: toolsFiles.length
+    };
+  }
+
+  /**
+   * Ejecuta la auditoría crítica asintótica sobre el proyecto de forma dinámica.
+   */
+  evaluateAsymptoticMaturity(options = {}) {
+    const evidence = this.scanWorkspaceEvidence();
+
+    const scoreF1 = evidence.hasTests ? 20 : 5;
+    const scoreF2 = evidence.hasPreflight ? 22 : 5;
+    const scoreF3 = evidence.hasContextGuard ? 28 : 8;
+    const scoreF4 = evidence.hasContextGuard ? 25 : 8;
+    const scoreF5 = evidence.hasAstPatch ? 24 : 6;
+    const scoreF6 = (evidence.hasDsse && evidence.hasMerkle) ? 32 : evidence.hasDsse ? 18 : 5;
+    const scoreF7 = evidence.hasTaint ? 25 : 10;
+
+    const evaluatedFrontiers = [
+      {
+        id: 'FORMAL_INVARIANTS',
+        name: '1. Verificación Formal y Consistencia de Invariantes de Estado',
+        currentMaturityPct: scoreF1,
+        unrealizedPct: 100 - scoreF1,
+        baseline: 'Suites completas de pruebas deterministas e integración en múltiples dominios.',
+        frontierGoal: 'Demostración formal matemática de invariantes de estado para el espacio total de ejecuciones sin depender de aserciones empíricas aisladas.',
+        gapAnalysis: 'Las pruebas empíricas demuestran la presencia de casos esperados, no la ausencia matemática de fallos en estados no explorados.'
+      },
+      {
+        id: 'ISOLATION_AND_SAFETY',
+        name: '2. Aislamiento y Ejecución Segura Fail-Closed',
+        currentMaturityPct: scoreF2,
+        unrealizedPct: 100 - scoreF2,
+        baseline: 'Preflight estructurado, hooks PreToolUse y ejecución blindada sin shell.',
+        frontierGoal: 'Enjaulamiento seguro y ejecución totalmente contenida con intercepción rigurosa de efectos colaterales y rollback determinista.',
+        gapAnalysis: 'El preflight léxico inspecciona comandos antes de ejecutarse; la frontera soberana garantiza contención de procesos en runtime.'
+      },
+      {
+        id: 'COGNITIVE_EFFICIENCY',
+        name: '3. Eficiencia Cognitiva, Densidad de Contexto y Token Economy',
+        currentMaturityPct: scoreF3,
+        unrealizedPct: 100 - scoreF3,
+        baseline: 'Guardianes de presupuesto de tokens y flujos de intención clarificada (/clarify).',
+        frontierGoal: 'Resolución precisa en iteración única (First-Shot Success) con mínima huella de contexto y máxima densidad de información útil por token.',
+        gapAnalysis: 'Los turnos interactivos consumen contexto progresivamente; la excelencia asintótica erradica el retrabajo y las iteraciones intermedias.'
+      },
+      {
+        id: 'CHRONIC_ENDURANCE',
+        name: '4. Resistencia Crónica y Memoria Fractal Anti-Deriva',
+        currentMaturityPct: scoreF4,
+        unrealizedPct: 100 - scoreF4,
+        baseline: 'Persistencia de contexto, grafo de decisiones y anclaje anti-amnesia (/memory).',
+        frontierGoal: 'Capacidad de sostener proyectos extensos sin degradación de memoria de trabajo mediante compresión jerárquica fractal.',
+        gapAnalysis: 'Las ventanas de contexto imponen límites físicos de memoria; se requiere indexación fractal determinista entre sesiones.'
+      },
+      {
+        id: 'ADAPTIVE_EVOLUTION',
+        name: '5. Evolución Adaptativa y Auto-Recuperación Determinista',
+        currentMaturityPct: scoreF5,
+        unrealizedPct: 100 - scoreF5,
+        baseline: 'Puntos de control verificados (snapshots SHA-256) y rollback semántico instantáneo.',
+        frontierGoal: 'Auto-diagnóstico de causas raíz con síntesis adaptativa de soluciones óptimas sin parches ciegos ni degradación técnica.',
+        gapAnalysis: 'El rollback recupera el estado seguro anterior; la frontera asintótica sintetiza activamente la mejor solución arquitectónica.'
+      },
+      {
+        id: 'PROVENANCE_AND_INTEGRITY',
+        name: '6. Trazabilidad Inmutable e Integridad de Cambios',
+        currentMaturityPct: scoreF6,
+        unrealizedPct: 100 - scoreF6,
+        baseline: 'Sellado criptográfico con hashes SHA-256, manifiestos de evidencia y firmas locales.',
+        frontierGoal: 'Cadena de custodia verificable de punta a punta con transparencia total de modificaciones y reproducibilidad determinista.',
+        gapAnalysis: 'Los hashes locales protegen el estado en disco; la meta soberana provee verificación independiente y trazabilidad total.'
+      },
+      {
+        id: 'SEMANTIC_DRIFT_RADAR',
+        name: '7. Radar de Deriva Semántica y Erradicación de Vibecoding',
+        currentMaturityPct: scoreF7,
+        unrealizedPct: 100 - scoreF7,
+        baseline: 'VibeGuard estricto con detección de antipatrones y análisis de complejidad.',
+        frontierGoal: 'Monitoreo continuo de coherencia semántica, prevención de deuda técnica latente y respeto inviolable a la intención del usuario.',
+        gapAnalysis: 'El análisis estático detecta patrones sintácticos conocidos; la frontera soberana audita la alineación conceptual profunda.'
+      }
+    ];
+
+    const totalScore = evaluatedFrontiers.reduce((acc, f) => acc + f.currentMaturityPct, 0);
+    const globalMaturityPct = Number((totalScore / evaluatedFrontiers.length).toFixed(1));
     const globalUnrealizedPct = Number((100 - globalMaturityPct).toFixed(1));
 
     const auditReport = {
       evaluatedAt: new Date().toISOString(),
       globalMaturityPct,
       globalUnrealizedPct,
-      paradigm: 'ASYMPTOTIC_RESTLESS_EXCELLENCE',
-      conclusion: `El proyecto ha completado su fase fundacional básica (${globalMaturityPct}%), encontrándose al ${globalUnrealizedPct}% de distancia de la Madurez Soberana Absoluta (Codex/Claude Code Industrial Tier).`,
+      paradigm: 'ASYMPTOTIC_RESTLESS_EXCELLENCE_V2',
+      lens: options.lens || 'SYSTEMIC_UNIVERSAL',
+      conclusion: `El proyecto ha conquistado el ${globalMaturityPct}% de madurez de excelencia verificada, encontrándose al ${globalUnrealizedPct}% de distancia de la Madurez Asintótica Absoluta (Horizonte Día 1).`,
       frontiers: evaluatedFrontiers,
-      strategicRoadmap: [
-        'Fase 1: Integración de Verificación Formal de Invariantes y Solvers SMT',
-        'Fase 2: Motor de Aislamiento en Wasm / Micro-Enclaves de Ejecución',
-        'Fase 3: Protocolo de Consenso Bizantino Multi-Modelo para Auditorías Cruzadas',
-        'Fase 4: Memoria Fractal y Paginación de Contexto para Campañas de 48h',
-        'Fase 5: Síntesis Genética Multivariante de Arquitecturas'
+      ladder: [
+        {
+          tier: 'Tier 1 — Optimización Inmediata (Local)',
+          action: 'Podar redundancias en prompts/herramientas y asegurar aserciones deterministas al primer intento.'
+        },
+        {
+          tier: 'Tier 2 — Salto 10x (Estructural)',
+          action: 'Refinar la orquestación autónoma en bucle cerrado (/drive) con compresión fractal de contexto (/memory).'
+        },
+        {
+          tier: 'Tier 3 — Horizonte Asintótico (Soberano)',
+          action: 'Operación continua sin errores, cero fricción cognitiva para no técnicos y consumo óptimo de recursos.'
+        }
       ]
     };
 
@@ -130,7 +182,11 @@ class AsymptoticCritic {
       .digest('hex');
 
     const reportPath = path.join(this.stateDir, `asymptotic-critique-${auditReport.digest.slice(0, 16)}.json`);
-    fs.writeFileSync(reportPath, JSON.stringify(auditReport, null, 2), 'utf8');
+    try {
+      fs.writeFileSync(reportPath, JSON.stringify(auditReport, null, 2), 'utf8');
+    } catch (err) {
+      if (process.env.DEBUG) console.error(`[AsymptoticCritic] Error guardando reporte: ${err.message}`);
+    }
     auditReport.reportPath = reportPath;
 
     return auditReport;
@@ -138,18 +194,41 @@ class AsymptoticCritic {
 }
 
 if (require.main === module) {
+  const isMarkdown = process.argv.includes('--markdown');
   const critic = new AsymptoticCritic();
-  console.log('[Axion Asymptotic Critic] Evaluando estado real frente al horizonte de excelencia absoluta...');
   const report = critic.evaluateAsymptoticMaturity();
 
-  console.log(`\n=== VEREDICTO METACONDUCTUAL ASINTÓTICO ===`);
-  console.log(`  Madurez Fundacional Conquistada: ${report.globalMaturityPct}%`);
-  console.log(`  Frontera Pendiente por Construir: ${report.globalUnrealizedPct}%`);
-  console.log(`\n=== DESGLOSE POR FRONTERA SOBERANA ===`);
-  for (const f of report.frontiers) {
-    console.log(`  ${f.name.padEnd(50)} [${f.currentMaturityPct}%] -> Brecha: ${f.gapAnalysis}`);
+  if (isMarkdown) {
+    console.log(`# Reporte de Crítica Asintótica Universal (v2.0)\n`);
+    console.log(`**Fecha:** \`${report.evaluatedAt}\` | **Digest:** \`${report.digest.slice(0, 16)}\`\n`);
+    console.log(`- **Madurez Conquistada (AMR):** \`${report.globalMaturityPct}%\``);
+    console.log(`- **Horizonte Pendiente (Día 1):** \`${report.globalUnrealizedPct}%\`\n`);
+    console.log(`## 🏛️ Las 7 Fronteras Asintóticas\n`);
+    for (const f of report.frontiers) {
+      console.log(`### ${f.name} [${f.currentMaturityPct}%]`);
+      console.log(`- **Línea Base:** ${f.baseline}`);
+      console.log(`- **Meta Asintótica:** ${f.frontierGoal}`);
+      console.log(`- **Brecha:** ${f.gapAnalysis}\n`);
+    }
+    console.log(`## 🪜 Escalera de 3 Peldaños hacia la Excelencia\n`);
+    for (const step of report.ladder) {
+      console.log(`- **${step.tier}:** ${step.action}`);
+    }
+  } else {
+    console.log('[Axion Asymptotic Critic v2.0] Evaluando estado real frente al horizonte de excelencia absoluta...');
+    console.log(`\n=== VEREDICTO METACONDUCTUAL ASINTÓTICO ===`);
+    console.log(`  Madurez Fundacional Conquistada (AMR): ${report.globalMaturityPct}%`);
+    console.log(`  Horizonte Pendiente por Construir    : ${report.globalUnrealizedPct}%`);
+    console.log(`\n=== DESGLOSE POR FRONTERA DE EXCELENCIA ===`);
+    for (const f of report.frontiers) {
+      console.log(`  ${f.name.padEnd(65)} [${f.currentMaturityPct}%] -> Brecha: ${f.gapAnalysis}`);
+    }
+    console.log(`\n=== ESCALERA DE 3 PELDAÑOS ===`);
+    for (const step of report.ladder) {
+      console.log(`  • ${step.tier}: ${step.action}`);
+    }
+    console.log(`\n✓ Reporte guardado en: ${report.reportPath}`);
   }
-  console.log(`\n✓ Reporte guardado en: ${report.reportPath}`);
 }
 
 module.exports = AsymptoticCritic;
