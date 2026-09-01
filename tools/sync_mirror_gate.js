@@ -161,15 +161,22 @@ class SyncMirrorGate {
 if (require.main === module) {
   const args = process.argv.slice(2);
   const isSync = args.includes('--sync') || args.includes('-s');
-  const gate = new SyncMirrorGate();
+
+  const sourceIdx = args.indexOf('--source');
+  const targetIdx = args.indexOf('--target');
+
+  const customSource = sourceIdx !== -1 && args[sourceIdx + 1] ? args[sourceIdx + 1] : ROOT;
+  const customTarget = targetIdx !== -1 && args[targetIdx + 1] ? args[targetIdx + 1] : AXKERN_DEFAULT;
+
+  const gate = new SyncMirrorGate(customSource, customTarget);
 
   if (isSync) {
-    console.log('[Sync Mirror Gate] Sincronizando espacios de trabajo (Axion Protocol -> Axkern)...');
+    console.log(`[Sync Mirror Gate] Sincronizando espacios de trabajo (${path.basename(customSource)} -> ${path.basename(customTarget)})...`);
     const res = gate.sync();
     console.log(`✓ Sincronización completada: ${res.copiedCount} archivos transferidos.`);
     console.log(`  Paridad inicial: ${res.preParityPct}% -> Paridad final: ${res.postParityPct}%`);
   } else {
-    console.log('[Sync Mirror Gate] Auditando paridad de espacios de trabajo...');
+    console.log(`[Sync Mirror Gate] Auditando paridad de espacios (${path.basename(customSource)} vs ${path.basename(customTarget)})...`);
     const res = gate.compare();
     console.log(`  Archivos origen: ${res.totalSource} | Coincidentes: ${res.matchingCount}`);
     console.log(`  Paridad actual : ${res.parityPct}%`);
