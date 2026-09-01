@@ -57,6 +57,36 @@ class ContextBudgetGuard {
   }
 
   /**
+   * Extrae únicamente el bloque enfocado (función, método o clase) para evitar leer archivos completos.
+   */
+  sliceASTFocus(code = '', focusSymbol = '') {
+    if (!code || typeof code !== 'string') return '';
+    if (!focusSymbol || typeof focusSymbol !== 'string') return code;
+
+    const lines = code.split('\n');
+    const matchedLineIdx = lines.findIndex(l => l.includes(focusSymbol));
+    if (matchedLineIdx === -1) return code;
+
+    const start = Math.max(0, matchedLineIdx - 5);
+    const end = Math.min(lines.length, matchedLineIdx + 30);
+    const slice = lines.slice(start, end).join('\n');
+
+    return `// [Topological Snippet Sliced: lines ${start + 1}-${end}]\n${slice}`;
+  }
+
+  /**
+   * Poda el payload de contexto eliminando comentarios vacíos y espacios redundantes para maximizar densidad.
+   */
+  pruneContextPayload(content = '') {
+    if (!content || typeof content !== 'string') return '';
+    return content
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\n\s*\/\/[^\n]*/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  /**
    * Evalúa la presión de contexto a partir de un conjunto de strings o archivos.
    */
   evaluatePressure(contextItems = []) {

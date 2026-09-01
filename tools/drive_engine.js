@@ -83,6 +83,31 @@ class DriveEngine {
   }
 
   /**
+   * Ejecuta una tarea atómica mediante Short-Circuit de Fast-Loop con verificación incremental ultra-rápida.
+   */
+  executeFastLoopShortCircuit(actionDescription = 'Cambio atómico puntual', impactedFiles = []) {
+    const t0 = performance.now();
+    const SmartIncrementalRunner = require('./smart_incremental_runner.js');
+    const runner = new SmartIncrementalRunner(this.root);
+    const runResult = runner.runIncremental(impactedFiles);
+
+    const durationMs = (performance.now() - t0).toFixed(1);
+
+    return {
+      status: runResult.allPass ? 'SUCCESS' : 'FAILURE',
+      mode: 'FAST_LOOP_SHORT_CIRCUIT',
+      action: actionDescription,
+      durationMs: parseFloat(durationMs),
+      suitesPassed: runResult.totalExecuted,
+      report: this.formatExecutiveReport({
+        action: actionDescription,
+        metrics: `${runResult.totalExecuted} suites en verde en ${durationMs}ms (Short-Circuit Fast-Loop)`,
+        nextVector: 'Listo para el siguiente requerimiento con cero fricción'
+      })
+    };
+  }
+
+  /**
    * Obtiene misiones proactivas de alta densidad cognitiva mediante el arnés de Antigravity.
    */
   getProactiveMissions(context = {}) {

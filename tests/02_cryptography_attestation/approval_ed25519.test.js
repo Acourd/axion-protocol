@@ -20,7 +20,7 @@ fs.mkdirSync(FIXTURE_ROOT, { recursive: true });
 function uniqueDir(label) {
   const suffix = crypto.randomBytes(8).toString('hex');
   const dir = path.join(FIXTURE_ROOT, `${label}-${suffix}`);
-  fs.mkdirSync(dir, { recursive: false });
+  fs.mkdirSync(dir, { recursive: true });
   return dir;
 }
 
@@ -29,7 +29,7 @@ function createFixture(label, authorityStatus = 'TRUSTED', keyPair = null) {
   const dir = uniqueDir(label);
   const registryPath = path.join(dir, 'trusted-authorities.json');
   const consumptionDir = path.join(dir, 'consumed');
-  fs.mkdirSync(consumptionDir, { recursive: false });
+  fs.mkdirSync(consumptionDir, { recursive: true });
 
   const publicKeyPem = pair.publicKey.export({ type: 'spki', format: 'pem' });
   const keyId = computePublicKeyId(pair.publicKey);

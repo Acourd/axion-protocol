@@ -152,6 +152,9 @@ function consumeOnce(consumptionDir, approval) {
   const markerPath = path.join(consumptionDir, markerName);
   let descriptor;
   try {
+    if (!fs.existsSync(consumptionDir)) {
+      fs.mkdirSync(consumptionDir, { recursive: true });
+    }
     const state = fs.statSync(consumptionDir);
     if (!state.isDirectory()) throw new Error('El registro de consumo no es un directorio.');
     descriptor = fs.openSync(markerPath, 'wx', 0o600);

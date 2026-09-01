@@ -82,7 +82,12 @@ function escribirAtomico(rutaDestino, contenido) {
   fs.mkdirSync(dir, { recursive: true });
   const tmp = `${rutaDestino}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   fs.writeFileSync(tmp, contenido, 'utf8');
-  fs.renameSync(tmp, rutaDestino);
+  try {
+    fs.renameSync(tmp, rutaDestino);
+  } catch (_) {
+    fs.copyFileSync(tmp, rutaDestino);
+    try { fs.unlinkSync(tmp); } catch (_) {}
+  }
 }
 
 function rutaPerfil(raiz) {

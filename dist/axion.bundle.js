@@ -4,7 +4,7 @@
 /**
  * Axion Protocol — Standalone Single-File Bundle
  * Versión: 1.2.0-beta.1 (Zero-Dependency)
- * Compilado: 2026-09-01T21:08:53.868Z
+ * Compilado: 2026-09-01T21:18:27.849Z
  */
 
 const __modules = {};
@@ -1061,6 +1061,36 @@ class ContextBudgetGuard {
     if (usageRatio < 0.70) return 'NOMINAL';
     if (usageRatio < 0.85) return 'PRESSURE';
     return 'CRITICAL';
+  }
+
+  /**
+   * Extrae únicamente el bloque enfocado (función, método o clase) para evitar leer archivos completos.
+   */
+  sliceASTFocus(code = '', focusSymbol = '') {
+    if (!code || typeof code !== 'string') return '';
+    if (!focusSymbol || typeof focusSymbol !== 'string') return code;
+
+    const lines = code.split('\n');
+    const matchedLineIdx = lines.findIndex(l => l.includes(focusSymbol));
+    if (matchedLineIdx === -1) return code;
+
+    const start = Math.max(0, matchedLineIdx - 5);
+    const end = Math.min(lines.length, matchedLineIdx + 30);
+    const slice = lines.slice(start, end).join('\n');
+
+    return `// [Topological Snippet Sliced: lines ${start + 1}-${end}]\n${slice}`;
+  }
+
+  /**
+   * Poda el payload de contexto eliminando comentarios vacíos y espacios redundantes para maximizar densidad.
+   */
+  pruneContextPayload(content = '') {
+    if (!content || typeof content !== 'string') return '';
+    return content
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\n\s*\/\/[^\n]*/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   }
 
   /**
