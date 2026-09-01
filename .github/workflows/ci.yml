@@ -102,9 +102,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Windows incluido a propósito: la mitad de los defectos de rutas y de códigos
-        # de salida de este proyecto solo aparecen fuera de Linux.
-        os: [ubuntu-latest, windows-latest]
+        # Matriz Multi-SO completa: Ubuntu, Windows y macOS
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -143,11 +142,11 @@ jobs:
         run: |
           set -e
           esperados=$(ls -d .agents/skills/*/ | wc -l)
-          test "$esperados" -ge 16 || { echo "FALLO: solo $esperados skills"; exit 1; }
+          test "$esperados" -eq 12 || { echo "FALLO: esperaba exactamente 12 skills consolidadas, encontradas $esperados"; exit 1; }
           sk=$(find .agents/skills -name SKILL.md | wc -l)
-          test "$sk" -eq "$esperados" || { echo "FALLO: $sk SKILL.md para $esperados directorios"; exit 1; }
+          test "$sk" -eq 12 || { echo "FALLO: $sk SKILL.md para 12 directorios"; exit 1; }
           cc=$(ls .claude/commands/*.md | wc -l)
-          test "$cc" -eq "$esperados" || { echo "FALLO: .claude/commands tiene $cc, esperaba $esperados"; exit 1; }
+          test "$cc" -eq 12 || { echo "FALLO: .claude/commands tiene $cc, esperaba 12"; exit 1; }
           test ! -d .agents/workflows || { echo "FALLO: sobrevive .agents/workflows obsoleto"; exit 1; }
           echo "OK: $esperados skills en .agents/skills y $cc comandos en .claude/commands"
           grep -q validate-tool-call.mjs .claude/settings.json
