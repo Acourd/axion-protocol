@@ -77,6 +77,7 @@ const SUBCOMANDOS = {
   demo: { script: 'tools/quickstart_interactive.js', ayuda: 'onboarding interactivo de 15 segundos y demo en vivo de protección fail-closed' },
   benchmark: { script: 'tools/competitive_benchmark.js', ayuda: 'ejecuta la suite de benchmarking y métricas competitivas reproducibles' },
   critic: { script: 'tools/asymptotic_critic.js', ayuda: 'evaluación asintótica dinámica y auditoría de madurez soberana' },
+  humanize: { script: 'tools/humanizer_engine.js', ayuda: 'auditoría y purificación de tono humano anti-AI slop para textos y READMEs' },
   drive: { script: 'tools/drive_engine.js', ayuda: 'meta-orquestador autónomo con deliberación profunda adaptativa' },
   test: { script: 'tests/run_all.js', ayuda: 'ejecuta la suite completa' },
 };

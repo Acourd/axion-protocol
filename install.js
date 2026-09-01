@@ -238,10 +238,12 @@ function runInstallation(targetDir) {
     'deep_reasoning.js',
     'fuzzer.js',
     'premortem.js',
-    // El README del proyecto instalado manda ejecutarla tras añadir suites, y /drive la
-    // cita en su fase de Release Loop. Una herramienta que la documentación entregada
-    // promete y el paquete no trae es la misma deuda que un prompt citando una ruta que
-    // no existe: el chequeo de salud lo detecta en el proyecto instalado, no aquí.
+    'asymptotic_critic.js',
+    'scout_engine.js',
+    'license_auditor.js',
+    'humanizer_engine.js',
+    'sync_mirror_gate.js',
+    'preflight_tdd_synthesizer.js',
     'sync_doc_stats.js'
   ];
   tools.forEach(t => {
