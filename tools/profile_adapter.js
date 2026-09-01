@@ -84,9 +84,11 @@ function escribirAtomico(rutaDestino, contenido) {
   fs.writeFileSync(tmp, contenido, 'utf8');
   try {
     fs.renameSync(tmp, rutaDestino);
-  } catch (_) {
+  } catch (renameErr) {
     fs.copyFileSync(tmp, rutaDestino);
-    try { fs.unlinkSync(tmp); } catch (_) {}
+    if (fs.existsSync(tmp)) {
+      fs.unlinkSync(tmp);
+    }
   }
 }
 
