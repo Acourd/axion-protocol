@@ -83,6 +83,7 @@ const SUBCOMANDOS = {
   'swarm-p2p': { script: 'tools/swarm_p2p_channel.js', ayuda: 'bus de mensajes autenticado P2P con firmas Ed25519 entre agentes concurrentes' },
   'swarm-consensus': { script: 'tools/swarm_consensus_arbiter.js', ayuda: 'protocolo de consenso y votación por quórum bizantino BFT multi-agente' },
   'swarm-bench': { script: 'tools/swarm_benchmark.js', ayuda: 'ejecuta el benchmark de estrés masivo de Swarm v2.0 (AST, P2P y BFT)' },
+  'swarm-sim': { script: 'tools/swarm_simulator.js', ayuda: 'simulación visual en vivo de enjambre multi-agente colaborativo' },
   sync: { script: 'tools/sync_mirror_gate.js', ayuda: 'auditoría y sincronización espejo determinista de espacios de trabajo' },
   humanize: { script: 'tools/humanizer_engine.js', ayuda: 'auditoría y purificación de tono humano anti-AI slop para textos y READMEs' },
   drive: { script: 'tools/drive_engine.js', ayuda: 'meta-orquestador autónomo con deliberación profunda adaptativa' },
