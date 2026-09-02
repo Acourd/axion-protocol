@@ -1,0 +1,1931 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "axion-protocol",
+  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/1788309817525",
+  "creationInfo": {
+    "created": "2026-09-02T00:43:37.525Z",
+    "creators": [
+      "Tool: SovereignSBOMGenerator-2.0.0",
+      "Organization: Axion Protocol"
+    ]
+  },
+  "packages": [
+    {
+      "name": "axion-protocol",
+      "SPDXID": "SPDXRef-Package-Axion",
+      "versionInfo": "1.3.1-rc.2",
+      "downloadLocation": "git+https://github.com/Acourd/axion-protocol.git",
+      "filesAnalyzed": true,
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0"
+    }
+  ],
+  "files": [
+    {
+      "fileName": "./.agents/skills/attest/SKILL.md",
+      "SPDXID": "SPDXRef-File-0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5ea7d1ef15f0a2238098871a95c365c2bd54d659cc23a9cb7608658d980fb9fb"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./.agents/skills/clarify/SKILL.md",
+      "SPDXID": "SPDXRef-File-1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "63b4141d336e385ea3ff2aad1f7dddabe7fc2a6196f27f094105f309b5805202"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./.agents/skills/debug/SKILL.md",
+      "SPDXID": "SPDXRef-File-2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "602cf1dc63a9df430be8a559aaa4f90d02814b87af9b8c39b1562b27e2aa8aab"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./.agents/skills/drive/SKILL.md",
+      "SPDXID": "SPDXRef-File-3",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7476fd1673868e3ca26eb1d51b4254afec1d3465dbdc5d364ad4a85e10259767"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./.agents/skills/halt/SKILL.md",
+      "SPDXID": "SPDXRef-File-4",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "93d93fe16aad184d35c2fc8b6b871294cff940018e6bacba24ff20c5374bf005"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./.agents/skills/memory/SKILL.md",
+      "SPDXID": "SPDXRef-File-5",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "016ff9d258f0383a706ed824270cecc639223315058bfa092a58c0e1a7a7d878"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./.agents/skills/preflight/SKILL.md",
+      "SPDXID": "SPDXRef-File-6",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f56667360b8729a8d441790f614cdc42807a19f6922db461f47799a5b8f96899"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./.agents/skills/premortem/SKILL.md",
+      "SPDXID": "SPDXRef-File-7",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "667ca08a78a759c02a1d0c05601c3a9291dd3b24b16024b01f146b4a428ecb05"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./.agents/skills/profile/SKILL.md",
+      "SPDXID": "SPDXRef-File-8",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a47b1e5a8bf249f1356a4bbf5c4532cf8a9c1f3498c31c75039179869e036c3a"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./.agents/skills/review/SKILL.md",
+      "SPDXID": "SPDXRef-File-9",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "55c12ab631674d3bd058af9a3637dd3cce5ba61c84f21be2a76ec9131b2b629d"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./.agents/skills/snapshot/SKILL.md",
+      "SPDXID": "SPDXRef-File-10",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5f431bce0b4ec63d98496a4c5af66596e6670e775648d3ef74b8d1685ba3923e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./.agents/skills/verify/SKILL.md",
+      "SPDXID": "SPDXRef-File-11",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1c134c7c11ffc759d5b23fa2a690976540f7b2c5c900670c7b75ccd39e761ecd"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./bin/axion.js",
+      "SPDXID": "SPDXRef-File-12",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "667e18eb344d65f71051080098e4e449ceda44c10eed9c24ebf4553571c70be1"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/adaptive_phase_planner.js",
+      "SPDXID": "SPDXRef-File-13",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8b6e824be1d04e55ac51e840776c047b75c7c383cd7d58ee107ba9c50b9d920f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/adaptive_worker_pool.js",
+      "SPDXID": "SPDXRef-File-14",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "64217f9a53dc892022aede70fb008a5e5f27f3c8631d827823c1c0154941bfa5"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/agent_chaos_monkey.js",
+      "SPDXID": "SPDXRef-File-15",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "36d59494ab6cbe993d18cbc1d524ac5cb4783adf79c20f59ca822f208e7be008"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/agent_heartbeat_daemon.js",
+      "SPDXID": "SPDXRef-File-16",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ae595b3b1141182f2df8c22ac6984535bf18c495cf55e37a54e38ad79c09e3ac"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/agent_shield.js",
+      "SPDXID": "SPDXRef-File-17",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "98146282a351b67ae9856764653f75a9a7b2f01fad1dc99ac719fb333f8af9b2"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/antigravity_drive_harness.js",
+      "SPDXID": "SPDXRef-File-18",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2f68629c6e41770c9467aa3860bc23d41c5484f0f3f79af4d4852035e4a1f94f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/approval_ed25519.js",
+      "SPDXID": "SPDXRef-File-19",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1da79fa3c26b944fbe0ad0eecf9bbb5b375bde4e6f1d87e4538427d888259214"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/assurance.js",
+      "SPDXID": "SPDXRef-File-20",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d56c65548bbaf939ab9752620120842b3fceafa978c061b762bcc19b34a65cf2"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/ast_complexity_analyzer.js",
+      "SPDXID": "SPDXRef-File-21",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d146b48b3b463109b2c926725a036040470515e75f7113f747f0348f9f0df2cf"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/ast_dead_code_analyzer.js",
+      "SPDXID": "SPDXRef-File-22",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a2cd689ccb0fac86a89c094f9bb94117a76c6acc50e2f3f495c596046b6b4aeb"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/ast_patch_synthesizer.js",
+      "SPDXID": "SPDXRef-File-23",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "eed1bf96dfb5d11d712d5a5c21319bfec9b029305b86d655f54b8106f7134eb4"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/ast_taint_dataflow_analyzer.js",
+      "SPDXID": "SPDXRef-File-24",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6ea7b5dcea926681acf987752238b0424077449a4df8e3dc5d0e53af78aebaa2"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/asymptotic_critic.js",
+      "SPDXID": "SPDXRef-File-25",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2bb3e2ec3122ef1f1c454c160fd8d2d165ea3c51095c61b94aabe35714d3a923"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/attestation_visualizer.js",
+      "SPDXID": "SPDXRef-File-26",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7071a42fe4126b592969d54c1cfa8834614fe8eae3e8f1a80ffb70d9b3ee4fd2"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/attestation.js",
+      "SPDXID": "SPDXRef-File-27",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "59fac97c5fa982aa9431f94f6cb95ac997df4ff6535f73baaad4731f813c764f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/auto_compacting_checkpoint.js",
+      "SPDXID": "SPDXRef-File-28",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "57d5b9b3e5e7c8b5538592e1750b042ace0f5dfc563a33f4b4ec46d96f9236de"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/autonomous_module_packager.js",
+      "SPDXID": "SPDXRef-File-29",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7eda154bd43f195ed708c5c367764382c1eac0f3d2161ec638248c76f399e9ea"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/blast_radius_estimator.js",
+      "SPDXID": "SPDXRef-File-30",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d251b74edcded5be999e3538e24dad21984e27784ac4164762c679b9469ef368"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/bundle_compiler.js",
+      "SPDXID": "SPDXRef-File-31",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "cba987424521fa9391c539b675fab1cadd5afde9a8a328bf04dd0fb7975a7c3d"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/canonical_json.js",
+      "SPDXID": "SPDXRef-File-32",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b0e73801783474229d95df7bb6e3b16bfccd0ddbdbd73f46ff6d0f6f1b16313c"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/capability_manager.js",
+      "SPDXID": "SPDXRef-File-33",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d4c55089a188afadb01043b698f65cb3e9acac493962655717f4b32130c9d414"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/chaos_fuzzer_1000.js",
+      "SPDXID": "SPDXRef-File-34",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "202532dfa2d4e2718182de8d0c72029c8dac30654d4a582ae6093fe8bb5759ac"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/chaos_fuzzer_10000.js",
+      "SPDXID": "SPDXRef-File-35",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "aedee9200aec921769a49c058c851608e34c5d2173d994b312225cddaf0f791e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/chaos_fuzzer_2500.js",
+      "SPDXID": "SPDXRef-File-36",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8550c3e00aac2f28c316a40f6807e29630711cf1045c31fee1d76392dd244b34"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/chaos_fuzzer_5000.js",
+      "SPDXID": "SPDXRef-File-37",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "830ecb1b172859a2ce67d2434e7762de8eb5c544a8f8015382fad6a2ce09d755"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/check_ed25519.js",
+      "SPDXID": "SPDXRef-File-38",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f5a99fe9260bddd7226ef147a12c5996c15ff7d820f43f8ec141d7c5a130e210"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/checkpoint.js",
+      "SPDXID": "SPDXRef-File-39",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a3f09019e6d3448c90a57d0906312d098826568f9d72ee03527c12be8bbc71a0"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/competitive_benchmark.js",
+      "SPDXID": "SPDXRef-File-40",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3da7325679b835ad15d436039e4abf10dfefa30d1ab3b84833c46678cdabdec9"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/compliance_matrix_exporter.js",
+      "SPDXID": "SPDXRef-File-41",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ce913b077b748b047bae9e0687e0b84bb4666ff856ec6ada7cb7a91806ca0411"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/concurrent_race_verifier.js",
+      "SPDXID": "SPDXRef-File-42",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "04e3c259980ff677ac625f7b50e9ecf6fe9f72bfa03ec139135d074227a0ac40"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/context_budget_guard.js",
+      "SPDXID": "SPDXRef-File-43",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f34e833fc49c6c713512378474abe938b9e742bbc801eb66e2779f6718ec2152"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/context_entropy_guard.js",
+      "SPDXID": "SPDXRef-File-44",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8faa626f231f6bc7e904f52ef2eaea11d17f5e0346148684b15b8b352266b656"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/context_shield.js",
+      "SPDXID": "SPDXRef-File-45",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1256f2de84d81ce43086a5caf20a7967e24d3779ceea629bfd60d6b7ccc680d8"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/convergence_loop.js",
+      "SPDXID": "SPDXRef-File-46",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "23d0fb3d935fcf193b1a6e690400a112c2ad8ee197596a1a97271d6920867460"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/convergence_regression_guard.js",
+      "SPDXID": "SPDXRef-File-47",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d83ee444dca7463d0e0f348b0537b61305dc177571e9ea7b39fbdd71265ee4da"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/deep_reasoning.js",
+      "SPDXID": "SPDXRef-File-48",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1dd0308c03adf541f102cf87d832da2553fbdbb3d161adc63e1900c5669cd338"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/disk_pressure_guard.js",
+      "SPDXID": "SPDXRef-File-49",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "285889a7867ab371937d6749bb1aa99e81cea5c6f625cae2353e0eaacee80c7d"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/doctor_repair_engine.js",
+      "SPDXID": "SPDXRef-File-50",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "21b637f12a9f7d7eb993aba317c9027d1646bace13f7e309bad11aec7da90a6f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/drive_dsse_attester.js",
+      "SPDXID": "SPDXRef-File-51",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3fac2c200da4708bc8309d3cd9a4ec2cf04cdb9a56af6926dfdf1fdbf9fa1959"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/drive_engine.js",
+      "SPDXID": "SPDXRef-File-52",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f64487cdc3ab06c2104b0de7fc49eb4a4459b8824b6a5b6c55cec7ff3728e4ba"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/drive_memory_copilot.js",
+      "SPDXID": "SPDXRef-File-53",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a5b93af1df02ea8f5b7d7e641608a3b622607fb5dd4d790c1b346af788f455fa"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/drive_mission_matrix.js",
+      "SPDXID": "SPDXRef-File-54",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b23c1bd561f8c65726c5474e45f389d4df93dbd9204b2ec682d46ad950c076a2"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/drive_mission_tracker.js",
+      "SPDXID": "SPDXRef-File-55",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "081379badf0859e1d290e400eff0a61f5277af28a9d58e5b9f12c03a28fa8b5d"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/drive_state_resumer.js",
+      "SPDXID": "SPDXRef-File-56",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f899ea0be1733ea49742776c28d9f6ed73e64f947b66fdb41a9808292889b602"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/drive_telemetry.js",
+      "SPDXID": "SPDXRef-File-57",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5935bbb9460f66dd77233d94f3f8c37294207638452873b821f5960b91e8b21b"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/drive_worker_sandbox.js",
+      "SPDXID": "SPDXRef-File-58",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "054e008e11988788413c1a576c4bd42bb5a8a52e04870aedb180d1cad9e4633b"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/dsse.js",
+      "SPDXID": "SPDXRef-File-59",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "443c4d2b80e307daed70b53741228f36a379615fe021c8412b2fe6b5f97b6ce8"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/dynamic_rule_weaver.js",
+      "SPDXID": "SPDXRef-File-60",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1791742b736a6eb723a5e9d0bd477a008469a36b0897df5087269b9a5eec510f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/emit_attestation.js",
+      "SPDXID": "SPDXRef-File-61",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9768e0294dc0b09a8847c16fa620480f8b868b949986d3bc5c126a96048b533f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/evidence_hasher.js",
+      "SPDXID": "SPDXRef-File-62",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "601b3f83c3adf7d1f3ac9b07d59c2fa81dd581f4bd7dac9a0c12b23c7e236ae6"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/fast_parity_benchmarker.js",
+      "SPDXID": "SPDXRef-File-63",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "11396fb9d16b995745f4eb487758875b89241cfbe5f7b6c615d178b3370d13aa"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/flight_recorder.js",
+      "SPDXID": "SPDXRef-File-64",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ae76dcec0ac74eeca762aee8cc6cd9c5eea969ce9999fc7c70dd5e904774307b"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/forensic_telemetry_engine.js",
+      "SPDXID": "SPDXRef-File-65",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "edcdeff5a9dd22dea0667fdc43e5e96b37c003950f38d8b242916fb62025be20"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/formal_smt_policy_verifier.js",
+      "SPDXID": "SPDXRef-File-66",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6321033334417c1162850ad3ac32b0ccada4d6adbf87dfe6f3865dbf99156d7e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/fuzzer.js",
+      "SPDXID": "SPDXRef-File-67",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a8956ef2684f9d45405040a2d3798137bd35d650a616eaa1f3cb23687a16b4aa"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/git_assistant.js",
+      "SPDXID": "SPDXRef-File-68",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b2ac0f1c8be3c6a8cb2a4a9e85a4ba5413ec43701fc8422ba8ccdbb64c46e9dc"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/git_governance_hook.js",
+      "SPDXID": "SPDXRef-File-69",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2ddb823542115c09dbd48e68e917e93f87b9bc925bf09c6c84514a4ec1b83d61"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/governance_dashboard.js",
+      "SPDXID": "SPDXRef-File-70",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "73366d35d8ed104579ff2cc4e8775e44133ff2afc3bb1cf06b1ceab7be6140ed"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/hardware_adaptive_profiler.js",
+      "SPDXID": "SPDXRef-File-71",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e5ecd8782f8df98406e692fc3a3d63156e7b8a76700084a949ae850e55cd7a63"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/health_check.js",
+      "SPDXID": "SPDXRef-File-72",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "94e29ce81d711a8fd064acd74fc7e4b50d2b3797a3e54975cdc6fab002a9fa0d"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/humanizer_engine.js",
+      "SPDXID": "SPDXRef-File-73",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e349d7acde41ef7c868147d52e7ee3f16ca1f42d4b6e525e4d64bfd78f0ac960"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/identity_canonical.js",
+      "SPDXID": "SPDXRef-File-74",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "abc5c6f8706cf02f97d1f5877d74e22081e7c93416c0f61b88d083852c9d39ef"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/instinct_synthesizer.js",
+      "SPDXID": "SPDXRef-File-75",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "89d6ca41aca26d0478f39c6f94d67246a9d1762f2b992c9d72a2a9337127a730"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/intent_clarifier.js",
+      "SPDXID": "SPDXRef-File-76",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1dbf03676449dfe56c6dd8f18bd38a2871bbd8881872ef2981d09aa6d10eaa0e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/killswitch.js",
+      "SPDXID": "SPDXRef-File-77",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "be2426b6de212627025d82a8521f573cce958f19a35fa02e2d92d28afd14a0f8"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/learning_engine.js",
+      "SPDXID": "SPDXRef-File-78",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fb037016f90668cd21f09c806f4e4a5155e3f3ff8cc6efbda1501ed89e3d62f7"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/license_auditor.js",
+      "SPDXID": "SPDXRef-File-79",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ed90771bb205ac971ec021d7e7d806404b1c14a6accdfe500f2b44d9206c3dd5"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/massive_fuzzer.js",
+      "SPDXID": "SPDXRef-File-80",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "184d9ea85012dd708956f6550fc5328d57e74a560de97361c4c53cfce1b7326f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/memory.js",
+      "SPDXID": "SPDXRef-File-81",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "af2d68a92750b65556a6602fefd2222b3502953c45ee78f4f67ef251b0a57607"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/merkle_cache_fast_forward.js",
+      "SPDXID": "SPDXRef-File-82",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d291bf3b23daf2ab59a88a503d98f84fb837774751ab49cf33ffa7d70dcdf1eb"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/merkle_integrity_ledger.js",
+      "SPDXID": "SPDXRef-File-83",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f02890b26ad442fb71c82e9373e9f3784a040c7838c38b293fa1399caa734ace"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/mission_backlog_vault.js",
+      "SPDXID": "SPDXRef-File-84",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "89bfc330830fe1515c426a5b29ed9a0a099390e822d1993b230eaa1119060293"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/module_dependency_graph.js",
+      "SPDXID": "SPDXRef-File-85",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "12df24c4b26d7f1b949fa36e7a408c2acfeff08e3238c35361fd5379f3f89eee"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/multi_file_cross_healer.js",
+      "SPDXID": "SPDXRef-File-86",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6aac594dbf2d297c5c83947c4c5b34eaa9cd601a94b79f47ed6581d664ae0cfc"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/multi_harness_adapter.js",
+      "SPDXID": "SPDXRef-File-87",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "763bddb82f4efd1be7fec2b84d772e4a1a5d5185c1517a0ff874a11cf58fa573"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/multidimensional_socratic_planner.js",
+      "SPDXID": "SPDXRef-File-88",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9bd05df2512ceea3ff01018d8be7d99226cf90fc3d405c9157411f303f8be2af"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/onboarding_wizard.js",
+      "SPDXID": "SPDXRef-File-89",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2b8d4b519da1e29881c60d2dd8bab8279fedcfb5ba824f7398cc879c44f64adb"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/performance_benchmark.js",
+      "SPDXID": "SPDXRef-File-90",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d115ae8a2b2bb0c8c75ecc546b7cc79bb2258861e5c9a65753284597719df782"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/pipeline_fast_gate.js",
+      "SPDXID": "SPDXRef-File-91",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fd28839a351aab006f341d5fd623a9ee277fb6f2aecf2e365806fcfbda232ae6"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/preflight_tdd_synthesizer.js",
+      "SPDXID": "SPDXRef-File-92",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a369c033bc684320be67d93d4c1d9478b6d884a329d2cb0d58c3524d640c8a4d"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/preflight.js",
+      "SPDXID": "SPDXRef-File-93",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "81757b27a88de980497fa65c30de2dfbe60fcb13573c76f408c8986fbe7be8a1"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/premortem.js",
+      "SPDXID": "SPDXRef-File-94",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f87d35a897ffe5542518e21db7560f205c0c98df560fdfab062f671ab9c04207"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/profile_adapter.js",
+      "SPDXID": "SPDXRef-File-95",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7f82611f1b703b3e65a3118815d94179e957bec97b043ab33446170acd4e2980"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/provenance_sbom_generator.js",
+      "SPDXID": "SPDXRef-File-96",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a83e513c5f5259cbe2e6c8cfba935c9d0c856ce337aacc8383f20266538fb156"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/quickstart_interactive.js",
+      "SPDXID": "SPDXRef-File-97",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f46c43e489df6a1dc289f79dd8776d7a47684cfa7d06960e7f82f2688af55ba1"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/README.md",
+      "SPDXID": "SPDXRef-File-98",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "09154879dae4fca25689cc5cc39bce7d524a615791b21b5502daf8f3bb14dbf0"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/repo_attestation_generator.js",
+      "SPDXID": "SPDXRef-File-99",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7af0cbefa01f5c5494945f04908d7fdc55e9534049013b5c64ee119a7102bb58"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/risk_policy_compiler.js",
+      "SPDXID": "SPDXRef-File-100",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "31d85cbdcdac4e1aee82d3fc2dfda5bb850c44730cdb67c07718eb778c084319"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/rollback_plan.js",
+      "SPDXID": "SPDXRef-File-101",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "eca45480dec24e33c835b553fbc44a11e9236abbaea4bd4af19d56827ede7988"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/sbom_sovereign_generator.js",
+      "SPDXID": "SPDXRef-File-102",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "333ca0d3b3d4b5624ce9f04b61de5d613d187395cf013bf67cda7a3145730235"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/schema_contract_verifier.js",
+      "SPDXID": "SPDXRef-File-103",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c2e457f55811e95a36b81f88d729a35b02b916544e4dc4c5f44ac41d919dc9db"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/scout_engine.js",
+      "SPDXID": "SPDXRef-File-104",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e2ecb87c1264d0e062c3229245dbb27e1dc524d41c63d66cd83aa6e457210a52"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/self_healing_engine.js",
+      "SPDXID": "SPDXRef-File-105",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "31ea8d4732b3bb920ca6960a62597c816ed488db7af1893bf7b14c8ec3a7abc6"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/semantic_auto_healer.js",
+      "SPDXID": "SPDXRef-File-106",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "79455c4c3f2a1f5183e3da2998672499a28cc2b859fc1a134bdb32102640aec3"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/semantic_memory_graph.js",
+      "SPDXID": "SPDXRef-File-107",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2704d0a9366a8098ed3c45e3895223cff971c6b275c8bdd500b3f41f84432bd1"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/semantic_snapshot_indexer.js",
+      "SPDXID": "SPDXRef-File-108",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d0818e10fee5c42033126032d84696a6c3c6087347e662e7c8d178089ccbb869"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/semantic_type_reconciler.js",
+      "SPDXID": "SPDXRef-File-109",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "87aacf70003c0962be4fddccb094672a3707cb403de6be991dafcb0cf20e1995"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/smart_incremental_runner.js",
+      "SPDXID": "SPDXRef-File-110",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6fadbeeedb29af8caaa11115e96669e9c485f83ac29a9a428eddc03c5c7927b9"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/socratic_tree_visualizer.js",
+      "SPDXID": "SPDXRef-File-111",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2a8365a00ffea0512c288c60ded954774befbd0fc118a3803dd481f644d0883b"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/sqlite_snapshot_isolation.js",
+      "SPDXID": "SPDXRef-File-112",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "59ab01d1db4cfbb90f232ceaac865db52c7b1e67ed204706521a65383c6564e4"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/structured_command.js",
+      "SPDXID": "SPDXRef-File-113",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "03d4bf6d3dc0a31e3292f55f47afb4d052eca59341744b2715a035594e5cebe9"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/swarm_arbiter.js",
+      "SPDXID": "SPDXRef-File-114",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6ac434eeddcdb692ce90b400ce9f0d43650270815090d70893d865aad85debf2"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/swarm_ast_arbiter.js",
+      "SPDXID": "SPDXRef-File-115",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5eb35229364dbbc6358ed737291b69bc7e6dfedbfb1f2565be5ed295caef0135"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/swarm_benchmark.js",
+      "SPDXID": "SPDXRef-File-116",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "09eb4fe22e6b4a497b7a476d5934d39eb0914da719290adea3fb324957951e40"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/swarm_consensus_arbiter.js",
+      "SPDXID": "SPDXRef-File-117",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "81f55faa388c54987d35172cc5a72a33f905edf8e4320a56fc6c9fe57416637c"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/swarm_p2p_channel.js",
+      "SPDXID": "SPDXRef-File-118",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d761655ed4459ae16c0c7e32fbc0adbd02fb8d1f49fa7e1591573ba5e8693ea6"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/swarm_simulator.js",
+      "SPDXID": "SPDXRef-File-119",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5ee26d799d9bdc883f942eedc938d501a3b494b0e1f6b5cfa97666636f2925fb"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/sync_doc_stats.js",
+      "SPDXID": "SPDXRef-File-120",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "db9cf53d150552f5e7d4e63ed5fc09561ba448a2242d0decdcab276f06888b52"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/sync_mirror_gate.js",
+      "SPDXID": "SPDXRef-File-121",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "19a5efaeba7ecec3f51f8f500066a01f9debb02c953d5ef17f40f875e0a22065"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/telemetry_gateway.js",
+      "SPDXID": "SPDXRef-File-122",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "27b1354d04229597583989855d8ee9da9385efa991f9d21c8a57b3c00928b916"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/temporal_state_verifier.js",
+      "SPDXID": "SPDXRef-File-123",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d3428c5bad661431df62c08c1d152fcc33b78b27426e5e33b577d57381354af8"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/transversal_project_optimizer.js",
+      "SPDXID": "SPDXRef-File-124",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "87d1862354233064851b29dda0d6331b23ed5747cf615c1a45785af3b7ce8d28"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/updater.js",
+      "SPDXID": "SPDXRef-File-125",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8a1ceb71e42fc331f1ff5768562607ca994b38c33811b750f967d92d3002bbdd"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/user_decision_trajectory.js",
+      "SPDXID": "SPDXRef-File-126",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "833bee77465a266f02a7eb6f33ec89153ce0e50cd1a0226c99b7c3d6ef115d38"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/verify_changes.js",
+      "SPDXID": "SPDXRef-File-127",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "67b0d83e98a19cba74359c4725eb8bdb3af72aaaa2c6730959da250a40ad6c37"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/vibeguard_gate.js",
+      "SPDXID": "SPDXRef-File-128",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1b9b549a45fec9a909637856b26b377cea78faf3306d80dd52f62c65ba77fd04"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/vibeguard_storage_hook.js",
+      "SPDXID": "SPDXRef-File-129",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "27a7ba14c6d88b4b57f5d17beb319719a1a3391142967c2b8e553d3f135be8ec"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/vibeguard.js",
+      "SPDXID": "SPDXRef-File-130",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fbbbc00c397f8b3745ff192a059eee997afbcd5d2e91e4ca2a6feed87640ed80"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/web_ui_auditor.js",
+      "SPDXID": "SPDXRef-File-131",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c557dd909adfb0b3218d43ebf88c05030aa1b30963f76605334ecea75b4c3342"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/wizard.js",
+      "SPDXID": "SPDXRef-File-132",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4ff075b070ad267a5b6de92fbb9ee047fb57aedac2c29f693d52af5a17ed336a"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/workflow_runner.js",
+      "SPDXID": "SPDXRef-File-133",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "24a87396ac62794c57648850f1ca0d53901f777491064af0a1cca9f1309f0964"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/workflow_state_machine.js",
+      "SPDXID": "SPDXRef-File-134",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d9ea22aee20fb0a7ac31c5ce4f1a683a5b6b4ec2dfe773f73b9133248fe1007d"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/workspace_debloater.js",
+      "SPDXID": "SPDXRef-File-135",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7ec29539f973b617a888aa122138fb448586ce1f745b4f1499ed0e0653e1506c"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    }
+  ]
+}
