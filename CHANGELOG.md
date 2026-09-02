@@ -2,6 +2,36 @@
 
 Todos los cambios relevantes de Axion Protocol se documentarán aquí.
 
+## [1.3.1-rc.3] — 2026-09-02 · Lanzamiento General (GA) & Blindaje Criptográfico Total
+
+Lanzamiento oficial de producción de Axion Protocol v1.3.1-rc.3 (Sovereign GA Candidate). Sella formalmente la resolución verificada de los 18 hallazgos de auditoría adversarial, blindaje de terminal fail-closed, consenso bizantino multi-agente, atestación in-toto Merkle y acabado visual Obsidian Glass.
+
+### Added
+
+- **Sellado Criptográfico Merkle Total e in-toto Statement v1 (`tools/repo_attestation_generator.js` y `M_001_RELEASE_GA`)**: Atestación formal DSSE Ed25519 con PAE (Pre-Authentication Encoding) sobre todos los sujetos del repositorio (270+ archivos).
+- **Gestor de Revocación Criptográfica Formal (`tools/revocation_manager.js`)**: Emisión y validación de Listas de Revocación de Certificados (CRL) con firmas Ed25519 y protección anti-replay.
+- **Acabado Obsidian Glass & Micro-Tipografía Suiza (`docs/site/style.css` y Misiones `M-VIS-001` a `M-VIS-003`)**: Sistema de tokens de diseño, curvas de resorte elástico (`--ease-spring`, `--ease-bounce`), contraste WCAG AAA en dark/light y soporte de reducción de movimiento con cero `!important`.
+- **Generador Soberano Dual de SBOMs (`tools/sbom_sovereign_generator.js`)**: Cobertura exhaustiva de los 139 módulos en formatos SPDX 2.3 y CycloneDX sin dependencias externas.
+- **Protocolo de Pensamiento Interno de Frontera (`.agents/rules/axion-governance.md` - Sección 7)**: Axiomas de falsacionismo previo y duda metódica para erradicar el sesgo de optimismo.
+
+### Fixed
+
+- **Gating Fail-Closed en Hooks (`.agents/hooks/validate-tool-call.mjs`)**: Corregido escape silencioso de comandos; `NEEDS_HUMAN_REVIEW` ahora emite bloqueo determinista con `BLOCK_EXIT = 2`.
+- **Evasión Léxica y Metacaracteres (`tools/structured_command.js`)**: Tokenización posicional completa inmune a expansiones `$IFS`, concatenaciones encadenadas (`;|&`) y evaluadores de intérpretes (`-c`, `-e`, `-enc`).
+- **Inyecciones Shell en Asistentes Git (`tools/git_assistant.js` y `tools/pipeline_fast_gate.js`)**: Migración absoluta a `spawnSync` con `{ shell: false }`.
+- **Fusión AST Concurrente & Canales P2P (`tools/swarm_ast_arbiter.js` y `tools/swarm_p2p_channel.js`)**: Aislamiento a nivel de kernel mediante lockfiles OS atómicos (`wx`) y corte posicional determinista.
+- **Consenso Multi-Agente BFT (`tools/swarm_consensus_arbiter.js`)**: Calibración a supermayoría Bizantina estricta ($\ge 2/3$), deduplicación de 1 voto por `voterId` y cómputo de quórum con abstenciones en el denominador.
+- **Restauración Atómica de Checkpoints (`tools/checkpoint.js`)**: Escritura transaccional en `.tmp` y promoción atómica vía `renameSync`.
+- **Serialización Canónica en Sobres PAE DSSE (`tools/attestation.js`)**: Adhesión matemática a la norma internacional RFC 8785 (`canonicalize`).
+
+### Enhanced
+
+- **Suite Determinista Unificada**: 201 de 201 suites de prueba en verde (100% PASS) ejecutadas en 14.49 segundos con 8 workers paralelos.
+- **Blindaje Anti-Vibecoding (VibeGuard)**: 131 archivos de código fuente escaneados con 0 antipatrones.
+- **Bundle Autónomo Standalone (`dist/axion.bundle.js`)**: 23 módulos de runtime empaquetados en un solo archivo de 180.7 KB con cero dependencias externas.
+
+---
+
 ## [1.3.1-rc.2] — 2026-09-01 · Versión Oficial de Gobernanza Integral y Experiencia de Vuelo
 
 Lanzamiento de Axion Protocol v1.3.1-rc.2 blindando los 5 bloques de arquitectura soberana con 188 suites deterministas y cero dependencias externas.

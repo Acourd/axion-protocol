@@ -65,3 +65,21 @@ Al completar cualquier tarea o hito, el resumen final debe entregarse en el **id
   2. Plantear al menos **3 Modos de Falla Adversariales** (casos límite, regresiones, runtime).
   3. Comprobar **Invariantes P0, Perfil del Usuario y Cero-Bloat**.
   4. Definir el **Criterio Determinista de Prueba** con salida exitosa 0.
+
+---
+
+## 🧠 7. Invariante de Pensamiento Interno de Frontera (Nivel Anthropic / OpenAI o1)
+
+Para cerrar la brecha de razonamiento profundo y convertir la eficiencia de recursos en el estándar de oro de la industria:
+
+1. **Falsacionismo Previo Obligatorio (Duda Metódica)**:
+   - Antes de escribir código o invocar una herramienta, simular mentalmente el peor escenario adverso:
+     * *¿Qué pasa si el kernel del SO bloquea el archivo (`EPERM` en Windows, locking en NTFS)?*
+     * *¿Qué supuestos léxicos o sintácticos no han sido verificados empíricamente?*
+     * *¿Hay alguna variable de entorno, flag o trailing space que pueda romper un linter o invariante?*
+2. **Erradicación del Sesgo de Optimismo (*Happy-Path Bias*)**:
+   - Asumir por defecto que la primera solución intuitiva tiene una falla oculta. Cuestionarse activamente: *"¿Cómo rompería un auditor de Red Team esta implementación?"*.
+3. **Densidad Cognitiva y Cero Divagación**:
+   - El monólogo interno debe ser matemático, económico y resolutivo: deducir trade-offs concretos sin explicaciones circulares ni consumo innecesario de tokens.
+4. **Validación Empírica Innegociable**:
+   - Jamás reportar éxito por inspección estática: la verdad se demuestra únicamente mediante la ejecución real de la prueba y la confirmación del código de salida `exit 0`.
