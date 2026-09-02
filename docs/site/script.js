@@ -679,6 +679,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const simTerminalInput = document.getElementById('sim-terminal-input');
   const btnClearTerminal = document.getElementById('btn-clear-terminal');
   const quickCmdButtons = document.querySelectorAll('.btn-quick-cmd');
+  const terminalCommandHistory = [];
+  let terminalHistoryIndex = -1;
 
   function appendTerminalLine(type, text) {
     if (!simTerminalOutput) return;
@@ -689,6 +691,14 @@ document.addEventListener('DOMContentLoaded', () => {
     simTerminalOutput.scrollTop = simTerminalOutput.scrollHeight;
   }
 
+  function appendTerminalLinesStaggered(lines, delayMs = 60) {
+    lines.forEach((item, idx) => {
+      setTimeout(() => {
+        appendTerminalLine(item.type, item.text);
+      }, idx * delayMs);
+    });
+  }
+
   function executeSimulatorCommand(cmd) {
     if (!cmd) return;
     playKeyClick();
@@ -697,46 +707,84 @@ document.addEventListener('DOMContentLoaded', () => {
     const clean = cmd.trim().toLowerCase();
     if (clean === '/drive') {
       playSuccessChime();
-      appendTerminalLine('info', '[/drive] Iniciando meta-orquestador autónomo universal...');
-      appendTerminalLine('pass', '✓ 7 fases sincronizadas · 0 colisiones en AST namespace');
-      appendTerminalLine('pass', '✓ Consenso BFT alcanzado con 4/4 quórum de subagentes');
-      appendTerminalLine('pass', '✓ in-toto Statement v1 emitido con sobre DSSE');
+      appendTerminalLinesStaggered([
+        { type: 'info', text: '[/drive] Iniciando meta-orquestador autónomo universal...' },
+        { type: 'pass', text: '✓ 7 fases sincronizadas · 0 colisiones en AST namespace' },
+        { type: 'pass', text: '✓ Consenso BFT alcanzado con 4/4 quórum de subagentes' },
+        { type: 'pass', text: '✓ in-toto Statement v1 emitido con sobre DSSE' }
+      ]);
     } else if (clean === '/verify') {
       playSuccessChime();
-      appendTerminalLine('info', '[/verify] Ejecutando suite de 201 pruebas deterministas en 8 workers...');
-      appendTerminalLine('pass', '✓ 201/201 suites PASS (0 FAIL, tiempo: 13.39s, exit code 0)');
+      appendTerminalLinesStaggered([
+        { type: 'info', text: '[/verify] Ejecutando suite de 203 pruebas deterministas en 8 workers...' },
+        { type: 'pass', text: '✓ 203/203 suites PASS (0 FAIL, tiempo: 14.12s, exit code 0)' }
+      ]);
     } else if (clean.includes('rm -rf') || clean.includes('drop database') || clean.includes(':(){ :|:& };:')) {
       playAlertBeep();
-      appendTerminalLine('deny', '🚨 [PREFLIGHT INTERCEPTOR] Veredicto: DENY (VIBEGUARD GATE)');
-      appendTerminalLine('deny', 'Vector destructivo interceptado antes de invocar sub-shell.');
-      appendTerminalLine('pass', '✓ Árbol protegido en modo Fail-Closed. Cero bytes modificados.');
+      appendTerminalLinesStaggered([
+        { type: 'deny', text: '🚨 [PREFLIGHT INTERCEPTOR] Veredicto: DENY (VIBEGUARD GATE)' },
+        { type: 'deny', text: 'Vector destructivo interceptado antes de invocar sub-shell.' },
+        { type: 'pass', text: '✓ Árbol protegido en modo Fail-Closed. Cero bytes modificados.' }
+      ], 70);
     } else if (clean === '/snapshot') {
       playSuccessChime();
-      appendTerminalLine('info', '[/snapshot] Creando punto de control inmutable SHA-256...');
-      appendTerminalLine('pass', '✓ Checkpoint "chk_2026_0902" sellado con éxito (131 archivos indexados).');
+      appendTerminalLinesStaggered([
+        { type: 'info', text: '[/snapshot] Creando punto de control inmutable SHA-256...' },
+        { type: 'pass', text: '✓ Checkpoint "chk_2026_0902" sellado con éxito (131 archivos indexados).' }
+      ]);
     } else if (clean === '/rollback') {
       playSuccessChime();
-      appendTerminalLine('info', '[/rollback] Restaurando árbol al último punto de control...');
-      appendTerminalLine('pass', '✓ Reversión atómica completada en 3.8 ms. Árbol de archivos recuperado al 100%.');
+      appendTerminalLinesStaggered([
+        { type: 'info', text: '[/rollback] Restaurando árbol al último punto de control...' },
+        { type: 'pass', text: '✓ Reversión atómica completada en 3.8 ms. Árbol de archivos recuperado al 100%.' }
+      ]);
     } else if (clean === '/premortem') {
       playSuccessChime();
-      appendTerminalLine('info', '[/premortem] Ejecutando simulación adversarial pre-código...');
-      appendTerminalLine('pass', '✓ 3 vectores de falla evaluados · Radio de explosión delimitado al submódulo.');
+      appendTerminalLinesStaggered([
+        { type: 'info', text: '[/premortem] Ejecutando simulación adversarial pre-código...' },
+        { type: 'pass', text: '✓ 3 vectores de falla evaluados · Radio de explosión delimitado al submódulo.' }
+      ]);
     } else if (clean === '/attest') {
       playSuccessChime();
-      appendTerminalLine('info', '[/attest] Generando atestación criptográfica in-toto Statement v1...');
-      appendTerminalLine('pass', '✓ Sobre DSSE generado con clave Ed25519 (Digest: 2253d4c4...)');
+      appendTerminalLinesStaggered([
+        { type: 'info', text: '[/attest] Generando atestación criptográfica in-toto Statement v1...' },
+        { type: 'pass', text: '✓ Sobre DSSE generado con clave Ed25519 (Digest: 2253d4c4...)' }
+      ]);
     } else {
-      appendTerminalLine('info', `[axion] Comando procesado: "${cmd}". Ejecutando preflight síncrono...`);
-      appendTerminalLine('pass', '✓ Veredicto: ALLOW (Sin riesgos destructivos detectados)');
+      appendTerminalLinesStaggered([
+        { type: 'info', text: `[axion] Comando procesado: "${cmd}". Ejecutando preflight síncrono...` },
+        { type: 'pass', text: '✓ Veredicto: ALLOW (Sin riesgos destructivos detectados)' }
+      ]);
     }
   }
 
   if (simTerminalForm && simTerminalInput) {
+    simTerminalInput.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp') {
+        if (terminalCommandHistory.length > 0 && terminalHistoryIndex < terminalCommandHistory.length - 1) {
+          e.preventDefault();
+          terminalHistoryIndex++;
+          simTerminalInput.value = terminalCommandHistory[terminalCommandHistory.length - 1 - terminalHistoryIndex];
+        }
+      } else if (e.key === 'ArrowDown') {
+        if (terminalHistoryIndex > 0) {
+          e.preventDefault();
+          terminalHistoryIndex--;
+          simTerminalInput.value = terminalCommandHistory[terminalCommandHistory.length - 1 - terminalHistoryIndex];
+        } else if (terminalHistoryIndex === 0) {
+          e.preventDefault();
+          terminalHistoryIndex = -1;
+          simTerminalInput.value = '';
+        }
+      }
+    });
+
     simTerminalForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const val = simTerminalInput.value.trim();
       if (val) {
+        terminalCommandHistory.push(val);
+        terminalHistoryIndex = -1;
         executeSimulatorCommand(val);
         simTerminalInput.value = '';
       }
@@ -746,7 +794,11 @@ document.addEventListener('DOMContentLoaded', () => {
   quickCmdButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       const c = btn.getAttribute('data-cmd');
-      executeSimulatorCommand(c);
+      if (c) {
+        terminalCommandHistory.push(c);
+        terminalHistoryIndex = -1;
+        executeSimulatorCommand(c);
+      }
     });
   });
 
@@ -810,6 +862,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const sealHashDisplay = document.getElementById('seal-hash-display');
   const contractCodeDisplay = document.getElementById('contract-code-display');
   const btnCopyContract = document.getElementById('btn-copy-contract');
+  const contractPreviewBox = document.querySelector('.contract-preview-box');
+
+  function scrambleHashEffect(element, targetText) {
+    if (!element) return;
+    const hexChars = '0123456789abcdef';
+    let count = 0;
+    const maxIterations = 8;
+    const interval = setInterval(() => {
+      count++;
+      if (count >= maxIterations) {
+        clearInterval(interval);
+        element.textContent = targetText;
+      } else {
+        const randHex = Array.from({ length: 8 }, () => hexChars[Math.floor(Math.random() * hexChars.length)]).join('');
+        element.textContent = randHex + '...' + targetText.slice(-4);
+      }
+    }, 28);
+  }
+
+  function triggerCopyAnimation(btnElement) {
+    if (!btnElement) return;
+    btnElement.classList.remove('copy-success-pulse');
+    void btnElement.offsetWidth;
+    btnElement.classList.add('copy-success-pulse');
+    setTimeout(() => {
+      btnElement.classList.remove('copy-success-pulse');
+    }, 1800);
+  }
 
   const contractPresets = [
     {
@@ -834,8 +914,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const idx = parseInt(opt.getAttribute('data-opt'), 10) || 0;
       const data = contractPresets[idx];
       if (data) {
-        if (sealHashDisplay) sealHashDisplay.textContent = data.hash;
-        if (contractCodeDisplay) contractCodeDisplay.textContent = data.code;
+        if (contractPreviewBox) {
+          contractPreviewBox.classList.remove('contract-sealed-pulse');
+          void contractPreviewBox.offsetWidth;
+          contractPreviewBox.classList.add('contract-sealed-pulse');
+        }
+        if (contractCodeDisplay) {
+          contractCodeDisplay.textContent = data.code;
+          contractCodeDisplay.classList.remove('code-flash');
+          void contractCodeDisplay.offsetWidth;
+          contractCodeDisplay.classList.add('code-flash');
+        }
+        if (sealHashDisplay) {
+          scrambleHashEffect(sealHashDisplay, data.hash);
+        }
         playSuccessChime();
       }
     });
@@ -845,6 +937,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCopyContract.addEventListener('click', () => {
       navigator.clipboard.writeText(contractCodeDisplay.textContent).then(() => {
         playSuccessChime();
+        triggerCopyAnimation(btnCopyContract);
         showToast(I18N[currentLang].toastCopied);
       }).catch((err) => {
         console.debug('Copy error:', err);
@@ -1265,6 +1358,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = installCmd.textContent.trim();
       navigator.clipboard.writeText(text).then(() => {
         playSuccessChime();
+        triggerCopyAnimation(copyBtn);
         showToast(I18N[currentLang].toastCopied);
         if (copyLabel) {
           copyLabel.textContent = '✓';

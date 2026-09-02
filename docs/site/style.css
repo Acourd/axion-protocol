@@ -1309,8 +1309,20 @@ code, kbd, samp, pre {
   color: #E2E8F0;
 }
 
+@keyframes termLineFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .term-msg {
   margin-bottom: 8px;
+  animation: termLineFadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .term-msg.info { color: #94A3B8; }
@@ -1325,6 +1337,31 @@ code, kbd, samp, pre {
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
+}
+
+.sim-terminal-prompt .prompt-sym {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--emerald-primary);
+  font-weight: 800;
+}
+
+.sim-terminal-prompt .prompt-sym::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: var(--emerald-primary);
+  box-shadow: 0 0 8px var(--emerald-primary);
+  margin-left: 3px;
+  animation: termCursorBlink 1s step-end infinite;
+}
+
+@keyframes termCursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .sim-terminal-prompt input {
@@ -1879,6 +1916,58 @@ code, kbd, samp, pre {
   color: #A78BFA;
   overflow-x: auto;
   flex-grow: 1;
+  transition: opacity 0.25s ease, transform 0.25s var(--ease-spring);
+}
+
+@keyframes contractSealPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    border-color: rgba(16, 185, 129, 0.9);
+  }
+  40% {
+    box-shadow: 0 0 24px 4px rgba(16, 185, 129, 0.45);
+    border-color: #10B981;
+  }
+  100% {
+    box-shadow: var(--glass-specular), 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: var(--border-subtle);
+  }
+}
+
+.contract-preview-box.contract-sealed-pulse {
+  animation: contractSealPulse 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes codeFlash {
+  0% { opacity: 0.4; transform: scale(0.99); }
+  50% { opacity: 1; transform: scale(1.008); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.code-flash {
+  animation: codeFlash 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Animación sutil de copiado exitoso */
+@keyframes copySuccessBounce {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.08); }
+  65% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+.btn-copy-contract.copy-success-pulse,
+.copy-btn.copy-success-pulse {
+  animation: copySuccessBounce 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--emerald-primary);
+  color: #000000;
+  border-color: var(--emerald-primary);
+  box-shadow: 0 0 16px var(--emerald-glow);
+}
+
+[data-theme="light"] .btn-copy-contract.copy-success-pulse,
+[data-theme="light"] .copy-btn.copy-success-pulse {
+  color: #FFFFFF;
 }
 
 /* ── 5. Architecture Radar & Blast Radius Canvas con Acabado Obsidian Glass ── */
