@@ -34,12 +34,58 @@ class SwarmASTArbiter {
     }
   }
 
+  withLock(fn) {
+    this.ensureSwarmDir();
+    const lockPath = path.join(this.swarmDir, 'ast_locks.lock');
+    let fd = null;
+    const start = Date.now();
+    while (Date.now() - start < 3000) {
+      try {
+        fd = fs.openSync(lockPath, 'wx');
+        break;
+      } catch (err) {
+        if (err.code === 'EEXIST') {
+          // Si el lockfile tiene más de 5 segundos de antigüedad, romper bloqueo huérfano
+          try {
+            const stat = fs.statSync(lockPath);
+            if (Date.now() - stat.mtimeMs > 5000) {
+              fs.unlinkSync(lockPath);
+              continue;
+            }
+          } catch (_) {
+            // El lockfile pudo haber sido liberado concurrentemente por otro proceso
+          }
+          // Esperar un breve lapso antes de reintentar
+          const waitTill = Date.now() + 20;
+          while (Date.now() < waitTill) {}
+        } else {
+          throw err;
+        }
+      }
+    }
+    if (fd === null) {
+      throw new Error('SWARM_LOCK_ACQUISITION_TIMEOUT');
+    }
+    try {
+      return fn();
+    } finally {
+      try {
+        fs.closeSync(fd);
+        fs.unlinkSync(lockPath);
+      } catch (_) {
+        // Ignorar si el lockfile ya fue liberado
+      }
+    }
+  }
+
   loadLocks() {
     if (!fs.existsSync(this.locksFile)) return {};
+    const content = fs.readFileSync(this.locksFile, 'utf8');
+    if (!content.trim()) return {};
     try {
-      return JSON.parse(fs.readFileSync(this.locksFile, 'utf8'));
-    } catch (_) {
-      return {};
+      return JSON.parse(content);
+    } catch (err) {
+      throw new Error(`SWARM_LOCKS_CORRUPT_FAIL_CLOSED: ${err.message}`);
     }
   }
 
@@ -67,80 +113,86 @@ class SwarmASTArbiter {
     const lockKey = `${relPath}::${symbolOrMethod}`;
     const now = Date.now();
 
-    const locks = this.loadLocks();
-    const existing = locks[lockKey];
+    return this.withLock(() => {
+      const locks = this.loadLocks();
+      const existing = locks[lockKey];
 
-    // Verificar si el bloqueo existente expiró
-    if (existing && existing.expiresAt > now && existing.agentId !== agentId) {
-      return {
-        acquired: false,
-        reason: 'LOCKED_BY_ANOTHER_AGENT',
-        holder: existing.agentId,
-        lockKey,
-        expiresInMs: existing.expiresAt - now
+      // Verificar si el bloqueo existente expiró
+      if (existing && existing.expiresAt > now && existing.agentId !== agentId) {
+        return {
+          acquired: false,
+          reason: 'LOCKED_BY_ANOTHER_AGENT',
+          holder: existing.agentId,
+          lockKey,
+          expiresInMs: existing.expiresAt - now
+        };
+      }
+
+      const leaseId = crypto.randomBytes(12).toString('hex');
+      const expiresAt = now + leaseMs;
+
+      locks[lockKey] = {
+        leaseId,
+        agentId,
+        filePath: relPath,
+        symbol: symbolOrMethod,
+        acquiredAt: now,
+        expiresAt
       };
-    }
 
-    const leaseId = crypto.randomBytes(12).toString('hex');
-    const expiresAt = now + leaseMs;
+      this.saveLocks(locks);
 
-    locks[lockKey] = {
-      leaseId,
-      agentId,
-      filePath: relPath,
-      symbol: symbolOrMethod,
-      acquiredAt: now,
-      expiresAt
-    };
-
-    this.saveLocks(locks);
-
-    return {
-      acquired: true,
-      leaseId,
-      lockKey,
-      expiresAt,
-      ttlMs: leaseMs
-    };
+      return {
+        acquired: true,
+        leaseId,
+        lockKey,
+        expiresAt,
+        ttlMs: leaseMs
+      };
+    });
   }
 
   /**
    * Libera un bloqueo granular adquirido por un agente.
    */
   releaseLock(leaseId, lockKey) {
-    const locks = this.loadLocks();
-    const existing = locks[lockKey];
+    return this.withLock(() => {
+      const locks = this.loadLocks();
+      const existing = locks[lockKey];
 
-    if (!existing || existing.leaseId !== leaseId) {
-      return { released: false, reason: 'LEASE_NOT_FOUND_OR_MISMATCH' };
-    }
+      if (!existing || existing.leaseId !== leaseId) {
+        return { released: false, reason: 'LEASE_NOT_FOUND_OR_MISMATCH' };
+      }
 
-    delete locks[lockKey];
-    this.saveLocks(locks);
+      delete locks[lockKey];
+      this.saveLocks(locks);
 
-    return { released: true, lockKey };
+      return { released: true, lockKey };
+    });
   }
 
   /**
    * Limpia concesiones expiradas.
    */
   pruneExpiredLocks() {
-    const locks = this.loadLocks();
-    const now = Date.now();
-    let pruned = 0;
+    return this.withLock(() => {
+      const locks = this.loadLocks();
+      const now = Date.now();
+      let pruned = 0;
 
-    for (const [key, val] of Object.entries(locks)) {
-      if (val.expiresAt <= now) {
-        delete locks[key];
-        pruned++;
+      for (const [key, val] of Object.entries(locks)) {
+        if (val.expiresAt <= now) {
+          delete locks[key];
+          pruned++;
+        }
       }
-    }
 
-    if (pruned > 0) {
-      this.saveLocks(locks);
-    }
+      if (pruned > 0) {
+        this.saveLocks(locks);
+      }
 
-    return { pruned };
+      return { pruned, prunedCount: pruned };
+    });
   }
 
   /**
@@ -151,17 +203,29 @@ class SwarmASTArbiter {
     if (!blockA || typeof blockA !== 'object') return baseCode;
     if (!blockB || typeof blockB !== 'object') return baseCode;
 
-    // Si los símbolos modificados son distintos, aplicar ambos de forma determinista
+    // Si los símbolos modificados son distintos, verificar rangos sin solapamiento
     if (blockA.symbol !== blockB.symbol) {
-      let merged = baseCode;
-      if (baseCode.includes(blockA.target) && baseCode.includes(blockB.target)) {
-        merged = merged.replace(blockA.target, blockA.replacement);
-        merged = merged.replace(blockB.target, blockB.replacement);
-        return {
-          success: true,
-          mergedCode: merged,
-          conflicts: 0
-        };
+      const startA = baseCode.indexOf(blockA.target);
+      const startB = baseCode.indexOf(blockB.target);
+
+      if (startA !== -1 && startB !== -1) {
+        const endA = startA + blockA.target.length;
+        const endB = startB + blockB.target.length;
+
+        // Verificar que los rangos objetivo no se solapen
+        if (endA <= startB || endB <= startA) {
+          let merged;
+          if (startA < startB) {
+            merged = baseCode.slice(0, startA) + blockA.replacement + baseCode.slice(endA, startB) + blockB.replacement + baseCode.slice(endB);
+          } else {
+            merged = baseCode.slice(0, startB) + blockB.replacement + baseCode.slice(endB, startA) + blockA.replacement + baseCode.slice(endA);
+          }
+          return {
+            success: true,
+            mergedCode: merged,
+            conflicts: 0
+          };
+        }
       }
     }
 

@@ -87,7 +87,7 @@ class TelemetryGateway {
       });
 
       this.server.on('error', reject);
-      this.server.listen(this.port, () => {
+      this.server.listen(this.port, '127.0.0.1', () => {
         resolve(this.port);
       });
     });

@@ -27,17 +27,29 @@ function executableName(executable) {
 }
 
 function rawLooksDestructive(command) {
-  const normalized = command.toLowerCase().replace(/["'`]/g, ' ');
-  // El separador previo admite barra y contrabarra, no solo espacio o inicio de linea:
-  // `/bin/rm -rf /` evadia el DENY y se degradaba a revision humana, que el hook traduce
-  // a preguntar. Trasladar esa decision a quien lleva veinte confirmaciones seguidas es
-  // como no tenerla. Puede denegar alguna cadena inocente que mencione un nombre parecido
-  // dentro de una carpeta; se acepta, porque una cadena cruda nunca alcanza permiso y en
-  // la duda denegar cuesta menos que continuar.
-  return /(^|[\s/\\])(rm|rmdir|rd|unlink|shred|srm|mkfs|dd|format|remove-item|ri|clear-content|clc|clear-item|cli|remove-itemproperty|rp|format-volume|clear-disk|initialize-disk|remove-partition|reset-physicaldisk|del|erase|diskpart|fdisk)(\.(exe|cmd|bat|ps1))?(\s|$)/i.test(normalized)
-    // Tuberia hacia un interprete: es descargar y ejecutar en un solo gesto, y el prompt
-    // de /preflight ya lo daba por bloqueado. La doc y el motor llevaban versiones
-    // distintas del contrato, y la que mandaba era la que no protegia.
+  const hasIFS = /\$IFS|\$\{IFS\}|IFS=/i.test(command);
+  const normalized = command
+    .replace(/\$\{?IFS\}?/gi, ' ')
+    .toLowerCase()
+    .replace(/["'`]/g, ' ');
+
+  // 1. Detección de IFS o intentos de ofuscación de separadores léxicos
+  if (hasIFS && /(rm|del|rd|erase|unlink|shred|mkfs|dd)/i.test(normalized)) {
+    return true;
+  }
+
+  // 2. Destructores directos con ancla extendida que cubre inicio, espacios, barras, punto y coma, pipes o ampersands
+  const isDirectDestructive = /(^|[\s/\\;&|])(rm|rmdir|rd|unlink|shred|srm|mkfs|dd|format|remove-item|ri|clear-content|clc|clear-item|cli|remove-itemproperty|rp|format-volume|clear-disk|initialize-disk|remove-partition|reset-physicaldisk|del|erase|diskpart|fdisk)(\.(exe|cmd|bat|ps1))?(\s|$|;)/i.test(normalized);
+
+  // 3. Intérpretes con banderas de evaluación directa ejecutando rutinas destructivas
+  const isEvalDestructive = /(python|python3|node|powershell|pwsh|cmd|sh|bash)\b[\s\S]*(-c|-e|--eval|-encodedcommand|-enc)\b[\s\S]*(rmtree|rmsync|unlinksync|remove-item|rmdir|unlink|del|erase|format|clean)/i.test(normalized);
+
+  // 4. PowerShell con comandos codificados en base64 (-EncodedCommand / -enc)
+  const isEncodedPowerShell = /(powershell|pwsh)\b[\s\S]*(-encodedcommand|-enc)\b/i.test(normalized);
+
+  return isDirectDestructive
+    || isEvalDestructive
+    || isEncodedPowerShell
     || /\|\s*(sudo\s+)?(\S*[/\\])?(sh|bash|zsh|fish|dash|ksh|powershell|pwsh|cmd)(\s|$)/i.test(normalized)
     || /\bfind\b[\s\S]*(-delete|-exec)\b/i.test(normalized)
     || /\btruncate\s+-s\s+0\b/i.test(normalized)

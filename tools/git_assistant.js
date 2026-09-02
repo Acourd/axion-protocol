@@ -9,14 +9,19 @@
  * informa al usuario si su proyecto está guardado en GitHub y sugiere guardados proactivos.
  */
 
-const { execSync } = require('child_process');
+const { spawnSync } = require('child_process');
 const process = require('process');
+
+function runGit(args, cwd) {
+  const res = spawnSync('git', args, { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'], shell: false });
+  return res.status === 0 ? (res.stdout || '').trim() : null;
+}
 
 function getGitStatusDiagnosis(options = {}) {
   const cwd = options.cwd || process.cwd();
 
   try {
-    const isGitRepo = execSync('git rev-parse --is-inside-work-tree', { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+    const isGitRepo = runGit(['rev-parse', '--is-inside-work-tree'], cwd);
 
     if (isGitRepo !== 'true') {
       return {
@@ -26,17 +31,14 @@ function getGitStatusDiagnosis(options = {}) {
       };
     }
 
-    const statusOutput = execSync('git status --porcelain', { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+    const statusOutput = runGit(['status', '--porcelain'], cwd) || '';
     const hasUncommitted = statusOutput.length > 0;
-    const changedFilesCount = hasUncommitted ? statusOutput.split('\n').length : 0;
+    const changedFilesCount = hasUncommitted ? statusOutput.split('\n').filter(Boolean).length : 0;
 
     let hasRemote = false;
-    let remoteName = '';
-    try {
-      remoteName = execSync('git remote', { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
-      hasRemote = remoteName.length > 0;
-    } catch (e) {
-      hasRemote = false;
+    let remoteName = runGit(['remote'], cwd);
+    if (remoteName && remoteName.length > 0) {
+      hasRemote = true;
     }
 
     if (!hasUncommitted) {

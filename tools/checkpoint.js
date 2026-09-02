@@ -299,7 +299,14 @@ function restaurar(raiz, referencia, opciones) {
       continue;
     }
     fs.mkdirSync(path.dirname(destino), { recursive: true });
-    fs.writeFileSync(destino, contenido);
+    const tmpDest = `${destino}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    fs.writeFileSync(tmpDest, contenido);
+    try {
+      fs.renameSync(tmpDest, destino);
+    } catch (_) {
+      fs.copyFileSync(tmpDest, destino);
+      if (fs.existsSync(tmpDest)) fs.unlinkSync(tmpDest);
+    }
     restaurados.push(f.path);
   }
 

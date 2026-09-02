@@ -168,6 +168,14 @@ class SovereignSBOMGenerator {
     fs.writeFileSync(cdxPath, JSON.stringify(cdx, null, 2), 'utf8');
     fs.writeFileSync(spdxPath, JSON.stringify(spdx, null, 2), 'utf8');
 
+    // Sincronizar también con sbom/ en la raíz si fue la ruta por defecto
+    if (!destDir) {
+      const rootSbom = path.join(this.root, 'sbom');
+      if (!fs.existsSync(rootSbom)) fs.mkdirSync(rootSbom, { recursive: true });
+      fs.writeFileSync(path.join(rootSbom, 'sbom.cyclonedx.json'), JSON.stringify(cdx, null, 2), 'utf8');
+      fs.writeFileSync(path.join(rootSbom, 'sbom.spdx.json'), JSON.stringify(spdx, null, 2), 'utf8');
+    }
+
     return { cdxPath, spdxPath, componentCount: cdx.components.length };
   }
 }

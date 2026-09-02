@@ -21,6 +21,14 @@ const ROOT = path.resolve(__dirname, '..');
 
 const CORE_MODULES = [
   'tools/preflight.js',
+  'tools/structured_command.js',
+  'tools/canonical_json.js',
+  'tools/dsse.js',
+  'tools/attestation.js',
+  'tools/checkpoint.js',
+  'tools/revocation_manager.js',
+  'tools/approval_ed25519.js',
+  'tools/check_ed25519.js',
   'tools/agent_shield.js',
   'tools/doctor_repair_engine.js',
   'tools/instinct_synthesizer.js',
@@ -31,6 +39,9 @@ const CORE_MODULES = [
   'tools/dynamic_rule_weaver.js',
   'tools/semantic_snapshot_indexer.js',
   'tools/vibeguard_gate.js',
+  'tools/swarm_ast_arbiter.js',
+  'tools/swarm_consensus_arbiter.js',
+  'tools/swarm_p2p_channel.js',
   'tools/sync_doc_stats.js'
 ];
 
@@ -75,12 +86,20 @@ ${code}
       }
     }
 
+    let pkgVersion = '1.3.1-rc.2';
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(this.root, 'package.json'), 'utf8'));
+      if (pkg.version) pkgVersion = pkg.version;
+    } catch (_) {
+      // Fallback a versión por defecto si package.json no está disponible
+    }
+
     const bundleTemplate = `#!/usr/bin/env node
 'use strict';
 
 /**
  * Axion Protocol — Standalone Single-File Bundle
- * Versión: 1.2.0-beta.1 (Zero-Dependency)
+ * Versión: ${pkgVersion} (Zero-Dependency)
  * Compilado: ${new Date().toISOString()}
  */
 
@@ -123,6 +142,9 @@ if (require.main === module) {
   const cmd = args[0] || 'help';
 
   const SUBCOMMANDS = {
+    preflight: () => { const M = __require('tools/preflight.js'); console.log(JSON.stringify(M.runPreflight(args.slice(1).join(' ')), null, 2)); },
+    checkpoint: () => { const M = __require('tools/checkpoint.js'); console.log(M.crear(process.cwd())); },
+    restore: () => { const M = __require('tools/checkpoint.js'); console.log(M.restaurar(process.cwd(), args[1] || 'latest')); },
     shield: () => { const M = __require('tools/agent_shield.js'); new M().runAudit(); },
     doctor: () => { const M = __require('tools/doctor_repair_engine.js'); new M().runDiagnosis(); },
     repair: () => { const M = __require('tools/doctor_repair_engine.js'); new M().repairAll(); },
@@ -134,10 +156,12 @@ if (require.main === module) {
     weave: () => { const M = __require('tools/dynamic_rule_weaver.js'); new M().weaveRules(); },
     search: () => { const M = __require('tools/semantic_snapshot_indexer.js'); console.log(new M().search(args.slice(1).join(' '))); },
     check: () => { const M = __require('tools/doctor_repair_engine.js'); new M().runDiagnosis(); },
+    revocation: () => { const M = __require('tools/revocation_manager.js'); console.log(JSON.stringify(new M().loadCRL(), null, 2)); },
+    swarm: () => { const M = __require('tools/swarm_ast_arbiter.js'); console.log(new M().loadLocks()); },
     help: () => {
-      console.log('Axion Protocol — Standalone Single-File Bundle v1.2.0-beta.1');
+      console.log('Axion Protocol — Standalone Single-File Bundle v${pkgVersion}');
       console.log('Uso: node axion.bundle.js <subcommand>\\n');
-      console.log('Subcomandos disponibles: shield, doctor, repair, instinct, budget, capabilities, dashboard, tree, weave, search, check, help');
+      console.log('Subcomandos disponibles: preflight, checkpoint, restore, shield, doctor, repair, instinct, budget, capabilities, dashboard, tree, weave, search, check, revocation, swarm, help');
     }
   };
 

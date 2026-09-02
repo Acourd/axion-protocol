@@ -38,32 +38,41 @@ class PipelineFastGate {
       pass: false
     };
 
+    const runSafe = (scriptPath, args = []) => {
+      const res = spawnSync(process.execPath, [path.join(this.root, scriptPath), ...args], {
+        cwd: this.root,
+        stdio: 'pipe',
+        shell: false
+      });
+      return res.status === 0;
+    };
+
     try {
       // 1. Tests
-      execSync('node tests/run_all.js', { cwd: this.root, stdio: 'pipe' });
+      if (!runSafe('tests/run_all.js')) throw new Error('run_all failed');
       results.tests = true;
 
       // 2. Health check
-      execSync('node bin/axion.js check', { cwd: this.root, stdio: 'pipe' });
+      if (!runSafe('bin/axion.js', ['check'])) throw new Error('health check failed');
       results.health = true;
 
       // 3. VibeGuard
-      execSync('node tools/vibeguard_gate.js --strict', { cwd: this.root, stdio: 'pipe' });
+      if (!runSafe('tools/vibeguard_gate.js', ['--strict'])) throw new Error('vibeguard failed');
       results.vibeguard = true;
 
       // 4. Chaos Fuzzer 1000
-      execSync('node tools/chaos_fuzzer_1000.js', { cwd: this.root, stdio: 'pipe' });
+      if (!runSafe('tools/chaos_fuzzer_1000.js')) throw new Error('chaos fuzzer failed');
       results.chaosFuzzer = true;
 
       // 5. Mirror local a Axkern si existe el directorio
       if (fs.existsSync(AXKERN)) {
         try {
-          execSync(`robocopy "${this.root}" "${AXKERN}" /MIR /XD .git node_modules scratch .axion\\state .axion\\checkpoints .axion\\manifests .axion\\audit /XF package-lock.json /NJH /NJS /NFL /NDL /NP`, { stdio: 'pipe' });
-        } catch (roboErr) {
-          // Robocopy retorna exit code 1-3 en éxito de copia en Windows
-          if (roboErr.status <= 7) {
-            results.mirror = true;
-          }
+          const SyncMirrorGate = require('./sync_mirror_gate.js');
+          const gate = new SyncMirrorGate(this.root, AXKERN);
+          const syncRes = gate.sync();
+          results.mirror = syncRes.synced || syncRes.initialParity >= 95;
+        } catch (_) {
+          results.mirror = false;
         }
       } else {
         results.mirror = true;

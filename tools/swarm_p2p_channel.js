@@ -87,7 +87,43 @@ class SwarmP2PChannel {
     };
 
     const inboxPath = this.getAgentInboxPath(recipientId);
-    fs.appendFileSync(inboxPath, JSON.stringify(envelope) + '\n', 'utf8');
+    const lockPath = `${inboxPath}.lock`;
+    let fd = null;
+    const start = Date.now();
+    while (Date.now() - start < 3000) {
+      try {
+        fd = fs.openSync(lockPath, 'wx');
+        break;
+      } catch (err) {
+        if (err.code === 'EEXIST') {
+          try {
+            const st = fs.statSync(lockPath);
+            if (Date.now() - st.mtimeMs > 5000) {
+              fs.unlinkSync(lockPath);
+              continue;
+            }
+          } catch (_) {
+            // El lockfile del buzón pudo haber sido liberado concurrentemente
+          }
+          const waitTill = Date.now() + 10;
+          while (Date.now() < waitTill) {}
+        } else {
+          break;
+        }
+      }
+    }
+    try {
+      fs.appendFileSync(inboxPath, JSON.stringify(envelope) + '\n', 'utf8');
+    } finally {
+      if (fd !== null) {
+        try {
+          fs.closeSync(fd);
+          fs.unlinkSync(lockPath);
+        } catch (_) {
+          // Ignorar si el lockfile ya fue eliminado
+        }
+      }
+    }
 
     return {
       success: true,

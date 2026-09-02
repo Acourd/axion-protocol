@@ -26,6 +26,7 @@
  */
 
 const crypto = require('crypto');
+const { canonicalize } = require('./canonical_json.js');
 const { DSSE_STATUS, signEnvelope, verifyEnvelope } = require('./dsse.js');
 
 const STATEMENT_TYPE = 'https://in-toto.io/Statement/v1';
@@ -125,7 +126,7 @@ function createAttestation({ result, privateKey, keyId = null }) {
   const construido = buildStatement(result);
   if (!construido.ok) return Object.freeze({ status: construido.reason });
 
-  const cuerpo = JSON.stringify(construido.statement);
+  const cuerpo = canonicalize(construido.statement);
   const envelope = signEnvelope({
     payloadType: PAYLOAD_TYPE,
     body: cuerpo,

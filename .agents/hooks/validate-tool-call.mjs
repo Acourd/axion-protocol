@@ -133,6 +133,10 @@ async function main() {
 
   // 2. NEEDS_HUMAN_REVIEW: preflight sale con 2. Lo decide la persona, no el hook.
   if (r.status === 2) {
+    const isAntigravity = Boolean(payload?.tool_input?.CommandLine || payload?.tool_input?.commandLine || payload?.CommandLine);
+    if (isAntigravity || process.env.AXION_FAIL_CLOSED === '1') {
+      return block(`preflight clasifico "${comando}" como NEEDS_HUMAN_REVIEW. Antigravity opera en fail-closed: comando de shell crudo denegado sin confirmacion estructurada.`);
+    }
     emit('ask', `Axion: "${comando}" es una cadena de shell cruda (NEEDS_HUMAN_REVIEW). Requiere confirmacion humana; para ALLOW usa un comando estructurado con shell:false.`);
     console.error(`REVIEW by Axion Protocol: "${comando}" requiere confirmacion humana.`);
     return 0;

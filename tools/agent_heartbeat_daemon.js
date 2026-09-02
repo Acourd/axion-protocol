@@ -48,9 +48,9 @@ class AgentHeartbeatDaemon {
     const isHalted = fs.existsSync(haltFile);
 
     // 3. Verificar Hooks
-    const geminiHook = path.join(this.root, '.gemini', 'hooks', 'pretooluse.json');
+    const hookScript = path.join(this.root, '.agents', 'hooks', 'validate-tool-call.mjs');
     const claudeHook = path.join(this.root, '.claude', 'settings.json');
-    const hooksPresent = fs.existsSync(geminiHook) || fs.existsSync(claudeHook) || true;
+    const hooksPresent = fs.existsSync(hookScript) || fs.existsSync(claudeHook);
 
     const t1 = process.hrtime.bigint();
     const latencyMicros = parseFloat((Number(t1 - t0) / 1000).toFixed(2));

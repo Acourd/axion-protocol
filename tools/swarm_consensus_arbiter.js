@@ -20,9 +20,10 @@ const crypto = require('crypto');
 const ROOT = path.resolve(__dirname, '..');
 
 class SwarmConsensusArbiter {
-  constructor(projectRoot = ROOT, { quorumThreshold = 0.66 } = {}) {
+  constructor(projectRoot = ROOT, { quorumThreshold = 0.667 } = {}) {
     this.root = path.resolve(projectRoot);
-    this.quorumThreshold = quorumThreshold;
+    const parsed = Number(quorumThreshold);
+    this.quorumThreshold = (Number.isFinite(parsed) && parsed > 0 && parsed <= 1) ? parsed : 0.667;
     this.consensusDir = path.join(this.root, '.axion', 'swarm', 'consensus');
     this.ensureConsensusDir();
   }
@@ -127,10 +128,15 @@ class SwarmConsensusArbiter {
     let validRejections = 0;
     let validAbstentions = 0;
     let verifiedVotersCount = 0;
+    const seenVoters = new Set();
 
     for (const ballot of proposal.ballots) {
+      if (!ballot || !ballot.voterId) continue;
+      // 1 voto por clave registrada: previene ataques de votación duplicada
+      if (seenVoters.has(ballot.voterId)) continue;
+
       const pubKey = knownPublicKeys[ballot.voterId];
-      if (!pubKey) continue; // Ignorar votos de agentes no registrados
+      if (!pubKey) continue; // Ignorar votos de agentes no registrados en el censo
 
       const ballotData = {
         proposalId: ballot.proposalId,
@@ -150,6 +156,7 @@ class SwarmConsensusArbiter {
       );
 
       if (isValidSig) {
+        seenVoters.add(ballot.voterId);
         verifiedVotersCount++;
         if (ballot.verdict === 'APPROVE') validApprovals++;
         else if (ballot.verdict === 'REJECT') validRejections++;
@@ -157,8 +164,9 @@ class SwarmConsensusArbiter {
       }
     }
 
-    const totalDecisiveVotes = validApprovals + validRejections;
-    const approvalRatio = totalDecisiveVotes > 0 ? validApprovals / totalDecisiveVotes : 0;
+    // BFT riguroso: el denominador incluye todas las papeletas emitidas (abstenciones no aprueban)
+    const totalVoters = validApprovals + validRejections + validAbstentions;
+    const approvalRatio = totalVoters > 0 ? validApprovals / totalVoters : 0;
     const hasSupermajority = approvalRatio >= this.quorumThreshold && verifiedVotersCount >= minVotes;
 
     const result = {

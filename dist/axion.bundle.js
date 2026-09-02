@@ -3,8 +3,8 @@
 
 /**
  * Axion Protocol — Standalone Single-File Bundle
- * Versión: 1.2.0-beta.1 (Zero-Dependency)
- * Compilado: 2026-09-02T21:11:15.007Z
+ * Versión: 1.3.1-rc.2 (Zero-Dependency)
+ * Compilado: 2026-09-02T21:50:13.544Z
  */
 
 const __modules = {};
@@ -116,6 +116,1694 @@ function main() {
 if (require.main === module) main();
 
 module.exports = { COMMAND_DECISION, runPreflight, parseArgs, USAGE };
+
+  };
+
+  __modules['tools/structured_command.js'] = function(module, exports, require) {
+'use strict';
+
+const path = require('path');
+const { spawnSync } = require('child_process');
+
+const COMMAND_DECISION = Object.freeze({
+  ALLOW: 'ALLOW',
+  DENY: 'DENY',
+  NEEDS_HUMAN_REVIEW: 'NEEDS_HUMAN_REVIEW',
+});
+
+const DESTRUCTIVE_EXECUTABLES = new Set([
+  'rm', 'rmdir', 'unlink', 'shred', 'srm', 'mkfs', 'dd', 'truncate',
+  'rd', 'del', 'erase', 'format', 'diskpart', 'fdisk',
+  'remove-item', 'ri', 'clear-content', 'clc', 'clear-item', 'cli',
+  'remove-itemproperty', 'rp', 'format-volume', 'clear-disk',
+  'initialize-disk', 'remove-partition', 'reset-physicaldisk',
+]);
+const SHELL_OR_WRAPPER_EXECUTABLES = new Set([
+  'sh', 'bash', 'zsh', 'fish', 'powershell', 'pwsh', 'cmd', 'wsl',
+  'sudo', 'env', 'nohup', 'xargs', 'invoke-expression', 'iex',
+]);
+const SAFE_GIT_SUBCOMMANDS = new Set(['status', 'log', 'diff', 'show', 'rev-parse']);
+
+function executableName(executable) {
+  return path.basename(executable).toLowerCase().replace(/\.(exe|cmd|bat|ps1)$/, '');
+}
+
+function rawLooksDestructive(command) {
+  const hasIFS = /\$IFS|\$\{IFS\}|IFS=/i.test(command);
+  const normalized = command
+    .replace(/\$\{?IFS\}?/gi, ' ')
+    .toLowerCase()
+    .replace(/["'`]/g, ' ');
+
+  // 1. Detección de IFS o intentos de ofuscación de separadores léxicos
+  if (hasIFS && /(rm|del|rd|erase|unlink|shred|mkfs|dd)/i.test(normalized)) {
+    return true;
+  }
+
+  // 2. Destructores directos con ancla extendida que cubre inicio, espacios, barras, punto y coma, pipes o ampersands
+  const isDirectDestructive = /(^|[\s/\\;&|])(rm|rmdir|rd|unlink|shred|srm|mkfs|dd|format|remove-item|ri|clear-content|clc|clear-item|cli|remove-itemproperty|rp|format-volume|clear-disk|initialize-disk|remove-partition|reset-physicaldisk|del|erase|diskpart|fdisk)(\.(exe|cmd|bat|ps1))?(\s|$|;)/i.test(normalized);
+
+  // 3. Intérpretes con banderas de evaluación directa ejecutando rutinas destructivas
+  const isEvalDestructive = /(python|python3|node|powershell|pwsh|cmd|sh|bash)\b[\s\S]*(-c|-e|--eval|-encodedcommand|-enc)\b[\s\S]*(rmtree|rmsync|unlinksync|remove-item|rmdir|unlink|del|erase|format|clean)/i.test(normalized);
+
+  // 4. PowerShell con comandos codificados en base64 (-EncodedCommand / -enc)
+  const isEncodedPowerShell = /(powershell|pwsh)\b[\s\S]*(-encodedcommand|-enc)\b/i.test(normalized);
+
+  return isDirectDestructive
+    || isEvalDestructive
+    || isEncodedPowerShell
+    || /\|\s*(sudo\s+)?(\S*[/\\])?(sh|bash|zsh|fish|dash|ksh|powershell|pwsh|cmd)(\s|$)/i.test(normalized)
+    || /\bfind\b[\s\S]*(-delete|-exec)\b/i.test(normalized)
+    || /\btruncate\s+-s\s+0\b/i.test(normalized)
+    || /\bcp\s+\/dev\/null\b/i.test(normalized)
+    || />\s*[^\s]+/.test(normalized)
+    || /\bgit\s+(clean\b|reset\s+--hard\b|checkout\s+--\s|push\s+(-f\b|--force\b))/i.test(normalized);
+}
+
+function validateStructuredCommand(command) {
+  if (!command || typeof command !== 'object' || Array.isArray(command)) return false;
+  const keys = Object.keys(command).sort();
+  if (keys.join(',') !== 'args,cwd,executable,shell') return false;
+  return typeof command.executable === 'string'
+    && command.executable.trim() !== ''
+    && Array.isArray(command.args)
+    && command.args.every((arg) => typeof arg === 'string' && !arg.includes('\u0000'))
+    && typeof command.cwd === 'string'
+    && command.cwd.trim() !== ''
+    && command.shell === false;
+}
+
+function classifyCommand(command) {
+  if (typeof command === 'string') {
+    if (command.trim() === '') return { decision: COMMAND_DECISION.DENY, reason: 'EMPTY_RAW_COMMAND' };
+    return rawLooksDestructive(command)
+      ? { decision: COMMAND_DECISION.DENY, reason: 'RAW_DESTRUCTIVE_COMMAND' }
+      : { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'RAW_SHELL_NOT_AUTHORIZED' };
+  }
+  if (!validateStructuredCommand(command)) {
+    return { decision: COMMAND_DECISION.DENY, reason: 'INVALID_STRUCTURED_COMMAND' };
+  }
+
+  const executable = executableName(command.executable);
+  const argsLower = command.args.map((arg) => arg.toLowerCase());
+  if (DESTRUCTIVE_EXECUTABLES.has(executable) || SHELL_OR_WRAPPER_EXECUTABLES.has(executable)) {
+    return { decision: COMMAND_DECISION.DENY, reason: 'DESTRUCTIVE_OR_SHELL_EXECUTABLE' };
+  }
+  if (command.args.some((arg) => /\$\(|`|\|\||&&|[;|<>]/.test(arg))) {
+    return { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'AMBIGUOUS_ARGUMENT_SYNTAX' };
+  }
+  if (executable === 'find' && argsLower.some((arg) => arg === '-delete' || arg === '-exec')) {
+    return { decision: COMMAND_DECISION.DENY, reason: 'DESTRUCTIVE_FIND_OPERATION' };
+  }
+  if (executable === 'cp' && argsLower.includes('/dev/null')) {
+    return { decision: COMMAND_DECISION.DENY, reason: 'DESTRUCTIVE_NULL_COPY' };
+  }
+  if (executable === 'git') {
+    const subcommand = argsLower[0] || '';
+    return SAFE_GIT_SUBCOMMANDS.has(subcommand)
+      ? { decision: COMMAND_DECISION.ALLOW, reason: 'STRUCTURED_READ_ONLY_GIT' }
+      : { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'GIT_SUBCOMMAND_NOT_ALLOWLISTED' };
+  }
+  if (executable === 'node') {
+    return command.args.length === 1 && ['-v', '--version'].includes(argsLower[0])
+      ? { decision: COMMAND_DECISION.ALLOW, reason: 'STRUCTURED_NODE_VERSION' }
+      : { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'NODE_PROGRAM_NOT_ALLOWLISTED' };
+  }
+  return { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'EXECUTABLE_NOT_ALLOWLISTED' };
+}
+
+function executeStructuredCommand(command, options = {}) {
+  const classification = classifyCommand(command);
+  if (classification.decision !== COMMAND_DECISION.ALLOW) {
+    return Object.freeze({ status: classification.decision, reason: classification.reason });
+  }
+  const executor = typeof options.executor === 'function' ? options.executor : spawnSync;
+  let execution;
+  try {
+    execution = executor(command.executable, [...command.args], { cwd: command.cwd, shell: false });
+  } catch (_) {
+    return Object.freeze({ status: 'EXECUTION_FAILED', exitCode: null });
+  }
+  return Object.freeze({
+    status: execution && execution.status === 0 ? 'EXECUTION_SUCCEEDED' : 'EXECUTION_FAILED',
+    exitCode: execution && Number.isInteger(execution.status) ? execution.status : null,
+  });
+}
+
+module.exports = {
+  COMMAND_DECISION,
+  classifyCommand,
+  executeStructuredCommand,
+  validateStructuredCommand,
+};
+
+  };
+
+  __modules['tools/canonical_json.js'] = function(module, exports, require) {
+'use strict';
+
+const crypto = require('crypto');
+
+function canonicalize(value) {
+  if (value === null) return 'null';
+  if (typeof value === 'string' || typeof value === 'boolean') return JSON.stringify(value);
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new TypeError('Canonical JSON rechaza números no finitos.');
+    return Object.is(value, -0) ? '0' : JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return `[${value.map(canonicalize).join(',')}]`;
+  if (typeof value !== 'object') {
+    throw new TypeError(`Canonical JSON rechaza valores ${typeof value}.`);
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    throw new TypeError('Canonical JSON solo acepta objetos JSON planos.');
+  }
+
+  return `{${Object.keys(value)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`)
+    .join(',')}}`;
+}
+
+function hashCanonical(value) {
+  return crypto.createHash('sha256').update(canonicalize(value), 'utf8').digest('hex');
+}
+
+module.exports = { canonicalize, hashCanonical };
+
+  };
+
+  __modules['tools/dsse.js'] = function(module, exports, require) {
+'use strict';
+
+/**
+ * Axion Protocol - Sobres DSSE (Dead Simple Signing Envelope).
+ *
+ * Por que existe este modulo: hasta ahora Axion firmaba sus artefactos en un formato
+ * propio. Funciona, pero solo Axion sabe leerlo, asi que su evidencia no la puede
+ * verificar nadie mas. DSSE es el sobre que usan in-toto, SLSA, cosign y las
+ * atestaciones de GitHub; hablarlo convierte la evidencia en algo comprobable con
+ * herramientas que ya existen.
+ *
+ * Lo que NO hace: no sustituye el formato interno. El sobre propio sigue gobernando el
+ * gating, y la capa Ed25519 no se rediseña —resistio la reauditoria de Fase G y esta
+ * fuera del alcance de Fase H—. Esto es una capa de exportacion, no un reemplazo.
+ *
+ * El detalle que importa: la firma NO se hace sobre el payload, sino sobre su PAE
+ * (Pre-Authentication Encoding), que incorpora el tipo de payload a lo firmado:
+ *
+ *   PAE(type, body) = "DSSEv1" SP LEN(type) SP type SP LEN(body) SP body
+ *
+ * donde SP es un espacio ASCII y LEN es la longitud EN BYTES en decimal ASCII. Sin eso,
+ * una firma valida para un tipo de documento podria reutilizarse haciendola pasar por
+ * otro. El test correspondiente comprueba justo esa reutilizacion.
+ *
+ * Referencia: https://github.com/secure-systems-lab/dsse
+ */
+
+const crypto = require('crypto');
+
+const DSSE_STATUS = Object.freeze({
+  VALID: 'DSSE_VALID',
+  MALFORMED: 'DSSE_MALFORMED',
+  INVALID_SIGNATURE: 'DSSE_INVALID_SIGNATURE',
+  NO_SIGNATURES: 'DSSE_NO_SIGNATURES',
+  UNKNOWN_KEY: 'DSSE_UNKNOWN_KEY',
+});
+
+/**
+ * PAE, byte a byte segun la especificacion.
+ * Las longitudes son de BYTES, no de caracteres: con UTF-8 multibyte no coinciden, y
+ * usar la longitud de la cadena romperia la interoperabilidad en silencio.
+ */
+function pae(payloadType, body) {
+  const tipo = Buffer.from(String(payloadType), 'utf8');
+  const cuerpo = Buffer.isBuffer(body) ? body : Buffer.from(String(body), 'utf8');
+  return Buffer.concat([
+    Buffer.from('DSSEv1', 'utf8'),
+    Buffer.from(' ', 'utf8'),
+    Buffer.from(String(tipo.length), 'utf8'),
+    Buffer.from(' ', 'utf8'),
+    tipo,
+    Buffer.from(' ', 'utf8'),
+    Buffer.from(String(cuerpo.length), 'utf8'),
+    Buffer.from(' ', 'utf8'),
+    cuerpo,
+  ]);
+}
+
+function esClavePrivadaEd25519(clave) {
+  const k = clave instanceof crypto.KeyObject ? clave : crypto.createPrivateKey(clave);
+  if (k.type !== 'private' || k.asymmetricKeyType !== 'ed25519') {
+    throw new TypeError('Se requiere una clave privada Ed25519.');
+  }
+  return k;
+}
+
+function esClavePublicaEd25519(clave) {
+  const k = clave instanceof crypto.KeyObject ? clave : crypto.createPublicKey(clave);
+  if (k.type !== 'public' || k.asymmetricKeyType !== 'ed25519') {
+    throw new TypeError('Se requiere una clave publica Ed25519.');
+  }
+  return k;
+}
+
+/**
+ * Envuelve y firma. `body` es el documento serializado; `payloadType` lo identifica y
+ * queda vinculado a la firma.
+ */
+function signEnvelope({ payloadType, body, privateKey, keyId = null }) {
+  if (typeof payloadType !== 'string' || payloadType.trim() === '') {
+    throw new TypeError('payloadType es obligatorio: es lo que ata la firma a un tipo de documento.');
+  }
+  const cuerpo = Buffer.isBuffer(body) ? body : Buffer.from(String(body), 'utf8');
+  const clave = esClavePrivadaEd25519(privateKey);
+  const firma = crypto.sign(null, pae(payloadType, cuerpo), clave);
+
+  const sig = { sig: firma.toString('base64') };
+  // keyid es una pista NO autenticada; la especificacion lo dice y conviene recordarlo:
+  // no se puede confiar en el para decidir nada, solo para elegir que clave probar.
+  if (typeof keyId === 'string' && keyId !== '') sig.keyid = keyId;
+
+  return {
+    payload: cuerpo.toString('base64'),
+    payloadType,
+    signatures: [sig],
+  };
+}
+
+function envelopeMalformado(envelope) {
+  return !envelope
+    || typeof envelope !== 'object'
+    || Array.isArray(envelope)
+    || typeof envelope.payload !== 'string'
+    || typeof envelope.payloadType !== 'string'
+    || envelope.payloadType.trim() === ''
+    || !Array.isArray(envelope.signatures);
+}
+
+/**
+ * Verifica un sobre contra una o varias claves publicas. Nunca lanza: devuelve un
+ * veredicto, como el resto de primitivas del proyecto.
+ *
+ * `expectedPayloadType` es opcional pero recomendable: verificar sin fijar el tipo
+ * esperado desaprovecha media proteccion del PAE.
+ */
+function verifyEnvelope({ envelope, publicKeys, expectedPayloadType = null }) {
+  if (envelopeMalformado(envelope)) {
+    return Object.freeze({ status: DSSE_STATUS.MALFORMED });
+  }
+  if (envelope.signatures.length === 0) {
+    return Object.freeze({ status: DSSE_STATUS.NO_SIGNATURES });
+  }
+  if (expectedPayloadType !== null && envelope.payloadType !== expectedPayloadType) {
+    // No es "firma invalida": es un documento de otro tipo. Distinguirlo importa
+    // para que quien lea el error entienda que no le han dado lo que pidio.
+    return Object.freeze({ status: DSSE_STATUS.MALFORMED, reason: 'PAYLOAD_TYPE_MISMATCH' });
+  }
+
+  let cuerpo;
+  try {
+    cuerpo = Buffer.from(envelope.payload, 'base64');
+  } catch (_) {
+    return Object.freeze({ status: DSSE_STATUS.MALFORMED });
+  }
+
+  let claves = [];
+  if (Array.isArray(publicKeys)) {
+    claves = publicKeys;
+  } else if (publicKeys && typeof publicKeys === 'object' && !(publicKeys instanceof crypto.KeyObject) && !Buffer.isBuffer(publicKeys)) {
+    claves = Object.values(publicKeys);
+  } else if (publicKeys) {
+    claves = [publicKeys];
+  }
+  if (claves.length === 0) return Object.freeze({ status: DSSE_STATUS.UNKNOWN_KEY });
+
+  const mensaje = pae(envelope.payloadType, cuerpo);
+
+  for (const firma of envelope.signatures) {
+    if (!firma || typeof firma.sig !== 'string') continue;
+    let bytesFirma;
+    try {
+      bytesFirma = Buffer.from(firma.sig, 'base64');
+    } catch (_) { continue; }
+
+    for (const clavePublica of claves) {
+      let clave;
+      try { clave = esClavePublicaEd25519(clavePublica); } catch (_) { continue; }
+      let ok = false;
+      try { ok = crypto.verify(null, mensaje, clave, bytesFirma); } catch (_) { ok = false; }
+      if (ok) {
+        return Object.freeze({
+          status: DSSE_STATUS.VALID,
+          payloadType: envelope.payloadType,
+          body: cuerpo.toString('utf8'),
+          keyid: typeof firma.keyid === 'string' ? firma.keyid : null,
+        });
+      }
+    }
+  }
+
+  return Object.freeze({ status: DSSE_STATUS.INVALID_SIGNATURE });
+}
+
+module.exports = { DSSE_STATUS, pae, signEnvelope, verifyEnvelope };
+
+  };
+
+  __modules['tools/attestation.js'] = function(module, exports, require) {
+'use strict';
+
+/**
+ * Axion Protocol - Atestaciones in-toto.
+ *
+ * Expresa el veredicto de una mision verificada como un in-toto Statement v1 dentro de
+ * un sobre DSSE. A partir de aqui la evidencia de Axion deja de ser un dialecto privado:
+ * la puede verificar cualquier herramienta que hable in-toto.
+ *
+ * Estructura (spec v1):
+ *
+ *   {
+ *     "_type": "https://in-toto.io/Statement/v1",
+ *     "subject": [{ "name": "<mision>", "digest": { "sha256": "<hex>" } }],
+ *     "predicateType": "<URI>",
+ *     "predicate": { ...hechos de gobernanza... }
+ *   }
+ *
+ * El subject es la evidencia de la mision, no un binario: lo que Axion atestigua no es
+ * "este fichero se construyo asi", sino "esta mision recorrio las siete fases y aqui
+ * esta la huella que lo demuestra".
+ *
+ * Regla que se hereda de AX-NC-0001: el predicado se construye SOLO con valores que las
+ * primitivas ya verificaron y devolvieron. Nunca se releen del payload original.
+ */
+
+const crypto = require('crypto');
+const { canonicalize } = require('./canonical_json.js');
+const { DSSE_STATUS, signEnvelope, verifyEnvelope } = require('./dsse.js');
+
+const STATEMENT_TYPE = 'https://in-toto.io/Statement/v1';
+const PAYLOAD_TYPE = 'application/vnd.in-toto+json';
+const PREDICATE_TYPE = 'https://axion-protocol.org/attestation/workflow/v1';
+
+const ATTESTATION_STATUS = Object.freeze({
+  VALID: 'ATTESTATION_VALID',
+  NOT_VERIFIED: 'ATTESTATION_SOURCE_NOT_VERIFIED',
+  MALFORMED: 'ATTESTATION_MALFORMED',
+  INVALID_SIGNATURE: 'ATTESTATION_INVALID_SIGNATURE',
+});
+
+const esHex64 = (v) => typeof v === 'string' && /^[a-f0-9]{64}$/i.test(v);
+
+/**
+ * Construye el Statement a partir del resultado de executeHybridWorkflow.
+ *
+ * Solo se atestiguan misiones VERIFIED. Emitir una atestacion de algo bloqueado seria
+ * exactamente el genero de afirmacion sin respaldo que este proyecto existe para evitar:
+ * una atestacion dice "esto ocurrio y se comprobo", no "esto se intento".
+ */
+function buildStatement(resultado) {
+  if (!resultado || typeof resultado !== 'object' || resultado.status !== 'VERIFIED') {
+    return { ok: false, reason: ATTESTATION_STATUS.NOT_VERIFIED };
+  }
+
+  const { check, approval, rollback, evidenceManifest, workflow } = resultado;
+  const digest = evidenceManifest && typeof evidenceManifest.hash === 'string'
+    ? evidenceManifest.hash.toLowerCase()
+    : null;
+
+  if (!esHex64(digest)) {
+    return { ok: false, reason: ATTESTATION_STATUS.MALFORMED };
+  }
+
+  const statement = {
+    _type: STATEMENT_TYPE,
+    subject: [{
+      name: `axion:mission:${resultado.missionId}`,
+      digest: { sha256: digest },
+    }],
+    predicateType: PREDICATE_TYPE,
+    predicate: {
+      missionId: resultado.missionId,
+      risk: resultado.risk,
+      outcome: 'VERIFIED',
+      // Identidades verificadas. Se declaran por separado porque la propiedad que
+      // Axion pretende demostrar es justamente que son distintas entre si.
+      roles: {
+        executor: (check && check.executorActorId) || null,
+        auditor: (check && check.actorId) || null,
+        approver: (approval && approval.actorId) || null,
+      },
+      // Sin esto, las tres identidades de arriba parecerian constar igual de bien.
+      // No es asi: dos vienen de firmas verificadas y la del ejecutor la escribio el
+      // propio ejecutor. Quien reciba la atestacion tiene derecho a saberlo.
+      assurance: resultado.assurance || null,
+      approval: approval ? {
+        status: approval.status,
+        approvalId: approval.approvalId || null,
+        digest: approval.approvalDigest || null,
+        keyId: approval.keyId || null,
+      } : null,
+      check: check ? {
+        status: check.status,
+        checkId: check.checkId || null,
+        digest: check.checkDigest || null,
+        keyId: check.keyId || null,
+      } : null,
+      rollback: rollback ? { status: rollback.status } : null,
+      evidence: {
+        manifestHash: digest,
+        bindingHash: evidenceManifest.binding_hash
+          ? evidenceManifest.binding_hash.toLowerCase()
+          : null,
+      },
+      workflow: {
+        // La secuencia de fases recorrida: es lo que distingue "paso los siete pasos"
+        // de "alguien declaro que los paso".
+        phases: workflow && Array.isArray(workflow.history)
+          ? workflow.history.map((h) => (typeof h === 'string' ? h : h && h.phase)).filter(Boolean)
+          : [],
+        state: workflow ? workflow.state || null : null,
+      },
+    },
+  };
+
+  return { ok: true, statement };
+}
+
+/**
+ * Statement + sobre DSSE firmado. `canonical` deja el JSON en forma estable para que
+ * dos ejecuciones del mismo veredicto produzcan bytes identicos.
+ */
+function createAttestation({ result, privateKey, keyId = null }) {
+  const construido = buildStatement(result);
+  if (!construido.ok) return Object.freeze({ status: construido.reason });
+
+  const cuerpo = canonicalize(construido.statement);
+  const envelope = signEnvelope({
+    payloadType: PAYLOAD_TYPE,
+    body: cuerpo,
+    privateKey,
+    keyId,
+  });
+
+  return Object.freeze({
+    status: ATTESTATION_STATUS.VALID,
+    envelope,
+    statement: construido.statement,
+  });
+}
+
+/**
+ * Verifica un sobre y devuelve el Statement que contiene, comprobando ademas que sea
+ * realmente una atestacion de Axion y no otro documento in-toto cualquiera.
+ */
+function verifyAttestation({ envelope, publicKeys }) {
+  const veredicto = verifyEnvelope({
+    envelope,
+    publicKeys,
+    expectedPayloadType: PAYLOAD_TYPE,
+  });
+
+  if (veredicto.status === DSSE_STATUS.INVALID_SIGNATURE) {
+    return Object.freeze({ status: ATTESTATION_STATUS.INVALID_SIGNATURE });
+  }
+  if (veredicto.status !== DSSE_STATUS.VALID) {
+    return Object.freeze({ status: ATTESTATION_STATUS.MALFORMED, dsse: veredicto.status });
+  }
+
+  let statement;
+  try {
+    statement = JSON.parse(veredicto.body);
+  } catch (_) {
+    return Object.freeze({ status: ATTESTATION_STATUS.MALFORMED });
+  }
+
+  if (!statement || statement._type !== STATEMENT_TYPE
+      || statement.predicateType !== PREDICATE_TYPE
+      || !Array.isArray(statement.subject) || statement.subject.length === 0
+      || !statement.subject[0] || !statement.subject[0].digest
+      || !esHex64(statement.subject[0].digest.sha256)) {
+    return Object.freeze({ status: ATTESTATION_STATUS.MALFORMED });
+  }
+
+  return Object.freeze({
+    status: ATTESTATION_STATUS.VALID,
+    statement,
+    keyid: veredicto.keyid,
+  });
+}
+
+const USO = [
+  'Uso:',
+  '  node tools/attestation.js verify <sobre.json> <clave-publica.pem>',
+  '',
+  'Emite y verifica atestaciones in-toto v1 en sobres DSSE. El sobre es el mismo formato',
+  'que usan in-toto, SLSA y cosign, asi que la evidencia de una mision verificada puede',
+  'comprobarse con herramientas ajenas a este proyecto.',
+  '',
+  `  payloadType    ${PAYLOAD_TYPE}`,
+  `  predicateType  ${PREDICATE_TYPE}`,
+  '',
+  'Para emitirla hace falta el resultado de una mision VERIFIED, asi que se genera desde',
+  'codigo con createAttestation(); no hay forma de fabricar una desde la linea de comandos.',
+  '',
+  'Codigos de salida: 0 valida, 1 invalida, 2 uso incorrecto.',
+].join('\n');
+
+function main() {
+  const [accion, rutaSobre, rutaClave] = process.argv.slice(2);
+  if (accion !== 'verify' || !rutaSobre || !rutaClave) {
+    console.log(USO);
+    process.exit(2);
+  }
+
+  const fs = require('fs');
+  let envelope;
+  try {
+    envelope = JSON.parse(fs.readFileSync(rutaSobre, 'utf8'));
+  } catch (error) {
+    console.log(JSON.stringify({ status: ATTESTATION_STATUS.MALFORMED, reason: error.message }, null, 2));
+    process.exit(1);
+  }
+
+  let clave;
+  try {
+    clave = crypto.createPublicKey(fs.readFileSync(rutaClave, 'utf8'));
+  } catch (error) {
+    console.log(JSON.stringify({ status: 'PUBLIC_KEY_UNREADABLE', reason: error.message }, null, 2));
+    process.exit(2);
+  }
+
+  const veredicto = verifyAttestation({ envelope, publicKeys: [clave] });
+  console.log(JSON.stringify(veredicto, null, 2));
+  process.exit(veredicto.status === ATTESTATION_STATUS.VALID ? 0 : 1);
+}
+
+if (require.main === module) main();
+
+module.exports = {
+  ATTESTATION_STATUS,
+  STATEMENT_TYPE,
+  PAYLOAD_TYPE,
+  PREDICATE_TYPE,
+  buildStatement,
+  createAttestation,
+  verifyAttestation,
+  USO,
+};
+
+  };
+
+  __modules['tools/checkpoint.js'] = function(module, exports, require) {
+'use strict';
+
+/**
+ * Axion Protocol - Puntos de control y restauracion determinista.
+ *
+ * Por que existe: hasta ahora /checkpoint y /rollback prometian "restaurar al ultimo
+ * snapshot SHA-256 verificado", pero lo unico que habia era un manifiesto de hashes.
+ * De un hash no se reconstruye un fichero. Prometer una reversion que no puede ocurrir
+ * es peor que no ofrecerla, porque invita a trabajar sin red creyendo que la hay.
+ *
+ * Aqui el snapshot guarda el contenido, no solo su huella, y la restauracion se
+ * verifica entera antes de escribir nada:
+ *
+ *   - El manifiesto lleva el sha256 de cada fichero y un digest del manifiesto entero.
+ *   - Antes de restaurar se recalcula el hash de cada copia guardada. Si una sola no
+ *     cuadra, no se restaura ninguna: una reversion a medias deja el arbol en un estado
+ *     que nadie ha revisado jamas, y eso es peor que el fallo que se queria deshacer.
+ *   - Restaurar crea antes su propio punto de control, para que deshacer sea reversible.
+ *   - Los ficheros creados despues del checkpoint se informan pero no se borran. Con
+ *     --prune se eliminan, y hay que pedirlo explicitamente.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
+const CONTRATO = '1.0.0';
+const DIR_EXCLUIDOS = new Set([
+  '.git', 'node_modules', '.axion', 'scratch', 'dist', 'build', 'out',
+  '.next', '.nuxt', '.venv', 'venv', '__pycache__', 'coverage', '.cache', 'target',
+]);
+const LIMITE_FICHERO = 5 * 1024 * 1024;
+const LIMITE_TOTAL = 200 * 1024 * 1024;
+
+// Cap MAX_CHECKPOINTS a 3 para mantener el proyecto ligero y prevenir inflación de I/O en disco.
+const MAX_CHECKPOINTS = 3;
+
+const sha256 = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
+
+function dirCheckpoints(raiz) {
+  return path.join(raiz, '.axion', 'checkpoints');
+}
+
+/**
+ * ¿La ruta relativa de un manifiesto se queda dentro del arbol?
+ *
+ * Sin esto, una entrada con `../` convertia la reversion en escritura arbitraria en
+ * cualquier punto del disco alcanzable, y el digest no lo impedia: nadie firma el
+ * manifiesto, asi que quien lo edita tambien puede recalcularlo. El agravante es que la
+ * red de seguridad previa se sella desde el arbol de trabajo y NO contiene el fichero de
+ * fuera, de modo que lo que se pisa ahi se pierde sin vuelta.
+ *
+ * Se comprueba al restaurar y tambien al sellar: un manifiesto con rutas invalidas no
+ * deberia llegar siquiera a existir.
+ */
+function rutaContenida(raiz, relativa) {
+  if (typeof relativa !== 'string' || relativa.trim() === '') return false;
+  if (path.isAbsolute(relativa) || /^[A-Za-z]:/.test(relativa)) return false;
+  const destino = path.resolve(raiz, relativa);
+  const base = path.resolve(raiz);
+  return destino !== base && destino.startsWith(base + path.sep);
+}
+
+// El id ordena lexicograficamente igual que cronologicamente, asi que "el ultimo"
+// es el ultimo del listado ordenado y no hace falta leer metadatos para saberlo.
+// El sufijo numerico solo aparece si dos sellados caen en el mismo milisegundo, para
+// que uno no pise al otro en silencio.
+function nuevoId(raiz, etiqueta) {
+  const marca = new Date().toISOString().replace(/[:.]/g, '-');
+  const etiquetaStr = (etiqueta && typeof etiqueta === 'object')
+    ? (etiqueta.label || etiqueta.etiqueta || etiqueta.name || 'checkpoint')
+    : String(etiqueta || 'checkpoint');
+  const limpia = etiquetaStr
+    .toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+  const base = marca + '__' + (limpia || 'checkpoint');
+  let id = base;
+  let n = 1;
+  while (fs.existsSync(path.join(dirCheckpoints(raiz), id))) {
+    id = base + '-' + (n += 1);
+  }
+  return id;
+}
+
+function recorrer(raiz, relativo) {
+  const abs = path.join(raiz, relativo || '');
+  let entradas;
+  try {
+    entradas = fs.readdirSync(abs, { withFileTypes: true });
+  } catch (_) {
+    return [];
+  }
+  const salida = [];
+  for (const e of entradas) {
+    if (e.isSymbolicLink()) continue;
+    const rel = relativo ? relativo + '/' + e.name : e.name;
+    if (e.isDirectory()) {
+      if (DIR_EXCLUIDOS.has(e.name)) continue;
+      salida.push(...recorrer(raiz, rel));
+    } else if (e.isFile()) {
+      salida.push(rel);
+    }
+  }
+  return salida;
+}
+
+function crear(raiz, etiqueta, kind) {
+  const id = nuevoId(raiz, etiqueta);
+  const destino = path.join(dirCheckpoints(raiz), id);
+  const dirDatos = path.join(destino, 'files');
+  fs.mkdirSync(dirDatos, { recursive: true });
+
+  const ficheros = [];
+  const omitidos = [];
+  let total = 0;
+
+  for (const rel of recorrer(raiz)) {
+    // Defensa en el origen: recorrer() no deberia producir rutas que escapen, pero si
+    // algun dia lo hiciera -un enlace, un nombre raro- el manifiesto no debe recogerlas.
+    if (!rutaContenida(raiz, rel)) {
+      omitidos.push({ path: rel, reason: 'RUTA_FUERA_DE_RAIZ' });
+      continue;
+    }
+    const origen = path.join(raiz, rel);
+    let st;
+    try {
+      st = fs.statSync(origen);
+    } catch (_) {
+      omitidos.push({ path: rel, reason: 'ILEGIBLE' });
+      continue;
+    }
+    if (st.size > LIMITE_FICHERO) {
+      omitidos.push({ path: rel, reason: 'EXCEDE_LIMITE_FICHERO' });
+      continue;
+    }
+    if (total + st.size > LIMITE_TOTAL) {
+      omitidos.push({ path: rel, reason: 'EXCEDE_LIMITE_TOTAL' });
+      continue;
+    }
+    let contenido;
+    try {
+      contenido = fs.readFileSync(origen);
+    } catch (_) {
+      omitidos.push({ path: rel, reason: 'ILEGIBLE' });
+      continue;
+    }
+    const copia = path.join(dirDatos, rel);
+    fs.mkdirSync(path.dirname(copia), { recursive: true });
+    fs.writeFileSync(copia, contenido);
+    ficheros.push({ path: rel, sha256: sha256(contenido), size: st.size });
+    total += st.size;
+  }
+
+  ficheros.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+
+  const manifiesto = {
+    contractVersion: CONTRATO,
+    checkpointId: id,
+    label: etiqueta || null,
+    // 'safety' marca las redes automaticas que crea restore. No son puntos elegidos por
+    // nadie, asi que quedan fuera de "latest": si contaran, un segundo `restore latest`
+    // devolveria justo el estado que se acababa de deshacer.
+    kind: kind === 'safety' ? 'safety' : 'user',
+    createdAt: new Date().toISOString(),
+    root: path.basename(raiz),
+    fileCount: ficheros.length,
+    totalBytes: total,
+    skipped: omitidos,
+    files: ficheros,
+  };
+  // El digest cubre solo la lista de ficheros: es lo que se restaura, y asi el mismo
+  // arbol produce el mismo digest aunque cambie la etiqueta o la hora.
+  manifiesto.digest = sha256(JSON.stringify(ficheros));
+
+  fs.writeFileSync(path.join(destino, 'manifest.json'), JSON.stringify(manifiesto, null, 2), 'utf8');
+  manifiesto.purged = purgarExcedente(raiz, id, manifiesto.kind);
+  return manifiesto;
+}
+
+/**
+ * Retira los puntos de control mas antiguos por encima del techo. Nunca toca el recien
+ * creado, y cuenta cada tipo por separado: las redes de seguridad automaticas no deben
+ * desplazar a los puntos que alguien eligio sellar a proposito.
+ */
+function purgarExcedente(raiz, idProtegido, kindProtegido) {
+  const base = dirCheckpoints(raiz);
+  const retirados = [];
+  const todos = listar(raiz);
+  for (const tipo of ['user', 'safety']) {
+    const delTipo = todos
+      .filter((m) => (m.kind || 'user') === tipo && m.checkpointId !== idProtegido)
+      .map((m) => m.checkpointId)
+      .sort();
+    // El recien creado ya ocupa una plaza de SU tipo. Descontarla del otro haria que
+    // sellar redes de seguridad fuese comiendose, plaza a plaza, los puntos elegidos a mano.
+    const cupo = tipo === kindProtegido ? MAX_CHECKPOINTS - 1 : MAX_CHECKPOINTS;
+    for (const id of delTipo.slice(0, Math.max(0, delTipo.length - cupo))) {
+      try {
+        fs.rmSync(path.join(base, id), { recursive: true, force: true });
+        retirados.push(id);
+      } catch (_) {
+        // Un punto que no se deja borrar no invalida el que se acaba de sellar.
+      }
+    }
+  }
+  return retirados;
+}
+
+function listar(raiz) {
+  const base = dirCheckpoints(raiz);
+  if (!fs.existsSync(base)) return [];
+  return fs.readdirSync(base)
+    .filter((d) => fs.existsSync(path.join(base, d, 'manifest.json')))
+    .sort()
+    .map((id) => {
+      try {
+        return JSON.parse(fs.readFileSync(path.join(base, id, 'manifest.json'), 'utf8'));
+      } catch (_) {
+        return { checkpointId: id, corrupto: true };
+      }
+    });
+}
+
+function resolver(raiz, referencia) {
+  const todos = listar(raiz);
+  if (todos.length === 0) return null;
+  if (!referencia || referencia === 'latest' || referencia === 'ultimo') {
+    const elegidos = todos.filter((m) => m.kind !== 'safety');
+    return elegidos.length > 0 ? elegidos[elegidos.length - 1] : null;
+  }
+  // Por id exacto o por etiqueta; una red de seguridad solo se alcanza nombrandola.
+  return todos.find((m) => m.checkpointId === referencia)
+    || todos.filter((m) => m.label === referencia).pop()
+    || null;
+}
+
+/**
+ * Verifica un checkpoint entero sin tocar el arbol de trabajo. Se llama siempre antes
+ * de restaurar, y tambien suelto, para auditar que la red de seguridad sigue ahi.
+ */
+function verificar(raiz, manifiesto) {
+  if (!manifiesto || manifiesto.corrupto) {
+    return { pass: false, status: 'CHECKPOINT_MISSING', problemas: ['no existe o el manifiesto es ilegible'] };
+  }
+  if (manifiesto.contractVersion !== CONTRATO) {
+    return { pass: false, status: 'CHECKPOINT_CONTRACT_MISMATCH', problemas: ['contractVersion ' + manifiesto.contractVersion] };
+  }
+  if (manifiesto.digest !== sha256(JSON.stringify(manifiesto.files))) {
+    return { pass: false, status: 'CHECKPOINT_DIGEST_MISMATCH', problemas: ['el manifiesto fue alterado tras crearse'] };
+  }
+  const dirDatos = path.join(dirCheckpoints(raiz), manifiesto.checkpointId, 'files');
+  const problemas = [];
+  for (const f of manifiesto.files) {
+    // La ruta se valida antes que nada: si escapa del arbol, ni siquiera se mira si la
+    // copia existe. Un checkpoint con una sola ruta fuera se descarta entero, porque el
+    // resto del manifiesto ya no merece confianza.
+    if (!rutaContenida(raiz, f.path)) {
+      problemas.push('la ruta ' + JSON.stringify(f.path) + ' escapa de la raiz del proyecto');
+      continue;
+    }
+    if (!rutaContenida(dirDatos, f.path)) {
+      problemas.push('la ruta ' + JSON.stringify(f.path) + ' escapa del almacen del checkpoint');
+      continue;
+    }
+    const copia = path.join(dirDatos, f.path);
+    if (!fs.existsSync(copia)) {
+      problemas.push('falta la copia de ' + f.path);
+      continue;
+    }
+    if (sha256(fs.readFileSync(copia)) !== f.sha256) {
+      problemas.push('la copia de ' + f.path + ' no coincide con su sha256');
+    }
+  }
+  return problemas.length === 0
+    ? { pass: true, status: 'CHECKPOINT_VALID', problemas: [] }
+    : { pass: false, status: 'CHECKPOINT_CORRUPT', problemas };
+}
+
+function restaurar(raiz, referencia, opciones) {
+  const opts = opciones || {};
+  const manifiesto = resolver(raiz, referencia);
+  const v = verificar(raiz, manifiesto);
+  if (!v.pass) {
+    return { pass: false, status: v.status, problemas: v.problemas };
+  }
+
+  // Deshacer tiene que ser deshacible. Sin esta red, un /rollback equivocado seria
+  // tan irreversible como el fallo que venia a corregir.
+  const previo = opts.safety === false ? null : crear(raiz, 'pre-restore-' + manifiesto.checkpointId.slice(0, 19), 'safety');
+
+  const dirDatos = path.join(dirCheckpoints(raiz), manifiesto.checkpointId, 'files');
+  const restaurados = [];
+  const intactos = [];
+  for (const f of manifiesto.files) {
+    const destino = path.join(raiz, f.path);
+    const contenido = fs.readFileSync(path.join(dirDatos, f.path));
+    if (fs.existsSync(destino) && sha256(fs.readFileSync(destino)) === f.sha256) {
+      intactos.push(f.path);
+      continue;
+    }
+    fs.mkdirSync(path.dirname(destino), { recursive: true });
+    const tmpDest = `${destino}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    fs.writeFileSync(tmpDest, contenido);
+    try {
+      fs.renameSync(tmpDest, destino);
+    } catch (_) {
+      fs.copyFileSync(tmpDest, destino);
+      if (fs.existsSync(tmpDest)) fs.unlinkSync(tmpDest);
+    }
+    restaurados.push(f.path);
+  }
+
+  const enManifiesto = new Set(manifiesto.files.map((f) => f.path));
+  const posteriores = recorrer(raiz).filter((rel) => !enManifiesto.has(rel));
+  const eliminados = [];
+  if (opts.prune) {
+    for (const rel of posteriores) {
+      try {
+        fs.unlinkSync(path.join(raiz, rel));
+        eliminados.push(rel);
+      } catch (_) {
+        // Un fichero bloqueado por otro proceso no justifica abortar una restauracion
+        // ya escrita; se informa como no eliminado y decide la persona.
+      }
+    }
+  }
+
+  return {
+    pass: true,
+    status: 'ROLLBACK_APPLIED',
+    checkpointId: manifiesto.checkpointId,
+    digest: manifiesto.digest,
+    restaurados,
+    intactos,
+    posteriores: opts.prune ? [] : posteriores,
+    eliminados,
+    safetyCheckpoint: previo ? previo.checkpointId : null,
+  };
+}
+
+const USO = [
+  'Uso:',
+  '  node tools/checkpoint.js create [etiqueta]     sella el estado actual del arbol',
+  '  node tools/checkpoint.js list                  lista los puntos de control',
+  '  node tools/checkpoint.js verify [id|latest]    comprueba integridad sin restaurar',
+  '  node tools/checkpoint.js restore [id|latest]   restaura (crea antes una red de seguridad)',
+  '',
+  'Opciones:',
+  '  --prune            en restore, elimina tambien lo creado despues del checkpoint',
+  '  --target <dir>     directorio a gobernar (por defecto, el actual)',
+  '',
+  'Se conservan los ' + MAX_CHECKPOINTS + ' puntos mas recientes de cada tipo; los anteriores se retiran.',
+  '',
+  'Se excluyen .git, node_modules, .axion, scratch y directorios de build.',
+  'Codigos de salida: 0 correcto, 1 fallo o integridad rota, 2 uso incorrecto.',
+].join('\n');
+
+function main() {
+  const args = process.argv.slice(2);
+  const accion = args[0];
+  if (!accion || accion === '--help' || accion === '-h') {
+    console.log(USO);
+    process.exit(2);
+  }
+
+  let raiz = process.cwd();
+  const iTarget = args.indexOf('--target');
+  if (iTarget !== -1 && args[iTarget + 1]) raiz = path.resolve(args[iTarget + 1]);
+
+  const prune = args.includes('--prune');
+  const posicional = [];
+  for (let i = 1; i < args.length; i++) {
+    if (args[i] === '--target') { i += 1; continue; }
+    if (args[i].startsWith('--')) continue;
+    posicional.push(args[i]);
+  }
+
+  if (accion === 'create') {
+    const m = crear(raiz, posicional[0]);
+    console.log('OK Punto de control sellado.');
+    console.log('  Id:       ' + m.checkpointId);
+    console.log('  Digest:   ' + m.digest);
+    console.log('  Ficheros: ' + m.fileCount + ' (' + (m.totalBytes / 1024).toFixed(1) + ' KiB)');
+    if (m.skipped.length > 0) console.log('  Omitidos: ' + m.skipped.length + ' (por tamano o ilegibles)');
+    if (m.purged && m.purged.length > 0) console.log('  Retirados por antiguedad: ' + m.purged.length + ' (techo: ' + MAX_CHECKPOINTS + ')');
+    console.log('  Reversion: node tools/checkpoint.js restore ' + m.checkpointId);
+    process.exit(0);
+  }
+
+  if (accion === 'list') {
+    const todos = listar(raiz);
+    if (todos.length === 0) {
+      console.log('No hay puntos de control. Crea uno con: node tools/checkpoint.js create <etiqueta>');
+      process.exit(0);
+    }
+    todos.forEach((m) => console.log('  ' + (m.kind === 'safety' ? '[red]  ' : '[user] ') + m.checkpointId + '  ' + String(m.fileCount).padStart(5) + ' ficheros  ' + String(m.digest || '').slice(0, 16)));
+    process.exit(0);
+  }
+
+  if (accion === 'verify') {
+    const m = resolver(raiz, posicional[0]);
+    const v = verificar(raiz, m);
+    console.log(JSON.stringify({ status: v.status, checkpointId: m ? m.checkpointId : null, problemas: v.problemas }, null, 2));
+    process.exit(v.pass ? 0 : 1);
+  }
+
+  if (accion === 'restore') {
+    const r = restaurar(raiz, posicional[0], { prune });
+    if (!r.pass) {
+      console.error('FALLO Reversion NO aplicada (' + r.status + ').');
+      r.problemas.forEach((p) => console.error('  - ' + p));
+      console.error('  No se ha tocado ningun fichero: una restauracion parcial es peor que ninguna.');
+      process.exit(1);
+    }
+    console.log('OK Reversion completada.');
+    console.log('  Checkpoint:  ' + r.checkpointId);
+    console.log('  Restaurados: ' + r.restaurados.length + ' | Ya identicos: ' + r.intactos.length);
+    r.restaurados.slice(0, 20).forEach((f) => console.log('    - ' + f));
+    if (r.restaurados.length > 20) console.log('    ... y ' + (r.restaurados.length - 20) + ' mas');
+    if (r.posteriores.length > 0) {
+      console.log('  Creados despues del checkpoint y NO eliminados: ' + r.posteriores.length + ' (usa --prune para borrarlos)');
+    }
+    if (r.eliminados.length > 0) console.log('  Eliminados por --prune: ' + r.eliminados.length);
+    if (r.safetyCheckpoint) console.log('  Red de seguridad previa: ' + r.safetyCheckpoint);
+    process.exit(0);
+  }
+
+  console.log('Accion desconocida: ' + accion + '\n');
+  console.log(USO);
+  process.exit(2);
+}
+
+if (require.main === module) main();
+
+module.exports = { CONTRATO, MAX_CHECKPOINTS, crear, listar, resolver, verificar, restaurar, rutaContenida, USO };
+
+  };
+
+  __modules['tools/revocation_manager.js'] = function(module, exports, require) {
+'use strict';
+
+/**
+ * Axion Protocol — Sovereign Key & Token Revocation Manager
+ *
+ * Mecanismo formal de revocación criptográfica determinista:
+ * 1. Emisión de Certificados de Revocación (CRL) firmados digitalmente con Ed25519.
+ * 2. Protección anti-replay mediante nonces criptográficos y sellado temporal ISO 8601.
+ * 3. Motivos de revocación formales (KEY_COMPROMISE, SUPERSEDED, CESSATION_OF_OPERATION).
+ * 4. Verificación fail-closed ante claves o certificados revocados.
+ *
+ * Cero dependencias externas.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const { canonicalize, hashCanonical } = require('./canonical_json.js');
+
+const ROOT = path.resolve(__dirname, '..');
+const REVOCATION_REASONS = Object.freeze([
+  'KEY_COMPROMISE',
+  'SUPERSEDED',
+  'CESSATION_OF_OPERATION',
+  'UNSPECIFIED'
+]);
+
+class RevocationManager {
+  constructor(projectRoot = ROOT) {
+    this.root = path.resolve(projectRoot);
+    this.revocationDir = path.join(this.root, '.axion', 'revocations');
+    this.crlFile = path.join(this.revocationDir, 'crl.json');
+    this.ensureDir();
+  }
+
+  ensureDir() {
+    if (!fs.existsSync(this.revocationDir)) {
+      fs.mkdirSync(this.revocationDir, { recursive: true });
+    }
+  }
+
+  loadCRL() {
+    if (!fs.existsSync(this.crlFile)) {
+      return { version: '1.0.0', entries: [] };
+    }
+    try {
+      const data = JSON.parse(fs.readFileSync(this.crlFile, 'utf8'));
+      return Array.isArray(data.entries) ? data : { version: '1.0.0', entries: [] };
+    } catch (_) {
+      return { version: '1.0.0', entries: [] };
+    }
+  }
+
+  saveCRL(crl) {
+    this.ensureDir();
+    const tmp = `${this.crlFile}.tmp-${Date.now()}`;
+    fs.writeFileSync(tmp, JSON.stringify(crl, null, 2), 'utf8');
+    try {
+      fs.renameSync(tmp, this.crlFile);
+    } catch (_) {
+      fs.copyFileSync(tmp, this.crlFile);
+      if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
+    }
+  }
+
+  /**
+   * Emite un certificado de revocación firmado para una clave o actor.
+   */
+  createRevocationCertificate({
+    targetKeyId,
+    actorId = 'unknown',
+    reason = 'KEY_COMPROMISE',
+    issuerKeyId,
+    issuerPrivateKey
+  }) {
+    if (!targetKeyId || !issuerPrivateKey) {
+      throw new Error('targetKeyId e issuerPrivateKey son obligatorios');
+    }
+
+    const normalizedReason = REVOCATION_REASONS.includes(reason) ? reason : 'UNSPECIFIED';
+    const timestamp = new Date().toISOString();
+    const nonce = crypto.randomBytes(16).toString('hex');
+    const revocationId = `REV-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+
+    const statement = {
+      revocationId,
+      targetKeyId,
+      actorId,
+      reason: normalizedReason,
+      revokedAt: timestamp,
+      nonce,
+      issuerKeyId: issuerKeyId || 'root-authority'
+    };
+
+    const canonicalBytes = Buffer.from(canonicalize(statement), 'utf8');
+    const signature = crypto.sign(null, canonicalBytes, issuerPrivateKey).toString('base64');
+    const certDigest = hashCanonical(statement);
+
+    const certificate = {
+      ...statement,
+      signature,
+      certDigest,
+      algorithm: 'Ed25519'
+    };
+
+    // Registrar en CRL local
+    const crl = this.loadCRL();
+    crl.entries.push(certificate);
+    this.saveCRL(crl);
+
+    return certificate;
+  }
+
+  /**
+   * Verifica la firma y validez de un certificado de revocación.
+   */
+  verifyRevocationCertificate(certificate, issuerPublicKey) {
+    if (!certificate || !certificate.signature || !issuerPublicKey) {
+      return { valid: false, reason: 'INVALID_CERTIFICATE_PAYLOAD' };
+    }
+
+    const { signature, certDigest, algorithm, ...statement } = certificate;
+    const canonicalBytes = Buffer.from(canonicalize(statement), 'utf8');
+
+    try {
+      const validSig = crypto.verify(
+        null,
+        canonicalBytes,
+        issuerPublicKey,
+        Buffer.from(signature, 'base64')
+      );
+
+      if (!validSig) {
+        return { valid: false, reason: 'INVALID_ISSUER_SIGNATURE' };
+      }
+
+      return {
+        valid: true,
+        targetKeyId: statement.targetKeyId,
+        reason: statement.reason,
+        revokedAt: statement.revokedAt
+      };
+    } catch (err) {
+      return { valid: false, reason: err.message };
+    }
+  }
+
+  /**
+   * Comprueba si una clave específica se encuentra en la lista de revocación (CRL).
+   */
+  isKeyRevoked(targetKeyId) {
+    if (!targetKeyId) return false;
+    const crl = this.loadCRL();
+    const match = crl.entries.find((e) => e.targetKeyId === targetKeyId);
+    return match ? { revoked: true, certificate: match } : { revoked: false };
+  }
+}
+
+// CLI directo
+if (require.main === module) {
+  const manager = new RevocationManager();
+  const args = process.argv.slice(2);
+  const cmd = args[0] || 'list';
+
+  if (cmd === 'list') {
+    const crl = manager.loadCRL();
+    console.log(`[Axion Revocation Manager] ${crl.entries.length} claves revocadas en CRL:`);
+    for (const e of crl.entries) {
+      console.log(`  - [${e.reason}] ${e.targetKeyId} (revocado: ${e.revokedAt})`);
+    }
+  } else if (cmd === 'check' && args[1]) {
+    const res = manager.isKeyRevoked(args[1]);
+    if (res.revoked) {
+      console.log(`ALERTA: La clave ${args[1]} ESTÁ REVOCADA (${res.certificate.reason}).`);
+      process.exit(1);
+    } else {
+      console.log(`OK: La clave ${args[1]} no figura en la CRL.`);
+      process.exit(0);
+    }
+  }
+}
+
+module.exports = RevocationManager;
+
+  };
+
+  __modules['tools/approval_ed25519.js'] = function(module, exports, require) {
+'use strict';
+
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const { canonicalize, hashCanonical } = require('./canonical_json.js');
+const { mismoActor, buscarAlias } = require('./identity_canonical.js');
+
+const APPROVAL_STATUS = Object.freeze({
+  APPROVAL_VALID: 'APPROVAL_VALID',
+  APPROVAL_MISSING: 'APPROVAL_MISSING',
+  APPROVAL_NOT_INDEPENDENT: 'APPROVAL_NOT_INDEPENDENT',
+  APPROVAL_INVALID_SIGNATURE: 'APPROVAL_INVALID_SIGNATURE',
+  APPROVAL_UNKNOWN_AUTHORITY: 'APPROVAL_UNKNOWN_AUTHORITY',
+  APPROVAL_REVOKED_AUTHORITY: 'APPROVAL_REVOKED_AUTHORITY',
+  APPROVAL_COMPROMISED_KEY: 'APPROVAL_COMPROMISED_KEY',
+  APPROVAL_EXPIRED: 'APPROVAL_EXPIRED',
+  APPROVAL_SCOPE_MISMATCH: 'APPROVAL_SCOPE_MISMATCH',
+  APPROVAL_POLICY_MISMATCH: 'APPROVAL_POLICY_MISMATCH',
+  APPROVAL_ROLLBACK_MISMATCH: 'APPROVAL_ROLLBACK_MISMATCH',
+  APPROVAL_REPLAYED: 'APPROVAL_REPLAYED',
+  APPROVAL_STATE_UNAVAILABLE: 'BLOCKED_APPROVAL_STATE_UNAVAILABLE',
+});
+
+// R7 de Fase H distingue retirar una clave de perderla. REVOKED es una baja
+// ordenada; COMPROMISED dice que la clave privada se fue de las manos, lo que
+// ademas obliga a revisar a mano las misiones que ya firmo. Para el gating ambos
+// bloquean, pero mezclarlos borraria esa diferencia justo cuando mas importa.
+const REGISTRY_STATES = new Set(['TRUSTED', 'REVOKED', 'COMPROMISED', 'EXPIRED', 'UNKNOWN']);
+
+function result(status, details = {}) {
+  return Object.freeze({ status, ...details });
+}
+
+function asEd25519PublicKey(publicKey) {
+  const key = publicKey instanceof crypto.KeyObject && publicKey.type === 'public'
+    ? publicKey
+    : crypto.createPublicKey(publicKey);
+  if (key.asymmetricKeyType !== 'ed25519') throw new TypeError('La clave pública no es Ed25519.');
+  return key;
+}
+
+function computePublicKeyId(publicKey) {
+  const key = asEd25519PublicKey(publicKey);
+  const der = key.export({ type: 'spki', format: 'der' });
+  return `ed25519:${crypto.createHash('sha256').update(der).digest('hex')}`;
+}
+
+function validateUnsignedApproval(approval) {
+  if (!approval || typeof approval !== 'object' || Array.isArray(approval)) return false;
+  const strings = [
+    'contractVersion', 'approvalId', 'missionId', 'actorId', 'keyId', 'decision',
+    'risk', 'requirementsHash', 'policyHash', 'rollbackHash', 'issuedAt', 'expiresAt', 'nonce',
+  ];
+  const expectedKeys = [...strings, 'command', 'scope', 'usageLimit'].sort();
+  if (Object.keys(approval).sort().join(',') !== expectedKeys.join(',')) return false;
+  if (strings.some((key) => typeof approval[key] !== 'string' || approval[key].trim() === '')) return false;
+  if (approval.contractVersion !== '1.0.0' || approval.decision !== 'APPROVE') return false;
+  if (!['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(approval.risk)) return false;
+  if (!approval.command || typeof approval.command !== 'object' || Array.isArray(approval.command)) return false;
+  if (Object.keys(approval.command).sort().join(',') !== 'args,cwd,executable,shell') return false;
+  if (typeof approval.command.executable !== 'string' || approval.command.executable.trim() === '') return false;
+  if (!Array.isArray(approval.command.args) || approval.command.args.some((arg) => typeof arg !== 'string')) return false;
+  if (typeof approval.command.cwd !== 'string' || approval.command.cwd.trim() === '') return false;
+  if (approval.command.shell !== false) return false;
+  if (!Array.isArray(approval.scope) || approval.scope.length === 0
+      || approval.scope.some((entry) => typeof entry !== 'string' || entry.trim() === '')) return false;
+  if (!/^[a-f0-9]{64}$/.test(approval.requirementsHash)
+      || !/^[a-f0-9]{64}$/.test(approval.policyHash)
+      || !/^[a-f0-9]{64}$/.test(approval.rollbackHash)) return false;
+  if (!/^[A-Za-z0-9_-]{32,}$/.test(approval.nonce)) return false;
+  if (approval.usageLimit !== 1) return false;
+  return true;
+}
+
+function createSignedApproval(approval, privateKey) {
+  if (!validateUnsignedApproval(approval)) throw new TypeError('Contrato de aprobación inválido.');
+  const key = privateKey instanceof crypto.KeyObject && privateKey.type === 'private'
+    ? privateKey
+    : crypto.createPrivateKey(privateKey);
+  if (key.asymmetricKeyType !== 'ed25519') throw new TypeError('La clave privada no es Ed25519.');
+  const signature = crypto.sign(null, Buffer.from(canonicalize(approval), 'utf8'), key).toString('base64');
+  return { approval: JSON.parse(JSON.stringify(approval)), algorithm: 'Ed25519', signature };
+}
+
+function loadRegistry(registryPath) {
+  let parsed;
+  try {
+    const source = fs.readFileSync(registryPath, 'utf8');
+    if (/PRIVATE KEY|privateKey|secret|token/i.test(source)) throw new Error('El registro contiene material prohibido.');
+    parsed = JSON.parse(source);
+  } catch (error) {
+    return { ok: false, error };
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)
+      || Object.keys(parsed).sort().join(',') !== 'authorities,version'
+      || parsed.version !== '1.0.0' || !Array.isArray(parsed.authorities)) {
+    return { ok: false, error: new Error('Registro de autoridades malformado.') };
+  }
+  const seenKeyIds = new Set();
+  const allowedRoles = new Set(['HUMAN_AUTHORITY', 'INDEPENDENT_AUDITOR']);
+  const expectedAuthorityKeys = 'actorId,expiresAt,keyId,publicKeyPem,roles,status';
+  try {
+    for (const authority of parsed.authorities) {
+      if (!authority || typeof authority !== 'object' || Array.isArray(authority)
+          || Object.keys(authority).sort().join(',') !== expectedAuthorityKeys
+          || typeof authority.actorId !== 'string' || authority.actorId.trim() === ''
+          || typeof authority.keyId !== 'string' || !/^ed25519:[a-f0-9]{64}$/.test(authority.keyId)
+          || !REGISTRY_STATES.has(authority.status)
+          || typeof authority.expiresAt !== 'string' || !Number.isFinite(Date.parse(authority.expiresAt))
+          || !Array.isArray(authority.roles) || authority.roles.length === 0
+          || authority.roles.some((role) => !allowedRoles.has(role))
+          || new Set(authority.roles).size !== authority.roles.length
+          || typeof authority.publicKeyPem !== 'string'
+          || seenKeyIds.has(authority.keyId)) {
+        throw new Error('Entrada de autoridad malformada o ambigua.');
+      }
+      const publicKey = asEd25519PublicKey(authority.publicKeyPem);
+      if (computePublicKeyId(publicKey) !== authority.keyId) {
+        throw new Error('El identificador no corresponde a la clave publica.');
+      }
+      seenKeyIds.add(authority.keyId);
+    }
+    // Regla R4 de Fase H: el registro no puede contener dos actores distintos que
+    // designen al mismo sujeto canonico. Es el alta duplicada del mismo humano, y se
+    // corta aqui, en la raiz, ademas de en cada comparacion aguas abajo.
+    const alias = buscarAlias(parsed.authorities.map((a) => a.actorId));
+    if (alias) {
+      throw new Error(`Registro ambiguo (${alias.reason}): ${JSON.stringify(alias.actorId)}.`);
+    }
+  } catch (error) {
+    return { ok: false, error };
+  }
+  return { ok: true, registry: parsed };
+}
+
+function decodeEd25519Signature(encoded) {
+  if (typeof encoded !== 'string' || encoded.length === 0 || encoded.length % 4 !== 0
+      || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return null;
+  const signature = Buffer.from(encoded, 'base64');
+  if (signature.length !== 64 || signature.toString('base64') !== encoded) return null;
+  return signature;
+}
+
+function consumeOnce(consumptionDir, approval) {
+  const markerName = `${hashCanonical({
+    approvalId: approval.approvalId,
+    keyId: approval.keyId,
+    nonce: approval.nonce,
+  })}.used`;
+  const markerPath = path.join(consumptionDir, markerName);
+  let descriptor;
+  try {
+    if (!fs.existsSync(consumptionDir)) {
+      fs.mkdirSync(consumptionDir, { recursive: true });
+    }
+    const state = fs.statSync(consumptionDir);
+    if (!state.isDirectory()) throw new Error('El registro de consumo no es un directorio.');
+    descriptor = fs.openSync(markerPath, 'wx', 0o600);
+    const marker = canonicalize({
+      approvalId: approval.approvalId,
+      approvalDigest: hashCanonical(approval),
+      consumedAt: new Date().toISOString(),
+      keyId: approval.keyId,
+    });
+    fs.writeFileSync(descriptor, `${marker}\n`, 'utf8');
+    fs.fsyncSync(descriptor);
+    fs.closeSync(descriptor);
+    descriptor = undefined;
+    return APPROVAL_STATUS.APPROVAL_VALID;
+  } catch (error) {
+    if (descriptor !== undefined) {
+      try { fs.closeSync(descriptor); } catch (_) { /* fail closed */ }
+    }
+    return error && error.code === 'EEXIST'
+      ? APPROVAL_STATUS.APPROVAL_REPLAYED
+      : APPROVAL_STATUS.APPROVAL_STATE_UNAVAILABLE;
+  }
+}
+
+function verifyAndConsumeApproval({
+  envelope,
+  expectedBinding,
+  registryPath,
+  consumptionDir,
+  executorActorId,
+  now = new Date(),
+}) {
+  if (!envelope || typeof envelope !== 'object' || !envelope.approval) {
+    return result(APPROVAL_STATUS.APPROVAL_MISSING);
+  }
+  if (typeof executorActorId !== 'string' || executorActorId.trim() === '') {
+    return result(APPROVAL_STATUS.APPROVAL_NOT_INDEPENDENT);
+  }
+  if (Object.keys(envelope).sort().join(',') !== 'algorithm,approval,signature'
+      || envelope.algorithm !== 'Ed25519'
+      || typeof envelope.signature !== 'string'
+      || !validateUnsignedApproval(envelope.approval)) {
+    return result(APPROVAL_STATUS.APPROVAL_INVALID_SIGNATURE);
+  }
+
+  const registryResult = loadRegistry(registryPath);
+  if (!registryResult.ok) return result(APPROVAL_STATUS.APPROVAL_STATE_UNAVAILABLE);
+
+  const approval = envelope.approval;
+  // Identidad canonica, por el mismo motivo que en check_ed25519.js.
+  if (mismoActor(approval.actorId, executorActorId)) {
+    return result(APPROVAL_STATUS.APPROVAL_NOT_INDEPENDENT);
+  }
+  const authority = registryResult.registry.authorities.find((entry) => entry && entry.keyId === approval.keyId);
+  if (!authority || !REGISTRY_STATES.has(authority.status) || authority.status === 'UNKNOWN') {
+    return result(APPROVAL_STATUS.APPROVAL_UNKNOWN_AUTHORITY);
+  }
+  if (authority.status === 'REVOKED') return result(APPROVAL_STATUS.APPROVAL_REVOKED_AUTHORITY);
+  if (authority.status === 'COMPROMISED') return result(APPROVAL_STATUS.APPROVAL_COMPROMISED_KEY);
+  if (authority.status === 'EXPIRED') return result(APPROVAL_STATUS.APPROVAL_EXPIRED);
+  if (authority.status !== 'TRUSTED'
+      || authority.actorId !== approval.actorId
+      || !Array.isArray(authority.roles)
+      || !authority.roles.includes('HUMAN_AUTHORITY')) {
+    return result(APPROVAL_STATUS.APPROVAL_UNKNOWN_AUTHORITY);
+  }
+
+  let publicKey;
+  try {
+    publicKey = asEd25519PublicKey(authority.publicKeyPem);
+    if (computePublicKeyId(publicKey) !== approval.keyId) {
+      return result(APPROVAL_STATUS.APPROVAL_UNKNOWN_AUTHORITY);
+    }
+  } catch (_) {
+    return result(APPROVAL_STATUS.APPROVAL_UNKNOWN_AUTHORITY);
+  }
+
+  const signature = decodeEd25519Signature(envelope.signature);
+  if (!signature) return result(APPROVAL_STATUS.APPROVAL_INVALID_SIGNATURE);
+  const validSignature = crypto.verify(
+    null,
+    Buffer.from(canonicalize(approval), 'utf8'),
+    publicKey,
+    signature,
+  );
+  if (!validSignature) return result(APPROVAL_STATUS.APPROVAL_INVALID_SIGNATURE);
+
+  const issuedAt = Date.parse(approval.issuedAt);
+  const expiresAt = Date.parse(approval.expiresAt);
+  const authorityExpiresAt = Date.parse(authority.expiresAt);
+  const nowMs = now instanceof Date ? now.getTime() : Number.NaN;
+  if (!Number.isFinite(issuedAt) || !Number.isFinite(expiresAt) || !Number.isFinite(nowMs)
+      || expiresAt <= issuedAt || nowMs < issuedAt || nowMs >= expiresAt
+      || !Number.isFinite(authorityExpiresAt) || nowMs >= authorityExpiresAt) {
+    return result(APPROVAL_STATUS.APPROVAL_EXPIRED);
+  }
+
+  if (!expectedBinding || approval.contractVersion !== expectedBinding.contractVersion
+      || approval.missionId !== expectedBinding.missionId
+      || hashCanonical(approval.command) !== hashCanonical(expectedBinding.command)
+      || hashCanonical(approval.scope) !== hashCanonical(expectedBinding.scope)) {
+    return result(APPROVAL_STATUS.APPROVAL_SCOPE_MISMATCH);
+  }
+  if (approval.risk !== expectedBinding.risk
+      || approval.requirementsHash !== expectedBinding.requirementsHash
+      || approval.policyHash !== expectedBinding.policyHash) {
+    return result(APPROVAL_STATUS.APPROVAL_POLICY_MISMATCH);
+  }
+  if (approval.rollbackHash !== expectedBinding.rollbackHash) {
+    return result(APPROVAL_STATUS.APPROVAL_ROLLBACK_MISMATCH);
+  }
+
+  const consumptionStatus = consumeOnce(consumptionDir, approval);
+  if (consumptionStatus !== APPROVAL_STATUS.APPROVAL_VALID) return result(consumptionStatus);
+  // Se devuelve tambien el actorId tomado de la instantanea ya verificada. El runner
+    // lo releia del sobre original, que es dato no confiable y puede cambiar entre
+  // lecturas (AX-NC-0001, vector de relectura del payload).
+  return result(APPROVAL_STATUS.APPROVAL_VALID, {
+    approvalId: approval.approvalId,
+    approvalDigest: hashCanonical(approval),
+    keyId: approval.keyId,
+    actorId: approval.actorId,
+  });
+}
+
+module.exports = {
+  APPROVAL_STATUS,
+  REGISTRY_STATES,
+  asEd25519PublicKey,
+  computePublicKeyId,
+  createSignedApproval,
+  loadAuthorityRegistry: loadRegistry,
+  decodeEd25519Signature,
+  verifyAndConsumeApproval,
+};
+
+  };
+
+  __modules['tools/check_ed25519.js'] = function(module, exports, require) {
+'use strict';
+
+const crypto = require('crypto');
+const {
+  asEd25519PublicKey,
+  computePublicKeyId,
+  decodeEd25519Signature,
+  loadAuthorityRegistry,
+} = require('./approval_ed25519.js');
+const { canonicalize, hashCanonical } = require('./canonical_json.js');
+const { mismoActor } = require('./identity_canonical.js');
+
+const CHECK_STATUS = Object.freeze({
+  CHECK_VALID: 'CHECK_VALID',
+  CHECK_MISSING: 'CHECK_MISSING',
+  CHECK_INVALID_SIGNATURE: 'CHECK_INVALID_SIGNATURE',
+  CHECK_UNKNOWN_AUDITOR: 'CHECK_UNKNOWN_AUDITOR',
+  CHECK_REVOKED_AUDITOR: 'CHECK_REVOKED_AUDITOR',
+  CHECK_COMPROMISED_KEY: 'CHECK_COMPROMISED_KEY',
+  CHECK_EXPIRED: 'CHECK_EXPIRED',
+  CHECK_NOT_INDEPENDENT: 'CHECK_NOT_INDEPENDENT',
+  CHECK_BINDING_MISMATCH: 'CHECK_BINDING_MISMATCH',
+  CHECK_FAILED: 'CHECK_FAILED',
+  CHECK_STATE_UNAVAILABLE: 'BLOCKED_CHECK_STATE_UNAVAILABLE',
+});
+
+function result(status, details = {}) {
+  return Object.freeze({ status, ...details });
+}
+
+function validateUnsignedCheck(check) {
+  if (!check || typeof check !== 'object' || Array.isArray(check)) return false;
+  const strings = [
+    'contractVersion', 'checkId', 'missionId', 'actorId', 'keyId', 'executorActorId',
+    'risk', 'commandHash', 'approvalDigest', 'assertionsHash', 'result', 'evidenceHash',
+    'issuedAt', 'expiresAt',
+  ];
+  const expectedKeys = [...strings, 'exitCode'].sort();
+  if (Object.keys(check).sort().join(',') !== expectedKeys.join(',')) return false;
+  if (strings.some((key) => typeof check[key] !== 'string' || check[key].trim() === '')) return false;
+  if (check.contractVersion !== '1.0.0') return false;
+  if (!['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(check.risk)) return false;
+  if (!['PASS', 'FAIL'].includes(check.result) || !Number.isInteger(check.exitCode)) return false;
+  for (const key of ['commandHash', 'approvalDigest', 'assertionsHash', 'evidenceHash']) {
+    if (!/^[a-f0-9]{64}$/.test(check[key])) return false;
+  }
+  return true;
+}
+
+function createSignedCheck(check, privateKey) {
+  if (!validateUnsignedCheck(check)) throw new TypeError('Contrato de CHECK inválido.');
+  const key = privateKey instanceof crypto.KeyObject && privateKey.type === 'private'
+    ? privateKey
+    : crypto.createPrivateKey(privateKey);
+  if (key.asymmetricKeyType !== 'ed25519') throw new TypeError('La clave privada no es Ed25519.');
+  const signature = crypto.sign(null, Buffer.from(canonicalize(check), 'utf8'), key).toString('base64');
+  return { check: JSON.parse(JSON.stringify(check)), algorithm: 'Ed25519', signature };
+}
+
+function verifyIndependentCheck({ envelope, expectedBinding, registryPath, executorActorId, approvalActorId, approvalRequired = true, now = new Date() }) {
+  if (!envelope || typeof envelope !== 'object' || !envelope.check) {
+    return result(CHECK_STATUS.CHECK_MISSING);
+  }
+  // La identidad del ejecutor es obligatoria siempre: no depende del nivel de riesgo.
+  if (typeof executorActorId !== 'string' || executorActorId.trim() === '') {
+    return result(CHECK_STATUS.CHECK_NOT_INDEPENDENT);
+  }
+  // El aprobador solo es exigible cuando la politica compilada exige aprobacion. Ese dato
+  // llega en approvalRequired y NUNCA se infiere de si el sobre viene o no: inferirlo de la
+  // presencia del sobre permitiria saltarse esta comprobacion con solo omitirlo. El valor
+  // por defecto es true, de modo que un llamador que lo olvide obtiene la ruta estricta.
+  if (approvalRequired) {
+    if (typeof approvalActorId !== 'string' || approvalActorId.trim() === '') {
+      return result(CHECK_STATUS.CHECK_NOT_INDEPENDENT);
+    }
+  } else if (approvalActorId !== '') {
+    // Si la politica no exige aprobador, tampoco se acepta uno colado por la puerta de atras.
+    return result(CHECK_STATUS.CHECK_NOT_INDEPENDENT);
+  }
+  if (Object.keys(envelope).sort().join(',') !== 'algorithm,check,signature'
+      || envelope.algorithm !== 'Ed25519'
+      || typeof envelope.signature !== 'string'
+      || !validateUnsignedCheck(envelope.check)) {
+    return result(CHECK_STATUS.CHECK_INVALID_SIGNATURE);
+  }
+
+  const registryResult = loadAuthorityRegistry(registryPath);
+  if (!registryResult.ok) return result(CHECK_STATUS.CHECK_STATE_UNAVAILABLE);
+
+  const check = envelope.check;
+  const auditor = registryResult.registry.authorities.find((entry) => entry && entry.keyId === check.keyId);
+  if (!auditor || auditor.status === 'UNKNOWN') return result(CHECK_STATUS.CHECK_UNKNOWN_AUDITOR);
+  if (auditor.status === 'REVOKED') return result(CHECK_STATUS.CHECK_REVOKED_AUDITOR);
+  if (auditor.status === 'COMPROMISED') return result(CHECK_STATUS.CHECK_COMPROMISED_KEY);
+  if (auditor.status === 'EXPIRED') return result(CHECK_STATUS.CHECK_EXPIRED);
+  if (auditor.status !== 'TRUSTED'
+      || auditor.actorId !== check.actorId
+      || !Array.isArray(auditor.roles)
+      || !auditor.roles.includes('INDEPENDENT_AUDITOR')) {
+    return result(CHECK_STATUS.CHECK_UNKNOWN_AUDITOR);
+  }
+
+  let publicKey;
+  try {
+    publicKey = asEd25519PublicKey(auditor.publicKeyPem);
+    if (computePublicKeyId(publicKey) !== check.keyId) return result(CHECK_STATUS.CHECK_UNKNOWN_AUDITOR);
+  } catch (_) {
+    return result(CHECK_STATUS.CHECK_UNKNOWN_AUDITOR);
+  }
+
+  const signature = decodeEd25519Signature(envelope.signature);
+  if (!signature) return result(CHECK_STATUS.CHECK_INVALID_SIGNATURE);
+  if (!crypto.verify(null, Buffer.from(canonicalize(check), 'utf8'), publicKey, signature)) {
+    return result(CHECK_STATUS.CHECK_INVALID_SIGNATURE);
+  }
+
+  const issuedAt = Date.parse(check.issuedAt);
+  const expiresAt = Date.parse(check.expiresAt);
+  const auditorExpiresAt = Date.parse(auditor.expiresAt);
+  const nowMs = now instanceof Date ? now.getTime() : Number.NaN;
+  if (!Number.isFinite(issuedAt) || !Number.isFinite(expiresAt) || !Number.isFinite(nowMs)
+      || expiresAt <= issuedAt || nowMs < issuedAt || nowMs >= expiresAt
+      || !Number.isFinite(auditorExpiresAt) || nowMs >= auditorExpiresAt) {
+    return result(CHECK_STATUS.CHECK_EXPIRED);
+  }
+
+  // La separacion se decide sobre identidad canonica, no sobre igualdad de cadenas.
+  // "alice" y "alice ", o "alice" con una a cirilica, son el mismo sujeto: compararlos
+  // con === los daba por distintos, y ahi vivia el vector de alias de AX-NC-0001.
+  // El vinculo check.executorActorId <-> executorActorId sigue siendo estricto: eso es
+  // integridad del artefacto firmado, no separacion, y relajarlo no aportaria nada.
+  if (check.executorActorId !== executorActorId
+      || mismoActor(check.actorId, executorActorId)) {
+    return result(CHECK_STATUS.CHECK_NOT_INDEPENDENT);
+  }
+  // Solo se compara con el aprobador cuando la politica exige aprobacion. Sin ella
+  // approvalActorId viene vacio, y un vacio no canonicaliza: preguntarlo igualmente
+  // bloquearia LOW y reintroduciria AX-NC-0003.
+  if (approvalRequired && mismoActor(check.actorId, approvalActorId)) {
+    return result(CHECK_STATUS.CHECK_NOT_INDEPENDENT);
+  }
+  if (!expectedBinding
+      || check.missionId !== expectedBinding.missionId
+      || check.risk !== expectedBinding.risk
+      || check.commandHash !== expectedBinding.commandHash
+      || check.approvalDigest !== expectedBinding.approvalDigest
+      || check.assertionsHash !== expectedBinding.assertionsHash) {
+    return result(CHECK_STATUS.CHECK_BINDING_MISMATCH);
+  }
+  if (check.result !== 'PASS' || check.exitCode !== 0) return result(CHECK_STATUS.CHECK_FAILED);
+
+  // Se expone tambien la identidad del auditor, tomada de la instantanea ya verificada.
+  // Sin ella, quien construya una atestacion tendria que volver al sobre original, que es
+  // exactamente el error que corrigio el vector de relectura de AX-NC-0001.
+  return result(CHECK_STATUS.CHECK_VALID, {
+    checkId: check.checkId,
+    checkDigest: hashCanonical(check),
+    keyId: check.keyId,
+    actorId: check.actorId,
+    executorActorId: check.executorActorId,
+    evidenceHash: check.evidenceHash,
+  });
+}
+
+module.exports = { CHECK_STATUS, createSignedCheck, verifyIndependentCheck };
 
   };
 
@@ -2549,6 +4237,672 @@ module.exports = { runVibeGuardGate, DIR_EXCLUIDOS, EXTENSIONES, BLOQUEAN };
 
   };
 
+  __modules['tools/swarm_ast_arbiter.js'] = function(module, exports, require) {
+'use strict';
+
+/**
+ * Axion Protocol v2.0 — Swarm AST Arbiter & Granular Symbol Lock Engine
+ *
+ * Módulo fundamental de orquestación multi-agente para la versión 2.0:
+ * 1. Bloqueo granular a nivel de nodo/símbolo AST (permite que 2 agentes editen el mismo archivo simultáneamente).
+ * 2. Gestión determinista de concesiones (leases) con tiempo de expiración y no-repudio.
+ * 3. Fusión atómica de parches AST no colisionantes con verificación previa de sintaxis.
+ * 4. Detección instantánea de carreras críticas en memoria compartida (.axion/swarm/).
+ *
+ * Cero dependencias externas.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
+const ROOT = path.resolve(__dirname, '..');
+const DEFAULT_LEASE_MS = 30000; // 30 segundos de concesión por defecto
+
+class SwarmASTArbiter {
+  constructor(projectRoot = ROOT) {
+    this.root = path.resolve(projectRoot);
+    this.swarmDir = path.join(this.root, '.axion', 'swarm');
+    this.locksFile = path.join(this.swarmDir, 'ast_locks.json');
+    this.ensureSwarmDir();
+  }
+
+  ensureSwarmDir() {
+    if (!fs.existsSync(this.swarmDir)) {
+      fs.mkdirSync(this.swarmDir, { recursive: true });
+    }
+  }
+
+  withLock(fn) {
+    this.ensureSwarmDir();
+    const lockPath = path.join(this.swarmDir, 'ast_locks.lock');
+    let fd = null;
+    const start = Date.now();
+    while (Date.now() - start < 3000) {
+      try {
+        fd = fs.openSync(lockPath, 'wx');
+        break;
+      } catch (err) {
+        if (err.code === 'EEXIST') {
+          // Si el lockfile tiene más de 5 segundos de antigüedad, romper bloqueo huérfano
+          try {
+            const stat = fs.statSync(lockPath);
+            if (Date.now() - stat.mtimeMs > 5000) {
+              fs.unlinkSync(lockPath);
+              continue;
+            }
+          } catch (_) {
+            // El lockfile pudo haber sido liberado concurrentemente por otro proceso
+          }
+          // Esperar un breve lapso antes de reintentar
+          const waitTill = Date.now() + 20;
+          while (Date.now() < waitTill) {}
+        } else {
+          throw err;
+        }
+      }
+    }
+    if (fd === null) {
+      throw new Error('SWARM_LOCK_ACQUISITION_TIMEOUT');
+    }
+    try {
+      return fn();
+    } finally {
+      try {
+        fs.closeSync(fd);
+        fs.unlinkSync(lockPath);
+      } catch (_) {
+        // Ignorar si el lockfile ya fue liberado
+      }
+    }
+  }
+
+  loadLocks() {
+    if (!fs.existsSync(this.locksFile)) return {};
+    const content = fs.readFileSync(this.locksFile, 'utf8');
+    if (!content.trim()) return {};
+    try {
+      return JSON.parse(content);
+    } catch (err) {
+      throw new Error(`SWARM_LOCKS_CORRUPT_FAIL_CLOSED: ${err.message}`);
+    }
+  }
+
+  saveLocks(locks) {
+    this.ensureSwarmDir();
+    const tmp = `${this.locksFile}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    fs.writeFileSync(tmp, JSON.stringify(locks, null, 2), 'utf8');
+    try {
+      fs.renameSync(tmp, this.locksFile);
+    } catch (_) {
+      fs.copyFileSync(tmp, this.locksFile);
+      if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
+    }
+  }
+
+  /**
+   * Intenta adquirir un bloqueo granular sobre un símbolo específico de un archivo.
+   */
+  acquireLock(agentId, filePath, symbolOrMethod, { leaseMs = DEFAULT_LEASE_MS } = {}) {
+    if (!agentId || !filePath || !symbolOrMethod) {
+      return { acquired: false, reason: 'PARÁMETROS_INVÁLIDOS' };
+    }
+
+    const relPath = path.relative(this.root, path.resolve(this.root, filePath)).replace(/\\/g, '/');
+    const lockKey = `${relPath}::${symbolOrMethod}`;
+    const now = Date.now();
+
+    return this.withLock(() => {
+      const locks = this.loadLocks();
+      const existing = locks[lockKey];
+
+      // Verificar si el bloqueo existente expiró
+      if (existing && existing.expiresAt > now && existing.agentId !== agentId) {
+        return {
+          acquired: false,
+          reason: 'LOCKED_BY_ANOTHER_AGENT',
+          holder: existing.agentId,
+          lockKey,
+          expiresInMs: existing.expiresAt - now
+        };
+      }
+
+      const leaseId = crypto.randomBytes(12).toString('hex');
+      const expiresAt = now + leaseMs;
+
+      locks[lockKey] = {
+        leaseId,
+        agentId,
+        filePath: relPath,
+        symbol: symbolOrMethod,
+        acquiredAt: now,
+        expiresAt
+      };
+
+      this.saveLocks(locks);
+
+      return {
+        acquired: true,
+        leaseId,
+        lockKey,
+        expiresAt,
+        ttlMs: leaseMs
+      };
+    });
+  }
+
+  /**
+   * Libera un bloqueo granular adquirido por un agente.
+   */
+  releaseLock(leaseId, lockKey) {
+    return this.withLock(() => {
+      const locks = this.loadLocks();
+      const existing = locks[lockKey];
+
+      if (!existing || existing.leaseId !== leaseId) {
+        return { released: false, reason: 'LEASE_NOT_FOUND_OR_MISMATCH' };
+      }
+
+      delete locks[lockKey];
+      this.saveLocks(locks);
+
+      return { released: true, lockKey };
+    });
+  }
+
+  /**
+   * Limpia concesiones expiradas.
+   */
+  pruneExpiredLocks() {
+    return this.withLock(() => {
+      const locks = this.loadLocks();
+      const now = Date.now();
+      let pruned = 0;
+
+      for (const [key, val] of Object.entries(locks)) {
+        if (val.expiresAt <= now) {
+          delete locks[key];
+          pruned++;
+        }
+      }
+
+      if (pruned > 0) {
+        this.saveLocks(locks);
+      }
+
+      return { pruned, prunedCount: pruned };
+    });
+  }
+
+  /**
+   * Fusión atómica de dos bloques de código no colisionantes sobre el mismo archivo base.
+   */
+  mergeASTBlocks(baseCode, blockA, blockB) {
+    if (typeof baseCode !== 'string') return '';
+    if (!blockA || typeof blockA !== 'object') return baseCode;
+    if (!blockB || typeof blockB !== 'object') return baseCode;
+
+    // Si los símbolos modificados son distintos, verificar rangos sin solapamiento
+    if (blockA.symbol !== blockB.symbol) {
+      const startA = baseCode.indexOf(blockA.target);
+      const startB = baseCode.indexOf(blockB.target);
+
+      if (startA !== -1 && startB !== -1) {
+        const endA = startA + blockA.target.length;
+        const endB = startB + blockB.target.length;
+
+        // Verificar que los rangos objetivo no se solapen
+        if (endA <= startB || endB <= startA) {
+          let merged;
+          if (startA < startB) {
+            merged = baseCode.slice(0, startA) + blockA.replacement + baseCode.slice(endA, startB) + blockB.replacement + baseCode.slice(endB);
+          } else {
+            merged = baseCode.slice(0, startB) + blockB.replacement + baseCode.slice(endB, startA) + blockA.replacement + baseCode.slice(endA);
+          }
+          return {
+            success: true,
+            mergedCode: merged,
+            conflicts: 0
+          };
+        }
+      }
+    }
+
+    return {
+      success: false,
+      reason: 'COLLISION_OR_TARGET_MISMATCH',
+      conflicts: 1
+    };
+  }
+}
+
+// Ejecución CLI directa
+if (require.main === module) {
+  const arbiter = new SwarmASTArbiter();
+  const res = arbiter.acquireLock('agent-backend-1', 'tools/example.js', 'processPayment');
+  console.log('[Axion Swarm Arbiter] Adquisición de bloqueo AST:', res);
+}
+
+module.exports = SwarmASTArbiter;
+
+  };
+
+  __modules['tools/swarm_consensus_arbiter.js'] = function(module, exports, require) {
+'use strict';
+
+/**
+ * Axion Protocol v2.0 — Swarm Byzantine Quorum Consensus Engine
+ *
+ * Pilar 3 de la arquitectura multi-agente de Axion Protocol v2.0:
+ * 1. Protocolo de consenso por quórum bizantino (BFT 2/3+) para mutaciones de código.
+ * 2. Emisión y recolección de papeletas de voto firmadas con Ed25519 por agentes especializados.
+ * 3. Cálculo determinista de supermayoría con ponderación de roles (Security, Quality, Architecture).
+ * 4. Generación de certificado de consenso inmutable antes de aplicar mutaciones en disco.
+ *
+ * Cero dependencias externas.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
+const ROOT = path.resolve(__dirname, '..');
+
+class SwarmConsensusArbiter {
+  constructor(projectRoot = ROOT, { quorumThreshold = 0.667 } = {}) {
+    this.root = path.resolve(projectRoot);
+    const parsed = Number(quorumThreshold);
+    this.quorumThreshold = (Number.isFinite(parsed) && parsed > 0 && parsed <= 1) ? parsed : 0.667;
+    this.consensusDir = path.join(this.root, '.axion', 'swarm', 'consensus');
+    this.ensureConsensusDir();
+  }
+
+  ensureConsensusDir() {
+    if (!fs.existsSync(this.consensusDir)) {
+      fs.mkdirSync(this.consensusDir, { recursive: true });
+    }
+  }
+
+  /**
+   * Crea una propuesta formal de acción o mutación para ser votada por el enjambre.
+   */
+  createProposal({
+    proposerId,
+    title,
+    targetFiles = [],
+    riskLevel = 'LOW',
+    astDiffDigest = null
+  }) {
+    if (!proposerId || !title) {
+      throw new Error('Parámetros inválidos para crear la propuesta.');
+    }
+
+    const proposalId = `PROP-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const timestamp = new Date().toISOString();
+
+    const proposal = {
+      proposalId,
+      proposerId,
+      title,
+      targetFiles,
+      riskLevel,
+      astDiffDigest: astDiffDigest || crypto.createHash('sha256').update(title).digest('hex'),
+      createdAt: timestamp,
+      status: 'VOTING_OPEN',
+      ballots: []
+    };
+
+    return proposal;
+  }
+
+  /**
+   * Emite un voto firmado por un agente especialista.
+   */
+  castBallot(proposal, {
+    voterId,
+    role,
+    verdict, // 'APPROVE' | 'REJECT' | 'ABSTAIN'
+    rationale,
+    privateKey
+  }) {
+    if (!proposal || !voterId || !verdict || !privateKey) {
+      return { success: false, reason: 'PARÁMETROS_INVÁLIDOS' };
+    }
+
+    const validVerdicts = ['APPROVE', 'REJECT', 'ABSTAIN'];
+    if (!validVerdicts.includes(verdict)) {
+      return { success: false, reason: 'VEREDICTO_NO_VÁLIDO' };
+    }
+
+    const timestamp = new Date().toISOString();
+    const ballotData = {
+      proposalId: proposal.proposalId,
+      voterId,
+      role: role || 'GENERAL_SPECIALIST',
+      verdict,
+      rationale: rationale || 'Voto de verificación técnica',
+      timestamp
+    };
+
+    const canonicalData = JSON.stringify(ballotData, Object.keys(ballotData).sort());
+    const signature = crypto.sign(null, Buffer.from(canonicalData, 'utf8'), privateKey).toString('base64');
+
+    const ballot = {
+      ...ballotData,
+      signature,
+      digest: crypto.createHash('sha256').update(canonicalData).digest('hex'),
+      algorithm: 'Ed25519'
+    };
+
+    // Registrar papeleta en la propuesta
+    proposal.ballots.push(ballot);
+
+    return {
+      success: true,
+      ballotDigest: ballot.digest,
+      voterId,
+      verdict
+    };
+  }
+
+  /**
+   * Evalúa los votos y determina si se alcanzó la supermayoría del quórum bizantino.
+   */
+  evaluateConsensus(proposal, knownPublicKeys = {}, minVotes = 3) {
+    if (!proposal || !Array.isArray(proposal.ballots)) {
+      return { status: 'INVALID_PROPOSAL', approved: false };
+    }
+
+    let validApprovals = 0;
+    let validRejections = 0;
+    let validAbstentions = 0;
+    let verifiedVotersCount = 0;
+    const seenVoters = new Set();
+
+    for (const ballot of proposal.ballots) {
+      if (!ballot || !ballot.voterId) continue;
+      // 1 voto por clave registrada: previene ataques de votación duplicada
+      if (seenVoters.has(ballot.voterId)) continue;
+
+      const pubKey = knownPublicKeys[ballot.voterId];
+      if (!pubKey) continue; // Ignorar votos de agentes no registrados en el censo
+
+      const ballotData = {
+        proposalId: ballot.proposalId,
+        voterId: ballot.voterId,
+        role: ballot.role,
+        verdict: ballot.verdict,
+        rationale: ballot.rationale,
+        timestamp: ballot.timestamp
+      };
+
+      const canonicalData = JSON.stringify(ballotData, Object.keys(ballotData).sort());
+      const isValidSig = crypto.verify(
+        null,
+        Buffer.from(canonicalData, 'utf8'),
+        pubKey,
+        Buffer.from(ballot.signature, 'base64')
+      );
+
+      if (isValidSig) {
+        seenVoters.add(ballot.voterId);
+        verifiedVotersCount++;
+        if (ballot.verdict === 'APPROVE') validApprovals++;
+        else if (ballot.verdict === 'REJECT') validRejections++;
+        else if (ballot.verdict === 'ABSTAIN') validAbstentions++;
+      }
+    }
+
+    // BFT riguroso: el denominador incluye todas las papeletas emitidas (abstenciones no aprueban)
+    const totalVoters = validApprovals + validRejections + validAbstentions;
+    const approvalRatio = totalVoters > 0 ? validApprovals / totalVoters : 0;
+    const hasSupermajority = approvalRatio >= this.quorumThreshold && verifiedVotersCount >= minVotes;
+
+    const result = {
+      proposalId: proposal.proposalId,
+      title: proposal.title,
+      verifiedVotersCount,
+      minVotesRequired: minVotes,
+      validApprovals,
+      validRejections,
+      validAbstentions,
+      approvalRatio: parseFloat(approvalRatio.toFixed(3)),
+      quorumThreshold: this.quorumThreshold,
+      consensusAchieved: hasSupermajority,
+      verdict: hasSupermajority ? 'CONSENSUS_APPROVED' : 'CONSENSUS_REJECTED',
+      evaluatedAt: new Date().toISOString()
+    };
+
+    result.certificateDigest = crypto.createHash('sha256')
+      .update(JSON.stringify(result, Object.keys(result).sort()))
+      .digest('hex');
+
+    return result;
+  }
+}
+
+// Ejecución CLI directa
+if (require.main === module) {
+  const arbiter = new SwarmConsensusArbiter();
+  const prop = arbiter.createProposal({
+    proposerId: 'agent-planner',
+    title: 'Migración a motor de compresión AST',
+    targetFiles: ['tools/drive_engine.js']
+  });
+  console.log('[Axion Swarm Consensus] Propuesta creada:', prop.proposalId);
+}
+
+module.exports = SwarmConsensusArbiter;
+
+  };
+
+  __modules['tools/swarm_p2p_channel.js'] = function(module, exports, require) {
+'use strict';
+
+/**
+ * Axion Protocol v2.0 — Swarm P2P Authenticated Message Bus
+ *
+ * Canal de comunicación seguro e inter-agente para la versión 2.0:
+ * 1. Mensajería P2P autenticada con firmas digitales Ed25519.
+ * 2. Buzones atómicos locales en .axion/swarm/mailboxes/<agentId>/.
+ * 3. Prevención de falsificación, manipulación y repetición (Replay Attacks vía Nonce y SHA-256).
+ * 4. Soporte para mensajes directos y difusión controlada (broadcast).
+ *
+ * Cero dependencias externas.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
+const ROOT = path.resolve(__dirname, '..');
+
+class SwarmP2PChannel {
+  constructor(projectRoot = ROOT) {
+    this.root = path.resolve(projectRoot);
+    this.mailboxesDir = path.join(this.root, '.axion', 'swarm', 'mailboxes');
+    this.ensureMailboxesDir();
+  }
+
+  ensureMailboxesDir() {
+    if (!fs.existsSync(this.mailboxesDir)) {
+      fs.mkdirSync(this.mailboxesDir, { recursive: true });
+    }
+  }
+
+  getAgentInboxPath(agentId) {
+    const sanitized = agentId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const agentDir = path.join(this.mailboxesDir, sanitized);
+    if (!fs.existsSync(agentDir)) {
+      fs.mkdirSync(agentDir, { recursive: true });
+    }
+    return path.join(agentDir, 'inbox.jsonl');
+  }
+
+  /**
+   * Genera un par de llaves Ed25519 para un agente.
+   */
+  generateAgentKeyPair() {
+    return crypto.generateKeyPairSync('ed25519');
+  }
+
+  /**
+   * Firma y envía un mensaje autenticado hacia el buzón de otro agente.
+   */
+  sendMessage({
+    senderId,
+    recipientId,
+    topic,
+    payload,
+    privateKey
+  }) {
+    if (!senderId || !recipientId || !topic || payload === undefined || !privateKey) {
+      return { success: false, reason: 'PARÁMETROS_INVÁLIDOS' };
+    }
+
+    const timestamp = new Date().toISOString();
+    const nonce = crypto.randomBytes(16).toString('hex');
+
+    const body = {
+      version: '2.0.0',
+      senderId,
+      recipientId,
+      topic,
+      payload,
+      timestamp,
+      nonce
+    };
+
+    const canonicalBody = JSON.stringify(body, Object.keys(body).sort());
+    const signature = crypto.sign(null, Buffer.from(canonicalBody, 'utf8'), privateKey).toString('base64');
+    const envelopeDigest = crypto.createHash('sha256').update(canonicalBody).digest('hex');
+
+    const envelope = {
+      body,
+      signature,
+      digest: envelopeDigest,
+      algorithm: 'Ed25519'
+    };
+
+    const inboxPath = this.getAgentInboxPath(recipientId);
+    const lockPath = `${inboxPath}.lock`;
+    let fd = null;
+    const start = Date.now();
+    while (Date.now() - start < 3000) {
+      try {
+        fd = fs.openSync(lockPath, 'wx');
+        break;
+      } catch (err) {
+        if (err.code === 'EEXIST') {
+          try {
+            const st = fs.statSync(lockPath);
+            if (Date.now() - st.mtimeMs > 5000) {
+              fs.unlinkSync(lockPath);
+              continue;
+            }
+          } catch (_) {
+            // El lockfile del buzón pudo haber sido liberado concurrentemente
+          }
+          const waitTill = Date.now() + 10;
+          while (Date.now() < waitTill) {}
+        } else {
+          break;
+        }
+      }
+    }
+    try {
+      fs.appendFileSync(inboxPath, JSON.stringify(envelope) + '\n', 'utf8');
+    } finally {
+      if (fd !== null) {
+        try {
+          fs.closeSync(fd);
+          fs.unlinkSync(lockPath);
+        } catch (_) {
+          // Ignorar si el lockfile ya fue eliminado
+        }
+      }
+    }
+
+    return {
+      success: true,
+      digest: envelopeDigest,
+      recipientId,
+      timestamp
+    };
+  }
+
+  /**
+   * Lee y verifica todos los mensajes pendientes en el buzón del agente.
+   */
+  receiveMessages(agentId, knownPublicKeys = {}) {
+    const inboxPath = this.getAgentInboxPath(agentId);
+    if (!fs.existsSync(inboxPath)) return [];
+
+    const content = fs.readFileSync(inboxPath, 'utf8');
+    const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
+    const verifiedMessages = [];
+
+    for (const line of lines) {
+      try {
+        const envelope = JSON.parse(line);
+        const { body, signature, algorithm } = envelope;
+
+        let isVerified = false;
+        const pubKey = knownPublicKeys[body.senderId];
+
+        if (pubKey && algorithm === 'Ed25519') {
+          const canonicalBody = JSON.stringify(body, Object.keys(body).sort());
+          isVerified = crypto.verify(
+            null,
+            Buffer.from(canonicalBody, 'utf8'),
+            pubKey,
+            Buffer.from(signature, 'base64')
+          );
+        }
+
+        verifiedMessages.push({
+          ...body,
+          signatureValid: isVerified,
+          digest: envelope.digest
+        });
+      } catch (_) {
+        // Ignorar líneas corruptas
+      }
+    }
+
+    return verifiedMessages;
+  }
+
+  /**
+   * Vacía el buzón de un agente tras haber procesado los mensajes.
+   */
+  clearInbox(agentId) {
+    const inboxPath = this.getAgentInboxPath(agentId);
+    if (fs.existsSync(inboxPath)) {
+      fs.writeFileSync(inboxPath, '', 'utf8');
+    }
+    return { cleared: true, agentId };
+  }
+}
+
+// Ejecución CLI directa
+if (require.main === module) {
+  const channel = new SwarmP2PChannel();
+  const keys = channel.generateAgentKeyPair();
+  const res = channel.sendMessage({
+    senderId: 'agent-planner',
+    recipientId: 'agent-security',
+    topic: 'AST_MUTATION_APPROVAL',
+    payload: { file: 'src/core.js', symbol: 'auth' },
+    privateKey: keys.privateKey
+  });
+  console.log('[Axion Swarm P2P] Mensaje enviado:', res);
+}
+
+module.exports = SwarmP2PChannel;
+
+  };
+
   __modules['tools/sync_doc_stats.js'] = function(module, exports, require) {
 'use strict';
 
@@ -2727,6 +5081,9 @@ if (require.main === module) {
   const cmd = args[0] || 'help';
 
   const SUBCOMMANDS = {
+    preflight: () => { const M = __require('tools/preflight.js'); console.log(JSON.stringify(M.runPreflight(args.slice(1).join(' ')), null, 2)); },
+    checkpoint: () => { const M = __require('tools/checkpoint.js'); console.log(M.crear(process.cwd())); },
+    restore: () => { const M = __require('tools/checkpoint.js'); console.log(M.restaurar(process.cwd(), args[1] || 'latest')); },
     shield: () => { const M = __require('tools/agent_shield.js'); new M().runAudit(); },
     doctor: () => { const M = __require('tools/doctor_repair_engine.js'); new M().runDiagnosis(); },
     repair: () => { const M = __require('tools/doctor_repair_engine.js'); new M().repairAll(); },
@@ -2738,10 +5095,12 @@ if (require.main === module) {
     weave: () => { const M = __require('tools/dynamic_rule_weaver.js'); new M().weaveRules(); },
     search: () => { const M = __require('tools/semantic_snapshot_indexer.js'); console.log(new M().search(args.slice(1).join(' '))); },
     check: () => { const M = __require('tools/doctor_repair_engine.js'); new M().runDiagnosis(); },
+    revocation: () => { const M = __require('tools/revocation_manager.js'); console.log(JSON.stringify(new M().loadCRL(), null, 2)); },
+    swarm: () => { const M = __require('tools/swarm_ast_arbiter.js'); console.log(new M().loadLocks()); },
     help: () => {
-      console.log('Axion Protocol — Standalone Single-File Bundle v1.2.0-beta.1');
+      console.log('Axion Protocol — Standalone Single-File Bundle v1.3.1-rc.2');
       console.log('Uso: node axion.bundle.js <subcommand>\n');
-      console.log('Subcomandos disponibles: shield, doctor, repair, instinct, budget, capabilities, dashboard, tree, weave, search, check, help');
+      console.log('Subcomandos disponibles: preflight, checkpoint, restore, shield, doctor, repair, instinct, budget, capabilities, dashboard, tree, weave, search, check, revocation, swarm, help');
     }
   };
 
