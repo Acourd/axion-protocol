@@ -122,7 +122,7 @@ Axion Protocol provides 12 core slash commands designed to work in synergy. For 
 
 ## Test Verification & Deterministic Invariants
 
-Axion Protocol includes **198 deterministic test suites** that run concurrently with zero external test runners:
+Axion Protocol includes **200 deterministic test suites** that run concurrently with zero external test runners:
 
 ```bash
 # Run the complete test suite across all 5 domains
@@ -133,13 +133,13 @@ npm test
 
 | Domain Pillar | Core Responsibilities | Test Suites |
 | :--- | :--- | :---: |
-| 🛡️ **Governance & Preflight** | PreToolUse hooks, lexical preflight, killswitch, risk policy compiler, structured commands, workflow state machine, drive engine | 107 |
+| 🛡️ **Governance & Preflight** | PreToolUse hooks, lexical preflight, killswitch, risk policy compiler, structured commands, workflow state machine, drive engine | 109 |
 | 🔐 **Cryptography & Attestation** | DSSE/PAE envelopes, RFC 8785 canonical JSON, in-toto Statement v1, Ed25519 signatures, evidence binding, revocation | 27 |
 | 🧭 **Intent & Socratic UX** | 2-question clarifier, A/B/C contracts, SHA-256 intent sealing, profile calibration, interactive wizard, deep reasoning | 23 |
 | 💾 **State, Checkpoints & Recovery** | Atomic snapshots, rollback plan validation, memory guard limits, context shield anchoring, evidence hasher, governance drift detection | 23 |
 | ⚡ **Adversarial Resilience** | 100+ mutation vectors, pre-mortem verdict derivation, VibeGuard lexical gate, boilerplate detection, fuzzer burst resilience | 18 |
 
-**Total: 198 suites** passed in ~12s (8 concurrent workers).
+**Total: 200 suites** passed in ~12s (8 concurrent workers).
 
 ---
 

@@ -33,7 +33,7 @@ assert.strictEqual(deepClass.requiresDeliberation, true, 'DEEP_LOOP exige delibe
 console.log('  ✓ Invariante 1: Clasificación de complejidad del DAG verificada.');
 
 // Invariante 2: Short-Circuit de Fast-Loop
-const fastResult = drive.executeFastLoopShortCircuit('Ajuste atómico de prueba', ['tools/killswitch.js']);
+const fastResult = drive.executeFastLoopShortCircuit('Ajuste atómico de prueba', ['tools/humanizer_engine.js']);
 assert.strictEqual(fastResult.status, 'SUCCESS', 'Fast-Loop Short-Circuit debe tener status SUCCESS');
 assert.ok(fastResult.durationMs < 5000, `Duración debe ser rápida (< 5000ms bajo carga concurrente), obtenida: ${fastResult.durationMs}ms`);
 assert.ok(fastResult.report.includes('✓ [Acción Cumplida]'), 'Reporte debe incluir formato ejecutivo de 3 líneas');
