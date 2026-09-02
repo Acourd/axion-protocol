@@ -1,40 +1,75 @@
 /**
  * Axion Protocol — Sovereign Engineering Controller & Audio-Visual Runtime (v2.0)
- * Native RFC 6455 WebSocket + Web Audio API + Physics Radar + Command Palette ⌘K + Tuner.
+ * Native RFC 6455 WebSocket + Web Audio API + Physics Radar + Command Palette ⌘K + Smart Dock.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ── 1. Diccionario Bilingüe de Textos de Ingeniería (EN / ES) ──────
+  // ── 1. Diccionario Bilingüe Exhaustivo (EN / ES) ───────────────────
   const I18N = {
     en: {
       toastLang: '✓ English language selected',
       toastThemeDark: '✓ Dark mode enabled',
       toastThemeLight: '✓ Light mode enabled',
+      toastSoundOn: '✓ Haptic audio enabled',
+      toastSoundOff: '✕ Haptic audio muted',
       toastCopied: '✓ Command copied to clipboard',
       toastCopyFail: 'Could not copy to clipboard automatically.',
-      toastCustomApplied: '✓ Workspace customization updated',
       statusPill: 'v2.0.0-rc.1 · 201 Suites PASS',
+      navHero: 'Home',
+      navSwarm: 'Swarm Engine',
+      navSandbox: 'CLI Sandbox',
+      navPipeline: '7-Step Workflow',
+      navRadar: 'Radar & Blast Radius',
+      navTelemetry: 'Telemetry HUD',
+      navCompat: 'Platforms',
+      navCommands: '12 Commands',
+      navSbom: 'SBOM Manifest',
+      paletteSearchBtn: 'Search',
+      paletteHelpNav: '<kbd>↑</kbd> <kbd>↓</kbd> Navigate',
+      paletteHelpExec: '<kbd>↵</kbd> Run / Open',
+      paletteHelpClose: '<kbd>ESC</kbd> Close',
       heroEyebrow: 'LOCAL GOVERNANCE HARNESS (EXPERIMENTAL)',
+      heroTagText: '0 THIRD-PARTY DEPENDENCIES · EXECUTION HARNESS',
       heroTitle: 'Local deterministic governance and runtime arbitration for AI agents.',
       heroLead: 'Execution engine operating in <code>fail-closed</code> mode (95.7 KB). Intercepts terminal tool calls with <code>shell: false</code>, arbitrates concurrent AST namespace collisions, and guarantees SHA-256 byte-accurate state rollback.',
-      heroTagText: '0 THIRD-PARTY DEPENDENCIES · EXECUTION HARNESS',
+      installBoxLabel: 'QUICKSTART COMMAND',
       copyLabel: 'Copy',
       telemetryStatus: '201 Suites PASS',
-      statDeps: '<strong>0</strong> dependencies',
-      statSize: '<strong>95.7 KB</strong> standalone',
-      statSuites: '<strong>201/201</strong> suites PASS',
-      statCmds: '<strong>12</strong> slash commands',
-      statSafety: '<strong>Fail-Closed</strong> by design',
+      metricSuites: 'Suites in Green (100%)',
+      metricDeps: 'External Dependencies',
+      metricRollback: 'Rollback SHA-256',
+      metricBft: 'BFT Rounds / sec',
+      consoleTitle: 'axion-telemetry-bus (SIMULATION RFC 6455)',
+      consoleVibeguardStat: 'VibeGuard: 129 files scanned (0 antipatterns)',
+      playgroundBadge: 'INTERACTIVE SANDBOX',
+      playgroundTitle: 'Command Simulator & Safety Brake',
+      playgroundDesc: 'Run interactive commands to experience how Axion intercepts risks, simulates adversarial attacks, and enforces rollback in <code>fail-closed</code> mode:',
+      quickActionLabel: 'Quick Run:',
+      quickDanger: '⚠️ Test Hostile: rm -rf /',
+      simTerminalBadge: 'PREFLIGHT INTERCEPTOR (PRE-TOOL USE SIMULATION)',
+      simClearBtn: 'Clear',
+      simInitMsg: 'Axion Protocol v2.0 Sandbox ready. Type a command or click the quick action pills above.',
+      simPlaceholder: 'Type a command (/drive, /verify, rm -rf /, /attest) and press Enter...',
+      simRunBtn: 'Run',
       swarmBadge: 'MULTI-AGENT CONCURRENCY',
       swarmTitle: 'Swarm Architecture v2.0 & Arbitration Triumvirate',
       swarmDesc: 'Three decoupled mathematical pillars to coordinate AI swarms without race conditions or blind overrides:',
+      p1Tag: 'PILLAR 1 · ISOLATION',
       pillar1Title: 'Granular AST Symbol Locking',
-      pillar1Desc: 'Manages atomic editing permissions on individual functions and classes instead of locking entire files.',
+      pillar1Desc: 'Manages atomic editing permissions on individual functions and classes instead of locking entire files. Eliminates concurrent overwrites across sub-agents.',
+      p2Tag: 'PILLAR 2 · COMMUNICATION',
       pillar2Title: 'P2P Message Bus with Asymmetric Signing',
-      pillar2Desc: 'Direct inter-agent communication channel authenticated with ephemeral Ed25519 keypairs.',
+      pillar2Desc: 'Direct inter-agent communication channel authenticated with ephemeral Ed25519 keypairs and isolated mailboxes in <code>.axion/swarm/</code>.',
+      p3Tag: 'PILLAR 3 · GOVERNANCE',
       pillar3Title: 'Byzantine Consensus Quorum (BFT ≥ 66%)',
-      pillar3Desc: 'No structural code mutation is applied without reaching a qualified supermajority of 66.7% of evaluator votes.',
+      pillar3Desc: 'No structural code mutation is applied without reaching a qualified supermajority of 66.7% of evaluator votes before writing to disk.',
+      deckBadge: 'LIVE SIMULATOR',
+      deckTitle: 'Voting Panel & BFT Quorum Meter',
+      btnConsensusTrigger: 'Simulate BFT Consensus Round',
+      nodeVotePending: 'Standby',
+      quorumReqLabel: 'Required Quorum: <strong>≥ 66.7%</strong>',
+      quorumInitText: 'Press "Simulate Round" to deliberate',
       pipeBadge: 'DETERMINISTIC LIFECYCLE',
       pipeTitle: 'Unified 7-Step Workflow & Socratic Sealer',
       pipeDesc: 'Guides models through a strict sequence of 7 states before committing changes:',
@@ -52,9 +87,56 @@ document.addEventListener('DOMContentLoaded', () => {
       step06Desc: 'Runs the full 201 automated test suites, performs strict VibeGuard anti-pattern scans, and validates exit code 0.',
       step07Name: 'PROMOTE',
       step07Desc: 'Issues in-toto Statement v1 cryptographic provenance in DSSE envelope with Ed25519 signature and localized summary.',
+      socraticBadge: 'SOCRATIC BRAKE · /clarify',
+      socraticTitle: 'IntentContract v1.2 Generator & Sealer',
+      socraticQNum: 'QUESTION 1 OF 2',
+      socraticQTitle: 'What is the exact scope of the requested code mutation?',
+      socraticOptA: 'Refactor internal logic only without altering the public API.',
+      socraticOptB: 'Create a new isolated module with corresponding TDD test suite.',
+      socraticOptC: 'Full structural migration with external dependency updates.',
+      btnCopyJson: 'Copy JSON',
+      radarBadge: 'TOPOLOGY & BLAST RADIUS',
+      radarTitle: 'Architecture Radar & Impact Analysis',
+      radarDesc: 'Visually explore the 5 domains and their interconnected modules. Click any node to compute its transitive blast radius and inspect verified invariants:',
+      chipAllDomains: 'All Domains (201)',
+      chipGovDomain: '01 Governance (110)',
+      chipCryptoDomain: '02 Cryptography (27)',
+      chipIntentDomain: '03 Intent (23)',
+      chipStateDomain: '04 State (23)',
+      chipResilienceDomain: '05 Resilience (18)',
+      btnBlastSim: '💥 Simulate Blast Radius',
+      inspActiveChip: 'Active Invariant',
+      inspLblBlast: 'Blast Radius',
+      inspLblTrans: 'Transitive Closure',
+      inspLblSig: 'Signature / Seal',
+      inspLblIso: 'Isolation',
+      telemetryBadge: 'REAL-TIME TELEMETRY',
+      telemetryTitle: 'Performance Metrics & Telemetry Stream',
+      telemetryDesc: 'Live monitoring of deterministic throughput, memory consumption, and continuous verification:',
+      chartBadge: 'LIVE THROUGHPUT',
+      chartTitle: 'BFT Consensus Rounds & Validations / Sec',
+      breakdownTitle: 'Distribution of the 201 Suites',
+      d1Name: '01 Governance & Preflight',
+      d2Name: '02 Cryptography & Attestation',
+      d3Name: '03 Intent & Socratic UX',
+      d4Name: '04 State & Checkpoints',
+      d5Name: '05 Adversarial Resilience',
       compatBadge: 'TOTAL INTEROPERABILITY',
       compatTitle: 'Universal Platform Support',
       compatDesc: 'Axion Protocol operates without friction across primary AI assisted development environments:',
+      thEnv: 'Development Environment',
+      thMech: 'Integration Mechanism',
+      thDir: 'Exported Directive',
+      thStatus: 'Verification Status',
+      tdOpenCodeMech: 'CLI / Rule Directives / Standalone Bundle',
+      tdCodexMech: 'Repository Instructions / Config TOML',
+      tdAntigravityMech: 'Modular Skills / P0 Rules / Interactive Modals',
+      tdClaudeMech: 'Native Slash Commands / CLAUDE.md',
+      tdCursorMech: 'MDC Rules / Agent Profiles',
+      tdVerified: 'Verified (201/201)',
+      tdNative: 'Native (100% Parity)',
+      tdNativeCmds: 'Native (12 Commands)',
+      tdSynced: 'Synchronized',
       cmdBadge: 'OPERATIONAL CATALOG',
       cmdTitle: '12 Governance Slash Commands',
       cmdDesc: 'Universal commands designed to coexist without collisions in any terminal environment:',
@@ -64,40 +146,101 @@ document.addEventListener('DOMContentLoaded', () => {
       chipState: 'State & Checkpoints',
       chipCrypto: 'Cryptography',
       cmdSearchPlaceholder: 'Search slash command (/drive, /verify, /rollback)...',
+      tagGov: 'Governance',
+      tagIntent: 'Intent',
+      tagState: 'State',
+      tagCrypto: 'Cryptography',
+      descDrive: 'Universal autonomous meta-orchestrator in closed loop. Adaptive deliberation and execution of complex missions.',
+      descClarify: 'Clarifies ambiguous requests using exactly 2 human questions with A/B/C choices before touching code.',
+      descVerify: 'Deterministic verification through real execution of the entire test suite, strictly requiring exit code 0.',
+      descSnapshot: 'Saves and restores SHA-256 verified deterministic checkpoints independent of the Git tree.',
+      descPreflight: 'Classifies the risk of terminal commands before execution with ALLOW, NEEDS_REVIEW, or DENY verdicts.',
+      descAttest: 'Issues and validates in-toto Statement v1 attestations in DSSE envelope with Ed25519 signatures.',
+      descMemory: 'Persistent project memory and cross-session anti-drift context anchoring.',
+      descDebug: 'Systematic 4-phase debugging cycle with root-cause analysis and reproducible evidence verification.',
+      descPremortem: 'Adversarial 6-month failure simulation and blast radius calculation before coding begins.',
+      descProfile: 'Calibrates and persists the user profile across 5 dimensions (technical depth, environment, pace, autonomy).',
+      descReview: 'Audits changes under 4 lenses (Technical, Functional, UX/Product, Architecture) with executable evidence.',
+      descHalt: 'Immediate emergency stop (killswitch) and deliberate fail-closed resumption upon anomalies.',
       sbomBadge: 'COMPLIANCE & SUPPLY CHAIN',
       sbomTitle: 'CycloneDX v1.5 and SPDX 2.3 SBOM Manifests',
       sbomDesc: 'Every module, tool, and command of Axion Protocol is indexed with its SHA-256 fingerprint under Apache-2.0 license.',
+      btnViewCyclone: 'View CycloneDX JSON',
+      btnViewSpdx: 'View SPDX 2.3 JSON',
       footerTagline: 'Deterministic governance runtime for autonomous AI agent operations.',
+      footerHeadingDocs: 'Documentation',
+      footerLinkMaturity: 'Maturity Report v2.0',
+      footerLinkSwarm: 'Swarm Architecture',
+      footerLinkCompat: 'OpenCode Compatibility',
+      footerHeadingCode: 'Code & License',
+      footerLinkGithub: 'GitHub Repository',
+      footerLinkReleases: 'Official Releases',
+      footerLinkLicense: 'Apache 2.0 License',
       footerCopy: '© 2026 Axion Protocol. Zero third-party telemetry. 100% open-source and local execution.'
     },
     es: {
       toastLang: '✓ Idioma español seleccionado',
       toastThemeDark: '✓ Modo oscuro activado',
       toastThemeLight: '✓ Modo claro activado',
+      toastSoundOn: '✓ Sonido háptico activado',
+      toastSoundOff: '✕ Sonido háptico silenciado',
       toastCopied: '✓ Comando copiado al portapapeles',
       toastCopyFail: 'No se pudo copiar automáticamente.',
-      toastCustomApplied: '✓ Personalización de entorno aplicada',
       statusPill: 'v2.0.0-rc.1 · 201 Suites PASS',
+      navHero: 'Inicio',
+      navSwarm: 'Swarm Engine',
+      navSandbox: 'Simulador CLI',
+      navPipeline: 'Flujo 7 Pasos',
+      navRadar: 'Radar Blast Radius',
+      navTelemetry: 'Telemetría HUD',
+      navCompat: 'Plataformas',
+      navCommands: '12 Comandos',
+      navSbom: 'Manifiesto SBOM',
+      paletteSearchBtn: 'Buscar',
+      paletteHelpNav: '<kbd>↑</kbd> <kbd>↓</kbd> Navegar',
+      paletteHelpExec: '<kbd>↵</kbd> Ejecutar / Abrir',
+      paletteHelpClose: '<kbd>ESC</kbd> Cerrar',
       heroEyebrow: 'ARNÉS DE GOBERNANZA LOCAL (EXPERIMENTAL)',
+      heroTagText: '0 DEPENDENCIAS EXTERNAS · EXECUTION HARNESS',
       heroTitle: 'Gobernanza local y arbitraje determinista para agentes de IA.',
       heroLead: 'Motor de ejecución en modo <code>fail-closed</code> (95.7 KB). Intercepta llamadas de terminal sin sub-shell, arbitra colisiones concurrentes en el árbol AST y garantiza reversión atómica verificada con SHA-256.',
-      heroTagText: '0 DEPENDENCIAS EXTERNAS · EXECUTION HARNESS',
+      installBoxLabel: 'COMANDO DE INICIO RÁPIDO',
       copyLabel: 'Copiar',
       telemetryStatus: '201 Suites PASS',
-      statDeps: '<strong>0</strong> dependencias',
-      statSize: '<strong>95.7 KB</strong> standalone',
-      statSuites: '<strong>201/201</strong> suites PASS',
-      statCmds: '<strong>12</strong> slash commands',
-      statSafety: '<strong>Fail-Closed</strong> nativo',
+      metricSuites: 'Suites en Verde (100%)',
+      metricDeps: 'Dependencias Externas',
+      metricRollback: 'Rollback SHA-256',
+      metricBft: 'Rondas BFT / seg',
+      consoleTitle: 'axion-telemetry-bus (SIMULACIÓN RFC 6455)',
+      consoleVibeguardStat: 'VibeGuard: 129 archivos escaneados (0 antipatrones)',
+      playgroundBadge: 'SANDBOX INTERACTIVO',
+      playgroundTitle: 'Simulador de Comandos y Freno de Seguridad',
+      playgroundDesc: 'Ejecuta comandos interactivos para experimentar cómo Axion intercepta riesgos, simula ataques hostiles y ejecuta reversión en modo <code>fail-closed</code>:',
+      quickActionLabel: 'Ejecución rápida:',
+      quickDanger: '⚠️ Test Hostil: rm -rf /',
+      simTerminalBadge: 'PREFLIGHT INTERCEPTOR (SIMULACIÓN PRE-TOOL USE)',
+      simClearBtn: 'Limpiar',
+      simInitMsg: 'Axion Protocol v2.0 Sandbox listo. Escribe un comando o haz clic en las acciones rápidas superiores.',
+      simPlaceholder: 'Escribe un comando (/drive, /verify, rm -rf /, /attest) y presiona Enter...',
+      simRunBtn: 'Ejecutar',
       swarmBadge: 'CONCURRENCIA MULTI-AGENTE',
       swarmTitle: 'Arquitectura Swarm v2.0 & Triunvirato de Arbitraje',
       swarmDesc: 'Tres pilares matemáticos desacoplados para coordinar enjambres de IA sin condiciones de carrera ni modificaciones ciegas:',
+      p1Tag: 'PILAR 1 · AISLAMIENTO',
       pillar1Title: 'Bloqueo Granular de Símbolos AST',
-      pillar1Desc: 'Gestiona permisos de edición atómicos sobre funciones y clases individuales en lugar de bloquear archivos enteros.',
+      pillar1Desc: 'Gestiona permisos de edición atómicos sobre funciones y clases individuales en lugar de bloquear archivos enteros. Elimina sobreescrituras concurrentes entre múltiples sub-agentes.',
+      p2Tag: 'PILAR 2 · COMUNICACIÓN',
       pillar2Title: 'Bus de Mensajes P2P con Firma Asimétrica',
-      pillar2Desc: 'Canal de comunicación directo inter-agente autenticado mediante pares de llaves Ed25519 efímeras.',
+      pillar2Desc: 'Canal de comunicación directo inter-agente autenticado mediante pares de llaves Ed25519 efímeras y buzones de entrada aislados en <code>.axion/swarm/</code>.',
+      p3Tag: 'PILAR 3 · GOBERNANZA',
       pillar3Title: 'Quórum de Consenso Bizantino (BFT ≥ 66%)',
-      pillar3Desc: 'Ninguna mutación estructural se aplica al código sin alcanzar una supermayoría calificada del 66.7% de los votos.',
+      pillar3Desc: 'Ninguna mutación estructural se aplica al código sin alcanzar una supermayoría calificada del 66.7% de los votos de los agentes evaluadores antes de escribir en disco.',
+      deckBadge: 'SIMULADOR EN VIVO',
+      deckTitle: 'Panel de Votación y Quórum BFT',
+      btnConsensusTrigger: 'Simular Ronda de Consenso BFT',
+      nodeVotePending: 'En espera',
+      quorumReqLabel: 'Quórum Requerido: <strong>≥ 66.7%</strong>',
+      quorumInitText: 'Presiona "Simular Ronda" para deliberar',
       pipeBadge: 'EJECUCIÓN DETERMINISTA',
       pipeTitle: 'Ciclo de Trabajo Híbrido Unificado & Socrático',
       pipeDesc: 'El protocolo guía a los modelos a través de una secuencia estricta de 7 estados antes de consolidar cambios:',
@@ -115,9 +258,56 @@ document.addEventListener('DOMContentLoaded', () => {
       step06Desc: 'Ejecución real de la suite de 201 pruebas, escaneo VibeGuard de antipatrones y validación de salida con exit code 0.',
       step07Name: 'PROMOVER',
       step07Desc: 'Generación del sobre criptográfico in-toto v1 en formato DSSE y reporte ejecutivo en el idioma del usuario.',
+      socraticBadge: 'FRENO SOCRÁTICO · /clarify',
+      socraticTitle: 'Generador y Sellador de IntentContract v1.2',
+      socraticQNum: 'PREGUNTA 1 DE 2',
+      socraticQTitle: '¿Cuál es el alcance exacto de la mutación solicitada?',
+      socraticOptA: 'Refactorizar únicamente la lógica interna sin alterar la API pública.',
+      socraticOptB: 'Crear nuevo módulo aislado y suite de pruebas TDD correspondiente.',
+      socraticOptC: 'Migración estructural completa con actualización de dependencias.',
+      btnCopyJson: 'Copiar JSON',
+      radarBadge: 'TOPOLOGÍA Y BLAST RADIUS',
+      radarTitle: 'Radar de Arquitectura & Análisis de Impacto',
+      radarDesc: 'Explora visualmente los 5 dominios y sus módulos interconectados. Haz clic en cualquier nodo para calcular su radio de impacto transitivo e inspeccionar sus invariantes:',
+      chipAllDomains: 'Todos los Dominios (201)',
+      chipGovDomain: '01 Gobernanza (110)',
+      chipCryptoDomain: '02 Criptografía (27)',
+      chipIntentDomain: '03 Intención (23)',
+      chipStateDomain: '04 Estado (23)',
+      chipResilienceDomain: '05 Resiliencia (18)',
+      btnBlastSim: '💥 Simular Blast Radius',
+      inspActiveChip: 'Invariante Activo',
+      inspLblBlast: 'Blast Radius',
+      inspLblTrans: 'Cierre Transitivo',
+      inspLblSig: 'Firma / Sello',
+      inspLblIso: 'Aislamiento',
+      telemetryBadge: 'TELEMETRÍA EN TIEMPO REAL',
+      telemetryTitle: 'Métricas de Rendimiento & Flujo de Telemetría',
+      telemetryDesc: 'Supervisión en vivo de rendimiento determinista, consumo de memoria y verificación continua:',
+      chartBadge: 'LIVE THROUGHPUT',
+      chartTitle: 'Rondas de Consenso BFT & Validaciones / Seg',
+      breakdownTitle: 'Distribución de las 201 Suites',
+      d1Name: '01 Gobernanza & Preflight',
+      d2Name: '02 Criptografía & Atestación',
+      d3Name: '03 Intención & UX Socrática',
+      d4Name: '04 Estado & Checkpoints',
+      d5Name: '05 Resiliencia Adversarial',
       compatBadge: 'INTEROPERABILIDAD TOTAL',
       compatTitle: 'Soporte Universal de Plataformas',
       compatDesc: 'Axion Protocol opera sin fricción en los principales entornos de desarrollo asistido por IA:',
+      thEnv: 'Entorno de Desarrollo',
+      thMech: 'Mecanismo de Integración',
+      thDir: 'Directiva Exportada',
+      thStatus: 'Estado de Verificación',
+      tdOpenCodeMech: 'CLI / Directivas de Reglas / Standalone Bundle',
+      tdCodexMech: 'Instrucciones de Repositorio / Config TOML',
+      tdAntigravityMech: 'Skills Modulares / Reglas P0 / Modales Interactivos',
+      tdClaudeMech: 'Slash Commands Nativos / CLAUDE.md',
+      tdCursorMech: 'MDC Rules / Perfiles de Agente',
+      tdVerified: 'Verificado (201/201)',
+      tdNative: 'Nativo (100% Paridad)',
+      tdNativeCmds: 'Nativo (12 Comandos)',
+      tdSynced: 'Sincronizado',
       cmdBadge: 'CATÁLOGO OPERATIVO',
       cmdTitle: '12 Slash Commands de Gobernanza',
       cmdDesc: 'Comandos universales diseñados para coexistir sin colisiones en cualquier terminal:',
@@ -127,10 +317,36 @@ document.addEventListener('DOMContentLoaded', () => {
       chipState: 'Estado & Checkpoints',
       chipCrypto: 'Criptografía',
       cmdSearchPlaceholder: 'Buscar comando (/drive, /verify, /rollback)...',
+      tagGov: 'Gobernanza',
+      tagIntent: 'Intención',
+      tagState: 'Estado',
+      tagCrypto: 'Criptografía',
+      descDrive: 'Meta-orquestador autónomo universal en bucle cerrado. Deliberación adaptativa y ejecución de misiones complejas.',
+      descClarify: 'Aclara peticiones ambiguas mediante exactamente 2 preguntas humanas con opciones A/B/C antes de tocar código.',
+      descVerify: 'Verificación determinista por ejecución real de la suite de pruebas completa, con exigencia estricta de exit code 0.',
+      descSnapshot: 'Guarda y restaura puntos de control deterministas verificados con SHA-256 independientes del árbol de Git.',
+      descPreflight: 'Clasifica el riesgo de comandos de terminal antes de su ejecución con veredictos ALLOW, NEEDS_REVIEW o DENY.',
+      descAttest: 'Emite y valida atestaciones in-toto Statement v1 en sobre DSSE con firmas Ed25519 compatibles con SLSA y cosign.',
+      descMemory: 'Memoria persistente del proyecto y anclaje de contexto anti-deriva entre sesiones de trabajo continuas.',
+      descDebug: 'Ciclo sistemático de depuración en 4 fases con análisis de causa raíz y verificación por evidencia reproducible.',
+      descPremortem: 'Simulación adversarial de fracaso a 6 meses y cálculo del radio de explosión antes de iniciar la programación.',
+      descProfile: 'Calibra y persiste el perfil del usuario en 5 dimensiones (profundidad técnica, entorno, cadencia y autonomía).',
+      descReview: 'Auditoría de cambios bajo 4 lentes (Técnica, Funcional, UX/Producto y Arquitectura) con evidencia ejecutable.',
+      descHalt: 'Parada de emergencia inmediata (killswitch) y reanudación deliberada en modo fail-closed ante anomalías.',
       sbomBadge: 'CUMPLIMIENTO Y CADENA DE SUMINISTRO',
       sbomTitle: 'Manifiestos SBOM en Estándares CycloneDX v1.5 y SPDX 2.3',
       sbomDesc: 'Cada módulo, herramienta y comando de Axion Protocol está indexado con su huella digital SHA-256 bajo licencia Apache-2.0.',
+      btnViewCyclone: 'Ver CycloneDX JSON',
+      btnViewSpdx: 'Ver SPDX 2.3 JSON',
       footerTagline: 'Runtime de gobernanza determinista para operaciones con agentes de IA autónomos.',
+      footerHeadingDocs: 'Documentación',
+      footerLinkMaturity: 'Reporte de Madurez v2.0',
+      footerLinkSwarm: 'Arquitectura Swarm',
+      footerLinkCompat: 'Compatibilidad OpenCode',
+      footerHeadingCode: 'Código y Licencia',
+      footerLinkGithub: 'Repositorio en GitHub',
+      footerLinkReleases: 'Releases Oficiales',
+      footerLinkLicense: 'Licencia Apache 2.0',
       footerCopy: '© 2026 Axion Protocol. Cero telemetría de terceros. 100% código abierto y ejecución local.'
     }
   };
@@ -139,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 2. Web Audio Haptic Synthesizer (Zero External Assets) ─────────
   let audioCtx = null;
-  let soundProfile = localStorage.getItem('axion_sound_profile') || 'synth';
+  let soundEnabled = localStorage.getItem('axion_sound_enabled') !== 'false';
 
   function initAudio() {
     if (!audioCtx && typeof window.AudioContext !== 'undefined') {
@@ -151,38 +367,31 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function playKeyClick() {
-    if (soundProfile === 'off') return;
+    if (!soundEnabled) return;
     initAudio();
     if (!audioCtx) return;
     try {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      if (soundProfile === 'click') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.02);
-      } else {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.03);
-      }
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.025, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.03);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
       osc.stop(audioCtx.currentTime + 0.03);
     } catch (e) {
-      console.debug('Audio error:', e);
+      console.debug('Audio click error:', e);
     }
   }
 
   function playSuccessChime() {
-    if (soundProfile === 'off') return;
+    if (!soundEnabled) return;
     initAudio();
     if (!audioCtx) return;
     try {
-      const freqs = [523.25, 659.25, 783.99]; // C5, E5, G5 (C Major)
+      const freqs = [523.25, 659.25, 783.99]; // C5, E5, G5
       freqs.forEach((freq, idx) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -201,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function playAlertBeep() {
-    if (soundProfile === 'off') return;
+    if (!soundEnabled) return;
     initAudio();
     if (!audioCtx) return;
     try {
@@ -221,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function playRadarPing() {
-    if (soundProfile === 'off') return;
+    if (!soundEnabled) return;
     initAudio();
     if (!audioCtx) return;
     try {
@@ -251,12 +460,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2500);
   }
 
-  // ── 4. Scroll Progress Indicator ───────────────────────────────────
+  // ── 4. Scroll Progress Indicator & Dock Tracking ───────────────────
   const scrollProgress = document.getElementById('scroll-progress');
+  const sideItems = document.querySelectorAll('.sidebar-smart .side-item');
+  const sections = document.querySelectorAll('section[id]');
+
   window.addEventListener('scroll', () => {
     const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
     const progress = totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0;
     if (scrollProgress) scrollProgress.style.width = `${progress}%`;
+
+    // Active Section Observer
+    let currentActive = 'hero';
+    const scrollPos = window.scrollY + 200;
+    sections.forEach(sec => {
+      if (sec.offsetTop <= scrollPos) {
+        currentActive = sec.getAttribute('id');
+      }
+    });
+
+    sideItems.forEach(item => {
+      const target = item.getAttribute('data-nav-target');
+      item.classList.toggle('active', target === currentActive);
+    });
   });
 
   // ── 5. Spotlight Cursor Tracker ────────────────────────────────────
@@ -275,23 +501,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ── 6. Theme & Customizer Engine ───────────────────────────────────
+  // ── 6. Theme & Sound Controls ──────────────────────────────────────
   const htmlRoot = document.documentElement;
   const themeToggleBtn = document.getElementById('theme-toggle');
-  const btnOpenCustomizer = document.getElementById('btn-open-customizer');
-  const btnCloseDrawer = document.getElementById('btn-close-drawer');
-  const customizerDrawer = document.getElementById('customizer-drawer');
+  const soundToggleBtn = document.getElementById('btn-sound-toggle');
 
-  // Cargar preferencias
   const savedTheme = localStorage.getItem('axion_theme') || 'dark';
-  const savedAccent = localStorage.getItem('axion_accent') || 'emerald';
-  const savedDensity = localStorage.getItem('axion_density') || 'standard';
-  const savedBg = localStorage.getItem('axion_bg') || 'grid';
-
   htmlRoot.setAttribute('data-theme', savedTheme);
-  htmlRoot.setAttribute('data-accent', savedAccent);
-  htmlRoot.setAttribute('data-density', savedDensity);
-  htmlRoot.setAttribute('data-bg', savedBg);
 
   if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
@@ -304,98 +520,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (btnOpenCustomizer && customizerDrawer) {
-    btnOpenCustomizer.addEventListener('click', () => {
-      playKeyClick();
-      customizerDrawer.classList.toggle('open');
+  function updateSoundUI() {
+    if (!soundToggleBtn) return;
+    const soundOn = soundToggleBtn.querySelector('.sound-on');
+    const soundOff = soundToggleBtn.querySelector('.sound-off');
+    if (soundOn && soundOff) {
+      soundOn.style.display = soundEnabled ? 'block' : 'none';
+      soundOff.style.display = soundEnabled ? 'none' : 'block';
+    }
+  }
+  updateSoundUI();
+
+  if (soundToggleBtn) {
+    soundToggleBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem('axion_sound_enabled', soundEnabled);
+      updateSoundUI();
+      if (soundEnabled) {
+        playSuccessChime();
+        showToast(I18N[currentLang].toastSoundOn);
+      } else {
+        showToast(I18N[currentLang].toastSoundOff);
+      }
     });
   }
-
-  if (btnCloseDrawer && customizerDrawer) {
-    btnCloseDrawer.addEventListener('click', () => {
-      playKeyClick();
-      customizerDrawer.classList.remove('open');
-    });
-  }
-
-  // Accent Switcher Buttons
-  const accentButtons = document.querySelectorAll('#accent-picker .accent-btn');
-  accentButtons.forEach(btn => {
-    if (btn.getAttribute('data-accent') === savedAccent) {
-      accentButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-    btn.addEventListener('click', () => {
-      playKeyClick();
-      accentButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const accent = btn.getAttribute('data-accent');
-      htmlRoot.setAttribute('data-accent', accent);
-      localStorage.setItem('axion_accent', accent);
-      playSuccessChime();
-      showToast(I18N[currentLang].toastCustomApplied);
-    });
-  });
-
-  // Density Switcher Buttons
-  const densityButtons = document.querySelectorAll('#density-toggle .seg-btn');
-  densityButtons.forEach(btn => {
-    if (btn.getAttribute('data-density') === savedDensity) {
-      densityButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-    btn.addEventListener('click', () => {
-      playKeyClick();
-      densityButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const density = btn.getAttribute('data-density');
-      htmlRoot.setAttribute('data-density', density);
-      localStorage.setItem('axion_density', density);
-    });
-  });
-
-  // Background Texture Buttons
-  const bgButtons = document.querySelectorAll('#bg-texture-toggle .seg-btn');
-  bgButtons.forEach(btn => {
-    if (btn.getAttribute('data-bg') === savedBg) {
-      bgButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-    btn.addEventListener('click', () => {
-      playKeyClick();
-      bgButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const bg = btn.getAttribute('data-bg');
-      htmlRoot.setAttribute('data-bg', bg);
-      localStorage.setItem('axion_bg', bg);
-    });
-  });
-
-  // Sound Profile Buttons & Test Actions
-  const soundButtons = document.querySelectorAll('#sound-profile-toggle .seg-btn');
-  soundButtons.forEach(btn => {
-    if (btn.getAttribute('data-sound') === soundProfile) {
-      soundButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-    btn.addEventListener('click', () => {
-      soundButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      soundProfile = btn.getAttribute('data-sound');
-      localStorage.setItem('axion_sound_profile', soundProfile);
-      const soundTag = document.getElementById('sound-status-tag');
-      if (soundTag) soundTag.textContent = soundProfile === 'off' ? 'Mudo' : 'Activado';
-      playKeyClick();
-    });
-  });
-
-  const btnTestChime = document.getElementById('btn-test-chime');
-  const btnTestAlert = document.getElementById('btn-test-alert');
-  const btnTestPing = document.getElementById('btn-test-ping');
-
-  if (btnTestChime) btnTestChime.addEventListener('click', playSuccessChime);
-  if (btnTestAlert) btnTestAlert.addEventListener('click', playAlertBeep);
-  if (btnTestPing) btnTestPing.addEventListener('click', playRadarPing);
 
   // ── 7. Command Palette ⌘K Engine ───────────────────────────────────
   const paletteModal = document.getElementById('palette-modal');
@@ -447,7 +595,6 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `).join('');
 
-    // Click handler on items
     paletteResults.querySelectorAll('.palette-item').forEach(item => {
       item.addEventListener('click', () => {
         const c = item.getAttribute('data-cmd');
@@ -517,14 +664,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Atajo global de teclado (⌘K / Ctrl+K)
   window.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       openPalette();
     } else if (e.key === 'Escape') {
       closePalette();
-      if (customizerDrawer) customizerDrawer.classList.remove('open');
     }
   });
 
@@ -625,12 +770,12 @@ document.addEventListener('DOMContentLoaded', () => {
       agentNodes.forEach(node => {
         node.classList.remove('voted-pass');
         const voteEl = node.querySelector('.node-vote');
-        if (voteEl) voteEl.textContent = 'Deliberando...';
+        if (voteEl) voteEl.textContent = currentLang === 'en' ? 'Deliberating...' : 'Deliberando...';
       });
 
       if (quorumVal) quorumVal.textContent = '0%';
       if (quorumBarFill) quorumBarFill.style.width = '0%';
-      if (quorumResultText) quorumResultText.textContent = 'Iniciando votación criptográfica...';
+      if (quorumResultText) quorumResultText.textContent = currentLang === 'en' ? 'Initiating cryptographic voting...' : 'Iniciando votación criptográfica...';
 
       let votes = 0;
       const total = agentNodes.length;
@@ -640,7 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
           playKeyClick();
           node.classList.add('voted-pass');
           const voteEl = node.querySelector('.node-vote');
-          if (voteEl) voteEl.textContent = '✓ Aprobado (Pass)';
+          if (voteEl) voteEl.textContent = currentLang === 'en' ? '✓ Approved (Pass)' : '✓ Aprobado (Pass)';
           votes++;
           const pct = Math.round((votes / total) * 100);
           if (quorumVal) quorumVal.textContent = `${pct}%`;
@@ -648,8 +793,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (votes === total) {
             playSuccessChime();
-            if (quorumResultText) quorumResultText.textContent = '✓ Quórum BFT alcanzado (100% ≥ 66.7%). Mutación autorizada y sellada en DSSE.';
-            showToast('✓ Quórum de consenso BFT alcanzado');
+            if (quorumResultText) {
+              quorumResultText.textContent = currentLang === 'en'
+                ? '✓ BFT Quorum reached (100% ≥ 66.7%). Mutation authorized and sealed in DSSE.'
+                : '✓ Quórum BFT alcanzado (100% ≥ 66.7%). Mutación autorizada y sellada en DSSE.';
+            }
+            showToast(currentLang === 'en' ? '✓ BFT consensus quorum reached' : '✓ Quórum de consenso BFT alcanzado');
           }
         }, (idx + 1) * 350);
       });
@@ -922,7 +1071,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnHighlightBlast.addEventListener('click', () => {
         playSuccessChime();
         blastSimulationActive = true;
-        showToast(`💥 Simulando Blast Radius para ${selectedNode.label}`);
+        showToast(currentLang === 'en' ? `💥 Simulating Blast Radius for ${selectedNode.label}` : `💥 Simulando Blast Radius para ${selectedNode.label}`);
         setTimeout(() => { blastSimulationActive = false; }, 3200);
       });
     }
@@ -945,7 +1094,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       ctx.clearRect(0, 0, w, h);
 
-      // Eje y gradiente
       const gradient = ctx.createLinearGradient(0, 0, 0, h);
       gradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
       gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
@@ -1112,7 +1260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   connectTelemetry();
 
-  // ── 17. Language Switcher ──────────────────────────────────────────
+  // ── 17. Motor Universal de Traducción Dinámica (EN / ES) ───────────
   const langButtons = document.querySelectorAll('.btn-lang');
 
   function applyLanguage(lang) {
@@ -1127,14 +1275,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const dict = I18N[lang];
     if (!dict) return;
 
-    const heroTag = document.getElementById('hero-tag-text');
-    if (heroTag) heroTag.textContent = dict.heroTagText;
+    // Actualizar todos los elementos con data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (dict[key]) {
+        el.innerHTML = dict[key];
+      }
+    });
 
-    const heroTitle = document.getElementById('hero-title');
-    if (heroTitle) heroTitle.innerHTML = dict.heroTitle;
-
-    const heroLead = document.getElementById('hero-lead');
-    if (heroLead) heroLead.innerHTML = dict.heroLead;
+    // Actualizar placeholders con data-i18n-placeholder
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (dict[key]) {
+        el.placeholder = dict[key];
+      }
+    });
 
     if (copyLabel) copyLabel.textContent = dict.copyLabel;
   }
