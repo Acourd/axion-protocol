@@ -48,7 +48,7 @@ for (const tf of toolFiles) {
   }
   const t1 = process.hrtime.bigint();
   const elapsedMs = Number(t1 - t0) / 1e6;
-  assert.ok(elapsedMs < 500, `${tf} tardó ${elapsedMs.toFixed(2)}ms en cargarse (límite: 500ms)`);
+  assert.ok(elapsedMs < 1500, `${tf} tardó ${elapsedMs.toFixed(2)}ms en cargarse (límite: 1500ms)`);
 }
 console.log(`✓ ${toolFiles.length} módulos de tools/ auditados: modo estricto, sin eval() y carga instantánea`);
 

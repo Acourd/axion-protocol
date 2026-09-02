@@ -3,9 +3,9 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "axion-protocol",
-  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/1788385649935",
+  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/1788386898010",
   "creationInfo": {
-    "created": "2026-09-02T21:47:29.935Z",
+    "created": "2026-09-02T22:08:18.010Z",
     "creators": [
       "Tool: SovereignSBOMGenerator-2.0.0",
       "Organization: Axion Protocol"
@@ -295,7 +295,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "1da79fa3c26b944fbe0ad0eecf9bbb5b375bde4e6f1d87e4538427d888259214"
+          "checksumValue": "0d6a79975144e5c2f6220a0c8ae257bb15b00274f9403c2fb7266fca8d8ddb8e"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -463,7 +463,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "cba987424521fa9391c539b675fab1cadd5afde9a8a328bf04dd0fb7975a7c3d"
+          "checksumValue": "bdcf72664fde25e3657154c73647eb935d480e96e13c3035d0dc7ad80cc4f9a9"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1667,7 +1667,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "326666afbd918950694ecd3213fa58f97cf8235033797a1b762c43c510bd97a7"
+          "checksumValue": "81f6cb636fa30ab73865a03bf181caff6dcc50bf496fbc475c1895d1b44ee356"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1709,7 +1709,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "5b13bd8190cefa5a89fc6c9ada753db76b71a82798eb6bd3bfb596d3b9c73fbf"
+          "checksumValue": "6427a556dea49a33ce6868d52a5e0cbaf600427e66aff15761fecbbb9a7db2aa"
         }
       ],
       "licenseConcluded": "Apache-2.0",

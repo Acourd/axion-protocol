@@ -55,7 +55,11 @@ try {
 
 } finally {
   if (fs.existsSync(sandbox)) {
-    fs.rmSync(sandbox, { recursive: true, force: true });
+    try {
+      fs.rmSync(sandbox, { recursive: true, force: true });
+    } catch (_) {
+      // Ignorar bloqueo temporal de OS en limpieza de sandbox
+    }
   }
 }
 

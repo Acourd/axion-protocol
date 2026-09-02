@@ -4,7 +4,7 @@
 /**
  * Axion Protocol — Standalone Single-File Bundle
  * Versión: 1.3.1-rc.2 (Zero-Dependency)
- * Compilado: 2026-09-02T21:50:13.544Z
+ * Compilado: 2026-09-02T22:08:15.188Z
  */
 
 const __modules = {};
@@ -1518,7 +1518,7 @@ function consumeOnce(consumptionDir, approval) {
     if (descriptor !== undefined) {
       try { fs.closeSync(descriptor); } catch (_) { /* fail closed */ }
     }
-    return error && error.code === 'EEXIST'
+    return (fs.existsSync(markerPath) || (error && error.code === 'EEXIST'))
       ? APPROVAL_STATUS.APPROVAL_REPLAYED
       : APPROVAL_STATUS.APPROVAL_STATE_UNAVAILABLE;
   }

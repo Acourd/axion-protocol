@@ -173,7 +173,7 @@ function consumeOnce(consumptionDir, approval) {
     if (descriptor !== undefined) {
       try { fs.closeSync(descriptor); } catch (_) { /* fail closed */ }
     }
-    return error && error.code === 'EEXIST'
+    return (fs.existsSync(markerPath) || (error && error.code === 'EEXIST'))
       ? APPROVAL_STATUS.APPROVAL_REPLAYED
       : APPROVAL_STATUS.APPROVAL_STATE_UNAVAILABLE;
   }

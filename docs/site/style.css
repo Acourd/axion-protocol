@@ -15,9 +15,10 @@
   --border-prominent: rgba(255, 255, 255, 0.16);
   --border-accent: rgba(16, 185, 129, 0.35);
 
+  /* WCAG AAA Calibrated Contrast Scales */
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
-  --text-muted: #64748B;
+  --text-muted: #7E8B9F;
 
   /* Radiant Emerald Functional Accent */
   --accent-rgb: 16, 185, 129;
@@ -28,12 +29,30 @@
   --emerald-tint: rgba(16, 185, 129, 0.12);
   --emerald-glow: rgba(16, 185, 129, 0.22);
 
-  /* Typography */
+  /* Unified Radius Hierarchy */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 9999px;
+
+  /* Obsidian Glass Finished Surfaces */
+  --glass-bg: rgba(14, 18, 27, 0.76);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-prominent: rgba(255, 255, 255, 0.16);
+  --glass-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.52), 0 4px 12px -2px rgba(0, 0, 0, 0.32);
+
+  /* Micro-Typography & Optical Glyphs */
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'cv11' 1, 'ss01' 1;
 
-  /* Transitions & Springs */
+  /* Spring Physics & Fluid Motion Curves */
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.25, 1, 0.5, 1);
   --duration-fast: 0.15s;
   --duration-normal: 0.25s;
   --duration-smooth: 0.35s;
@@ -51,9 +70,10 @@
   --border-prominent: rgba(15, 23, 42, 0.16);
   --border-accent: rgba(5, 150, 105, 0.4);
 
+  /* WCAG AAA Calibrated Contrast Scales */
   --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-muted: #64748B;
+  --text-secondary: #334155;
+  --text-muted: #475569;
 
   --emerald-radiant: #059669;
   --emerald-primary: #059669;
@@ -61,6 +81,13 @@
   --emerald-light: #10B981;
   --emerald-tint: rgba(5, 150, 105, 0.1);
   --emerald-glow: rgba(5, 150, 105, 0.18);
+
+  /* Obsidian Glass for Light Slate */
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-border-prominent: rgba(15, 23, 42, 0.18);
+  --glass-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
+  --glass-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
 }
 
 *, *::before, *::after {
@@ -74,8 +101,11 @@ html {
   background-color: var(--bg-canvas);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  line-height: 1.6;
+  font-feature-settings: var(--font-feature-settings);
+  line-height: 1.68;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -85,7 +115,36 @@ body {
   position: relative;
 }
 
-/* ── Textura de Fondo (Rejilla de Ingeniería) ─────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  font-weight: 750;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+h1 {
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+}
+
+h2 {
+  letter-spacing: -0.028em;
+  line-height: 1.22;
+}
+
+p {
+  color: var(--text-secondary);
+  line-height: 1.68;
+  letter-spacing: -0.005em;
+}
+
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
+  font-feature-settings: 'zero' 1, 'ss01' 1, 'cv02' 1;
+  letter-spacing: -0.015em;
+}
+
+/* ── Textura de Fondo (Rejilla de Ingeniería Soberana) ────────── */
 .matrix-bg {
   background-image: 
     radial-gradient(circle at 50% -20%, rgba(16, 185, 129, 0.12), transparent 70%),
@@ -111,33 +170,35 @@ body {
   background: var(--emerald-primary);
   width: 0%;
   z-index: 1000;
-  box-shadow: 0 0 10px var(--emerald-primary);
+  box-shadow: 0 0 12px var(--emerald-primary);
   transition: width 0.08s linear;
 }
 
-/* ── Toast de Feedback ────────────────────────────────────────── */
+/* ── Toast de Feedback con Acabado Obsidian Glass ──────────────── */
 .toast {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: var(--bg-surface-elevated);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--border-accent);
   color: var(--text-primary);
   padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 0.84rem;
   font-weight: 600;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--glass-specular), var(--glass-shadow);
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(12px) scale(0.96);
   pointer-events: none;
-  transition: all var(--duration-normal) var(--ease-spring);
+  transition: opacity var(--duration-normal) ease, transform var(--duration-normal) var(--ease-spring);
   z-index: 9999;
 }
 
 .toast.show {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 /* ── Barra Lateral Inteligente Desplegable (Smart Left Dock) ─────── */
@@ -150,28 +211,29 @@ body {
 }
 
 .sidebar-track {
-  background: rgba(14, 18, 27, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
   padding: 8px 6px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--glass-specular), var(--glass-shadow);
   width: 44px;
   overflow: hidden;
+  will-change: width, transform;
   transition: width var(--duration-smooth) var(--ease-spring), border-color var(--duration-fast);
 }
 
 [data-theme="light"] .sidebar-track {
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-specular), var(--glass-shadow);
 }
 
 .sidebar-smart:hover .sidebar-track {
-  width: 190px;
+  width: 194px;
   border-color: var(--border-accent);
 }
 
@@ -179,17 +241,18 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 6px;
-  border-radius: 6px;
+  padding: 6px 8px;
+  border-radius: var(--radius-xs);
   text-decoration: none;
   color: var(--text-secondary);
   white-space: nowrap;
-  transition: all var(--duration-fast);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.2s var(--ease-spring);
 }
 
 .side-item:hover, .side-item.active {
   background: var(--bg-surface-elevated);
   color: var(--text-primary);
+  transform: translateX(2px);
 }
 
 .side-item.active .side-num {
@@ -225,14 +288,18 @@ body {
   transform: translateX(0);
 }
 
-/* ── Spotlight Cursor Effect ──────────────────────────────────── */
+/* ── Spotlight Cursor Effect & Obsidian Glass Cards ───────────── */
 .spotlight-card {
   position: relative;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-specular), 0 8px 24px rgba(0, 0, 0, 0.28);
   overflow: hidden;
-  transition: border-color var(--duration-fast);
+  will-change: transform, box-shadow;
+  transition: transform 0.28s var(--ease-spring), border-color 0.2s ease, box-shadow 0.28s var(--ease-spring);
 }
 
 .spotlight-card::before {
@@ -242,7 +309,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(350px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(16, 185, 129, 0.1), transparent 80%);
+  background: radial-gradient(380px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(16, 185, 129, 0.12), transparent 80%);
   pointer-events: none;
   opacity: 0;
   transition: opacity var(--duration-normal);
@@ -253,23 +320,26 @@ body {
 }
 
 .spotlight-card:hover {
+  transform: translateY(-2.5px) scale(1.006);
   border-color: var(--border-prominent);
+  box-shadow: var(--glass-specular), 0 16px 36px -4px rgba(0, 0, 0, 0.48);
 }
 
-/* ── Top Navigation Bar ────────────────────────────────────────── */
+/* ── Top Navigation Bar con Acabado Obsidian Glass ─────────────── */
 .top-nav-bar {
   position: sticky;
   top: 0;
   z-index: 850;
-  background: rgba(8, 9, 12, 0.85);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--glass-specular);
   padding: 10px 0;
 }
 
 [data-theme="light"] .top-nav-bar {
-  background: rgba(248, 250, 252, 0.9);
+  background: var(--glass-bg);
 }
 
 .top-nav-container {
@@ -287,18 +357,24 @@ body {
   gap: 8px;
   text-decoration: none;
   color: var(--text-primary);
+  transition: transform 0.2s var(--ease-spring);
+}
+
+.brand-link:hover {
+  transform: scale(1.015);
 }
 
 .brand-icon {
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   background: var(--emerald-tint);
   border: 1px solid var(--border-accent);
   color: var(--emerald-primary);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 10px var(--emerald-glow);
 }
 
 .brand-icon svg {
@@ -309,7 +385,7 @@ body {
 .brand-text {
   font-size: 1.05rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .accent-dot {
@@ -319,13 +395,14 @@ body {
 .version-badge {
   font-family: var(--font-mono);
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 750;
   color: var(--text-muted);
   background: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
   margin-left: 4px;
+  letter-spacing: -0.01em;
 }
 
 .top-nav-actions {
@@ -334,26 +411,31 @@ body {
   gap: 8px;
 }
 
-/* ⌘K Trigger Button */
+/* ⌘K Trigger Button con Física Elástica */
 .btn-palette-trigger {
   display: flex;
   align-items: center;
   gap: 6px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  padding: 5px 10px;
-  border-radius: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-xs);
   color: var(--text-secondary);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .btn-palette-trigger:hover {
   background: var(--bg-surface-elevated);
   border-color: var(--border-prominent);
   color: var(--text-primary);
+  transform: translateY(-1.5px);
+}
+
+.btn-palette-trigger:active {
+  transform: translateY(0.5px) scale(0.97);
 }
 
 .search-mini-icon {
@@ -433,7 +515,7 @@ body {
 .btn-sound-toggle, .theme-toggle-btn {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   width: 32px;
   height: 32px;
   display: flex;
@@ -442,13 +524,18 @@ body {
   color: var(--text-secondary);
   cursor: pointer;
   flex-shrink: 0;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .btn-sound-toggle:hover, .theme-toggle-btn:hover {
   background: var(--bg-surface-hover);
   color: var(--emerald-primary);
   border-color: var(--border-accent);
+  transform: translateY(-1.5px);
+}
+
+.btn-sound-toggle:active, .theme-toggle-btn:active {
+  transform: translateY(0.5px) scale(0.96);
 }
 
 .sound-icon, .theme-icon {
@@ -471,11 +558,11 @@ body {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   padding: 5px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   text-decoration: none;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), background 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-github-nav svg {
@@ -486,18 +573,23 @@ body {
 .btn-github-nav:hover {
   background: var(--bg-surface-hover);
   border-color: var(--border-prominent);
+  transform: translateY(-1.5px);
 }
 
-/* ── Modal Paleta de Comandos (⌘K) ────────────────────────────── */
+.btn-github-nav:active {
+  transform: translateY(0.5px) scale(0.97);
+}
+
+/* ── Modal Paleta de Comandos (⌘K) con Acabado Obsidian Glass ───── */
 .palette-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 9990;
   display: flex;
   align-items: flex-start;
@@ -515,11 +607,13 @@ body {
 
 .palette-container {
   width: 100%;
-  max-width: 600px;
-  background: #0E121B;
+  max-width: 620px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--border-accent);
-  border-radius: 12px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-specular), var(--glass-shadow);
   overflow: hidden;
   transform: translateY(-10px) scale(0.98);
   transition: transform var(--duration-normal) var(--ease-spring);
@@ -711,19 +805,27 @@ body {
   border: 1px solid var(--border-subtle);
 }
 
-/* Install Box */
+/* Install Box con Acabado Obsidian Glass */
 .install-box {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-specular), 0 10px 28px rgba(0, 0, 0, 0.28);
   overflow: hidden;
   margin-bottom: 28px;
   max-width: 540px;
+  transition: border-color 0.2s ease, box-shadow 0.25s var(--ease-spring);
+}
+
+.install-box:hover {
+  border-color: var(--border-prominent);
 }
 
 .install-header {
   background: var(--bg-surface-elevated);
-  padding: 8px 12px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -735,31 +837,36 @@ body {
   font-size: 0.68rem;
   font-weight: 800;
   color: var(--text-muted);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .pm-tabs {
   display: flex;
-  gap: 3px;
+  gap: 4px;
 }
 
 .tab-btn {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 0.7rem;
   font-weight: 700;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), color 0.15s ease, background 0.15s ease;
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+  transform: translateY(-1px);
 }
 
 .tab-btn.active {
   background: var(--bg-surface-hover);
   color: var(--emerald-primary);
-  border: 1px solid var(--border-accent);
+  border-color: var(--border-accent);
 }
 
 .install-command-row {
@@ -790,18 +897,23 @@ body {
   font-size: 0.76rem;
   font-weight: 700;
   padding: 4px 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 5px;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .copy-btn:hover {
   background: var(--emerald-primary);
   color: #000000;
   border-color: var(--emerald-primary);
+  transform: translateY(-1.5px);
+}
+
+.copy-btn:active {
+  transform: translateY(0.5px) scale(0.96);
 }
 
 [data-theme="light"] .copy-btn:hover {
@@ -817,11 +929,22 @@ body {
 }
 
 .metric-item {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  padding: 8px 10px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
   text-align: left;
+  box-shadow: var(--glass-specular), 0 4px 12px rgba(0, 0, 0, 0.2);
+  will-change: transform, box-shadow;
+  transition: transform 0.25s var(--ease-spring), border-color 0.2s ease, box-shadow 0.25s var(--ease-spring);
+}
+
+.metric-item:hover {
+  transform: translateY(-2.5px);
+  border-color: var(--border-accent);
+  box-shadow: var(--glass-specular), 0 10px 22px -4px rgba(0, 0, 0, 0.4);
 }
 
 .m-val {
@@ -830,21 +953,25 @@ body {
   font-size: 1.05rem;
   font-weight: 800;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .m-lbl {
   font-size: 0.72rem;
   color: var(--text-muted);
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
-/* Runtime Console Preview */
+/* Runtime Console Preview con Acabado Obsidian Glass */
 .runtime-console {
-  background: #0B0E14;
-  border: 1px solid var(--border-prominent);
-  border-radius: 10px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--glass-specular), var(--glass-shadow);
+  transition: border-color 0.2s ease, box-shadow 0.25s var(--ease-spring);
 }
 
 [data-theme="light"] .runtime-console {
@@ -974,16 +1101,21 @@ body {
   font-family: var(--font-mono);
   font-size: 0.76rem;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 5px 12px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .btn-quick-cmd:hover {
   background: var(--bg-surface-hover);
   color: var(--emerald-primary);
   border-color: var(--border-accent);
+  transform: translateY(-1.5px);
+}
+
+.btn-quick-cmd:active {
+  transform: translateY(0.5px) scale(0.96);
 }
 
 .btn-quick-cmd.danger {
@@ -994,19 +1126,25 @@ body {
 .btn-quick-cmd.danger:hover {
   background: rgba(239, 68, 68, 0.15);
   border-color: #EF4444;
+  color: #F87171;
+  transform: translateY(-1.5px);
 }
 
+/* Simulated Terminal Frame con Acabado Obsidian Glass */
 .sim-terminal-frame {
-  background: #0B0E14;
-  border: 1px solid var(--border-prominent);
-  border-radius: 10px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--glass-specular), var(--glass-shadow);
+  transition: border-color 0.2s ease, box-shadow 0.25s var(--ease-spring);
 }
 
 .sim-terminal-top {
   background: #121722;
-  padding: 10px 14px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1042,29 +1180,35 @@ body {
   height: 6px;
   border-radius: 50%;
   background: var(--emerald-primary);
-  box-shadow: 0 0 6px var(--emerald-primary);
+  box-shadow: 0 0 8px var(--emerald-primary);
 }
 
 .btn-clear-term {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--text-muted);
   font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
+  transition: transform 0.2s var(--ease-bounce), color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-clear-term:hover {
   color: var(--text-primary);
   border-color: var(--border-prominent);
+  transform: translateY(-1px);
+}
+
+.btn-clear-term:active {
+  transform: translateY(0.5px) scale(0.96);
 }
 
 .sim-terminal-body {
-  padding: 16px;
+  padding: 16px 18px;
   font-family: var(--font-mono);
   font-size: 0.84rem;
-  line-height: 1.6;
+  line-height: 1.65;
   min-height: 180px;
   max-height: 320px;
   overflow-y: auto;
@@ -1083,7 +1227,7 @@ body {
 .sim-terminal-prompt {
   background: #0E121B;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 10px 14px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1106,14 +1250,19 @@ body {
   font-family: var(--font-mono);
   font-size: 0.76rem;
   font-weight: 800;
-  padding: 4px 12px;
-  border-radius: 4px;
+  padding: 5px 14px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s ease;
 }
 
 .btn-term-run:hover {
-  box-shadow: 0 0 10px var(--emerald-primary);
+  box-shadow: 0 0 12px var(--emerald-glow);
+  transform: translateY(-1.5px);
+}
+
+.btn-term-run:active {
+  transform: translateY(0.5px) scale(0.96);
 }
 
 /* ── 3. Secciones Generales & Swarm Trio ───────────────────────── */
@@ -1158,18 +1307,29 @@ body {
 }
 
 .feature-tile {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
   padding: 24px;
   display: flex;
   flex-direction: column;
+  box-shadow: var(--glass-specular), 0 6px 20px rgba(0, 0, 0, 0.22);
+  will-change: transform, box-shadow;
+  transition: transform 0.28s var(--ease-spring), border-color 0.2s ease, box-shadow 0.28s var(--ease-spring);
+}
+
+.feature-tile:hover {
+  transform: translateY(-3.5px) scale(1.008);
+  border-color: var(--border-prominent);
+  box-shadow: var(--glass-specular), 0 16px 36px -4px rgba(0, 0, 0, 0.45);
 }
 
 .tile-icon-box {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-xs);
   background: var(--emerald-tint);
   border: 1px solid var(--border-accent);
   color: var(--emerald-primary);
@@ -1177,6 +1337,7 @@ body {
   align-items: center;
   justify-content: center;
   margin-bottom: 16px;
+  box-shadow: 0 0 12px var(--emerald-glow);
 }
 
 .tile-icon-box svg {
@@ -1189,13 +1350,13 @@ body {
   font-size: 0.68rem;
   font-weight: 800;
   color: var(--text-muted);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   margin-bottom: 8px;
 }
 
 .tile-title {
   font-size: 1.15rem;
-  font-weight: 700;
+  font-weight: 750;
   margin-bottom: 10px;
   letter-spacing: -0.02em;
 }
@@ -1203,7 +1364,7 @@ body {
 .tile-desc {
   font-size: 0.9rem;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.65;
   margin-bottom: 20px;
   flex-grow: 1;
 }
@@ -1214,8 +1375,8 @@ body {
   justify-content: space-between;
   background: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-xs);
   font-family: var(--font-mono);
   font-size: 0.74rem;
 }
@@ -1225,16 +1386,19 @@ body {
 }
 
 .spec-stat {
-  font-weight: 700;
+  font-weight: 750;
   color: var(--emerald-primary);
 }
 
-/* Swarm Simulation Deck */
+/* Swarm Simulation Deck con Acabado Obsidian Glass */
 .swarm-sim-deck {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--glass-specular), 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .deck-top {
@@ -1251,11 +1415,13 @@ body {
   font-size: 0.68rem;
   font-weight: 800;
   color: var(--emerald-primary);
+  letter-spacing: 0.05em;
 }
 
 .deck-title {
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 750;
+  letter-spacing: -0.015em;
 }
 
 .btn-deck-trigger {
@@ -1264,18 +1430,23 @@ body {
   border: none;
   font-family: var(--font-sans);
   font-size: 0.82rem;
-  font-weight: 700;
-  padding: 6px 14px;
-  border-radius: 6px;
+  font-weight: 750;
+  padding: 6px 16px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s ease;
 }
 
 .btn-deck-trigger:hover {
-  box-shadow: 0 0 12px var(--emerald-primary);
+  box-shadow: 0 0 14px var(--emerald-glow);
+  transform: translateY(-1.5px);
+}
+
+.btn-deck-trigger:active {
+  transform: translateY(0.5px) scale(0.96);
 }
 
 .deck-grid {
@@ -1381,17 +1552,23 @@ body {
 }
 
 .step-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
   padding: 16px 12px;
-  transition: all var(--duration-fast);
+  box-shadow: var(--glass-specular), 0 4px 12px rgba(0, 0, 0, 0.18);
+  will-change: transform, border-color, box-shadow;
+  transition: transform 0.25s var(--ease-spring), border-color 0.2s ease, background 0.2s ease, box-shadow 0.25s var(--ease-spring);
   cursor: pointer;
 }
 
 .step-card:hover, .step-card.active {
   border-color: var(--border-accent);
   background: var(--bg-surface-elevated);
+  transform: translateY(-2.5px);
+  box-shadow: var(--glass-specular), 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
 .step-num {
@@ -1404,7 +1581,7 @@ body {
 
 .step-name {
   font-size: 0.88rem;
-  font-weight: 700;
+  font-weight: 750;
   margin-bottom: 8px;
   letter-spacing: -0.01em;
 }
@@ -1412,23 +1589,26 @@ body {
 .step-summary {
   font-size: 0.78rem;
   color: var(--text-secondary);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .step-summary code {
   font-family: var(--font-mono);
   font-size: 0.9em;
   background: rgba(255, 255, 255, 0.05);
-  padding: 1px 3px;
-  border-radius: 3px;
+  padding: 1px 4px;
+  border-radius: var(--radius-xs);
 }
 
-/* Socratic Builder Box */
+/* Socratic Builder Box con Acabado Obsidian Glass */
 .socratic-builder-box {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
   padding: 24px;
+  box-shadow: var(--glass-specular), var(--glass-shadow);
 }
 
 .builder-header {
@@ -1442,7 +1622,8 @@ body {
 
 .b-head-title {
   font-size: 1.15rem;
-  font-weight: 700;
+  font-weight: 750;
+  letter-spacing: -0.015em;
 }
 
 .seal-pill {
@@ -1454,8 +1635,9 @@ body {
   background: var(--bg-surface-elevated);
   border: 1px solid var(--border-accent);
   color: var(--emerald-primary);
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-xs);
+  box-shadow: 0 0 10px var(--emerald-glow);
 }
 
 .builder-body-grid {
@@ -1496,15 +1678,20 @@ body {
   background: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
   padding: 10px 14px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   text-align: left;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), border-color 0.15s ease, background 0.15s ease;
 }
 
 .opt-btn:hover, .opt-btn.active {
   border-color: var(--border-accent);
   background: var(--bg-surface-hover);
+  transform: translateY(-1.5px);
+}
+
+.opt-btn:active {
+  transform: translateY(0.5px) scale(0.98);
 }
 
 .opt-key {
@@ -1515,7 +1702,7 @@ body {
   color: #000000;
   width: 22px;
   height: 22px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1532,7 +1719,8 @@ body {
 .contract-preview-box {
   background: #090B10;
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-specular), 0 8px 24px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1540,7 +1728,7 @@ body {
 
 .contract-top-bar {
   background: #121722;
-  padding: 8px 12px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1555,35 +1743,44 @@ body {
 
 .btn-copy-contract {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--text-secondary);
   font-size: 0.7rem;
   font-weight: 700;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
+  transition: transform 0.2s var(--ease-bounce), color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-copy-contract:hover {
   color: var(--emerald-primary);
   border-color: var(--border-accent);
+  transform: translateY(-1px);
+}
+
+.btn-copy-contract:active {
+  transform: translateY(0.5px) scale(0.96);
 }
 
 .contract-code {
-  padding: 14px;
+  padding: 14px 16px;
   font-family: var(--font-mono);
   font-size: 0.8rem;
-  line-height: 1.5;
+  line-height: 1.55;
   color: #A78BFA;
   overflow-x: auto;
   flex-grow: 1;
 }
 
-/* ── 5. Architecture Radar & Blast Radius Canvas ─────────────── */
+/* ── 5. Architecture Radar & Blast Radius Canvas con Acabado Obsidian Glass ── */
 .radar-card-layout {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-specular), var(--glass-shadow);
   overflow: hidden;
 }
 
@@ -1610,16 +1807,17 @@ body {
   color: var(--text-secondary);
   font-size: 0.74rem;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 4px 12px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .r-chip.active, .r-chip:hover {
   background: var(--bg-surface-hover);
   color: var(--emerald-primary);
   border-color: var(--border-accent);
+  transform: translateY(-1px);
 }
 
 .btn-blast-sim {
@@ -1628,16 +1826,22 @@ body {
   color: var(--emerald-primary);
   font-family: var(--font-sans);
   font-size: 0.76rem;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 6px;
+  font-weight: 750;
+  padding: 5px 14px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s ease;
 }
 
 .btn-blast-sim:hover {
   background: var(--emerald-primary);
   color: #000000;
+  box-shadow: 0 0 12px var(--emerald-glow);
+  transform: translateY(-1.5px);
+}
+
+.btn-blast-sim:active {
+  transform: translateY(0.5px) scale(0.96);
 }
 
 .radar-viewport {
@@ -1893,15 +2097,20 @@ body {
   font-size: 0.78rem;
   font-weight: 600;
   padding: 5px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .chip-btn.active, .chip-btn:hover {
   background: var(--bg-surface-elevated);
   color: var(--text-primary);
   border-color: var(--border-prominent);
+  transform: translateY(-1px);
+}
+
+.chip-btn:active {
+  transform: translateY(0.5px) scale(0.96);
 }
 
 .search-input-wrap {
@@ -1917,8 +2126,9 @@ body {
   font-family: var(--font-sans);
   font-size: 0.82rem;
   padding: 7px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   outline: none;
+  transition: border-color 0.15s ease;
 }
 
 .search-input-wrap input:focus {
@@ -1932,15 +2142,21 @@ body {
 }
 
 .cmd-item {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  padding: 16px;
-  transition: border-color var(--duration-fast);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  box-shadow: var(--glass-specular), 0 4px 16px rgba(0, 0, 0, 0.2);
+  will-change: transform, box-shadow;
+  transition: transform 0.25s var(--ease-spring), border-color 0.2s ease, box-shadow 0.25s var(--ease-spring);
 }
 
 .cmd-item:hover {
+  transform: translateY(-2.5px) scale(1.008);
   border-color: var(--border-prominent);
+  box-shadow: var(--glass-specular), 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
 .cmd-head {
@@ -1955,29 +2171,34 @@ body {
   font-size: 0.92rem;
   font-weight: 800;
   color: var(--emerald-primary);
+  letter-spacing: -0.01em;
 }
 
 .badge-category {
   font-size: 0.68rem;
-  font-weight: 700;
+  font-weight: 750;
   color: var(--text-muted);
   background: var(--bg-surface-elevated);
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.04em;
 }
 
 .cmd-text {
   font-size: 0.82rem;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
-/* ── 9. Banner SBOM ───────────────────────────────────────────── */
+/* ── 9. Banner SBOM con Acabado Obsidian Glass ─────────────────── */
 .sbom-banner {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
   padding: 28px;
+  box-shadow: var(--glass-specular), var(--glass-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1986,13 +2207,15 @@ body {
 
 .sbom-title {
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 750;
+  letter-spacing: -0.02em;
   margin-bottom: 8px;
 }
 
 .sbom-desc {
   font-size: 0.9rem;
   color: var(--text-secondary);
+  line-height: 1.6;
   max-width: 680px;
 }
 
@@ -2009,16 +2232,36 @@ body {
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 0.78rem;
-  font-weight: 700;
-  padding: 8px 14px;
-  border-radius: 6px;
+  font-weight: 750;
+  padding: 8px 16px;
+  border-radius: var(--radius-xs);
   text-decoration: none;
-  transition: all var(--duration-fast);
+  transition: transform 0.2s var(--ease-bounce), background 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-outline:hover {
   background: var(--bg-surface-hover);
   border-color: var(--border-prominent);
+  transform: translateY(-1.5px);
+}
+
+.btn-outline:active {
+  transform: translateY(0.5px) scale(0.96);
+}
+
+/* ── Accesibilidad: Reducción de Movimiento ───────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0s;
+    --duration-normal: 0s;
+    --duration-smooth: 0s;
+    --ease-spring: linear;
+    --ease-bounce: linear;
+    --ease-smooth: linear;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* ── 10. Footer ───────────────────────────────────────────────── */
