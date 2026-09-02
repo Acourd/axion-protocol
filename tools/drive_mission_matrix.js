@@ -80,6 +80,9 @@ class DriveMissionMatrix {
 
   saveBacklog(data) {
     data.updatedAt = new Date().toISOString();
+    if (!fs.existsSync(this.stateDir)) {
+      fs.mkdirSync(this.stateDir, { recursive: true });
+    }
     fs.writeFileSync(this.backlogFile, JSON.stringify(data, null, 2), 'utf8');
   }
 
