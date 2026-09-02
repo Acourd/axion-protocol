@@ -964,9 +964,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderRadar() {
       ctx.clearRect(0, 0, width, height);
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
 
       // Grid de fondo con precisión sub-píxel
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+      ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.035)';
       ctx.lineWidth = 1;
       const gridSize = 40;
       for (let x = 0; x < width; x += gridSize) {
@@ -996,13 +997,13 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineTo(toNode.x, toNode.y);
 
         if (isHighlighted) {
-          ctx.strokeStyle = '#10B981';
+          ctx.strokeStyle = isLight ? '#059669' : '#10B981';
           ctx.lineWidth = 2.5;
         } else if (isDimmed) {
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+          ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.04)' : 'rgba(255, 255, 255, 0.03)';
           ctx.lineWidth = 1;
         } else {
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+          ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.16)' : 'rgba(255, 255, 255, 0.14)';
           ctx.lineWidth = 1.2;
         }
         ctx.stroke();
@@ -1044,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
         if (isDimmed) {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+          ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.1)' : 'rgba(255, 255, 255, 0.08)';
         } else {
           const coreGrad = ctx.createRadialGradient(node.x - node.r * 0.3, node.y - node.r * 0.3, 1, node.x, node.y, node.r);
           coreGrad.addColorStop(0, isSelected ? '#FFFFFF' : hexToRgba(node.color, 1));
@@ -1054,16 +1055,22 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fill();
 
         // 3. Anillo de borde sub-píxel
-        ctx.strokeStyle = isSelected ? '#FFFFFF' : (isHovered ? '#10B981' : hexToRgba(node.color, 0.6));
+        ctx.strokeStyle = isSelected 
+          ? (isLight ? '#0F172A' : '#FFFFFF') 
+          : (isHovered ? (isLight ? '#059669' : '#10B981') : hexToRgba(node.color, 0.6));
         ctx.lineWidth = isSelected ? 2.5 : (isHovered ? 2 : 1.2);
         ctx.stroke();
 
-        // 4. Tipografía con sombra de contraste
+        // 4. Tipografía con sombra de contraste calibrada
         ctx.font = isSelected ? '700 11px JetBrains Mono, monospace' : '600 10px JetBrains Mono, monospace';
         ctx.textAlign = 'center';
-        ctx.fillStyle = isDimmed ? 'rgba(0, 0, 0, 0.4)' : 'rgba(5, 7, 11, 0.85)';
-        ctx.fillText(node.label.split('/').pop(), node.x + 1, node.y + node.r + 15);
-        ctx.fillStyle = isDimmed ? 'rgba(255, 255, 255, 0.25)' : (isSelected ? '#FFFFFF' : '#E2E8F0');
+        if (!isLight) {
+          ctx.fillStyle = isDimmed ? 'rgba(0, 0, 0, 0.4)' : 'rgba(5, 7, 11, 0.85)';
+          ctx.fillText(node.label.split('/').pop(), node.x + 1, node.y + node.r + 15);
+        }
+        ctx.fillStyle = isDimmed 
+          ? (isLight ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.25)') 
+          : (isSelected ? (isLight ? '#047857' : '#FFFFFF') : (isLight ? '#0F172A' : '#E2E8F0'));
         ctx.fillText(node.label.split('/').pop(), node.x, node.y + node.r + 14);
       });
 
@@ -1147,9 +1154,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawChart() {
       const w = cachedW;
       ctx.clearRect(0, 0, w, h);
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
 
-      // Líneas de cuadrícula sutiles
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      // Líneas de cuadrícula sutiles calibradas
+      ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.04)';
       ctx.lineWidth = 1;
       for (let y = 30; y < h; y += 40) {
         ctx.beginPath();
@@ -1180,9 +1188,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Trazo resplandeciente
       ctx.save();
-      ctx.shadowColor = 'rgba(16, 185, 129, 0.65)';
+      ctx.shadowColor = isLight ? 'rgba(5, 150, 105, 0.45)' : 'rgba(16, 185, 129, 0.65)';
       ctx.shadowBlur = 10;
-      ctx.strokeStyle = '#10B981';
+      ctx.strokeStyle = isLight ? '#059669' : '#10B981';
       ctx.lineWidth = 2.5;
       ctx.stroke();
       ctx.restore();
@@ -1192,16 +1200,16 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.lineTo(0, h);
       ctx.closePath();
       const gradient = ctx.createLinearGradient(0, 0, 0, h);
-      gradient.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
-      gradient.addColorStop(0.7, 'rgba(16, 185, 129, 0.06)');
+      gradient.addColorStop(0, isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(16, 185, 129, 0.28)');
+      gradient.addColorStop(0.7, isLight ? 'rgba(5, 150, 105, 0.04)' : 'rgba(16, 185, 129, 0.06)');
       gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
       ctx.fillStyle = gradient;
       ctx.fill();
 
       // Beacon pulsante en el punto más reciente (Head Node)
       const beaconGrad = ctx.createRadialGradient(lastPoint.x, lastPoint.y, 2, lastPoint.x, lastPoint.y, 14);
-      beaconGrad.addColorStop(0, 'rgba(16, 185, 129, 0.9)');
-      beaconGrad.addColorStop(0.4, 'rgba(16, 185, 129, 0.4)');
+      beaconGrad.addColorStop(0, isLight ? 'rgba(5, 150, 105, 0.95)' : 'rgba(16, 185, 129, 0.9)');
+      beaconGrad.addColorStop(0.4, isLight ? 'rgba(5, 150, 105, 0.4)' : 'rgba(16, 185, 129, 0.4)');
       beaconGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
       ctx.beginPath();
       ctx.arc(lastPoint.x, lastPoint.y, 14, 0, Math.PI * 2);

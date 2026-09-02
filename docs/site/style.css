@@ -90,6 +90,94 @@
   --glass-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
 }
 
+/* ── Studio Slate Pro Componentes Calibrados ─────────────────────── */
+[data-theme="light"] .feature-tile,
+[data-theme="light"] .spotlight-card,
+[data-theme="light"] .step-card,
+[data-theme="light"] .compat-card,
+[data-theme="light"] .phase-tile,
+[data-theme="light"] .radar-card-layout {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+}
+
+[data-theme="light"] .feature-tile:hover,
+[data-theme="light"] .spotlight-card:hover,
+[data-theme="light"] .step-card:hover,
+[data-theme="light"] .compat-card:hover,
+[data-theme="light"] .phase-tile:hover {
+  border-color: rgba(5, 150, 105, 0.35);
+  box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.09), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+}
+
+[data-theme="light"] .metric-item {
+  background: #FFFFFF;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+[data-theme="light"] .metric-item:hover {
+  border-color: rgba(5, 150, 105, 0.35);
+  box-shadow: 0 8px 20px -2px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .btn-quick-cmd {
+  background: #FFFFFF;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #334155;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+[data-theme="light"] .btn-quick-cmd:hover {
+  background: #F1F5F9;
+  color: #059669;
+  border-color: rgba(5, 150, 105, 0.4);
+}
+
+[data-theme="light"] .btn-quick-cmd.danger {
+  color: #DC2626;
+  border-color: rgba(220, 38, 38, 0.25);
+  background: #FEF2F2;
+}
+
+[data-theme="light"] .btn-quick-cmd.danger:hover {
+  background: #FEE2E2;
+  border-color: #DC2626;
+  color: #B91C1C;
+}
+
+[data-theme="light"] .radar-controls-bar {
+  background: #F8FAFC;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .filter-chip {
+  background: #FFFFFF;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #475569;
+}
+
+[data-theme="light"] .filter-chip.active,
+[data-theme="light"] .filter-chip:hover {
+  background: #059669;
+  color: #FFFFFF;
+  border-color: #059669;
+}
+
+[data-theme="light"] .opt-btn {
+  background: #FFFFFF;
+  border-color: rgba(15, 23, 42, 0.10);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+[data-theme="light"] .opt-btn:hover,
+[data-theme="light"] .opt-btn.active {
+  background: #F8FAFC;
+  border-color: #059669;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.12);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -1142,6 +1230,12 @@ code, kbd, samp, pre {
   transition: border-color 0.2s ease, box-shadow 0.25s var(--ease-spring);
 }
 
+[data-theme="light"] .sim-terminal-frame {
+  background: #090D16;
+  border-color: rgba(15, 23, 42, 0.18);
+  box-shadow: 0 20px 48px -8px rgba(15, 23, 42, 0.16), 0 4px 16px -2px rgba(15, 23, 42, 0.08);
+}
+
 .sim-terminal-top {
   background: #121722;
   padding: 10px 16px;
@@ -1241,6 +1335,14 @@ code, kbd, samp, pre {
   font-family: var(--font-mono);
   font-size: 0.88rem;
   color: var(--text-primary);
+}
+
+[data-theme="light"] .sim-terminal-prompt input {
+  color: #F8FAFC;
+}
+
+[data-theme="light"] .sim-terminal-prompt input::placeholder {
+  color: #64748B;
 }
 
 .btn-term-run {
@@ -1726,6 +1828,12 @@ code, kbd, samp, pre {
   flex-direction: column;
 }
 
+[data-theme="light"] .contract-preview-box {
+  background: #0B0F17;
+  border-color: rgba(15, 23, 42, 0.16);
+  box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.14), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+}
+
 .contract-top-bar {
   background: #121722;
   padding: 8px 14px;
@@ -1899,7 +2007,7 @@ code, kbd, samp, pre {
   font-size: 0.95rem;
   font-weight: 700;
   margin-bottom: 6px;
-  color: #FFFFFF;
+  color: var(--text-primary);
 }
 
 .insp-module-desc {
@@ -1917,7 +2025,8 @@ code, kbd, samp, pre {
 }
 
 .insp-metric {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
   padding: 4px 6px;
   border-radius: 4px;
 }
