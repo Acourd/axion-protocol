@@ -81,6 +81,7 @@ const SUBCOMANDOS = {
   'audit-ui': { script: 'tools/attestation_visualizer.js', ayuda: 'genera el panel web visual interactivo de atestaciones y firmas Ed25519' },
   swarm: { script: 'tools/swarm_ast_arbiter.js', ayuda: 'bloqueo atómico AST multi-agente y arbitraje de colisiones concurrentes' },
   'swarm-p2p': { script: 'tools/swarm_p2p_channel.js', ayuda: 'bus de mensajes autenticado P2P con firmas Ed25519 entre agentes concurrentes' },
+  'swarm-consensus': { script: 'tools/swarm_consensus_arbiter.js', ayuda: 'protocolo de consenso y votación por quórum bizantino BFT multi-agente' },
   sync: { script: 'tools/sync_mirror_gate.js', ayuda: 'auditoría y sincronización espejo determinista de espacios de trabajo' },
   humanize: { script: 'tools/humanizer_engine.js', ayuda: 'auditoría y purificación de tono humano anti-AI slop para textos y READMEs' },
   drive: { script: 'tools/drive_engine.js', ayuda: 'meta-orquestador autónomo con deliberación profunda adaptativa' },
