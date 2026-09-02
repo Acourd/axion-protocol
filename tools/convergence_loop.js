@@ -219,6 +219,114 @@ class ConvergenceEngine {
 
     return cycleRecord;
   }
+
+  /**
+   * Ejecuta auto-curación y reconciliación de tipos AST en bucle cerrado sin intervención humana.
+   */
+  autoResolveConvergence(options = {}) {
+    const filePath = options.filePath ? path.resolve(this.root, options.filePath) : null;
+    const verifyFn = options.verifyFn;
+    const maxIterations = options.maxIterations || 3;
+    const autoRollback = options.autoRollback !== false;
+    const contractSpec = options.contractSpec || {};
+
+    const record = {
+      iterations: 0,
+      maxIterations,
+      converged: false,
+      healed: false,
+      actions: []
+    };
+
+    if (!filePath || !fs.existsSync(filePath)) {
+      return { success: false, reason: 'Ruta de archivo no especificada o inexistente', record };
+    }
+
+    const SemanticAutoHealer = require('./semantic_auto_healer.js');
+    const healer = new SemanticAutoHealer(this.root);
+
+    let checkpointId = null;
+    if (typeof crearCheckpoint === 'function') {
+      try {
+        const cp = crearCheckpoint(this.root, 'pre-auto-resolve-' + path.basename(filePath));
+        checkpointId = cp ? cp.checkpointId : null;
+        record.checkpointId = checkpointId;
+      } catch (cpErr) {
+        record.checkpointError = cpErr.message;
+      }
+    }
+
+    while (record.iterations < maxIterations) {
+      record.iterations++;
+
+      // 1. Ejecutar verificación
+      let verifyResult = null;
+      try {
+        verifyResult = typeof verifyFn === 'function' ? verifyFn(record.iterations) : { pass: true, output: '' };
+      } catch (vErr) {
+        verifyResult = { pass: false, output: vErr.message };
+      }
+
+      if (verifyResult && verifyResult.pass) {
+        record.converged = true;
+        break;
+      }
+
+      // 2. Intentar auto-curación semántica en el archivo
+      const currentCode = fs.readFileSync(filePath, 'utf8');
+      const errOutput = (verifyResult && verifyResult.output) ? verifyResult.output : 'Unknown verification failure';
+      const healResult = healer.executeHealLoop({
+        sourceCode: currentCode,
+        errorTrace: errOutput,
+        contractSpec
+      });
+
+      if (!healResult.success || healResult.healedCode === currentCode) {
+        record.actions.push({
+          iteration: record.iterations,
+          healed: false,
+          reason: healResult.reason || 'No se pudo sintetizar parche aplicable',
+          errorSnippet: String(errOutput).slice(0, 300)
+        });
+        break;
+      }
+
+      // 3. Escribir código curado atómicamente
+      const tmpPath = filePath + '.autoresolve.tmp';
+      fs.writeFileSync(tmpPath, healResult.healedCode, 'utf8');
+      fs.renameSync(tmpPath, filePath);
+
+      record.healed = true;
+      record.actions.push({
+        iteration: record.iterations,
+        healed: true,
+        strategy: healResult.strategy,
+        details: healResult.details,
+        safetyVerdict: healResult.safetyVerdict
+      });
+    }
+
+    // Si no convergió y autoRollback está activo, restaurar
+    if (!record.converged && autoRollback && checkpointId && typeof restaurarCheckpoint === 'function') {
+      try {
+        restaurarCheckpoint(this.root, checkpointId);
+        record.rollbackExecuted = true;
+      } catch (rErr) {
+        record.rollbackError = rErr.message;
+      }
+    }
+
+    const digest = crypto.createHash('sha256').update(JSON.stringify(record)).digest('hex').slice(0, 16);
+    const logPath = path.join(this.stateDir, `autoresolve-history-${digest}.json`);
+    fs.writeFileSync(logPath, JSON.stringify(record, null, 2), 'utf8');
+    record.logPath = logPath;
+
+    return {
+      success: record.converged,
+      converged: record.converged,
+      record
+    };
+  }
 }
 
 if (require.main === module) {

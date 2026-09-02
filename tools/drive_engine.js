@@ -838,6 +838,15 @@ class DriveEngine {
   }
 
   /**
+   * Ejecuta el resolvedor automático de convergencia y auto-curación de tipos AST en bucle cerrado.
+   */
+  autoResolveConvergence(options = {}) {
+    const ConvergenceEngine = require('./convergence_loop.js');
+    const engine = new ConvergenceEngine(this.root);
+    return engine.autoResolveConvergence(options);
+  }
+
+  /**
    * Compila un contrato de ejecución socrático multidimensional.
    */
   compileSocraticIntentContract(options = {}) {

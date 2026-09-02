@@ -36,15 +36,38 @@ class SemanticAutoHealer {
     const trace = String(errorTrace);
     let category = 'UNKNOWN_FAILURE';
     let missingEntity = null;
+    let targetType = null;
+    let functionName = null;
 
     if (trace.includes('Cannot find module') || trace.includes('MODULE_NOT_FOUND')) {
       category = 'MISSING_DEPENDENCY';
       const match = trace.match(/Cannot find module '([^']+)'/);
       if (match) missingEntity = match[1];
     } else if (trace.includes('is not a function')) {
-      category = 'MISSING_METHOD_EXPORT';
-      const match = trace.match(/([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+) is not a function/);
-      if (match) missingEntity = match[2];
+      const arrayMethodMatch = trace.match(/([a-zA-Z0-9_]+)\.(map|filter|forEach|reduce|some|every|find|includes|indexOf|push|pop|shift|unshift)\s+is not a function/);
+      const stringMethodMatch = trace.match(/([a-zA-Z0-9_]+)\.(toLowerCase|toUpperCase|trim|startsWith|endsWith|replace|split)\s+is not a function/);
+      if (arrayMethodMatch) {
+        category = 'TYPE_MISMATCH';
+        missingEntity = arrayMethodMatch[1];
+        targetType = 'array';
+      } else if (stringMethodMatch) {
+        category = 'TYPE_MISMATCH';
+        missingEntity = stringMethodMatch[1];
+        targetType = 'string';
+      } else {
+        category = 'MISSING_METHOD_EXPORT';
+        const match = trace.match(/([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+) is not a function/);
+        if (match) missingEntity = match[2];
+      }
+    } else if (trace.includes('must be an array') || trace.includes('expected array') || trace.includes('must be a string') || trace.includes('must be a number') || trace.includes('must be an object')) {
+      category = 'TYPE_MISMATCH';
+      if (trace.includes('array')) targetType = 'array';
+      else if (trace.includes('string')) targetType = 'string';
+      else if (trace.includes('number')) targetType = 'number';
+      else if (trace.includes('object')) targetType = 'object';
+
+      const paramMatch = trace.match(/([a-zA-Z0-9_]+)\s+must be/i) || trace.match(/expected\s+([a-zA-Z0-9_]+)/i);
+      if (paramMatch) missingEntity = paramMatch[1];
     } else if (trace.includes('AssertionError') || trace.includes('expected') || trace.includes('must have property')) {
       category = 'CONTRACT_DISCREPANCY';
     } else if (trace.includes('Cannot read properties of undefined') || trace.includes('Cannot read property') || trace.includes('null') || trace.includes('undefined')) {
@@ -53,9 +76,16 @@ class SemanticAutoHealer {
       if (propMatch) missingEntity = propMatch[1];
     }
 
+    if (sourceCode) {
+      const fnMatch = sourceCode.match(/function\s+([a-zA-Z0-9_]+)\s*\(/);
+      if (fnMatch) functionName = fnMatch[1];
+    }
+
     return {
       category,
       missingEntity,
+      targetType,
+      functionName,
       errorTraceSnippet: trace.split('\n')[0],
       sourceLength: sourceCode.length
     };
@@ -198,6 +228,25 @@ class SemanticAutoHealer {
           code: nullHeal.healedCode,
           strategy: 'NULL_DEREFERENCE_GUARD',
           details: 'Inyectadas ' + nullHeal.guardCount + ' guardas de nulabilidad para ' + diagnosis.missingEntity
+        };
+      }
+    }
+
+    if (diagnosis.category === 'TYPE_MISMATCH' && (diagnosis.missingEntity || diagnosis.targetType)) {
+      const SemanticTypeReconciler = require('./semantic_type_reconciler.js');
+      const reconciler = new SemanticTypeReconciler(this.root);
+      const param = diagnosis.missingEntity || 'items';
+      const type = diagnosis.targetType || 'array';
+      const reconRes = reconciler.reconcileFunctionTypes(sourceCode, {
+        functionName: diagnosis.functionName,
+        paramName: param,
+        targetType: type
+      });
+      if (reconRes.success) {
+        return {
+          code: reconRes.healedCode,
+          strategy: 'TYPE_RECONCILIATION',
+          details: 'Reconciliado tipo ' + type + ' para ' + param + ' (' + reconRes.safetyVerdict + ')'
         };
       }
     }
