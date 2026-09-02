@@ -852,7 +852,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ── 11. Interactive Architecture Radar Canvas Engine ───────────────
+  function hexToRgba(hex, alpha) {
+    let c = hex.replace('#', '');
+    if (c.length === 3) c = c.split('').map(x => x + x).join('');
+    const num = parseInt(c, 16);
+    return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+  }
+
+  // ── 11. Interactive Architecture Radar Canvas Engine (Retina 2x/3x) ──
   const radarCanvas = document.getElementById('radar-canvas');
   const radarFilters = document.querySelectorAll('.radar-filter-chips .r-chip');
   const btnHighlightBlast = document.getElementById('btn-highlight-blast');
@@ -873,10 +880,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const rect = radarCanvas.getBoundingClientRect();
       width = rect.width || 1140;
       height = 480;
-      const dpr = window.devicePixelRatio || 1;
-      radarCanvas.width = width * dpr;
-      radarCanvas.height = height * dpr;
-      ctx.scale(dpr, dpr);
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      radarCanvas.width = Math.round(width * dpr);
+      radarCanvas.height = Math.round(height * dpr);
+      radarCanvas.style.width = width + 'px';
+      radarCanvas.style.height = height + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
     }
     resizeRadar();
     window.addEventListener('resize', resizeRadar);
@@ -954,8 +965,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderRadar() {
       ctx.clearRect(0, 0, width, height);
 
-      // Grid de fondo
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+      // Grid de fondo con precisión sub-píxel
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
       ctx.lineWidth = 1;
       const gridSize = 40;
       for (let x = 0; x < width; x += gridSize) {
@@ -971,7 +982,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.stroke();
       }
 
-      // Conexiones
+      // Conexiones vectoriales con suavizado
       RADAR_EDGES.forEach(edge => {
         const fromNode = RADAR_NODES.find(n => n.id === edge.from);
         const toNode = RADAR_NODES.find(n => n.id === edge.to);
@@ -991,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
           ctx.lineWidth = 1;
         } else {
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
           ctx.lineWidth = 1.2;
         }
         ctx.stroke();
@@ -1010,23 +1021,49 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.stroke();
       }
 
-      // Nodos
+      // Nodos con Halo de Brillo Retina 2x/3x
       RADAR_NODES.forEach(node => {
         const isSelected = selectedNode && selectedNode.id === node.id;
+        const isHovered = hoveredNode && hoveredNode.id === node.id;
         const isDimmed = activeDomainFilter !== 'all' && node.domain !== activeDomainFilter;
 
+        // 1. Halo difuso multicapa
+        if (!isDimmed) {
+          const glowMultiplier = isSelected ? 3.2 : (isHovered ? 2.6 : 1.9);
+          const glowGrad = ctx.createRadialGradient(node.x, node.y, node.r * 0.4, node.x, node.y, node.r * glowMultiplier);
+          const haloAlpha = isSelected ? 0.42 : (isHovered ? 0.32 : 0.16);
+          glowGrad.addColorStop(0, hexToRgba(node.color, haloAlpha));
+          glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, node.r * glowMultiplier, 0, Math.PI * 2);
+          ctx.fillStyle = glowGrad;
+          ctx.fill();
+        }
+
+        // 2. Núcleo con gradiente y specular highlight
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
-        ctx.fillStyle = isDimmed ? 'rgba(255, 255, 255, 0.1)' : (isSelected ? '#FFFFFF' : node.color);
+        if (isDimmed) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        } else {
+          const coreGrad = ctx.createRadialGradient(node.x - node.r * 0.3, node.y - node.r * 0.3, 1, node.x, node.y, node.r);
+          coreGrad.addColorStop(0, isSelected ? '#FFFFFF' : hexToRgba(node.color, 1));
+          coreGrad.addColorStop(1, isSelected ? node.color : hexToRgba(node.color, 0.78));
+          ctx.fillStyle = coreGrad;
+        }
         ctx.fill();
 
-        ctx.strokeStyle = isSelected ? '#10B981' : 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = isSelected ? 3 : 1.5;
+        // 3. Anillo de borde sub-píxel
+        ctx.strokeStyle = isSelected ? '#FFFFFF' : (isHovered ? '#10B981' : hexToRgba(node.color, 0.6));
+        ctx.lineWidth = isSelected ? 2.5 : (isHovered ? 2 : 1.2);
         ctx.stroke();
 
-        ctx.font = isSelected ? 'bold 11px JetBrains Mono' : '10px JetBrains Mono';
-        ctx.fillStyle = isDimmed ? 'rgba(255, 255, 255, 0.2)' : '#E2E8F0';
+        // 4. Tipografía con sombra de contraste
+        ctx.font = isSelected ? '700 11px JetBrains Mono, monospace' : '600 10px JetBrains Mono, monospace';
         ctx.textAlign = 'center';
+        ctx.fillStyle = isDimmed ? 'rgba(0, 0, 0, 0.4)' : 'rgba(5, 7, 11, 0.85)';
+        ctx.fillText(node.label.split('/').pop(), node.x + 1, node.y + node.r + 15);
+        ctx.fillStyle = isDimmed ? 'rgba(255, 255, 255, 0.25)' : (isSelected ? '#FFFFFF' : '#E2E8F0');
         ctx.fillText(node.label.split('/').pop(), node.x, node.y + node.r + 14);
       });
 
@@ -1036,13 +1073,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     radarCanvas.addEventListener('mousemove', (e) => {
       const rect = radarCanvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+      const scaleX = width / rect.width;
+      const scaleY = height / rect.height;
+      const mouseX = (e.clientX - rect.left) * scaleX;
+      const mouseY = (e.clientY - rect.top) * scaleY;
 
       let found = null;
       for (const node of RADAR_NODES) {
         const dist = Math.hypot(node.x - mouseX, node.y - mouseY);
-        if (dist <= node.r + 6) {
+        if (dist <= node.r + 8) {
           found = node;
           break;
         }
@@ -1077,45 +1116,105 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ── 12. Live Throughput Canvas Chart Streamer ──────────────────────
+  // ── 12. Live Throughput Canvas Chart Streamer (Splines Bézier Continuas) ──
   const chartCanvas = document.getElementById('telemetry-chart');
   if (chartCanvas) {
     const ctx = chartCanvas.getContext('2d');
     let dataPoints = Array.from({ length: 40 }, () => Math.floor(Math.random() * 200 + 1550));
+    let lastWidth = 0;
+    let cachedW = 600;
+    const h = 180;
 
-    function drawChart() {
+    function resizeChartCanvas() {
       const rect = chartCanvas.getBoundingClientRect();
       const w = rect.width || 600;
-      const h = 180;
-      const dpr = window.devicePixelRatio || 1;
-      chartCanvas.width = w * dpr;
-      chartCanvas.height = h * dpr;
-      ctx.scale(dpr, dpr);
+      cachedW = w;
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      if (Math.abs(lastWidth - w) > 2) {
+        lastWidth = w;
+        chartCanvas.width = Math.round(w * dpr);
+        chartCanvas.height = Math.round(h * dpr);
+        chartCanvas.style.width = w + 'px';
+        chartCanvas.style.height = h + 'px';
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+    }
+    resizeChartCanvas();
+    window.addEventListener('resize', resizeChartCanvas);
 
+    function drawChart() {
+      const w = cachedW;
       ctx.clearRect(0, 0, w, h);
 
-      const gradient = ctx.createLinearGradient(0, 0, 0, h);
-      gradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
-      gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+      // Líneas de cuadrícula sutiles
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.lineWidth = 1;
+      for (let y = 30; y < h; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
 
-      ctx.beginPath();
+      // Calcular puntos normalizados
       const step = w / (dataPoints.length - 1);
-      dataPoints.forEach((val, idx) => {
+      const points = dataPoints.map((val, idx) => {
         const x = idx * step;
         const normalized = (val - 1400) / 500;
-        const y = h - (normalized * (h - 20)) - 10;
-        if (idx === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+        const y = h - (normalized * (h - 30)) - 15;
+        return { x, y };
       });
 
+      // Trazar Spline Bézier Continua
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 0; i < points.length - 1; i++) {
+        const xc = (points[i].x + points[i + 1].x) / 2;
+        const yc = (points[i].y + points[i + 1].y) / 2;
+        ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+      }
+      const lastPoint = points[points.length - 1];
+      ctx.lineTo(lastPoint.x, lastPoint.y);
+
+      // Trazo resplandeciente
+      ctx.save();
+      ctx.shadowColor = 'rgba(16, 185, 129, 0.65)';
+      ctx.shadowBlur = 10;
+      ctx.strokeStyle = '#10B981';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // Relleno de área bajo la spline con gradiente vertical
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      const gradient = ctx.createLinearGradient(0, 0, 0, h);
+      gradient.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
+      gradient.addColorStop(0.7, 'rgba(16, 185, 129, 0.06)');
+      gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Beacon pulsante en el punto más reciente (Head Node)
+      const beaconGrad = ctx.createRadialGradient(lastPoint.x, lastPoint.y, 2, lastPoint.x, lastPoint.y, 14);
+      beaconGrad.addColorStop(0, 'rgba(16, 185, 129, 0.9)');
+      beaconGrad.addColorStop(0.4, 'rgba(16, 185, 129, 0.4)');
+      beaconGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+      ctx.beginPath();
+      ctx.arc(lastPoint.x, lastPoint.y, 14, 0, Math.PI * 2);
+      ctx.fillStyle = beaconGrad;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(lastPoint.x, lastPoint.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
       ctx.strokeStyle = '#10B981';
       ctx.lineWidth = 2;
       ctx.stroke();
-
-      ctx.lineTo(w, h);
-      ctx.lineTo(0, h);
-      ctx.fillStyle = gradient;
-      ctx.fill();
     }
 
     setInterval(() => {
