@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es" data-theme="dark" data-accent="emerald" data-density="standard">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Axion Protocol — Local Deterministic Governance Runtime for Autonomous AI</title>
+  <title>Axion Protocol — Local Deterministic Governance Runtime & Swarm Engine</title>
   <meta name="description" content="Local governance runtime and concurrency arbiter for agentic AI. Zero external dependencies, AST symbol locking, Ed25519 DSSE attestations, and deterministic state rollback. Estado experimental.">
   <meta name="color-scheme" content="dark light">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2308090C'/><path d='M16 5L27 25H21.5L16 14.5L10.5 25H5L16 5Z' fill='%2310B981'/></svg>">
@@ -15,10 +15,105 @@
   
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="matrix-bg">
+
+  <!-- Barra de Progreso de Lectura Superior -->
+  <div class="scroll-progress-bar" id="scroll-progress" role="progressbar" aria-label="Progreso de página"></div>
 
   <!-- Notificación Toast -->
   <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+  <!-- ── Modal de Paleta de Comandos (⌘K / Ctrl+K) ───────────────────── -->
+  <div class="palette-backdrop" id="palette-modal" aria-hidden="true">
+    <div class="palette-container" role="dialog" aria-modal="true" aria-label="Paleta de comandos">
+      <div class="palette-search-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="palette-icon">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="palette-input" placeholder="Escribe un comando o busca en la documentación (ej. /drive, swarm, rollback)..." autocomplete="off" spellcheck="false">
+        <kbd class="palette-key-badge">ESC</kbd>
+      </div>
+      <div class="palette-results" id="palette-results">
+        <!-- Generado dinámicamente -->
+      </div>
+      <div class="palette-footer">
+        <span><kbd>↑</kbd> <kbd>↓</kbd> Navegar</span>
+        <span><kbd>↵</kbd> Ejecutar / Abrir</span>
+        <span><kbd>ESC</kbd> Cerrar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Cajón Lateral de Personalización y Afinación de Interfaz ──────── -->
+  <aside class="customizer-drawer" id="customizer-drawer" aria-hidden="true">
+    <div class="drawer-header">
+      <div class="drawer-title-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="drawer-icon">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span class="drawer-title">Afinación de Runtime & UI</span>
+      </div>
+      <button class="btn-close-drawer" id="btn-close-drawer" aria-label="Cerrar ajustes">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- Paleta de Color de Acento Funcional -->
+      <div class="config-group">
+        <label class="config-label">Acento de Ingeniería</label>
+        <div class="accent-picker" id="accent-picker">
+          <button class="accent-btn active" data-accent="emerald" title="Emerald (Kernel Default)" style="--color-preview: #10B981;"></button>
+          <button class="accent-btn" data-accent="sapphire" title="Sapphire (Cosign Blue)" style="--color-preview: #38BDF8;"></button>
+          <button class="accent-btn" data-accent="amber" title="Amber (State Gold)" style="--color-preview: #F59E0B;"></button>
+          <button class="accent-btn" data-accent="crimson" title="Crimson (Adversarial Ruby)" style="--color-preview: #EF4444;"></button>
+          <button class="accent-btn" data-accent="amethyst" title="Amethyst (DSSE Purple)" style="--color-preview: #A78BFA;"></button>
+        </div>
+      </div>
+
+      <!-- Densidad de Layout -->
+      <div class="config-group">
+        <label class="config-label">Densidad de Interfaz</label>
+        <div class="toggle-segmented" id="density-toggle">
+          <button class="seg-btn active" data-density="standard">Estándar</button>
+          <button class="seg-btn" data-density="compact">Ingeniero (Compacto)</button>
+        </div>
+      </div>
+
+      <!-- Fondo y Matriz -->
+      <div class="config-group">
+        <label class="config-label">Textura de Fondo</label>
+        <div class="toggle-segmented" id="bg-texture-toggle">
+          <button class="seg-btn active" data-bg="grid">Rejilla Blueprint</button>
+          <button class="seg-btn" data-bg="dots">Matriz de Puntos</button>
+          <button class="seg-btn" data-bg="solid">Liso</button>
+        </div>
+      </div>
+
+      <!-- Perfil de Audio Háptico -->
+      <div class="config-group">
+        <div class="config-label-row">
+          <label class="config-label">Audio Háptico Web Audio</label>
+          <span class="status-tag" id="sound-status-tag">Activado</span>
+        </div>
+        <div class="toggle-segmented" id="sound-profile-toggle">
+          <button class="seg-btn active" data-sound="synth">Sintetizado</button>
+          <button class="seg-btn" data-sound="click">Mecánico</button>
+          <button class="seg-btn" data-sound="off">Mudo</button>
+        </div>
+      </div>
+
+      <!-- Acciones de Prueba -->
+      <div class="config-group">
+        <label class="config-label">Prueba Rápida de Sonido</label>
+        <div class="btn-group-row">
+          <button class="btn-mini-action" id="btn-test-chime">Sonido Éxito</button>
+          <button class="btn-mini-action" id="btn-test-alert">Alarma Riesgo</button>
+          <button class="btn-mini-action" id="btn-test-ping">Ping Telemetría</button>
+        </div>
+      </div>
+    </div>
+  </aside>
 
   <!-- ── Barra Superior de Control y Navegación ────────────────────────── -->
   <header class="top-nav-bar">
@@ -35,14 +130,33 @@
       </a>
 
       <nav class="nav-links" aria-label="Navegación principal">
-        <a href="#architecture" class="nav-link">Arquitectura</a>
         <a href="#swarm" class="nav-link">Swarm Engine</a>
+        <a href="#playground" class="nav-link">Simulador CLI</a>
         <a href="#pipeline" class="nav-link">Flujo 7 Pasos</a>
-        <a href="#compatibility" class="nav-link">Compatibilidad</a>
-        <a href="#commands" class="nav-link">Comandos</a>
+        <a href="#radar" class="nav-link">Radar Blast Radius</a>
+        <a href="#telemetry-deck" class="nav-link">Telemetría HUD</a>
+        <a href="#commands" class="nav-link">12 Comandos</a>
       </nav>
 
       <div class="top-nav-actions">
+        <!-- Disparador de Paleta de Comandos ⌘K -->
+        <button class="btn-palette-trigger" id="btn-open-palette" title="Abrir paleta de comandos (Ctrl+K / ⌘K)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-mini-icon">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span class="palette-txt">Buscar</span>
+          <kbd class="kbd-badge">⌘K</kbd>
+        </button>
+
+        <!-- Botón de Personalización / Tuning -->
+        <button class="btn-icon-nav" id="btn-open-customizer" title="Personalizar apariencia y sonido" aria-label="Personalizar interfaz">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+
         <!-- Selector Bilingüe EN / ES -->
         <div class="lang-switch" id="lang-switcher" aria-label="Language selector">
           <button class="btn-lang" data-lang="en" title="English">EN</button>
@@ -56,7 +170,7 @@
         </div>
 
         <!-- Conmutador de Tema Claro / Oscuro -->
-        <button class="theme-toggle-btn" id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema visual">
+        <button class="theme-toggle-btn" id="theme-toggle" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema visual">
           <svg class="theme-icon sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="4"></circle>
             <path d="M12 2v2"></path>
@@ -146,7 +260,7 @@
 
         <!-- Consola de Telemetría e Inspección en Tiempo Real -->
         <div class="hero-preview">
-          <div class="runtime-console">
+          <div class="runtime-console spotlight-card">
             <div class="console-top">
               <div class="console-signals">
                 <span class="sig-dot"></span>
@@ -164,7 +278,7 @@
             <div class="console-footer">
               <div class="stat-indicator">
                 <span class="pulse-emerald"></span>
-                <span>VibeGuard: 131 archivos escaneados (0 antipatrones)</span>
+                <span>VibeGuard: 129 archivos escaneados (0 antipatrones)</span>
               </div>
               <span class="hash-tag">SHA-256: 2253d4c...</span>
             </div>
@@ -173,17 +287,66 @@
       </div>
     </section>
 
-    <!-- ── 2. Arquitectura Swarm v2.0: El Triunvirato Soberano ───────────── -->
+    <!-- ── 2. Interactive Terminal Simulator Playground ─────────────────── -->
+    <section class="content-section" id="playground">
+      <div class="section-title-wrap">
+        <span class="sub-label">SANDBOX INTERACTIVO</span>
+        <h2 class="section-heading">Simulador de Comandos y Freno de Seguridad</h2>
+        <p class="section-lead">Ejecuta comandos interactivos para experimentar cómo Axion intercepta riesgos, simula ataques hostiles y ejecuta reversión en modo <code>fail-closed</code>:</p>
+      </div>
+
+      <div class="playground-layout">
+        <!-- Barra de Acciones Rápidas -->
+        <div class="quick-command-strip">
+          <span class="strip-label">Ejecución rápida:</span>
+          <button class="btn-quick-cmd" data-cmd="/drive">▶ /drive</button>
+          <button class="btn-quick-cmd" data-cmd="/verify">▶ /verify</button>
+          <button class="btn-quick-cmd danger" data-cmd="rm -rf /">⚠️ Test Hostil: rm -rf /</button>
+          <button class="btn-quick-cmd" data-cmd="/snapshot">▶ /snapshot</button>
+          <button class="btn-quick-cmd" data-cmd="/rollback">▶ /rollback</button>
+          <button class="btn-quick-cmd" data-cmd="/premortem">▶ /premortem</button>
+          <button class="btn-quick-cmd" data-cmd="/attest">▶ /attest</button>
+        </div>
+
+        <!-- Terminal Interactivo Funcional -->
+        <div class="sim-terminal-frame spotlight-card">
+          <div class="sim-terminal-top">
+            <div class="terminal-dots">
+              <span class="t-dot red"></span>
+              <span class="t-dot yellow"></span>
+              <span class="t-dot green"></span>
+            </div>
+            <div class="terminal-badge-secure">
+              <span class="dot-secure"></span>
+              <span>PREFLIGHT INTERCEPTOR (SIMULACIÓN PRE-TOOL USE)</span>
+            </div>
+            <button class="btn-clear-term" id="btn-clear-terminal" title="Limpiar salida">Limpiar</button>
+          </div>
+
+          <div class="sim-terminal-body" id="sim-terminal-output">
+            <div class="term-msg info">Axion Protocol v2.0 Sandbox listo. Escribe un comando o haz clic en las acciones rápidas superiores.</div>
+          </div>
+
+          <form class="sim-terminal-prompt" id="sim-terminal-form">
+            <span class="prompt-sym">$</span>
+            <input type="text" id="sim-terminal-input" placeholder="Escribe un comando (/drive, /verify, rm -rf /, /attest) y presiona Enter..." autocomplete="off" spellcheck="false">
+            <button type="submit" class="btn-term-run">Ejecutar</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 3. Arquitectura Swarm v2.0: Sandbox de Concurrencia Multi-Agente ── -->
     <section class="content-section" id="swarm">
       <div class="section-title-wrap">
         <span class="sub-label">CONCURRENCIA MULTI-AGENTE</span>
-        <h2 class="section-heading">Arquitectura Swarm v2.0</h2>
+        <h2 class="section-heading">Arquitectura Swarm v2.0 & Triunvirato de Arbitraje</h2>
         <p class="section-lead">Tres pilares matemáticos desacoplados para coordinar enjambres de IA sin condiciones de carrera ni modificaciones ciegas:</p>
       </div>
 
       <div class="swarm-trio-grid">
         <!-- Pilar 1: Bloqueo Granular AST -->
-        <article class="feature-tile">
+        <article class="feature-tile spotlight-card">
           <div class="tile-icon-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -202,7 +365,7 @@
         </article>
 
         <!-- Pilar 2: Bus P2P Ed25519 -->
-        <article class="feature-tile">
+        <article class="feature-tile spotlight-card">
           <div class="tile-icon-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
@@ -221,7 +384,7 @@
         </article>
 
         <!-- Pilar 3: Consenso BFT -->
-        <article class="feature-tile">
+        <article class="feature-tile spotlight-card">
           <div class="tile-icon-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -239,13 +402,73 @@
           </div>
         </article>
       </div>
+
+      <!-- Simulador Interactivo de Consenso Swarm en Vivo -->
+      <div class="swarm-sim-deck spotlight-card">
+        <div class="deck-top">
+          <div class="deck-title-group">
+            <span class="deck-badge">SIMULADOR EN VIVO</span>
+            <h4 class="deck-title">Panel de Votación y Quórum BFT</h4>
+          </div>
+          <button class="btn-deck-trigger" id="btn-trigger-consensus">
+            <span class="play-icon">▶</span>
+            <span>Simular Ronda de Consenso BFT</span>
+          </button>
+        </div>
+
+        <div class="deck-grid">
+          <!-- Nodos de Agente -->
+          <div class="agent-nodes-grid" id="agent-nodes-container">
+            <div class="agent-node" data-node="1">
+              <div class="node-head">
+                <span class="node-status-dot"></span>
+                <span class="node-name">Agent-1 (Lead)</span>
+              </div>
+              <span class="node-vote">En espera</span>
+            </div>
+            <div class="agent-node" data-node="2">
+              <div class="node-head">
+                <span class="node-status-dot"></span>
+                <span class="node-name">Agent-2 (Security)</span>
+              </div>
+              <span class="node-vote">En espera</span>
+            </div>
+            <div class="agent-node" data-node="3">
+              <div class="node-head">
+                <span class="node-status-dot"></span>
+                <span class="node-name">Agent-3 (Reviewer)</span>
+              </div>
+              <span class="node-vote">En espera</span>
+            </div>
+            <div class="agent-node" data-node="4">
+              <div class="node-head">
+                <span class="node-status-dot"></span>
+                <span class="node-name">Agent-4 (TDD Invariants)</span>
+              </div>
+              <span class="node-vote">En espera</span>
+            </div>
+          </div>
+
+          <!-- Barra de Quórum -->
+          <div class="quorum-meter-col">
+            <div class="quorum-header">
+              <span class="q-label">Quórum Requerido: <strong>&ge; 66.7%</strong></span>
+              <span class="q-val" id="quorum-val">0%</span>
+            </div>
+            <div class="quorum-bar-track">
+              <div class="quorum-bar-fill" id="quorum-bar-fill" style="width: 0%;"></div>
+            </div>
+            <div class="quorum-result-text" id="quorum-result-text">Presiona "Simular Ronda" para deliberar</div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- ── 3. Flujo de Trabajo en 7 Pasos ──────────────────────────────── -->
+    <!-- ── 4. Flujo de Trabajo en 7 Pasos & Socratic Intent Sealer ───────── -->
     <section class="content-section" id="pipeline">
       <div class="section-title-wrap">
         <span class="sub-label">EJECUCIÓN DETERMINISTA</span>
-        <h2 class="section-heading">Ciclo de Trabajo Híbrido Unificado</h2>
+        <h2 class="section-heading">Ciclo de Trabajo Híbrido Unificado & Socrático</h2>
         <p class="section-lead">El protocolo guía a los modelos a través de una secuencia estricta de 7 estados antes de consolidar cambios:</p>
       </div>
 
@@ -292,9 +515,186 @@
           <p class="step-summary">Generación del sobre criptográfico in-toto v1 en formato DSSE y reporte ejecutivo en el idioma del usuario.</p>
         </div>
       </div>
+
+      <!-- Constructor Interactivo de Contrato Socrático IntentContract -->
+      <div class="socratic-builder-box spotlight-card">
+        <div class="builder-header">
+          <div class="b-head-info">
+            <span class="sub-label">FRENO SOCRÁTICO · /clarify</span>
+            <h3 class="b-head-title">Generador y Sellador de IntentContract v1.2</h3>
+          </div>
+          <div class="seal-pill" id="live-seal-badge">
+            <span class="seal-icon">🔒</span>
+            <span>SHA-256 SEAL: <code id="seal-hash-display">e8a419c9...f2b4</code></span>
+          </div>
+        </div>
+
+        <div class="builder-body-grid">
+          <!-- Pregunta 1 Socrática -->
+          <div class="socratic-question-box">
+            <span class="q-number">PREGUNTA 1 DE 2</span>
+            <h4 class="q-title">¿Cuál es el alcance exacto de la mutación solicitada?</h4>
+            <div class="options-list">
+              <button class="opt-btn active" data-opt="0">
+                <span class="opt-key">A</span>
+                <span class="opt-text">Refactorizar únicamente la lógica interna sin alterar la API pública.</span>
+              </button>
+              <button class="opt-btn" data-opt="1">
+                <span class="opt-key">B</span>
+                <span class="opt-text">Crear nuevo módulo aislado y suite de pruebas TDD correspondiente.</span>
+              </button>
+              <button class="opt-btn" data-opt="2">
+                <span class="opt-key">C</span>
+                <span class="opt-text">Migración estructural completa con actualización de dependencias.</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Visor del Contrato Sellado -->
+          <div class="contract-preview-box">
+            <div class="contract-top-bar">
+              <span class="c-tab-title">IntentContract.json (Inmutable)</span>
+              <button class="btn-copy-contract" id="btn-copy-contract">Copiar JSON</button>
+            </div>
+            <pre class="contract-code"><code id="contract-code-display">{
+  "version": "1.2.0",
+  "intent_type": "ATOMIC_REFACTOR",
+  "scope": "INTERNAL_LOGIC_ONLY",
+  "rollback_strategy": "SHA256_SNAPSHOT",
+  "socratic_confirmed": true,
+  "human_authority": "GRANTED",
+  "manifest_digest": "e8a419c9fb7283d84a1e948c..."
+}</code></pre>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- ── 4. Matriz de Compatibilidad Multi-Harness ──────────────────── -->
+    <!-- ── 5. Interactive Architecture Radar & Blast Radius Canvas ──────── -->
+    <section class="content-section" id="radar">
+      <div class="section-title-wrap">
+        <span class="sub-label">TOPOLOGÍA Y BLAST RADIUS</span>
+        <h2 class="section-heading">Radar de Arquitectura & Análisis de Impacto</h2>
+        <p class="section-lead">Explora visualmente los 5 dominios y sus módulos interconectados. Haz clic en cualquier nodo para calcular su radio de impacto transitivo e inspeccionar sus invariantes:</p>
+      </div>
+
+      <div class="radar-card-layout spotlight-card">
+        <div class="radar-controls-bar">
+          <div class="radar-filter-chips">
+            <button class="r-chip active" data-domain="all">Todos los Dominios (201)</button>
+            <button class="r-chip" data-domain="gov">01 Gobernanza (110)</button>
+            <button class="r-chip" data-domain="crypto">02 Criptografía (27)</button>
+            <button class="r-chip" data-domain="intent">03 Intención (23)</button>
+            <button class="r-chip" data-domain="state">04 Estado (23)</button>
+            <button class="r-chip" data-domain="resilience">05 Resiliencia (18)</button>
+          </div>
+          <button class="btn-blast-sim" id="btn-highlight-blast">
+            <span>💥 Simular Blast Radius</span>
+          </button>
+        </div>
+
+        <div class="radar-viewport">
+          <canvas id="radar-canvas" class="radar-canvas" aria-label="Grafo interactivo de módulos de Axion Protocol"></canvas>
+          
+          <!-- Panel Flotante de Inspección de Nodo -->
+          <div class="radar-inspector-overlay" id="radar-inspector">
+            <div class="insp-top">
+              <span class="insp-domain-tag" id="insp-domain">01_governance_preflight</span>
+              <span class="insp-stat-chip">Invariante Activo</span>
+            </div>
+            <h4 class="insp-module-name" id="insp-title">tools/preflight.js</h4>
+            <p class="insp-module-desc" id="insp-desc">Supervisión síncrona previa a la ejecución de comandos. Intercepta vectores destructivos en modo Fail-Closed.</p>
+            <div class="insp-metrics-grid">
+              <div class="insp-metric">
+                <span class="im-lbl">Blast Radius</span>
+                <strong class="im-val" id="insp-radius">8 módulos dependientes</strong>
+              </div>
+              <div class="insp-metric">
+                <span class="im-lbl">Cierre Transitivo</span>
+                <strong class="im-val" id="insp-transitive">Atómico (Nivel 2)</strong>
+              </div>
+              <div class="insp-metric">
+                <span class="im-lbl">Firma / Sello</span>
+                <strong class="im-val" id="insp-sig">SHA-256 Validado</strong>
+              </div>
+              <div class="insp-metric">
+                <span class="im-lbl">Aislamiento</span>
+                <strong class="im-val" id="insp-isolation">shell: false</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 6. Live Telemetry Deck & Throughput Streamer ─────────────────── -->
+    <section class="content-section" id="telemetry-deck">
+      <div class="section-title-wrap">
+        <span class="sub-label">TELEMETRÍA EN TIEMPO REAL</span>
+        <h2 class="section-heading">Métricas de Rendimiento & Flujo de Telemetría</h2>
+        <p class="section-lead">Supervisión en vivo de rendimiento determinista, consumo de memoria y verificación continua:</p>
+      </div>
+
+      <div class="telemetry-deck-grid">
+        <!-- Gráfico en Vivo Canvas de Throughput -->
+        <div class="chart-box spotlight-card">
+          <div class="chart-header">
+            <div class="ch-left">
+              <span class="ch-badge">LIVE THROUGHPUT</span>
+              <h4 class="ch-title">Rondas de Consenso BFT & Validaciones / Seg</h4>
+            </div>
+            <span class="ch-rate" id="telemetry-live-rate">1,663 ops/s</span>
+          </div>
+          <div class="canvas-chart-wrap">
+            <canvas id="telemetry-chart" height="180" aria-label="Gráfico de rendimiento en tiempo real"></canvas>
+          </div>
+        </div>
+
+        <!-- Desglose por Dominios con Barras -->
+        <div class="domains-breakdown-box spotlight-card">
+          <h4 class="breakdown-title">Distribución de las 201 Suites</h4>
+          <div class="domain-bars-list">
+            <div class="d-bar-item">
+              <div class="d-bar-head">
+                <span>01 Gobernanza & Preflight</span>
+                <strong>110 suites (54.7%)</strong>
+              </div>
+              <div class="d-bar-track"><div class="d-bar-fill" style="width: 54.7%;"></div></div>
+            </div>
+            <div class="d-bar-item">
+              <div class="d-bar-head">
+                <span>02 Criptografía & Atestación</span>
+                <strong>27 suites (13.4%)</strong>
+              </div>
+              <div class="d-bar-track"><div class="d-bar-fill" style="width: 13.4%;"></div></div>
+            </div>
+            <div class="d-bar-item">
+              <div class="d-bar-head">
+                <span>03 Intención & UX Socrática</span>
+                <strong>23 suites (11.4%)</strong>
+              </div>
+              <div class="d-bar-track"><div class="d-bar-fill" style="width: 11.4%;"></div></div>
+            </div>
+            <div class="d-bar-item">
+              <div class="d-bar-head">
+                <span>04 Estado & Checkpoints</span>
+                <strong>23 suites (11.4%)</strong>
+              </div>
+              <div class="d-bar-track"><div class="d-bar-fill" style="width: 11.4%;"></div></div>
+            </div>
+            <div class="d-bar-item">
+              <div class="d-bar-head">
+                <span>05 Resiliencia Adversarial</span>
+                <strong>18 suites (9.0%)</strong>
+              </div>
+              <div class="d-bar-track"><div class="d-bar-fill" style="width: 9.0%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 7. Matriz de Compatibilidad Multi-Harness ──────────────────── -->
     <section class="content-section" id="compatibility">
       <div class="section-title-wrap">
         <span class="sub-label">INTEROPERABILIDAD TOTAL</span>
@@ -302,7 +702,7 @@
         <p class="section-lead">Axion Protocol opera sin fricción en los principales entornos de desarrollo asistido por IA:</p>
       </div>
 
-      <div class="harness-table-wrap">
+      <div class="harness-table-wrap spotlight-card">
         <table class="data-table" aria-label="Matriz de compatibilidad multi-harness">
           <thead>
             <tr>
@@ -348,7 +748,7 @@
       </div>
     </section>
 
-    <!-- ── 5. Catálogo de los 12 Slash Commands ───────────────────────── -->
+    <!-- ── 8. Catálogo de los 12 Slash Commands ───────────────────────── -->
     <section class="content-section" id="commands">
       <div class="section-title-wrap">
         <span class="sub-label">CATÁLOGO OPERATIVO</span>
@@ -372,7 +772,7 @@
 
       <div class="commands-grid" id="commands-list">
         <!-- drive -->
-        <div class="cmd-item" data-cat="governance">
+        <div class="cmd-item spotlight-card" data-cat="governance">
           <div class="cmd-head">
             <code class="cmd-name">/drive</code>
             <span class="badge-category">Gobernanza</span>
@@ -381,7 +781,7 @@
         </div>
 
         <!-- clarify -->
-        <div class="cmd-item" data-cat="intent">
+        <div class="cmd-item spotlight-card" data-cat="intent">
           <div class="cmd-head">
             <code class="cmd-name">/clarify</code>
             <span class="badge-category">Intención</span>
@@ -390,7 +790,7 @@
         </div>
 
         <!-- verify -->
-        <div class="cmd-item" data-cat="governance">
+        <div class="cmd-item spotlight-card" data-cat="governance">
           <div class="cmd-head">
             <code class="cmd-name">/verify</code>
             <span class="badge-category">Gobernanza</span>
@@ -399,7 +799,7 @@
         </div>
 
         <!-- snapshot -->
-        <div class="cmd-item" data-cat="state">
+        <div class="cmd-item spotlight-card" data-cat="state">
           <div class="cmd-head">
             <code class="cmd-name">/snapshot</code>
             <span class="badge-category">Estado</span>
@@ -408,7 +808,7 @@
         </div>
 
         <!-- preflight -->
-        <div class="cmd-item" data-cat="governance">
+        <div class="cmd-item spotlight-card" data-cat="governance">
           <div class="cmd-head">
             <code class="cmd-name">/preflight</code>
             <span class="badge-category">Gobernanza</span>
@@ -417,7 +817,7 @@
         </div>
 
         <!-- attest -->
-        <div class="cmd-item" data-cat="crypto">
+        <div class="cmd-item spotlight-card" data-cat="crypto">
           <div class="cmd-head">
             <code class="cmd-name">/attest</code>
             <span class="badge-category">Criptografía</span>
@@ -426,7 +826,7 @@
         </div>
 
         <!-- memory -->
-        <div class="cmd-item" data-cat="state">
+        <div class="cmd-item spotlight-card" data-cat="state">
           <div class="cmd-head">
             <code class="cmd-name">/memory</code>
             <span class="badge-category">Estado</span>
@@ -435,7 +835,7 @@
         </div>
 
         <!-- debug -->
-        <div class="cmd-item" data-cat="governance">
+        <div class="cmd-item spotlight-card" data-cat="governance">
           <div class="cmd-head">
             <code class="cmd-name">/debug</code>
             <span class="badge-category">Gobernanza</span>
@@ -444,7 +844,7 @@
         </div>
 
         <!-- premortem -->
-        <div class="cmd-item" data-cat="governance">
+        <div class="cmd-item spotlight-card" data-cat="governance">
           <div class="cmd-head">
             <code class="cmd-name">/premortem</code>
             <span class="badge-category">Gobernanza</span>
@@ -453,7 +853,7 @@
         </div>
 
         <!-- profile -->
-        <div class="cmd-item" data-cat="intent">
+        <div class="cmd-item spotlight-card" data-cat="intent">
           <div class="cmd-head">
             <code class="cmd-name">/profile</code>
             <span class="badge-category">Intención</span>
@@ -462,7 +862,7 @@
         </div>
 
         <!-- review -->
-        <div class="cmd-item" data-cat="governance">
+        <div class="cmd-item spotlight-card" data-cat="governance">
           <div class="cmd-head">
             <code class="cmd-name">/review</code>
             <span class="badge-category">Gobernanza</span>
@@ -471,7 +871,7 @@
         </div>
 
         <!-- halt -->
-        <div class="cmd-item" data-cat="governance">
+        <div class="cmd-item spotlight-card" data-cat="governance">
           <div class="cmd-head">
             <code class="cmd-name">/halt</code>
             <span class="badge-category">Gobernanza</span>
@@ -481,9 +881,9 @@
       </div>
     </section>
 
-    <!-- ── 6. Manifiesto de Cadena de Suministro y SBOM ───────────────── -->
+    <!-- ── 9. Manifiesto de Cadena de Suministro y SBOM ───────────────── -->
     <section class="content-section" id="sbom">
-      <div class="sbom-banner">
+      <div class="sbom-banner spotlight-card">
         <div class="sbom-info">
           <span class="sub-label">CUMPLIMIENTO Y CADENA DE SUMINISTRO</span>
           <h3 class="sbom-title">Manifiestos SBOM en Estándares CycloneDX v1.5 y SPDX 2.3</h3>
