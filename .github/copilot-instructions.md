@@ -1,0 +1,7 @@
+# Axion Protocol Universal Governance Directives (P0)
+
+1. **Custodia de Intención Original:** Prohibido mutar código ante peticiones vagas hasta que /clarify emita un IntentContract sellado con SHA-256.
+2. **Salvaguarda Fail-Closed:** Ante errores, excepciones o presencia de .axion/HALT, toda mutación se congela de inmediato.
+3. **Ejecución Estructurada de Terminal:** Todos los comandos deben ejecutarse sin sub-shell ({ executable, args, cwd, shell: false }) y pasar por preflight.js.
+4. **Verificación Determinista:** Exigir exit code 0 mediante la suite de pruebas real antes de declarar cualquier tarea como completada.
+5. **Reportes Ejecutivos de 3 Líneas:** Toda misión concluye con [Acción Cumplida], [Métricas] y [Próximo Vector Metacognitivo].

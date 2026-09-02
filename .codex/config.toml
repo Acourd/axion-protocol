@@ -1,0 +1,5 @@
+# Axion Protocol Codex Configuration
+[governance]
+mode = "fail-closed"
+deterministic_verification = true
+attestation = "in-toto-v1-dsse"
