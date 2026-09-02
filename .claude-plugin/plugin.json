@@ -1,6 +1,6 @@
 {
   "name": "axion-protocol",
-  "version": "1.3.1-rc.1",
+  "version": "1.3.1-rc.2",
   "description": "Runtime de gobernanza fail-closed para agentes: 12 comandos, puerta PreToolUse con clasificacion lexica, parada de emergencia, reversion determinista verificada con SHA-256, aprobaciones Ed25519 y atestaciones in-toto v1 en sobre DSSE. Cero dependencias.",
   "author": {
     "name": "Adria",

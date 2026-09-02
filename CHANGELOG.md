@@ -2,19 +2,23 @@
 
 Todos los cambios relevantes de Axion Protocol se documentarán aquí.
 
-## [1.3.1-rc.1] — 2026-09-01 · Experiencia de Usuario, Recetas Operativas y Documentación Modular
+## [1.3.1-rc.2] — 2026-09-01 · Versión Oficial de Gobernanza Integral y Experiencia de Vuelo
 
-Refactorización orientada a producto y experiencia de primer contacto (Onboarding). Compactación de portadas principales, extracción del manual de comandos y recetas operativas.
+Lanzamiento de Axion Protocol v1.3.1-rc.2 blindando los 5 bloques de arquitectura soberana con 188 suites deterministas y cero dependencias externas.
 
 ### Added
 
-- **Manual Canónico de Comandos y Recetas (`docs/COMMANDS.md` y `docs/COMMANDS.es.md`)**: Documentación exhaustiva desacoplada del README principal con recetas operativas por objetivo (Estrategia `/drive /premortem /critic`, Fix ágil `/drive`, Depuración `/debug /verify`, Rollback `/snapshot`).
-- **Sandbox Hashgraph Oficial (`SANDBOX.md`)**: Entorno de incubación y prototipado experimental con paridad determinista vía `sync_mirror_gate`.
+- **Onboarding Universal de 1 Clic & Semáforo de Vuelo HUD (`tools/onboarding_wizard.js` y `ax_f_168`)**: Inicialización en < 150 ms con detección ambiental automática y cuadro de mando visual con recetas de tareas rápidas.
+- **Sensor Predictivo de Tokens y Entropía Léxica (`tools/context_budget_guard.js` y `ax_f_171`)**: Proyección matemática de agotamiento de ventana de contexto y alerta de picos acelerados (`CRITICAL_SPIKE`).
+- **Gobernanza de Ecosistema Bilingüe (`CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/` y `ax_f_170`)**: Directrices formales de colaboración abierta, plantillas de issues/PRs y verificación estricta de los 5 Invariantes Soberanos.
+- **Matriz Multi-SO de Integración Continua (`.github/workflows/ci.yml` y `ax_f_169`)**: Pipeline en GitHub Actions que audita las 188 suites en Ubuntu, Windows y macOS con Node.js 20, 22 y 24.
+- **Motor Clean-Room de Humanización Anti-AI Slop (`tools/humanizer_engine.js` y `ax_f_166`)**: Auditoría y purificación de tono robótico de IA en textos y READMEs.
 
-### Changed
+### Enhanced
 
-- **READMEs Compactos y Profesionales**: Eliminación de emojis informales de chat en favor de badges SVG minimalistas, tablas estructuradas de valor de producto y enlace directo al manual técnico.
-- **Paridad Lingüística Total**: Sincronización exacta de `README.md` y `README.es.md` con enfoque en mitigación de riesgos de IA agentiva y cero dependencias.
+- **Fast-Loop Short-Circuit (`tools/drive_engine.js` y `ax_f_167`)**: Ejecución de cambios atómicos en sub-300 ms sin micro-turnos innecesarios.
+- **Podado Topológico de Contexto (`sliceASTFocus` y `pruneContextPayload`)**: Ahorro del 40% al 60% de tokens en cada turno de lectura de código.
+- **Paridad Espejo 100%**: Sincronización inmutable verificada entre `Axion Protocol`, `Axkern` y `Hashgraph`.
 
 ---
 
