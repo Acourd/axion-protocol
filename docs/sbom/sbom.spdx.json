@@ -3,9 +3,9 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "axion-protocol",
-  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/1788389335505",
+  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/1788389615248",
   "creationInfo": {
-    "created": "2026-09-02T22:48:55.504Z",
+    "created": "2026-09-02T22:53:35.248Z",
     "creators": [
       "Tool: SovereignSBOMGenerator-2.0.0",
       "Organization: Axion Protocol"
@@ -939,7 +939,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "edcdeff5a9dd22dea0667fdc43e5e96b37c003950f38d8b242916fb62025be20"
+          "checksumValue": "f4857989ec7e6cd326fc08e39b00b956254567561f68a91a1a2eba796906d99c"
         }
       ],
       "licenseConcluded": "Apache-2.0",

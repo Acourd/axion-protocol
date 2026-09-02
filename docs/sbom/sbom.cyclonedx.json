@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:e3c26b11-6c48-40f1-a63d-81d2b7ddbff5",
+  "serialNumber": "urn:uuid:4b6ef04e-00b9-4a62-b47c-120e1ad2ce0d",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-09-02T22:48:55.481Z",
+    "timestamp": "2026-09-02T22:53:35.223Z",
     "tools": [
       {
         "vendor": "Axion Protocol",
@@ -1670,7 +1670,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "edcdeff5a9dd22dea0667fdc43e5e96b37c003950f38d8b242916fb62025be20"
+          "content": "f4857989ec7e6cd326fc08e39b00b956254567561f68a91a1a2eba796906d99c"
         }
       ],
       "licenses": [
@@ -1683,7 +1683,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "6427"
+          "value": "12260"
         }
       ]
     },
