@@ -78,6 +78,7 @@ const SUBCOMANDOS = {
   benchmark: { script: 'tools/competitive_benchmark.js', ayuda: 'ejecuta la suite de benchmarking y métricas competitivas reproducibles' },
   critic: { script: 'tools/asymptotic_critic.js', ayuda: 'evaluación asintótica dinámica y auditoría de madurez soberana' },
   onboard: { script: 'tools/onboarding_wizard.js', ayuda: 'onboarding universal de 1 clic y semáforo visual de control de vuelo' },
+  'audit-ui': { script: 'tools/attestation_visualizer.js', ayuda: 'genera el panel web visual interactivo de atestaciones y firmas Ed25519' },
   sync: { script: 'tools/sync_mirror_gate.js', ayuda: 'auditoría y sincronización espejo determinista de espacios de trabajo' },
   humanize: { script: 'tools/humanizer_engine.js', ayuda: 'auditoría y purificación de tono humano anti-AI slop para textos y READMEs' },
   drive: { script: 'tools/drive_engine.js', ayuda: 'meta-orquestador autónomo con deliberación profunda adaptativa' },
