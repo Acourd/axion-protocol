@@ -125,6 +125,7 @@ function runUserInstallation(homeDir) {
   fs.mkdirSync(destino, { recursive: true });
   const respaldos = [];
   const ausentes = [];
+  const anotar = (r) => { if (r) respaldos.push(r); };
 
   for (const wf of WORKFLOWS) {
     const r = copiarProtegido(origenSkill(__dirname, wf), path.join(destino, wf), ausentes);
@@ -146,6 +147,45 @@ function runUserInstallation(homeDir) {
     console.log(`  ✓ ${WORKFLOWS.length} skills instaladas en ${destinoAgy}`);
   } else {
     console.log('  · Antigravity no detectado (~/.gemini ausente): se omite su ambito global.');
+  }
+
+  // OpenCode: puerta fail-closed global. El plugin solo actua en proyectos con
+  // Axion instalado, asi que no secuestra la terminal de proyectos ajenos.
+  const destinoOcPlugins = path.join(home, '.config', 'opencode', 'plugins');
+  fs.mkdirSync(destinoOcPlugins, { recursive: true });
+  anotar(copiarProtegido(
+    path.join(__dirname, '.opencode', 'plugins', 'axion-gate.ts'),
+    path.join(destinoOcPlugins, 'axion-gate.ts'), ausentes));
+  console.log(`  ✓ Plugin fail-closed instalado en ${destinoOcPlugins}`);
+
+  // Registro en opencode.jsonc si es JSON puro y aun no esta registrado. Si el
+  // archivo tiene comentarios (JSONC) no se toca: se instruye el alta manual.
+  const rutaOcJsonc = path.join(home, '.config', 'opencode', 'opencode.jsonc');
+  const existeJsonc = fs.existsSync(rutaOcJsonc);
+  let registroOk = false;
+  if (existeJsonc) {
+    try {
+      const cfg = JSON.parse(fs.readFileSync(rutaOcJsonc, 'utf8'));
+      const ya = Array.isArray(cfg.plugins) && cfg.plugins.some((p) => String(p).includes('axion-gate'));
+      if (!ya) {
+        cfg.plugins = [...(Array.isArray(cfg.plugins) ? cfg.plugins : []), './plugins/axion-gate.ts'];
+        fs.writeFileSync(rutaOcJsonc, JSON.stringify(cfg, null, 2) + '\n', 'utf8');
+      }
+      registroOk = true;
+    } catch (_) {
+      registroOk = false;
+    }
+  } else {
+    fs.writeFileSync(rutaOcJsonc, JSON.stringify({
+      $schema: 'https://opencode.ai/config.json',
+      plugins: ['./plugins/axion-gate.ts'],
+    }, null, 2) + '\n', 'utf8');
+    registroOk = true;
+  }
+  if (registroOk) {
+    console.log(`  ✓ Puerta global registrada en ${rutaOcJsonc}`);
+  } else {
+    console.log(`  ! ${rutaOcJsonc} no es JSON puro y no se ha tocado. Anade a mano: "plugins": ["./plugins/axion-gate.ts"]`);
   }
 
   const faltantes = [...new Set(ausentes)];

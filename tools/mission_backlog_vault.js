@@ -23,7 +23,9 @@ const BADGES = {
   AUTO_HEALING: { icon: '🔄', label: 'AUTO-CURACIÓN', color: 'green' },
   RELEASE_SEAL: { icon: '📜', label: 'RELEASE & SELLO', color: 'gold' },
   STRESS_BENCHMARK: { icon: '⚡', label: 'INGENIERÍA & ESTRÉS', color: 'magenta' },
-  GOVERNANCE: { icon: '🛡️', label: 'GOBERNANZA', color: 'blue' }
+  GOVERNANCE: { icon: '🛡️', label: 'GOBERNANZA', color: 'blue' },
+  COGNITIVE_REASONING: { icon: '🧠', label: 'PENSAMIENTO PROFUNDO', color: 'purple' },
+  TOKEN_ECONOMY: { icon: '📉', label: 'AHORRO DE TOKENS', color: 'emerald' }
 };
 
 class MissionBacklogVault {
@@ -166,13 +168,56 @@ class MissionBacklogVault {
   }
 
   /**
-   * Obtiene la selección curada de misiones formateadas visualmente respetando el reservorio completo.
+   * Calcula el peso de afinidad contextual para una misión según la intención del usuario.
    */
-  getVisualMissionSelection(limit = 4) {
+  computeContextAffinity(mission, contextText = '') {
+    if (!contextText || typeof contextText !== 'string') return 0;
+    const lower = contextText.toLowerCase();
+    let score = 0;
+
+    // Patrones de Pensamiento / Razonamiento Profundo
+    const cogPatterns = ['pensamiento', 'razonamiento', 'thinking', 'profundidad', 'metacognit', 'deductiv', 'anthropic', 'openai', 'o1', 'sonnet', 'cognitiv'];
+    if (cogPatterns.some(k => lower.includes(k))) {
+      if (mission.category === 'COGNITIVE_REASONING') score += 50;
+    }
+
+    // Patrones de Ahorro de Tokens / Eficiencia de Recursos
+    const tokPatterns = ['token', 'ahorro', 'eficiencia', 'recurso', 'cuota', 'limite', 'gasto', 'contexto', 'roundtrip', 'overhead'];
+    if (tokPatterns.some(k => lower.includes(k))) {
+      if (mission.category === 'TOKEN_ECONOMY') score += 45;
+    }
+
+    // Patrones de Gobernanza y Seguridad
+    const govPatterns = ['gobernanza', 'seguridad', 'vulnerabilidad', 'fail-closed', 'preflight', 'in-toto', 'dsse'];
+    if (govPatterns.some(k => lower.includes(k))) {
+      if (mission.category === 'GOVERNANCE' || mission.category === 'RELEASE_SEAL') score += 30;
+    }
+
+    // Si el usuario no menciona explícitamente aspectos visuales o CSS, despriorizar misiones cosméticas
+    const visPatterns = ['web', 'css', 'tema', 'visual', 'estetica', 'ui', 'color', 'diseño'];
+    const isVisualRequested = visPatterns.some(k => lower.includes(k));
+    if (!isVisualRequested && (mission.id.startsWith('M_VIS_') || (mission.category === 'AUTO_HEALING' && mission.title.includes('Visual')))) {
+      score -= 25;
+    }
+
+    return score;
+  }
+
+  /**
+   * Obtiene la selección curada de misiones formateadas visualmente respetando afinidad contextual.
+   */
+  getVisualMissionSelection(limit = 4, contextText = '') {
     const vault = this.loadVault();
     const sorted = vault.reservoir
       .filter(m => m.status === 'QUEUED')
-      .sort((a, b) => (b.priority || 0) - (a.priority || 0));
+      .map(m => {
+        const affinity = this.computeContextAffinity(m, contextText);
+        return {
+          ...m,
+          effectivePriority: (m.priority || 0) + affinity
+        };
+      })
+      .sort((a, b) => b.effectivePriority - a.effectivePriority);
 
     const selected = sorted.slice(0, limit);
 
@@ -184,6 +229,7 @@ class MissionBacklogVault {
         category: m.category,
         title: m.title,
         summary: m.summary,
+        effectivePriority: m.effectivePriority,
         formattedOption: this.formatOptionDisplay(m, idx === 0)
       }))
     };

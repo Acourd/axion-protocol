@@ -822,10 +822,28 @@ class DriveEngine {
   /**
    * Obtiene la selección curada de misiones formateadas visualmente desde el reservorio permanente.
    */
-  getVaultMissionSelection(limit = 4) {
+  getVaultMissionSelection(limit = 4, contextText = '') {
     const MissionBacklogVault = require('./mission_backlog_vault.js');
     const vault = new MissionBacklogVault(this.root);
-    return vault.getVisualMissionSelection(limit);
+    return vault.getVisualMissionSelection(limit, contextText);
+  }
+
+  /**
+   * Ejecuta deliberación metacognitiva profunda (Deep Thinking Protocol) antes de mutaciones.
+   */
+  deliberateCognitivePreconditions(task = {}) {
+    const CognitiveReasoningEngine = require('./cognitive_reasoning_engine.js');
+    const engine = new CognitiveReasoningEngine(this.root);
+    return engine.deliberate(task);
+  }
+
+  /**
+   * Poda salidas de terminal y buffers para ahorro masivo de tokens en bucles agénticos.
+   */
+  pruneOutputTokens(rawStdout = '', maxLines = 20) {
+    const TokenEconomyPruner = require('./token_economy_pruner.js');
+    const pruner = new TokenEconomyPruner(this.root);
+    return pruner.pruneTerminalOutput(rawStdout, maxLines);
   }
 
   /**
