@@ -954,6 +954,15 @@ class DriveEngine {
   }
 
   /**
+   * Conduce una deliberación dialéctica (Tesis/Antítesis/Síntesis) emitiendo un contrato formal (M_COG_009).
+   */
+  deliberateDialecticDecision(proposal = {}) {
+    const DialecticDebater = require('./dialectic_debater.js');
+    const debater = new DialecticDebater(this.root);
+    return debater.synthesizeDecision(proposal);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {

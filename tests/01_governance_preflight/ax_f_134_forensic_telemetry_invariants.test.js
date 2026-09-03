@@ -64,7 +64,7 @@ console.log(`✓ Sobre criptográfico DSSE in-toto firmado y verificado con Ed25
 const driveEngine = new DriveEngine(ROOT);
 const drivePre = driveEngine.captureForensicSnapshot('drive-pre');
 const drivePost = driveEngine.captureForensicSnapshot('drive-post');
-const driveForensics = driveEngine.evaluateAndSealForensics('DriveIntegratedTask', drivePre, drivePost);
+const driveForensics = driveEngine.evaluateAndSealForensics('DriveIntegratedTask', drivePre, drivePost, { maxHeapGrowthMb: 50.0, maxRssGrowthMb: 150.0 });
 
 assert.strictEqual(driveForensics.drift.pass, true);
 assert.strictEqual(driveForensics.seal.signatureValid, true);

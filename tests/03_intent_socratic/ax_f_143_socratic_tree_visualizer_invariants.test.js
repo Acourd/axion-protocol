@@ -13,13 +13,14 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const SocraticTreeVisualizer = require('../../tools/socratic_tree_visualizer.js');
 const DriveEngine = require('../../tools/drive_engine.js');
 
 console.log('=== AX-F-143 Invariantes del Visualizador Socrático de Decisiones ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_tree_sandbox_${Date.now()}`);
+const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'ax-tree-sandbox-'));
 fs.mkdirSync(path.join(sandbox, '.axion', 'reports'), { recursive: true });
 
 try {
