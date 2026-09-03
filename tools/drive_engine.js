@@ -981,6 +981,15 @@ class DriveEngine {
   }
 
   /**
+   * Arbitra consensos dialécticos en mallas multi-agente con veto de seguridad P0 asimétrico (M_COG_011).
+   */
+  arbitrateMultiAgentConsensus(proposals = []) {
+    const DialecticConsensusArbiter = require('./dialectic_consensus_arbiter.js');
+    const arbiter = new DialecticConsensusArbiter(this.root);
+    return arbiter.arbitrate(proposals);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
