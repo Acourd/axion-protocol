@@ -1007,6 +1007,24 @@ class DriveEngine {
   }
 
   /**
+   * Deduplica semánticamente bloques de contexto inter-sesión reduciendo hasta un 40% de tokens (M_TOK_006).
+   */
+  deduplicateContextTokens(rawText = '', options = {}) {
+    const SemanticTokenDeduplicator = require('./semantic_token_deduplicator.js');
+    const deduplicator = new SemanticTokenDeduplicator({ projectRoot: this.root, ...options });
+    return deduplicator.deduplicate(rawText);
+  }
+
+  /**
+   * Expande bloques deduplicados restaurando el contenido original idéntico (M_TOK_006).
+   */
+  expandDeduplicatedTokens(deduplicatedText = '', cache = null) {
+    const SemanticTokenDeduplicator = require('./semantic_token_deduplicator.js');
+    const deduplicator = new SemanticTokenDeduplicator({ projectRoot: this.root });
+    return deduplicator.expand(deduplicatedText, cache);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
