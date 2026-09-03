@@ -1105,6 +1105,22 @@ class DriveEngine {
   }
 
   /**
+   * Crea un podador dinámico de contexto por relevancia causal (M_TOK_010).
+   */
+  createContextRelevancePruner(options = {}) {
+    const ContextRelevancePruner = require('./context_relevance_pruner.js');
+    return new ContextRelevancePruner({ projectRoot: this.root, ...options });
+  }
+
+  /**
+   * Poda selectivamente bloques de contexto irrelevantes protegiendo el hilo crítico (M_TOK_010).
+   */
+  pruneContextItems(items = [], options = {}) {
+    const pruner = this.createContextRelevancePruner(options);
+    return pruner.prune(items, options);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
