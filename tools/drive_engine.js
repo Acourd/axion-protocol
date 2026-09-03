@@ -847,6 +847,24 @@ class DriveEngine {
   }
 
   /**
+   * Consulta el grafo de conocimiento semántico (M_006) para ubicar símbolos sin leer archivos completos.
+   */
+  lookupSemanticSymbol(symbolName) {
+    const SemanticCrossIndexer = require('./semantic_cross_indexer.js');
+    const indexer = new SemanticCrossIndexer(this.root);
+    return indexer.lookupSymbol(symbolName);
+  }
+
+  /**
+   * Obtiene o regenera el índice semántico cruzado multidimensional.
+   */
+  getSemanticCrossIndex() {
+    const SemanticCrossIndexer = require('./semantic_cross_indexer.js');
+    const indexer = new SemanticCrossIndexer(this.root);
+    return indexer.loadIndex();
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
