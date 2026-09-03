@@ -4,32 +4,29 @@
 // Intercepta la tool "bash" antes de ejecutar, clasifica la cadena con
 // tools/preflight.js y bloquea (lanzando Error) todo lo que preflight marque
 // como DENY o que no pueda evaluar. NEEDS_HUMAN_REVIEW se deja pasar: el
-// sistema de permisos nativo de OpenCode pregunta al humano (bash=ask).
+// sistema de permisos nativo de OpenCode pregunta al humano (bash=ask);
+// con AXION_FAIL_CLOSED=1 en el entorno, NHR tambien bloquea.
 //
 // Con .axion/HALT presente se bloquea CUALQUIER tool, no solo bash.
-// NEEDS_HUMAN_REVIEW se deja pasar (el permiso nativo de bash pregunta al humano);
-// con AXION_FAIL_CLOSED=1 en el entorno, NHR tambien bloquea, como el hook de Claude.
+// Ámbito global: actúa SOLO en proyectos con Axion (marcador tools/preflight.js
+// o .axion/); fuera permanece inerte salvo AXION_GLOBAL_ENFORCE_ALL=1.
+//
+// IMPORTANTE: el módulo exporta ÚNICAMENTE el plugin (export default). Cualquier
+// export nombrado rompe el plugin host de opencode 1.18.x con
+// 'paths[0] must be of type string'. Los helpers son internos.
 //
 // Cero dependencias: spawnSync con array de argv, nunca shell.
-// Formato de plugin: export default (ctx) => ({ "tool.execute.before": ... }).
-//
-// Ámbito global: al instalarse en ~/.config/opencode/plugins/, el plugin actúa
-// SOLO en proyectos con Axion instalado (marcador: tools/preflight.js o .axion/).
-// Fuera de ellos permanece inerte, salvo que AXION_GLOBAL_ENFORCE_ALL=1 exija
-// fail-closed estricto (entonces bloquea lo que no pueda evaluar).
 
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-export function esProyectoGobernado(base) {
+function esProyectoGobernado(base) {
   return existsSync(path.join(base, '.axion'))
     || existsSync(path.join(base, 'tools', 'preflight.js'));
 }
 
-// Función pura para poder probarla fuera de OpenCode. Devuelve un veredicto
-// { decision, reason } con decision en ALLOW | NEEDS_HUMAN_REVIEW | DENY.
-export function clasificar({ preflightPath, command, haltPath }) {
+function clasificar({ preflightPath, command, haltPath }) {
   if (haltPath && existsSync(haltPath)) {
     return { decision: 'DENY', reason: 'el sistema está detenido (.axion/HALT). Retira la parada con `axion resume`.' };
   }
@@ -68,8 +65,8 @@ export default async ({ project, directory, worktree }) => {
 
   return {
     'tool.execute.before': async (input, output) => {
-      // Fuera de un proyecto Axion la puerta global no debe secuestrar cualquier
-      // terminal; solo con AXION_GLOBAL_ENFORCE_ALL=1 se exige fail-closed global.
+      // Fuera de un proyecto Axion la puerta global no secuestra cualquier terminal;
+      // solo con AXION_GLOBAL_ENFORCE_ALL=1 se exige fail-closed global.
       if (!enforceAll && !esProyectoGobernado(base)) return;
 
       const tool = String((input && input.tool) || '').toLowerCase();

@@ -888,6 +888,15 @@ class DriveEngine {
   }
 
   /**
+   * Resuelve automáticamente anomalías de invariantes y sintetiza parches verificados (M_COG_004).
+   */
+  autoHealMetacognitiveAST(sourceCode = '') {
+    const MetacognitiveHeuristicSolver = require('./metacognitive_heuristic_solver.js');
+    const solver = new MetacognitiveHeuristicSolver(this.root);
+    return solver.autoHealSource(sourceCode);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
