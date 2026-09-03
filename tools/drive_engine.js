@@ -998,6 +998,15 @@ class DriveEngine {
   }
 
   /**
+   * Simula y audita contrafácticamente caminos críticos calculando el Regret Score (M_COG_012).
+   */
+  evaluateCounterfactualPath(factualSpec = {}, counterfactualSpec = {}) {
+    const CounterfactualReasoningOracle = require('./counterfactual_reasoning_oracle.js');
+    const oracle = new CounterfactualReasoningOracle(this.root);
+    return oracle.simulateCounterfactual(factualSpec, counterfactualSpec);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
