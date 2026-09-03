@@ -78,6 +78,44 @@ function generarOpenCodeConfig(dirCommands, rutaSalida, ausentes) {
 }
 
 /**
+ * Registra los comandos de Axion en la config GLOBAL de OpenCode, fusionando con
+ * la config existente (no la pisa). La Desktop arranca sesiones desde cualquier
+ * carpeta (p.ej. la raiz del workspace, no el proyecto), asi que los comandos
+ * deben estar en la config global para aparecer siempre en el menu de slash.
+ */
+function registrarComandosGlobales(dirCommands, rutaSalida, ausentes) {
+  if (!fs.existsSync(dirCommands)) {
+    if (ausentes) ausentes.push(path.relative(process.cwd(), dirCommands).split(path.sep).join('/'));
+    return null;
+  }
+  const command = {};
+  for (const f of fs.readdirSync(dirCommands).filter((n) => n.endsWith('.md'))) {
+    const name = f.replace(/\.md$/, '');
+    const texto = fs.readFileSync(path.join(dirCommands, f), 'utf8');
+    const fm = texto.match(/^---\n([\s\S]*?)\n---/);
+    const descripcion = (fm && (fm[1].match(/^description:\s*(.+)$/m) || [])[1] || '').trim() || name;
+    const cuerpo = fm ? texto.slice(fm[0].length).trim() : texto.trim();
+    command[name] = {
+      description: descripcion,
+      template: `${cuerpo}\n\n## Argumentos del usuario\n$ARGUMENTS`,
+    };
+  }
+  let base = { $schema: 'https://opencode.ai/config.json' };
+  if (fs.existsSync(rutaSalida)) {
+    try {
+      const previo = JSON.parse(fs.readFileSync(rutaSalida, 'utf8'));
+      if (previo && typeof previo === 'object' && !Array.isArray(previo)) base = previo;
+    } catch (_) {
+      // No es JSON puro (JSONC): se conserva intacto y no se registra.
+      return null;
+    }
+  }
+  base.command = { ...(base.command || {}), ...command };
+  fs.writeFileSync(rutaSalida, JSON.stringify(base, null, 2) + '\n', 'utf8');
+  return command;
+}
+
+/**
  * Inyecta el bloque de gobernanza en AGENTS.md de la raiz sin pisar lo que ya exista.
  * Idempotente: si el marcador ya esta, no toca el archivo.
  */
@@ -193,6 +231,19 @@ function runUserInstallation(homeDir) {
   // No se registra en opencode.jsonc: el plugin está deshabilitado hasta que el
   // plugin host de opencode soporte interceptar bash sin crash/colgar. Para
   // reactivarlo, renombrar a axion-gate.ts y añadir "plugins": ["./plugins/axion-gate.ts"].
+
+  // Comandos GLOBALES de OpenCode: la Desktop arranca sesiones desde cualquier
+  // carpeta, asi que los slash de Axion deben vivir en la config global.
+  const comGlobales = registrarComandosGlobales(
+    path.join(__dirname, '.opencode', 'commands'),
+    path.join(home, '.config', 'opencode', 'opencode.json'),
+    ausentes,
+  );
+  if (comGlobales) {
+    console.log(`  ✓ ${Object.keys(comGlobales).length} comandos registrados globalmente en ~/.config/opencode/opencode.json`);
+  } else {
+    console.log('  ! No se pudieron registrar comandos globales de OpenCode (config global no es JSON puro o faltan archivos).');
+  }
 
   const faltantes = [...new Set(ausentes)];
   if (faltantes.length > 0) {

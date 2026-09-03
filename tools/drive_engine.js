@@ -1077,6 +1077,15 @@ class DriveEngine {
   }
 
   /**
+   * Expande especulativamente punteros de contexto con verificación de integridad criptográfica (M_TOK_009).
+   */
+  expandSpeculativeTokens(text = '', cache = null) {
+    const SpeculativeTokenExpander = require('./speculative_token_expander.js');
+    const expander = new SpeculativeTokenExpander({ projectRoot: this.root });
+    return expander.expandSpeculative(text, cache);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
