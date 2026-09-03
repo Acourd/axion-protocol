@@ -1051,6 +1051,15 @@ class DriveEngine {
   }
 
   /**
+   * Sintetiza un meta-prompt dialéctico de razonamiento profundo calibrado por modelo (M_COG_014).
+   */
+  synthesizeDialecticMetaprompt(objective = '', options = {}) {
+    const MetapromptDialecticSynthesizer = require('./metaprompt_dialectic_synthesizer.js');
+    const synthesizer = new MetapromptDialecticSynthesizer({ projectRoot: this.root });
+    return synthesizer.synthesize(objective, options);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
