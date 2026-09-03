@@ -1146,6 +1146,25 @@ class DriveEngine {
   }
 
   /**
+   * Crea un actualizador bayesiano de creencias e hipótesis en tiempo real (M_COG_018).
+   */
+  createBayesianHypothesisUpdater(options = {}) {
+    const BayesianHypothesisUpdater = require('./bayesian_hypothesis_updater.js');
+    return new BayesianHypothesisUpdater({ projectRoot: this.root, ...options });
+  }
+
+  /**
+   * Actualiza las probabilidades bayesianas ante nueva evidencia empírica (M_COG_018).
+   */
+  updateBayesianBeliefs(updater, evidence = {}) {
+    if (!updater || typeof updater.update !== 'function') {
+      const freshUpdater = this.createBayesianHypothesisUpdater();
+      return freshUpdater.update(evidence);
+    }
+    return updater.update(evidence);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
