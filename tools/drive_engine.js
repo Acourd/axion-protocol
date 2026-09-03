@@ -1060,6 +1060,14 @@ class DriveEngine {
   }
 
   /**
+   * Crea un presupuestador adaptativo de cuotas de tokens y salvaguarda fail-closed (M_TOK_008).
+   */
+  createAdaptiveTokenBudgeter(options = {}) {
+    const AdaptiveTokenBudgeter = require('./adaptive_token_budgeter.js');
+    return new AdaptiveTokenBudgeter({ projectRoot: this.root, ...options });
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
