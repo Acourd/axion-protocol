@@ -1043,6 +1043,14 @@ class DriveEngine {
   }
 
   /**
+   * Crea un registrador de trazas y telemetría de tokens de alta frecuencia con latencia sub-100us (M_TOK_007).
+   */
+  createZeroOverheadTraceLogger(options = {}) {
+    const ZeroOverheadTraceLogger = require('./zero_overhead_trace_logger.js');
+    return new ZeroOverheadTraceLogger({ projectRoot: this.root, ...options });
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
