@@ -1165,6 +1165,30 @@ class DriveEngine {
   }
 
   /**
+   * Crea un compactor diferencial de modificaciones y parches semánticos (M_TOK_012).
+   */
+  createDiffTokenCompactor(options = {}) {
+    const DiffTokenCompactor = require('./diff_token_compactor.js');
+    return new DiffTokenCompactor({ projectRoot: this.root, ...options });
+  }
+
+  /**
+   * Compacta modificaciones de código a formato diferencial unificado con reversibilidad probada (M_TOK_012).
+   */
+  compactFileDiff(originalText = '', modifiedText = '', options = {}) {
+    const compactor = this.createDiffTokenCompactor(options);
+    return compactor.createHunk(originalText, modifiedText, options);
+  }
+
+  /**
+   * Aplica un parche diferencial unificado reconstruyendo el contenido íntegro (M_TOK_012).
+   */
+  applyCompactedDiff(originalText = '', diffText = '') {
+    const compactor = this.createDiffTokenCompactor();
+    return compactor.applyHunk(originalText, diffText);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
