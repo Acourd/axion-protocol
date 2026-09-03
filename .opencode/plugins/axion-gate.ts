@@ -2,8 +2,9 @@
 // Axion Protocol — Puerta fail-closed para OpenCode.
 //
 // Intercepta la tool "bash" antes de ejecutar, clasifica la cadena con
-// tools/preflight.js y bloquea (lanzando Error) todo lo que preflight marque
-// como DENY o que no pueda evaluar. NEEDS_HUMAN_REVIEW se deja pasar: el
+// tools/preflight.js y bloquea sustituyendo el comando por un no-op con salida
+// no-cero (NO se lanza Error: en opencode 1.18.x lanzar desde tool.execute.before
+// crashea el host de plugins de bun). NEEDS_HUMAN_REVIEW se deja pasar: el
 // sistema de permisos nativo de OpenCode pregunta al humano (bash=ask);
 // con AXION_FAIL_CLOSED=1 en el entorno, NHR tambien bloquea.
 //

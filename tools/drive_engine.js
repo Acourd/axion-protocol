@@ -906,6 +906,18 @@ class DriveEngine {
   }
 
   /**
+   * Audita la compatibilidad de contratos de llamada y aridad entre módulos interconectados (M_COG_006).
+   */
+  auditSemanticContracts(invocations = null) {
+    const SemanticContractVerifier = require('./semantic_contract_verifier.js');
+    const verifier = new SemanticContractVerifier(this.root);
+    if (Array.isArray(invocations)) {
+      return verifier.auditCalls(invocations);
+    }
+    return verifier.auditCoreContracts();
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
