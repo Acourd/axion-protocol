@@ -11,9 +11,9 @@
  *
  * Por eso aquí se verifica capacidad, no presencia:
  *   - El hook se dispara de verdad contra un destructivo, no solo existe ni solo compila.
- *   - Está registrado en los dos runtimes, no en uno.
- *   - Los 14 comandos están en las dos superficies y sin divergir entre ellas.
- *   - Cada `node tools/X.js` citado en un workflow apunta a un archivo real.
+*  - Está registrado en los dos runtimes, no en uno.
+ *  - Los 12 comandos están en las dos superficies y sin divergir entre ellas.
+ *  - Cada `node tools/X.js` citado en un workflow apunta a un archivo real.
  */
 
 const fs = require('fs');
@@ -226,6 +226,19 @@ function runHealthCheck(targetDir) {
   const claudeMd = path.join(target, 'CLAUDE.md');
   addCheck('Claude Code Bridge', fs.existsSync(claudeMd),
     fs.existsSync(claudeMd) ? 'CLAUDE.md sincronizado' : 'falta CLAUDE.md');
+
+  // 9b. Superficie OpenCode. OpenCode lee AGENTS.md en la raiz y descubre
+  //     .opencode/commands/*.md; las skills de .agents/skills/ las carga por
+  //     compatibilidad nativa. Sin los comandos, los slash de OpenCode no existen.
+  const dirOc = path.join(target, '.opencode', 'commands');
+  const enOc = WORKFLOWS.filter((w) => fs.existsSync(path.join(dirOc, w)));
+  const agentsRaiz = fs.existsSync(path.join(target, 'AGENTS.md'));
+  const pluginOc = fs.existsSync(path.join(target, '.opencode', 'plugins', 'axion-gate.ts'));
+  const ocOk = enOc.length === WORKFLOWS.length && agentsRaiz && pluginOc;
+  addCheck('Superficie OpenCode', ocOk,
+    ocOk
+      ? `${enOc.length}/${WORKFLOWS.length} en .opencode/commands, AGENTS.md raíz y plugin fail-closed`
+      : `faltan ${WORKFLOWS.length - enOc.length} comando(s) en .opencode/commands${agentsRaiz ? '' : ' y falta AGENTS.md raíz'}${pluginOc ? '' : ' y falta .opencode/plugins/axion-gate.ts'}`);
 
   // 10. Estado de parada. No es un fallo: es información que cambia lo que se puede hacer.
   const detenido = fs.existsSync(path.join(target, '.axion', 'HALT'));

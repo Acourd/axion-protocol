@@ -31,6 +31,40 @@ const WORKFLOWS = Object.freeze(
 // unico sitio que conoce la traduccion entre ambas.
 const origenSkill = (raiz, wf) => path.join(raiz, '.agents', 'skills', wf.replace(/\.md$/, ''), 'SKILL.md');
 
+// Directivas que OpenCode (y cualquier harness que lea AGENTS.md en la raiz) recibe.
+// El bloque se marca para poder inyectarlo sin pisar un AGENTS.md que ya exista.
+const MARCA_AGENTS = '<!-- axion-protocol:gobernanza -->';
+const BLOQUE_AGENTS_MD = `# Axion Protocol — Gobernanza Determinista (P0)
+
+1. **Custodia de Intención Original:** Prohibido mutar código ante peticiones vagas hasta que /clarify emita un IntentContract sellado con SHA-256.
+2. **Salvaguarda Fail-Closed:** Ante errores, excepciones o presencia de .axion/HALT, toda mutación se congela de inmediato.
+3. **Ejecución Estructurada de Terminal:** Todos los comandos deben ejecutarse sin sub-shell ({ executable, args, cwd, shell: false }) y pasar por node tools/preflight.js.
+4. **Verificación Determinista:** Exigir exit code 0 mediante la suite de pruebas real antes de declarar cualquier tarea como completada.
+5. **Rollback Semántico:** Ante cualquier petición de deshacer en lenguaje natural, ejecutar node tools/checkpoint.js restore latest y reportar el resultado real.
+6. **Reportes Ejecutivos de 3 Líneas:** Toda misión concluye con [Acción Cumplida], [Métricas] y [Próximo Vector Metacognitivo].
+
+Comandos disponibles: /attest /clarify /debug /drive /halt /memory /preflight /premortem /profile /review /snapshot /verify.
+Herramientas: tools/preflight.js, tools/checkpoint.js, tools/attestation.js, tools/evidence_hasher.js, tools/killswitch.js.`;
+
+/**
+ * Inyecta el bloque de gobernanza en AGENTS.md de la raiz sin pisar lo que ya exista.
+ * Idempotente: si el marcador ya esta, no toca el archivo.
+ */
+function inyectarAgentsMd(rootDir) {
+  const ruta = path.join(rootDir, 'AGENTS.md');
+  let previo = '';
+  if (fs.existsSync(ruta)) {
+    previo = fs.readFileSync(ruta, 'utf8');
+    if (previo.includes(MARCA_AGENTS)) return null;
+  }
+  const bloque = `${MARCA_AGENTS}\n\n${BLOQUE_AGENTS_MD}\n\n${MARCA_AGENTS}`;
+  const contenido = previo.trim()
+    ? `${previo.trim()}\n\n---\n\n${bloque}\n`
+    : `# Axion Protocol\n\n${bloque}\n`;
+  fs.writeFileSync(ruta, contenido, 'utf8');
+  return null;
+}
+
 function hashDe(filePath) {
   return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
 }
@@ -147,6 +181,9 @@ function runInstallation(targetDir) {
     '.agents/skills',
     '.agents/hooks',
     '.claude/commands',
+    '.opencode',
+    '.codex',
+    '.github',
     'tools',
     'policies',
     'schemas',
@@ -197,6 +234,33 @@ function runInstallation(targetDir) {
   } else {
     console.log('  ✓ Hook PreToolUse ya estaba registrado en .claude/settings.json');
   }
+
+  // 2b. OpenCode, Codex y Copilot. Las tres son superficies que leen AGENTS.md en la
+  //     raiz; OpenCode ademas descubre .opencode/commands/*.md y las skills de
+  //     .agents/skills/ (compatibilidad nativa). Si no se despliegan aqui, el "universal"
+  //     del instalador era falso: solo Antigravity y Claude recibian gobernanza.
+  console.log('\n📦 2b. Configurando OpenCode, Codex y Copilot...');
+  anotar(inyectarAgentsMd(rootDir));
+  anotar(copiarProtegido(
+    path.join(sourceRoot, '.opencode', 'rules', 'axion-protocol.md'),
+    path.join(rootDir, '.opencode', 'rules', 'axion-protocol.md'), ausentes));
+  let opencodeCommands = 0;
+  workflows.forEach(wf => {
+    const destinoOc = path.join(rootDir, '.opencode', 'commands', wf);
+    fs.mkdirSync(path.dirname(destinoOc), { recursive: true });
+    anotar(copiarProtegido(origenSkill(sourceRoot, wf), destinoOc, ausentes));
+    opencodeCommands++;
+  });
+  anotar(copiarProtegido(
+    path.join(sourceRoot, '.opencode', 'plugins', 'axion-gate.ts'),
+    path.join(rootDir, '.opencode', 'plugins', 'axion-gate.ts'), ausentes));
+  anotar(copiarProtegido(
+    path.join(sourceRoot, '.codex', 'AGENTS.md'),
+    path.join(rootDir, '.codex', 'AGENTS.md'), ausentes));
+  anotar(copiarProtegido(
+    path.join(sourceRoot, '.github', 'copilot-instructions.md'),
+    path.join(rootDir, '.github', 'copilot-instructions.md'), ausentes));
+  console.log(`  ✓ AGENTS.md raíz inyectado, regla y ${opencodeCommands} comandos en .opencode/, plugin fail-closed en .opencode/plugins/, más .codex/AGENTS.md y .github/copilot-instructions.md`);
 
   // 3. Inyectar Herramientas de Gobernanza en tools/
   console.log('\n📦 3. Inyectar Suite de Herramientas (tools/)...');
@@ -281,7 +345,8 @@ function runInstallation(targetDir) {
   }
 
   console.log('\n✅ [Axion Protocol] Instalación universal completada con éxito.');
-  console.log('   Los agentes (Antigravity, Claude Code, Cursor) ahora están gobernados por el protocolo.\n');
+  console.log('   Superficies gobernadas: Antigravity, Claude Code, OpenCode, Codex y Copilot.');
+  console.log('   (Cursor se añade con `axion harness`; este instalador no fabrica archivos que no porta.)\n');
 
   return {
     status: 'SUCCESS',

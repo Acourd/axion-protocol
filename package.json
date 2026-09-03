@@ -43,6 +43,10 @@
     ".agents/",
     ".claude/",
     ".claude-plugin/",
+    ".opencode/",
+    ".codex/",
+    ".cursor/",
+    ".github/",
     "install.js",
     "CLAUDE.md",
     "GOVERNANCE.md",
@@ -58,7 +62,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/axion-protocol/axion-protocol.git"
+    "url": "git+https://github.com/Acourd/axion-protocol.git"
   },
   "publishConfig": {
     "access": "public"

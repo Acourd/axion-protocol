@@ -70,3 +70,4 @@ Si el usuario expresa en cualquier idioma la intención de revertir o deshacer c
 2. **Zero-Bloat Gate:** Prohibido instalar paquetes o dependencias de `npm`/`pip` sin solicitar confirmación humana explícita (`GATE`).
 3. **Acotamiento de Alcance Atómico:** Prohibido refactorizar archivos o módulos fuera del alcance del milestone autorizado.
 4. **Verificación Empírica Obligatoria:** Jamás declarar éxito sin ejecutar la suite de pruebas y mostrar la salida `PASS`.
+5. **Anclaje Empírico en Tiempo Real:** Prohibido aseverar datos sobre el ecosistema vivo, modelos o versiones basándose en memoria estática de entrenamiento. Consulta obligatoria con herramientas de búsqueda activa (`search_web`).
