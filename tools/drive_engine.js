@@ -1025,6 +1025,24 @@ class DriveEngine {
   }
 
   /**
+   * Crea una instancia de Grafo Acíclico Dirigido (DAG) Causal para decisiones y bifurcaciones (M_COG_013).
+   */
+  createCausalDAG(options = {}) {
+    const CausalDAGBacktracker = require('./causal_dag_backtracker.js');
+    return new CausalDAGBacktracker({ projectRoot: this.root, ...options });
+  }
+
+  /**
+   * Retrocede causalmente en un DAG hasta la bifurcación segura más cercana podando ramas erróneas (M_COG_013).
+   */
+  backtrackCausalDAG(dag, failingNodeId) {
+    if (!dag || typeof dag.backtrackToSafeAncestor !== 'function') {
+      throw new TypeError('Se requiere una instancia válida de CausalDAGBacktracker');
+    }
+    return dag.backtrackToSafeAncestor(failingNodeId);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
