@@ -1068,6 +1068,15 @@ class DriveEngine {
   }
 
   /**
+   * Cuantifica la incertidumbre epistémica y emite la calibración de confianza (M_COG_015).
+   */
+  quantifyEpistemicUncertainty(proposal = {}, options = {}) {
+    const EpistemicUncertaintyQuantifier = require('./epistemic_uncertainty_quantifier.js');
+    const quantifier = new EpistemicUncertaintyQuantifier({ projectRoot: this.root, ...options });
+    return quantifier.quantify(proposal);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
