@@ -945,6 +945,15 @@ class DriveEngine {
   }
 
   /**
+   * Demuestra formalmente la equivalencia semántica de dos funciones sin regresiones (M_COG_008).
+   */
+  verifyFormalEquivalence(fnOriginal, fnRefactored, domain = null) {
+    const FormalEquivalenceChecker = require('./formal_equivalence_checker.js');
+    const checker = new FormalEquivalenceChecker(this.root);
+    return checker.verifyEquivalence(fnOriginal, fnRefactored, domain);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
