@@ -865,6 +865,18 @@ class DriveEngine {
   }
 
   /**
+   * Ejecuta auditoría metacognitiva de invariantes AST y detección de fugas lógicas (M_COG_003).
+   */
+  auditMetacognitiveAST(filePathOrSource) {
+    const MetacognitiveASTAnalyzer = require('./metacognitive_ast_analyzer.js');
+    const analyzer = new MetacognitiveASTAnalyzer(this.root);
+    if (filePathOrSource.includes('\n') || !filePathOrSource.endsWith('.js')) {
+      return analyzer.auditSource(filePathOrSource);
+    }
+    return analyzer.auditFile(filePathOrSource);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
