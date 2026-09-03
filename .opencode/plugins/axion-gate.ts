@@ -73,6 +73,13 @@ export default async ({ project, directory, worktree }) => {
       const haltPath = path.join(base, '.axion', 'HALT');
 
       if (existsSync(haltPath)) {
+        // En bash la parada se aplica por sustitución (no crashea el host). Para el
+        // resto de tools se lanza: en opencode 1.18.x lanzar puede crashear el host de
+        // plugins (bun panic), pero en una parada un crash sigue siendo fail-closed.
+        if (tool === 'bash') {
+          output.args.command = 'echo Axion-Protocol: sistema detenido (.axion/HALT). Retira la parada con `axion resume` && exit 1';
+          return;
+        }
         throw new Error('Axion Protocol: el sistema está detenido (.axion/HALT). Retira la parada con `axion resume`.');
       }
 
@@ -91,7 +98,12 @@ export default async ({ project, directory, worktree }) => {
 
       if (v.decision === 'DENY'
         || (v.decision === 'NEEDS_HUMAN_REVIEW' && process.env.AXION_FAIL_CLOSED === '1')) {
-        throw new Error(`Axion Protocol bloquea la ejecución: ${v.reason}`);
+        // NO se lanza: en opencode 1.18.x lanzar desde tool.execute.before crashea el
+        // host de plugins (bun panic). Se sustituye el comando por un no-op seguro con
+        // salida no-cero; el modelo ve el motivo y la tool falla limpio.
+        const motivo = String(v.reason || 'comando denegado').replace(/["'`$;&|<>\\\r\n]/g, ' ');
+        output.args.command = `echo Axion-Protocol-bloquea: ${motivo} && exit 1`;
+        return;
       }
     },
   };

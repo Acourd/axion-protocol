@@ -897,6 +897,15 @@ class DriveEngine {
   }
 
   /**
+   * Inyecta dinámicamente aserciones deterministas de precondición en firmas de funciones AST (M_COG_005).
+   */
+  injectDynamicInvariants(sourceCode = '') {
+    const DynamicInvariantAssertor = require('./dynamic_invariant_assertor.js');
+    const assertor = new DynamicInvariantAssertor(this.root);
+    return assertor.processSource(sourceCode);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
