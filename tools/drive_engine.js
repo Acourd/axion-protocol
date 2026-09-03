@@ -963,6 +963,15 @@ class DriveEngine {
   }
 
   /**
+   * Demuestra formalmente la preservación de invariantes por inducción matemática (M_COG_010).
+   */
+  proveInductiveInvariant(spec = {}) {
+    const InductiveHypothesisProver = require('./inductive_hypothesis_prover.js');
+    const prover = new InductiveHypothesisProver(this.root);
+    return prover.proveInvariant(spec);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
