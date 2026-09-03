@@ -1086,6 +1086,25 @@ class DriveEngine {
   }
 
   /**
+   * Crea un analizador de deriva de convergencia y guardián de bucle metacognitivo (M_COG_016).
+   */
+  createConvergenceDriftAnalyzer(options = {}) {
+    const ConvergenceDriftAnalyzer = require('./convergence_drift_analyzer.js');
+    return new ConvergenceDriftAnalyzer({ projectRoot: this.root, ...options });
+  }
+
+  /**
+   * Audita una trayectoria completa de pasos evaluando velocidad de convergencia y estancamiento (M_COG_016).
+   */
+  auditConvergenceTrajectory(steps = [], options = {}) {
+    const analyzer = this.createConvergenceDriftAnalyzer(options);
+    for (const s of steps) {
+      analyzer.recordStep(s);
+    }
+    return analyzer.analyzeConvergence(options);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
