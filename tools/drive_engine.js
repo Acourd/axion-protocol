@@ -877,6 +877,17 @@ class DriveEngine {
   }
 
   /**
+   * Particiona y acelera el payload agéntico para maximizar aciertos en caché KV de tokens (M_TOK_002).
+   */
+  accelerateContextCache(components = {}) {
+    const ContextCacheAccelerator = require('./context_cache_accelerator.js');
+    const accelerator = new ContextCacheAccelerator(this.root);
+    const partition = accelerator.partitionPayload(components);
+    const savings = accelerator.calculateSavings(partition);
+    return { partition, savings };
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {

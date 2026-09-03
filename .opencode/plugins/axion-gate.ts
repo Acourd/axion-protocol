@@ -59,7 +59,11 @@ export function clasificar({ preflightPath, command, haltPath }) {
 }
 
 export default async ({ project, directory, worktree }) => {
-  const base = (project && (project.root || project.directory)) || directory || worktree || process.cwd();
+  // En opencode 1.18.x `project` NO tiene .root/.directory (y project.directory puede
+  // ser objeto). Solo se aceptan strings; directory/worktree top-level son confiables.
+  const base = [project && project.root, project && project.directory, directory, worktree]
+    .find((v) => typeof v === 'string' && v.trim() !== '')
+    || process.cwd();
   const enforceAll = process.env.AXION_GLOBAL_ENFORCE_ALL === '1';
 
   return {
