@@ -1121,6 +1121,15 @@ class DriveEngine {
   }
 
   /**
+   * Ejecuta diagnóstico abductivo (Inferencia a la Mejor Explicación) ante anomalías (M_COG_017).
+   */
+  diagnoseAbductiveAnomaly(anomaly = {}, candidateHypotheses = [], options = {}) {
+    const AbductiveAnomalyDetector = require('./abductive_anomaly_detector.js');
+    const detector = new AbductiveAnomalyDetector({ projectRoot: this.root, ...options });
+    return detector.diagnose(anomaly, candidateHypotheses);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {

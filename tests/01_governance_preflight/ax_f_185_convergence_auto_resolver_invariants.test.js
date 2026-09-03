@@ -14,6 +14,7 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const SemanticAutoHealer = require('../../tools/semantic_auto_healer.js');
 const ConvergenceEngine = require('../../tools/convergence_loop.js');
 const DriveEngine = require('../../tools/drive_engine.js');
@@ -65,8 +66,7 @@ assert.ok(healRes.healedCode.includes('items_safe = Array.isArray(items)'));
 console.log(`✓ Auto-curación de tipo formalmente probada: [${healRes.safetyVerdict}]`);
 
 // 3. Validar ejecución autónoma en bucle cerrado
-const sandboxDir = path.join(ROOT, 'scratch', 'test_sandbox_185');
-if (!fs.existsSync(sandboxDir)) fs.mkdirSync(sandboxDir, { recursive: true });
+const sandboxDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ax_185_'));
 const targetFile = path.join(sandboxDir, 'test_target.js');
 fs.writeFileSync(targetFile, brokenCode, 'utf8');
 
@@ -96,8 +96,7 @@ console.log('✓ Integración con DriveEngine.autoResolveConvergence() demostrad
 
 // Limpieza de sandbox
 try {
-  if (fs.existsSync(targetFile)) fs.unlinkSync(targetFile);
-  if (fs.existsSync(sandboxDir)) fs.rmdirSync(sandboxDir);
+  fs.rmSync(sandboxDir, { recursive: true, force: true });
 } catch (_) {}
 
 console.log('\nPASS AX-F-185 — Invariantes del Auto-Resolver de Convergencia AST demostrados al 100%.');

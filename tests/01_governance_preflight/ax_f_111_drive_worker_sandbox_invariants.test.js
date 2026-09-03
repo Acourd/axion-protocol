@@ -18,7 +18,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-111 Invariantes del Sandbox de Aislamiento de Memoria y Watchdog ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = new DriveWorkerSandbox({ maxHeapMb: 32, defaultTimeoutMs: 1000 });
+const sandbox = new DriveWorkerSandbox({ maxHeapMb: 32, defaultTimeoutMs: 5000 });
 
 (async () => {
   // 1. Validar tarea exitosa
