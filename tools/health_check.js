@@ -227,20 +227,25 @@ function runHealthCheck(targetDir) {
   addCheck('Claude Code Bridge', fs.existsSync(claudeMd),
     fs.existsSync(claudeMd) ? 'CLAUDE.md sincronizado' : 'falta CLAUDE.md');
 
-// 9b. Superficie OpenCode. OpenCode lee AGENTS.md en la raiz y descubre
-//     .opencode/commands/*.md; las skills de .agents/skills/ las carga por
-//     compatibilidad nativa (verificado por `opencode run`). El plugin de gate
-//     fail-closed está en .opencode/plugins/axion-gate.ts.disabled: el plugin
-//     host de opencode 1.18.x crash/colga al interceptar bash, así que no se
-//     exige activo (ver nota en el propio archivo).
+// 9b. Superficie OpenCode. OpenCode 1.18.x NO descubre comandos por archivos:
+//     solo registra los declarados bajo `command` en opencode.json (verificado
+//     con `opencode run`). Se exige el JSON con los 12 comandos + AGENTS.md raíz.
   const dirOc = path.join(target, '.opencode', 'commands');
   const enOc = WORKFLOWS.filter((w) => fs.existsSync(path.join(dirOc, w)));
   const agentsRaiz = fs.existsSync(path.join(target, 'AGENTS.md'));
-  const ocOk = enOc.length === WORKFLOWS.length && agentsRaiz;
+  let registradosOc = [];
+  try {
+    const ocCfg = JSON.parse(leer(path.join(target, 'opencode.json')));
+    registradosOc = Object.keys(ocCfg.command || {});
+  } catch (_) {
+    registradosOc = [];
+  }
+  const enRegistro = WORKFLOWS.filter((w) => registradosOc.includes(w.replace(/\.md$/, '')));
+  const ocOk = enOc.length === WORKFLOWS.length && enRegistro.length === WORKFLOWS.length && agentsRaiz;
   addCheck('Superficie OpenCode', ocOk,
     ocOk
-      ? `${enOc.length}/${WORKFLOWS.length} en .opencode/commands y AGENTS.md raíz (plugin gate deshabilitado: plugin host 1.18.x inestable)`
-      : `faltan ${WORKFLOWS.length - enOc.length} comando(s) en .opencode/commands${agentsRaiz ? '' : ' y falta AGENTS.md raíz'}`);
+      ? `${enOc.length}/${WORKFLOWS.length} archivos + ${enRegistro.length}/${WORKFLOWS.length} registrados en opencode.json + AGENTS.md raíz`
+      : `faltan ${WORKFLOWS.length - enOc.length} en .opencode/commands, ${WORKFLOWS.length - enRegistro.length} en opencode.json${agentsRaiz ? '' : ' y falta AGENTS.md raíz'}`);
 
   // 10. Estado de parada. No es un fallo: es información que cambia lo que se puede hacer.
   const detenido = fs.existsSync(path.join(target, '.axion', 'HALT'));

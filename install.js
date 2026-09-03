@@ -47,6 +47,37 @@ Comandos disponibles: /attest /clarify /debug /drive /halt /memory /preflight /p
 Herramientas: tools/preflight.js, tools/checkpoint.js, tools/attestation.js, tools/evidence_hasher.js, tools/killswitch.js.`;
 
 /**
+ * Genera opencode.json con los comandos de Axion registrados via config.
+ *
+ * Por que existe: opencode 1.18.x NO descubre comandos por archivos
+ * (.opencode/commands/*.md); solo registra los declarados bajo la clave
+ * `command` de opencode.json (verificado empiricamente con `opencode run`).
+ */
+function generarOpenCodeConfig(dirCommands, rutaSalida, ausentes) {
+  if (!fs.existsSync(dirCommands)) {
+    if (ausentes) ausentes.push(path.relative(process.cwd(), dirCommands).split(path.sep).join('/'));
+    return null;
+  }
+  const command = {};
+  for (const f of fs.readdirSync(dirCommands).filter((n) => n.endsWith('.md'))) {
+    const name = f.replace(/\.md$/, '');
+    const texto = fs.readFileSync(path.join(dirCommands, f), 'utf8');
+    const fm = texto.match(/^---\n([\s\S]*?)\n---/);
+    const descripcion = (fm && (fm[1].match(/^description:\s*(.+)$/m) || [])[1] || '').trim() || name;
+    const cuerpo = fm ? texto.slice(fm[0].length).trim() : texto.trim();
+    command[name] = {
+      description: descripcion,
+      template: `${cuerpo}\n\n## Argumentos del usuario\n$ARGUMENTS`,
+    };
+  }
+  fs.writeFileSync(rutaSalida, JSON.stringify({
+    $schema: 'https://opencode.ai/config.json',
+    command,
+  }, null, 2) + '\n', 'utf8');
+  return command;
+}
+
+/**
  * Inyecta el bloque de gobernanza en AGENTS.md de la raiz sin pisar lo que ya exista.
  * Idempotente: si el marcador ya esta, no toca el archivo.
  */
@@ -266,6 +297,12 @@ function runInstallation(targetDir) {
     anotar(copiarProtegido(origenSkill(sourceRoot, wf), destinoOc, ausentes));
     opencodeCommands++;
   });
+  const ocConfig = generarOpenCodeConfig(
+    path.join(rootDir, '.opencode', 'commands'),
+    path.join(rootDir, 'opencode.json'),
+    ausentes,
+  );
+  const ocRegistrados = ocConfig ? Object.keys(ocConfig).length : 0;
   anotar(copiarProtegido(
     path.join(sourceRoot, '.opencode', 'plugins', 'axion-gate.ts.disabled'),
     path.join(rootDir, '.opencode', 'plugins', 'axion-gate.ts.disabled'), ausentes));
@@ -275,7 +312,7 @@ function runInstallation(targetDir) {
   anotar(copiarProtegido(
     path.join(sourceRoot, '.github', 'copilot-instructions.md'),
     path.join(rootDir, '.github', 'copilot-instructions.md'), ausentes));
-  console.log(`  ✓ AGENTS.md raíz inyectado, regla y ${opencodeCommands} comandos en .opencode/, plugin gate en .disabled (plugin host 1.18.x inestable al interceptar bash), más .codex/AGENTS.md y .github/copilot-instructions.md`);
+  console.log(`  ✓ AGENTS.md raíz inyectado, regla, ${opencodeCommands} comandos en .opencode/commands y ${ocRegistrados} registrados en opencode.json (config), plugin gate en .disabled (plugin host 1.18.x inestable al interceptar bash), más .codex/AGENTS.md y .github/copilot-instructions.md`);
 
   // 3. Inyectar Herramientas de Gobernanza en tools/
   console.log('\n📦 3. Inyectar Suite de Herramientas (tools/)...');

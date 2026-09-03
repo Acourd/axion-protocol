@@ -47,6 +47,7 @@
     ".codex/",
     ".cursor/",
     ".github/",
+    "opencode.json",
     "install.js",
     "CLAUDE.md",
     "GOVERNANCE.md",

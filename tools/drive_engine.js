@@ -972,6 +972,15 @@ class DriveEngine {
   }
 
   /**
+   * Poda redundancias gramaticales en prompts de agentes para reducir un ~35% de tokens (M_TOK_004).
+   */
+  compactPromptGrammar(rawText = '') {
+    const PromptGrammarCompactor = require('./prompt_grammar_compactor.js');
+    const compactor = new PromptGrammarCompactor(this.root);
+    return compactor.compactPrompt(rawText);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
