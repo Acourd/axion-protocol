@@ -990,6 +990,14 @@ class DriveEngine {
   }
 
   /**
+   * Crea un compactador adaptativo de flujos de streaming en tiempo real (M_TOK_005).
+   */
+  createStreamingTokenCompactor(options = {}) {
+    const TokenStreamingCompactor = require('./token_streaming_compactor.js');
+    return new TokenStreamingCompactor({ projectRoot: this.root, ...options });
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
