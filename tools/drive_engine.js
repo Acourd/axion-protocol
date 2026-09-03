@@ -918,6 +918,24 @@ class DriveEngine {
   }
 
   /**
+   * Comprime un snapshot de contexto con LZW sin pérdida y validación SHA-256 (M_TOK_003).
+   */
+  compressContextSnapshot(data) {
+    const ContextSnapshotCompressor = require('./context_snapshot_compressor.js');
+    const compressor = new ContextSnapshotCompressor(this.root);
+    return compressor.compressSnapshot(data);
+  }
+
+  /**
+   * Descomprime un snapshot de contexto validando estrictamente su hash de integridad (M_TOK_003).
+   */
+  decompressContextSnapshot(compressedPackage) {
+    const ContextSnapshotCompressor = require('./context_snapshot_compressor.js');
+    const compressor = new ContextSnapshotCompressor(this.root);
+    return compressor.decompressSnapshot(compressedPackage);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
