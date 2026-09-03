@@ -1,4 +1,19 @@
 #!/usr/bin/env node
+// ESTADO: DESHABILITADO (renombrado a .ts.disabled a proposito).
+//
+// El plugin host de opencode 1.18.27 no soporta interceptar la tool "bash":
+//   - lanzar un Error desde tool.execute.before => crash del host (bun panic)
+//   - sustituir output.args.command             => cuelga el pty (sin salida)
+// Verificado empiricamente con `opencode run` (los logs estan en
+// ~/.local/share/opencode/log/). La logica es correcta y esta probada (7/7
+// tests); el bloqueo real del host es el problema.
+//
+// Para reactivar cuando opencode lo soporte:
+//   1. Renombrar este archivo a axion-gate.ts
+//   2. En opencode.jsonc global/proyecto: "plugins": ["./plugins/axion-gate.ts"]
+// Mientras tanto, la gobernanza en OpenCode se apoya en el permiso nativo de
+// bash (ask) + los comandos .opencode/commands/*.md + AGENTS.md raiz.
+//
 // Axion Protocol — Puerta fail-closed para OpenCode.
 //
 // Intercepta la tool "bash" antes de ejecutar, clasifica la cadena con

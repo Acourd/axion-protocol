@@ -936,6 +936,15 @@ class DriveEngine {
   }
 
   /**
+   * Ejecuta una auditoría de cobertura mutacional contra defectos sintéticos (M_COG_007).
+   */
+  runMutationAudit(sourceCode, testHarnessFn) {
+    const MutationCoverageOracle = require('./mutation_coverage_oracle.js');
+    const oracle = new MutationCoverageOracle(this.root);
+    return oracle.evaluateMutationScore(sourceCode, testHarnessFn);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {

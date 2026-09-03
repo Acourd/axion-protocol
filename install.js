@@ -149,44 +149,19 @@ function runUserInstallation(homeDir) {
     console.log('  · Antigravity no detectado (~/.gemini ausente): se omite su ambito global.');
   }
 
-  // OpenCode: puerta fail-closed global. El plugin solo actua en proyectos con
-  // Axion instalado, asi que no secuestra la terminal de proyectos ajenos.
+  // OpenCode: puerta fail-closed global (deshabilitada: el plugin host de opencode
+  // 1.18.x crash/colga al interceptar bash; se entrega como .disabled y se reactiva
+  // renombrando a .ts cuando la plataforma lo soporte).
   const destinoOcPlugins = path.join(home, '.config', 'opencode', 'plugins');
   fs.mkdirSync(destinoOcPlugins, { recursive: true });
   anotar(copiarProtegido(
-    path.join(__dirname, '.opencode', 'plugins', 'axion-gate.ts'),
-    path.join(destinoOcPlugins, 'axion-gate.ts'), ausentes));
-  console.log(`  ✓ Plugin fail-closed instalado en ${destinoOcPlugins}`);
+    path.join(__dirname, '.opencode', 'plugins', 'axion-gate.ts.disabled'),
+    path.join(destinoOcPlugins, 'axion-gate.ts.disabled'), ausentes));
+  console.log(`  ✓ Plugin gate entregado en ${destinoOcPlugins} (estado .disabled)`);
 
-  // Registro en opencode.jsonc si es JSON puro y aun no esta registrado. Si el
-  // archivo tiene comentarios (JSONC) no se toca: se instruye el alta manual.
-  const rutaOcJsonc = path.join(home, '.config', 'opencode', 'opencode.jsonc');
-  const existeJsonc = fs.existsSync(rutaOcJsonc);
-  let registroOk = false;
-  if (existeJsonc) {
-    try {
-      const cfg = JSON.parse(fs.readFileSync(rutaOcJsonc, 'utf8'));
-      const ya = Array.isArray(cfg.plugins) && cfg.plugins.some((p) => String(p).includes('axion-gate'));
-      if (!ya) {
-        cfg.plugins = [...(Array.isArray(cfg.plugins) ? cfg.plugins : []), './plugins/axion-gate.ts'];
-        fs.writeFileSync(rutaOcJsonc, JSON.stringify(cfg, null, 2) + '\n', 'utf8');
-      }
-      registroOk = true;
-    } catch (_) {
-      registroOk = false;
-    }
-  } else {
-    fs.writeFileSync(rutaOcJsonc, JSON.stringify({
-      $schema: 'https://opencode.ai/config.json',
-      plugins: ['./plugins/axion-gate.ts'],
-    }, null, 2) + '\n', 'utf8');
-    registroOk = true;
-  }
-  if (registroOk) {
-    console.log(`  ✓ Puerta global registrada en ${rutaOcJsonc}`);
-  } else {
-    console.log(`  ! ${rutaOcJsonc} no es JSON puro y no se ha tocado. Anade a mano: "plugins": ["./plugins/axion-gate.ts"]`);
-  }
+  // No se registra en opencode.jsonc: el plugin está deshabilitado hasta que el
+  // plugin host de opencode soporte interceptar bash sin crash/colgar. Para
+  // reactivarlo, renombrar a axion-gate.ts y añadir "plugins": ["./plugins/axion-gate.ts"].
 
   const faltantes = [...new Set(ausentes)];
   if (faltantes.length > 0) {
@@ -292,15 +267,15 @@ function runInstallation(targetDir) {
     opencodeCommands++;
   });
   anotar(copiarProtegido(
-    path.join(sourceRoot, '.opencode', 'plugins', 'axion-gate.ts'),
-    path.join(rootDir, '.opencode', 'plugins', 'axion-gate.ts'), ausentes));
+    path.join(sourceRoot, '.opencode', 'plugins', 'axion-gate.ts.disabled'),
+    path.join(rootDir, '.opencode', 'plugins', 'axion-gate.ts.disabled'), ausentes));
   anotar(copiarProtegido(
     path.join(sourceRoot, '.codex', 'AGENTS.md'),
     path.join(rootDir, '.codex', 'AGENTS.md'), ausentes));
   anotar(copiarProtegido(
     path.join(sourceRoot, '.github', 'copilot-instructions.md'),
     path.join(rootDir, '.github', 'copilot-instructions.md'), ausentes));
-  console.log(`  ✓ AGENTS.md raíz inyectado, regla y ${opencodeCommands} comandos en .opencode/, plugin fail-closed en .opencode/plugins/, más .codex/AGENTS.md y .github/copilot-instructions.md`);
+  console.log(`  ✓ AGENTS.md raíz inyectado, regla y ${opencodeCommands} comandos en .opencode/, plugin gate en .disabled (plugin host 1.18.x inestable al interceptar bash), más .codex/AGENTS.md y .github/copilot-instructions.md`);
 
   // 3. Inyectar Herramientas de Gobernanza en tools/
   console.log('\n📦 3. Inyectar Suite de Herramientas (tools/)...');
@@ -377,7 +352,7 @@ function runInstallation(targetDir) {
     console.log(`\n❌ [Axion Protocol] Faltan ${ausentes.length} archivo(s) en el paquete de origen:`);
     ausentes.forEach(a => console.log(`   - ${a}`));
     console.log('   La instalación está INCOMPLETA. Reinstala el paquete o clona el repositorio.\n');
-    return { status: 'INCOMPLETE', target: rootDir, backups: respaldos, missing: faltantes };
+    return { status: 'INCOMPLETE', target: rootDir, backups: respaldos, missing: ausentes };
   }
 
   if (respaldos.length > 0) {
