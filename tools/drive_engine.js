@@ -1130,6 +1130,22 @@ class DriveEngine {
   }
 
   /**
+   * Crea un enrutador de afinidad de caché de prefijos de prompt (M_TOK_011).
+   */
+  createPrefixCacheRouter(options = {}) {
+    const PrefixCacheAffinityRouter = require('./prefix_cache_affinity_router.js');
+    return new PrefixCacheAffinityRouter({ projectRoot: this.root, ...options });
+  }
+
+  /**
+   * Optimiza y secuencia lotes de prompts para maximizar la tasa de acierto de KV-cache (M_TOK_011).
+   */
+  routePromptAffinityBatch(prompts = [], options = {}) {
+    const router = this.createPrefixCacheRouter(options);
+    return router.optimizeAffinityBatch(prompts);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
