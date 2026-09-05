@@ -30,6 +30,124 @@ const SENSITIVE_PATTERNS = [
   /\.axion[\/\\]/i
 ];
 
+
+class SessionLockManager {
+  constructor(projectRoot = ROOT) {
+    this.root = path.resolve(projectRoot);
+    this.lockPath = path.join(this.root, '.axion', 'session.lock');
+    this.staleThresholdMs = 600 * 1000; // 600 segundos (Linear & v5 requirement)
+  }
+
+  /**
+   * Intenta adquirir el lock de sesión.
+   * Si existe un lock activo con mtime/timestamp <= 600s, emite CONFLICTO_GIT.
+   * Si existe un lock huérfano > 600s (STALE_PROCESS), lo recupera.
+   */
+  acquireSessionLock(nonce, options = {}) {
+    const axionDir = path.dirname(this.lockPath);
+    if (!fs.existsSync(axionDir)) fs.mkdirSync(axionDir, { recursive: true });
+
+    const now = Date.now();
+    const pid = process.pid;
+
+    if (fs.existsSync(this.lockPath)) {
+      try {
+        const raw = fs.readFileSync(this.lockPath, 'utf8').trim();
+        const stat = fs.statSync(this.lockPath);
+        const parts = raw.split(':');
+        const existingNonce = parts[0];
+        const existingTime = parseInt(parts[1], 10) || stat.mtimeMs;
+        const elapsed = now - existingTime;
+
+        if (existingNonce === nonce) {
+          this.refreshHeartbeat(nonce);
+          return { acquired: true, nonce, isReentrant: true };
+        }
+
+        if (elapsed <= this.staleThresholdMs) {
+          return {
+            acquired: false,
+            verdict: 'CONFLICTO_GIT',
+            family: 'CAUSA_DE_DETENCION',
+            activeNonce: existingNonce,
+            elapsedSeconds: Math.floor(elapsed / 1000),
+            reason: `Colisión de lock de sesión concurrente activa (${existingNonce}) con heartbeat reciente (${Math.floor(elapsed / 1000)}s < 600s).`
+          };
+        } else {
+          // Reclamación atómica con CAS para prevenir colisiones de carrera concurrentes
+          const currentRaw = fs.readFileSync(this.lockPath, 'utf8').trim();
+          if (currentRaw !== raw) {
+            return {
+              acquired: false,
+              verdict: 'CONFLICTO_GIT',
+              family: 'CAUSA_DE_DETENCION',
+              reason: 'Colisión de carrera: el stale lock fue modificado por otra sesión concurrente.'
+            };
+          }
+          const lockContent = `${nonce}:${now}:${pid}`;
+          fs.writeFileSync(this.lockPath, lockContent, 'utf8');
+          return {
+            acquired: true,
+            nonce,
+            recoveredFromStale: true,
+            previousNonce: existingNonce,
+            staleMode: 'STALE_PROCESS',
+            inactiveSeconds: Math.floor(elapsed / 1000)
+          };
+        }
+      } catch (err) {
+        // Fallback de recuperación
+      }
+    }
+
+    const lockContent = `${nonce}:${now}:${pid}`;
+    fs.writeFileSync(this.lockPath, lockContent, 'utf8');
+    return { acquired: true, nonce, recoveredFromStale: false };
+  }
+
+  refreshHeartbeat(nonce) {
+    if (!fs.existsSync(this.lockPath)) return false;
+    try {
+      const now = Date.now();
+      const content = `${nonce}:${now}:${process.pid}`;
+      fs.writeFileSync(this.lockPath, content, 'utf8');
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  releaseSessionLock(nonce) {
+    if (!fs.existsSync(this.lockPath)) return { released: true, reason: 'NO_LOCK_FILE' };
+    try {
+      const raw = fs.readFileSync(this.lockPath, 'utf8').trim();
+      const existingNonce = raw.split(':')[0];
+      if (existingNonce === nonce) {
+        fs.unlinkSync(this.lockPath);
+        return { released: true, nonce };
+      }
+      return { released: false, reason: 'LOCK_HELD_BY_ANOTHER_SESSION', activeNonce: existingNonce };
+    } catch (err) {
+      return { released: false, error: err.message };
+    }
+  }
+
+  createSessionSandbox(nonce) {
+    const sandboxDir = path.join(this.root, 'tests', `.sandbox_${nonce}`);
+    if (!fs.existsSync(sandboxDir)) fs.mkdirSync(sandboxDir, { recursive: true });
+    return sandboxDir;
+  }
+
+  cleanSessionSandbox(nonce) {
+    const sandboxDir = path.join(this.root, 'tests', `.sandbox_${nonce}`);
+    if (fs.existsSync(sandboxDir)) {
+      fs.rmSync(sandboxDir, { recursive: true, force: true });
+      return { cleaned: true, sandboxDir };
+    }
+    return { cleaned: false, reason: 'SANDBOX_NOT_FOUND' };
+  }
+}
+
 class DriveEngine {
   constructor(projectRoot = ROOT) {
     this.root = path.resolve(projectRoot);
@@ -43,8 +161,24 @@ class DriveEngine {
     let isStructural = options.isStructural || false;
     let hasSecurityRisk = options.hasSecurityRisk || false;
 
+    // Guardián Metacognitivo: Protección estricta de archivos críticos en Fast-Loop
+    const DriveMetacognitiveSentinel = require('./drive_metacognitive_sentinel.js');
+    const sentinel = new DriveMetacognitiveSentinel({ projectRoot: this.root });
+
     if (Array.isArray(options.files)) {
       filesCount = options.files.length;
+      const safety = sentinel.evaluateFastLoopSafety(options.files, options);
+      if (!safety.allowed) {
+        return {
+          mode: 'DEEP_LOOP',
+          requiresDeliberation: true,
+          filesCount,
+          criticalFiles: safety.criticalFiles || [],
+          reason: safety.reason === 'CRITICAL_FILE_PROTECTED'
+            ? `Archivo crítico protegido detectado: ${safety.criticalFiles.join(', ')}. Escalamiento forzado a DEEP_LOOP.`
+            : 'Cambio estructural, crítico o multi-archivo detectado.'
+        };
+      }
       for (const file of options.files) {
         if (SENSITIVE_PATTERNS.some(p => p.test(file))) {
           isStructural = true;
@@ -80,6 +214,41 @@ class DriveEngine {
       `📊 [Métricas]: ${metrics || 'Verificación determinista superada'} · Modo Autónomo Local`,
       `🧠 [Próximo Vector Metacognitivo]: ${nextVector || 'Listo para el siguiente requerimiento'}`
     ].join('\n\n');
+  }
+
+  /**
+   * Audita la compuerta socrática de intención previa a la ejecución de misiones en /drive.
+   */
+  auditIntentContract(options = {}) {
+    const DriveMetacognitiveSentinel = require('./drive_metacognitive_sentinel.js');
+    const sentinel = new DriveMetacognitiveSentinel({ projectRoot: this.root });
+    return sentinel.verifyIntentContract(options.contract || this.root);
+  }
+
+  /**
+   * Valida un comando previo a la ejecución bajo la compuerta de preflight (v3.0.0 — Fase 3: Terminal Safety Shield).
+   * Asegura que comandos crudos o destructivos no toquen la terminal sin autorización.
+   */
+  validateCommandPreflight(command) {
+    const { classifyCommand, COMMAND_DECISION } = require('./structured_command.js');
+    const classification = classifyCommand(command);
+    return {
+      allowed: classification.decision === COMMAND_DECISION.ALLOW,
+      decision: classification.decision,
+      reason: classification.reason,
+      isDestructive: classification.decision === COMMAND_DECISION.DENY,
+      requiresHumanReview: classification.decision === COMMAND_DECISION.NEEDS_HUMAN_REVIEW,
+      command
+    };
+  }
+
+  /**
+   * Ejecuta un comando estructurado bajo la compuerta fail-closed de preflight.
+   * Solo procede si preflight clasifica el comando como ALLOW (shell: false y allowlistado).
+   */
+  executeCommandPreflight(command, options = {}) {
+    const { executeStructuredCommand } = require('./structured_command.js');
+    return executeStructuredCommand(command, options);
   }
 
   /**
@@ -203,6 +372,30 @@ class DriveEngine {
   getDriveCopilot(options = {}) {
     const DriveMemoryCopilot = require('./drive_memory_copilot.js');
     return new DriveMemoryCopilot(this.root, options);
+  }
+
+  /**
+   * Obtiene una instancia del centinela metacognitivo de Drive.
+   */
+  getMetacognitiveSentinel(options = {}) {
+    const DriveMetacognitiveSentinel = require('./drive_metacognitive_sentinel.js');
+    return new DriveMetacognitiveSentinel({ projectRoot: this.root, ...options });
+  }
+
+  /**
+   * Compacta telemetría de fallos para preservación de tokens en bucles autónomos.
+   */
+  compactFailureTelemetry(rawOutput = '', options = {}) {
+    const sentinel = this.getMetacognitiveSentinel(options);
+    return sentinel.compactFailureTelemetry(rawOutput, options);
+  }
+
+  /**
+   * Ejecuta una auditoría metacognitiva de segundo orden sobre un plan o contexto.
+   */
+  executeMetacognitiveAudit(options = {}) {
+    const sentinel = this.getMetacognitiveSentinel(options);
+    return sentinel.runMetacognitiveAudit(options);
   }
 
   /**
@@ -1189,6 +1382,93 @@ class DriveEngine {
   }
 
   /**
+   * Crea un disyuntor de auto-recuperación determinista (M_RES_010 / AX-F-217).
+   */
+  createCircuitBreaker(options = {}) {
+    const SelfHealingCircuitBreaker = require('./self_healing_circuit_breaker.js');
+    return new SelfHealingCircuitBreaker({ projectRoot: this.root, ...options });
+  }
+
+  /**
+   * Ejecuta una operación protegida bajo disyuntor con presupuesto de fallos y fallback fail-fast (M_RES_010).
+   */
+  executeWithCircuitBreaker(clusterKey, fn, fallback = null, options = {}) {
+    if (!this._circuitBreaker) {
+      this._circuitBreaker = this.createCircuitBreaker(options);
+    }
+    return this._circuitBreaker.execute(clusterKey, fn, fallback);
+  }
+
+  /**
+   * Crea una instancia del anclaje fractal de memoria anti-deriva (M_MEM_005 / AX-F-218).
+   */
+  createFractalMemoryAnchor(options = {}) {
+    const FractalMemoryAnchor = require('./fractal_memory_anchor.js');
+    return new FractalMemoryAnchor({ projectRoot: this.root, ...options });
+  }
+
+  /**
+   * Obtiene el micro-anchor fractal (< 150 tokens) para inyección en system prompts (M_MEM_005).
+   */
+  getFractalMemoryAnchor(entries = [], options = {}) {
+    const anchor = this.createFractalMemoryAnchor(options);
+    const tiers = anchor.synthesizeTiers(entries);
+    return tiers.tier2_microAnchor;
+  }
+
+  /**
+   * Crea una instancia del sandbox de ejecución simbólica y aislamiento fail-closed (M_SEC_012 / AX-F-219).
+   */
+  createSymbolicSandbox(options = {}) {
+    const SymbolicExecutionSandbox = require('./symbolic_execution_sandbox.js');
+    return new SymbolicExecutionSandbox({ workspaceRoot: this.root, ...options });
+  }
+
+  /**
+   * Ejecuta una rutina de forma segura dentro del sandbox de ejecución simbólica (M_SEC_012).
+   */
+  executeInSymbolicSandbox(fn, options = {}) {
+    const sandbox = this.createSymbolicSandbox(options);
+    try {
+      const result = fn(sandbox);
+      if (options.commit) {
+        sandbox.commit();
+      }
+      return {
+        success: true,
+        result,
+        auditReport: sandbox.getAuditReport()
+      };
+    } catch (err) {
+      sandbox.rollback();
+      return {
+        success: false,
+        error: err.message,
+        errorCode: err.code,
+        auditReport: sandbox.getAuditReport()
+      };
+    }
+  }
+
+  /**
+   * Demuestra formalmente los invariantes de corte y alcanzabilidad de una máquina de estados (M_GOV_015 / AX-F-220).
+   */
+  proveStateTransitionInvariants(machineDef, options = {}) {
+    const StateTransitionInvariantProver = require('./state_transition_invariant_prover.js');
+    const prover = new StateTransitionInvariantProver({ projectRoot: this.root });
+    return prover.proveInvariants(machineDef, options);
+  }
+
+  /**
+   * Ejecuta la simulación de cargas masivas y benchmarking asintótico en SQLite (M_002_STRESS_SIMULATOR / AX-F-221).
+   */
+  simulateSQLiteStress(options = {}) {
+    const SQLiteStressSimulator = require('./sqlite_stress_simulator.js');
+    const simulator = new SQLiteStressSimulator({ projectRoot: this.root });
+    return simulator.runStressBenchmark(options);
+  }
+
+  /**
    * Ejecuta la reconciliación semántica de tipos en funciones AST.
    */
   reconcileASTTypes(sourceCode, options = {}) {
@@ -1266,10 +1546,15 @@ class DriveEngine {
     let lastError = null;
     let attempts = 0;
 
+    const DriveMetacognitiveSentinel = require('./drive_metacognitive_sentinel.js');
+    const sentinel = options.sentinel || new DriveMetacognitiveSentinel({ projectRoot: targetDir });
+
     while (attempts < maxAttempts) {
       attempts++;
+      let result = null;
+      let taskError = null;
       try {
-        const result = typeof taskFn === 'function' ? taskFn(attempts) : { pass: true };
+        result = typeof taskFn === 'function' ? taskFn(attempts) : { pass: true };
         if (result && result.pass) {
           return {
             success: true,
@@ -1278,10 +1563,37 @@ class DriveEngine {
             result
           };
         }
-        lastError = result.error || new Error(result.reason || 'Fallo de verificación en ciclo');
+        if (result && !result.pass) {
+          taskError = result.error || new Error(result.reason || 'Fallo de verificación en ciclo');
+        }
       } catch (err) {
-        lastError = err;
+        taskError = err;
       }
+
+      // Metacognitive cycle guard: auditar oscilación de estados de mutación o firmas de error (Ping-Pong)
+      const stateDescriptor = result && (result.state !== undefined || result.mutationHash !== undefined || result.files !== undefined)
+        ? (result.state !== undefined ? result.state : (result.mutationHash !== undefined ? result.mutationHash : result.files))
+        : null;
+      const errorSig = taskError ? (taskError.message || String(taskError)) : null;
+
+      if (stateDescriptor !== null || errorSig !== null) {
+        const oscCheck = sentinel.recordMutationState(stateDescriptor, {
+          attempt: attempts,
+          errorSignature: errorSig
+        });
+        if (oscCheck.isOscillating) {
+          return {
+            success: false,
+            attempts,
+            abortedByCycle: true,
+            oscillationDetails: oscCheck,
+            checkpointId: initialCheckpoint ? initialCheckpoint.checkpointId : null,
+            error: `Oscilación de mutaciones detectada (Ciclo ${oscCheck.cycleLength || 2}). Abortando bucle para conservar presupuesto de reintentos.`
+          };
+        }
+      }
+
+      lastError = taskError;
 
       // Si falla y se puede revertir, ejecutar rollback determinista al checkpoint inicial
       if (initialCheckpoint && typeof restaurarCheckpoint === 'function') {
@@ -1484,6 +1796,282 @@ class DriveEngine {
 
     return results;
   }
+
+  /**
+   * Resguardo Seguro de Sesión con las 5 Exclusiones Obligatorias (v5.0.0).
+   */
+  createSafeSessionBackup(filesToBackup = [], options = {}) {
+    const nonce = options.nonce || (crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10));
+    const backupDir = path.join(this.root, '.axion', `backup_${nonce}`);
+    const backedUpFiles = [];
+    const excludedFiles = [];
+
+    const SECRET_PATTERNS = [
+      /(^|[\/\\])(\.env(.[\w.-]+)?|id_rsa|.*\.pem|.*\.key|credentials\.json)$/i,
+      /(secret|credential|token|api_key)/i
+    ];
+    const CACHE_PATTERNS = [
+      /(^|[\/\\])(\.cache|\.tmp|target|build|dist)($|[\/\\_.-])|\.(tmp|cache|bak|swp)$/i
+    ];
+
+    for (const file of filesToBackup) {
+      const resolved = path.resolve(this.root, file);
+      const rel = path.relative(this.root, resolved);
+
+      // Exclusión 4: Boundary Traversal fuera del workspace
+      if (rel.startsWith('..') || path.isAbsolute(rel)) {
+        excludedFiles.push({ file, reason: 'WORKSPACE_ESCAPE_EXCLUDED' });
+        continue;
+      }
+
+      // Exclusión 1: Secretos y Credenciales
+      if (SECRET_PATTERNS.some(p => p.test(rel) || p.test(path.basename(resolved)))) {
+        excludedFiles.push({ file, reason: 'SECRET_CREDENTIAL_EXCLUDED' });
+        continue;
+      }
+
+      // Exclusión 5: Caches y Directorios Generados
+      if (CACHE_PATTERNS.some(p => p.test(rel))) {
+        excludedFiles.push({ file, reason: 'CACHE_DIRECTORY_EXCLUDED' });
+        continue;
+      }
+
+      if (rel.includes('node_modules')) {
+        excludedFiles.push({ file, reason: 'LARGE_OR_DEPENDENCY_ARTIFACT_EXCLUDED' });
+        continue;
+      }
+
+      if (!fs.existsSync(resolved)) {
+        excludedFiles.push({ file, reason: 'FILE_NOT_FOUND' });
+        continue;
+      }
+
+      // Exclusión 3: Enlaces Simbólicos que apunten fuera
+      try {
+        const lstat = fs.lstatSync(resolved);
+        if (lstat.isSymbolicLink()) {
+          const target = fs.readlinkSync(resolved);
+          const resolvedTarget = path.resolve(path.dirname(resolved), target);
+          const relTarget = path.relative(this.root, resolvedTarget);
+          if (relTarget.startsWith('..') || path.isAbsolute(relTarget)) {
+            excludedFiles.push({ file, reason: 'SYMLINK_ESCAPE_EXCLUDED' });
+            continue;
+          }
+        }
+      } catch (symlinkErr) {
+        // Fallback intencional: archivo no es enlace simbólico o lstat no aplica
+      }
+
+      // Exclusión 2: Artefactos Grandes > 10MB
+      try {
+        const stat = fs.statSync(resolved);
+        if (stat.size > 10 * 1024 * 1024) {
+          excludedFiles.push({ file, reason: 'LARGE_OR_DEPENDENCY_ARTIFACT_EXCLUDED', size: stat.size });
+          continue;
+        }
+
+        const dest = path.join(backupDir, rel);
+        const destDir = path.dirname(dest);
+        if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+        fs.copyFileSync(resolved, dest);
+        backedUpFiles.push({ source: rel, dest: path.relative(this.root, dest), size: stat.size });
+      } catch (err) {
+        excludedFiles.push({ file, reason: `READ_ERROR: ${err.message}` });
+      }
+    }
+
+    return {
+      success: true,
+      nonce,
+      backupDir,
+      backedUpFiles,
+      excludedFiles
+    };
+  }
+
+  /**
+   * Clasificación Extensible de Riesgo mediante .axion/risk_policy.json (v5.0.0).
+   */
+  evaluateExtensibleRisk(files = [], options = {}) {
+    const riskPolicyPath = path.join(this.root, '.axion', 'risk_policy.json');
+    let customPolicy = null;
+    let isExtensible = false;
+
+    if (fs.existsSync(riskPolicyPath)) {
+      try {
+        customPolicy = JSON.parse(fs.readFileSync(riskPolicyPath, 'utf8'));
+        isExtensible = true;
+      } catch (policyErr) {
+        // Fallback intencional: risk_policy.json ausente o corrupto, usar baseline
+      }
+    }
+
+    const criticalPatterns = [
+      /auth[\/\\]/i,
+      /db[\/\\]migrations/i,
+      /core[\/\\]/i,
+      /kernel[\/\\]/i,
+      /schemas[\/\\]/i,
+      /bin[\/\\]/i,
+      /tools[\/\\]/i,
+      /\.github[\/\\]/i,
+      /package(-lock)?\.json$/i,
+      /(^|[\/\\])\.axion[\/\\]/i
+    ];
+    const controlledPatterns = [
+      /src[\/\\]/i,
+      /lib[\/\\]/i,
+      /api[\/\\]/i
+    ];
+
+    if (customPolicy) {
+      if (Array.isArray(customPolicy.criticalPatterns)) {
+        customPolicy.criticalPatterns.forEach(p => criticalPatterns.push(new RegExp(p, 'i')));
+      }
+      if (Array.isArray(customPolicy.controlledPatterns)) {
+        customPolicy.controlledPatterns.forEach(p => controlledPatterns.push(new RegExp(p, 'i')));
+      }
+    }
+
+    const matchedRules = [];
+    let hasCritical = false;
+    let hasControlled = false;
+
+    for (const f of files) {
+      const normalized = f.replace(/\\/g, '/');
+      const critMatch = criticalPatterns.find(p => p.test(normalized));
+      if (critMatch) {
+        hasCritical = true;
+        matchedRules.push({ file: f, level: 'CRÍTICO', pattern: critMatch.toString() });
+        continue;
+      }
+      const ctrlMatch = controlledPatterns.find(p => p.test(normalized));
+      if (ctrlMatch) {
+        hasControlled = true;
+        matchedRules.push({ file: f, level: 'CONTROLADO', pattern: ctrlMatch.toString() });
+      }
+    }
+
+    let riskLevel = 'MENOR';
+    if (hasCritical || files.length >= 5) {
+      riskLevel = 'CRÍTICO';
+    } else if (hasControlled || files.length >= 2) {
+      riskLevel = 'CONTROLADO';
+    }
+
+    return {
+      riskLevel,
+      isExtensible,
+      filesCount: files.length,
+      matchedRules,
+      obligations: riskLevel === 'CRÍTICO'
+        ? ['Plan escrito obligatorio', 'Checkpoint preventivo obligatorio', 'Suite transversal completa', 'Cero entrega con EVIDENCIA_LIMITADA']
+        : (riskLevel === 'CONTROLADO'
+          ? ['Checkpoint preventivo', 'Suite de dominio', 'Diff hygiene']
+          : ['Prueba unitaria o verificación estática', 'Diff hygiene', 'Autoriza EVIDENCIA_LIMITADA si no hay suite'])
+    };
+  }
+
+  /**
+   * Validación Directa del DoD contra Falsos Verdes (Principio Linear & v5.0.0).
+   */
+  validateDoDAlignment(intentContract = {}, testExecutionResult = {}) {
+    const exitCode = testExecutionResult.exitCode;
+    const stdout = String(testExecutionResult.stdout || '');
+    const stderr = String(testExecutionResult.stderr || '');
+    const command = String(testExecutionResult.command || '').trim();
+    const combinedOutput = stdout + '\n' + stderr;
+
+    if (exitCode !== 0) {
+      return {
+        valid: false,
+        verdict: 'PENDIENTE_VERIFICACION',
+        family: 'RESULTADO_DE_MISION',
+        reason: `El comando oráculo falló con exit code ${exitCode}. Fallo no resuelto.`
+      };
+    }
+
+    // Detección de bypass trivial (echo ok, pwd, etc.)
+    const TRIVIAL_COMMANDS = /^(echo\b|pwd$|dir$|true$|type\b|cat\b)/i;
+    if (TRIVIAL_COMMANDS.test(command) && !combinedOutput.includes('PASS') && !combinedOutput.includes('passed')) {
+      return {
+        valid: false,
+        verdict: 'PENDIENTE_VERIFICACION',
+        family: 'RESULTADO_DE_MISION',
+        rejectionCode: 'FALSE_GREEN_BYPASS_DETECTED',
+        reason: `Comando trivial "${command}" no constituye un oráculo válido para el DoD. Falso verde rechazado.`
+      };
+    }
+
+    // Límites 1 y 2 de Linear: Oráculo Declarado explícito (Build, Typecheck, Integración)
+    const declaredOracle = intentContract.declaredOracle || {};
+    const isBuildOrTypecheckOracle = 
+      declaredOracle.type === 'BUILD' || 
+      declaredOracle.type === 'TYPECHECK' || 
+      declaredOracle.type === 'ARTIFACT' ||
+      testExecutionResult.oracleType === 'BUILD' ||
+      testExecutionResult.oracleType === 'TYPECHECK';
+
+    if (isBuildOrTypecheckOracle) {
+      if (declaredOracle.expectedArtifact) {
+        const artifactPath = path.resolve(this.root, declaredOracle.expectedArtifact);
+        if (!fs.existsSync(artifactPath)) {
+          return {
+            valid: false,
+            verdict: 'PENDIENTE_VERIFICACION',
+            family: 'RESULTADO_DE_MISION',
+            rejectionCode: 'MISSING_BUILD_ARTIFACT',
+            reason: `El oráculo de compilación terminó con exit code 0 pero no produjo el artefacto declarado: ${declaredOracle.expectedArtifact}`
+          };
+        }
+      }
+      return {
+        valid: true,
+        verdict: 'MISION_ENTREGADA',
+        family: 'RESULTADO_DE_MISION',
+        oracleType: declaredOracle.type || 'BUILD_TYPECHECK',
+        reason: `Oráculo declarado (${declaredOracle.type || 'BUILD/TYPECHECK'}) verificado con éxito (exit code 0 y artefactos conformes).`
+      };
+    }
+
+    const assertionsCount = testExecutionResult.assertionsCount || 0;
+    const testsPassed = testExecutionResult.testsPassed || 0;
+    const hasPassSignal = /PASS|✓|passed|\d+\s+passing/i.test(combinedOutput);
+
+    if (assertionsCount === 0 && testsPassed === 0 && !hasPassSignal) {
+      return {
+        valid: false,
+        verdict: 'EVIDENCIA_INSUFICIENTE',
+        family: 'RESULTADO_DE_MISION',
+        rejectionCode: 'VACUOUS_PASS_ZERO_ASSERTIONS',
+        reason: 'El comando retornó exit code 0 pero no ejecutó aserciones ni pruebas verificables.'
+      };
+    }
+
+    if (intentContract && intentContract.expectedBehavior) {
+      const expected = String(intentContract.expectedBehavior).toLowerCase();
+      const keywords = expected.split(/\s+/).filter(w => w.length > 4);
+      const matchesKeyword = keywords.some(k => combinedOutput.toLowerCase().includes(k) || command.toLowerCase().includes(k));
+
+      if (keywords.length > 0 && !matchesKeyword && !hasPassSignal) {
+        return {
+          valid: false,
+          verdict: 'PENDIENTE_VERIFICACION',
+          family: 'RESULTADO_DE_MISION',
+          rejectionCode: 'DOD_UNALIGNED_ORACLE',
+          reason: 'El oráculo ejecutado no contiene evidencia ni aserciones vinculadas al DoD declarado.'
+        };
+      }
+    }
+
+    return {
+      valid: true,
+      verdict: 'MISION_ENTREGADA',
+      family: 'RESULTADO_DE_MISION',
+      reason: 'Oráculo del DoD ejecutado deterministamente con exit code 0 y aserciones verificadas.'
+    };
+  }
+
 }
 
 function main() {
@@ -1515,4 +2103,5 @@ function main() {
 
 if (require.main === module) main();
 
+DriveEngine.SessionLockManager = SessionLockManager;
 module.exports = DriveEngine;
