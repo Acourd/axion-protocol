@@ -10,6 +10,14 @@ description: Verificación determinista por ejecución real de la suite, con exi
 
 ---
 
+## 🛑 Cuándo se Activa
+
+- Al cerrar cualquier ciclo de implementación, antes de promover o atestar.
+- Cuando se sospecha que un cambio "funciona" sin haberse ejecutado.
+- Invocación explícita mediante `/verify`.
+
+---
+
 ## 📋 Protocolo de Ejecución
 
 1. **Ejecutar el verificador**:
@@ -32,3 +40,11 @@ description: Verificación determinista por ejecución real de la suite, con exi
 
 3. **Antes de promover**: `/verify` en verde es requisito previo de `/attest`. Una
    atestación sobre código no verificado documenta una afirmación, no un hecho.
+
+---
+
+## ⚖️ Veredictos del Motor
+
+- `PASS` — exit code 0 con el número real de suites en verde impreso por la salida.
+- `FAIL` — exit code distinto de 0: prohibido declarar éxito; pasa a `/debug`.
+- `NO_TEST_RUNNER_FOUND` — no hay suite: no es PASS silencioso, se propone una prueba mínima.

@@ -10,6 +10,14 @@ description: Auditoría de cambios por 4 lentes (Técnica, Funcional, UX/Product
 
 ---
 
+## 🛑 Cuándo se Activa
+
+- Al cerrar una iteración o antes de promover un cambio a `VERIFIED`.
+- Cuando se pide una auditoría de cambios con varias lentes de calidad.
+- Invocación explícita mediante `/review` sobre el diff de la última iteración.
+
+---
+
 ## 🔍 Las 4 Lentes
 
 | Lente | Qué examina | Evidencia que exige |
@@ -44,6 +52,23 @@ Si hay brechas, lista priorizada — nada de inventario plano:
 | `BLOQUEANTE` | | | rompe algo en uso o abre un riesgo real | |
 | `IMPORTANTE` | | | funciona, pero fallará de forma previsible | |
 | `MENOR` | | | mejora sin consecuencia si se pospone | |
+
+---
+
+## 💻 Ejecución por Herramienta
+
+```bash
+node tools/verify_changes.js
+```
+La evidencia de la lente Técnica es la salida real del verificador, no una afirmación.
+
+---
+
+## ⚖️ Veredictos del Motor
+
+- `PASS` — sin brechas, con evidencia ejecutable verificada.
+- `BRECHAS_BLOQUEANTES` — al menos una `BLOQUEANTE`: no promover hasta cerrarla.
+- `BRECHAS_MENORES` — funciona; las `IMPORTANTE`/`MENOR` quedan priorizadas, no en silencio.
 
 ---
 

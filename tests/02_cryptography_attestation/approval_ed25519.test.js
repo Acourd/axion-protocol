@@ -14,7 +14,10 @@ const {
 const { hashCanonical } = require('../../tools/canonical_json.js');
 
 const ROOT = path.join(__dirname, '..', '..');
-const FIXTURE_ROOT = path.join(ROOT, '.phase-e', 'test-runtime', 'approval');
+// Raíz única por proceso: en la corrida paralela otro suite puede tocar
+// .phase-e/test-runtime y un directorio compartido flakeaba con
+// APPROVAL_STATE_UNAVAILABLE al no poder escribir el marcador de consumo.
+const FIXTURE_ROOT = path.join(ROOT, '.phase-e', 'test-runtime', `approval-${process.pid}`);
 fs.mkdirSync(FIXTURE_ROOT, { recursive: true });
 
 function uniqueDir(label) {

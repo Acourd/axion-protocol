@@ -7,8 +7,11 @@ const {
   classifyCommand,
   executeStructuredCommand
 } = require('../../tools/structured_command.js');
+const { runPreflight, PREFLIGHT_VERSION } = require('../../tools/preflight.js');
+const DriveEngine = require('../../tools/drive_engine.js');
+const DriveMetacognitiveSentinel = require('../../tools/drive_metacognitive_sentinel.js');
 
-console.log('=== AX-F-062 Invariantes Adversariales de Clasificación y Ejecución Estructurada ===\n');
+console.log('=== AX-F-062 Invariantes Adversariales de Clasificación y Ejecución Estructurada (v3.0.0) ===\n');
 
 // 1. Invariantes de validación estructural (validateStructuredCommand)
 assert.strictEqual(validateStructuredCommand(null), false);
@@ -32,9 +35,14 @@ assert.strictEqual(validateStructuredCommand({ ...cmdValido, extraKey: 'malicios
 assert.strictEqual(validateStructuredCommand({ ...cmdValido, shell: true }), false);
 assert.strictEqual(validateStructuredCommand({ ...cmdValido, shell: undefined }), false);
 
-// 1d. Rechazo de bytes nulos en argumentos
+// 1d. Rechazo de bytes nulos, zero-width y caracteres de control en argumentos, ejecutable y cwd
 assert.strictEqual(validateStructuredCommand({ ...cmdValido, args: ['status\u0000payload'] }), false);
-console.log('✓ Invariantes de validación estructural y rechazo de inyección de bytes nulos verificados');
+assert.strictEqual(validateStructuredCommand({ ...cmdValido, executable: 'git\u0000' }), false);
+assert.strictEqual(validateStructuredCommand({ ...cmdValido, cwd: 'C:\\workspace\u0000' }), false);
+assert.strictEqual(validateStructuredCommand({ ...cmdValido, executable: 'git\u200B' }), false);
+assert.strictEqual(validateStructuredCommand({ ...cmdValido, cwd: 'C:\\workspace\uFEFF' }), false);
+assert.strictEqual(validateStructuredCommand({ ...cmdValido, args: ['status\nmalicious'] }), false);
+console.log('✓ Invariantes de validación estructural y rechazo de inyección de bytes nulos y zero-width verificados');
 
 // 2. Matriz de clasificación adversarial para comandos crudos (RAW)
 const destructiveRaw = [
@@ -49,7 +57,55 @@ const destructiveRaw = [
   'find . -name "*.log" -delete',
   'git reset --hard HEAD~1',
   'git push -f origin main',
-  'git push --force origin master'
+  'git push --force origin master',
+  // Homóglifos Unicode
+  'r\u043C -rf /',
+  'd\u0435l C:\\*',
+  'f\u043Ermat C:',
+  // Caracteres invisibles / Zero-width
+  'r\u200Bm -rf /',
+  'r\uFEFFm -rf /',
+  'r\u00ADm -rf /',
+  'r\u200Cm -rf /',
+  'r\u200Dm -rf /',
+  'r\u2060m -rf /',
+  // Escapes intra-token
+  'r""m -rf /',
+  'r^m -rf /',
+  'r`m -rf /',
+  'r\\m -rf /',
+  'r\\\\m -rf /',
+  '\\\\r\\\\m -rf /',
+  // Delimitadores de subshell e invocación
+  '(rm -rf /)',
+  '&(Remove-Item) C:\\',
+  '{rm,-rf,/}',
+  // Fork bombs
+  ':(){ :|:& };:',
+  '%0|%0',
+  '^%0|^%0',
+  'f(){ f|f& };f',
+  '_(){ _|_& };_',
+  'bomb(){ bomb|bomb& };bomb',
+  // Fuga de secretos
+  'cat .env',
+  'cat <.env',
+  'cat < .env',
+  'type .env.local',
+  'grep SECRET .env',
+  'cat ~/.ssh/id_rsa',
+  'printenv',
+  'export -p',
+  'echo $AWS_SECRET_ACCESS_KEY',
+  'dir env:',
+  'Get-ChildItem Env:',
+  // Intérpretes con rutinas destructivas
+  'node -e "fs.rm(\'dir\')"',
+  'python -c "import os; os.remove(\'file\')"',
+  // Windows / PowerShell
+  'Remove-Item C:\\ -Recurse -Force',
+  'Format-Volume -DriveLetter D',
+  'powershell -enc JABjAG0AZAA='
 ];
 
 for (const cmd of destructiveRaw) {
@@ -88,7 +144,11 @@ const destructiveStructured = [
   { executable: 'format', args: ['D:'], cwd: process.cwd(), shell: false },
   { executable: 'bash', args: ['-c', 'echo hi'], cwd: process.cwd(), shell: false },
   { executable: 'powershell', args: ['Get-Process'], cwd: process.cwd(), shell: false },
-  { executable: 'cmd', args: ['/c', 'dir'], cwd: process.cwd(), shell: false }
+  { executable: 'cmd', args: ['/c', 'dir'], cwd: process.cwd(), shell: false },
+  // Homoglifo estructurado
+  { executable: 'r\u043C', args: ['-rf', 'dir'], cwd: process.cwd(), shell: false },
+  // Fuga de secretos estructurada
+  { executable: 'cat', args: ['.env'], cwd: process.cwd(), shell: false }
 ];
 
 for (const cmd of destructiveStructured) {
@@ -135,5 +195,39 @@ assert.strictEqual(resExecBlocked.status, COMMAND_DECISION.DENY);
 assert.strictEqual(resExecBlocked.reason, 'DESTRUCTIVE_OR_SHELL_EXECUTABLE');
 assert.strictEqual(Object.isFrozen(resExecBlocked), true);
 console.log('✓ Ejecución controlada y rechazo fail-closed de comandos no autorizados verificado');
+
+// 8. Integración con preflight v3.0.0, DriveEngine y DriveMetacognitiveSentinel
+const pfRes = runPreflight('rm -rf /');
+assert.strictEqual(pfRes.status, COMMAND_DECISION.DENY);
+assert.strictEqual(pfRes.version, PREFLIGHT_VERSION);
+assert.strictEqual(pfRes.version, '3.0.0');
+
+const engine = new DriveEngine(process.cwd());
+const valPreflight = engine.validateCommandPreflight({ executable: 'git', args: ['status'], cwd: process.cwd(), shell: false });
+assert.strictEqual(valPreflight.allowed, true);
+assert.strictEqual(valPreflight.decision, COMMAND_DECISION.ALLOW);
+
+const execSafe = engine.executeCommandPreflight(
+  { executable: 'node', args: ['-v'], cwd: process.cwd(), shell: false },
+  { executor() { return { status: 0 }; } }
+);
+assert.strictEqual(execSafe.status, 'EXECUTION_SUCCEEDED');
+
+const execDenied = engine.executeCommandPreflight('rm -rf /');
+assert.strictEqual(execDenied.status, COMMAND_DECISION.DENY);
+
+const sentinel = new DriveMetacognitiveSentinel({ projectRoot: process.cwd() });
+const auditDestructive = sentinel.auditPreflightCommand('rm -rf /');
+assert.strictEqual(auditDestructive.isValid, false);
+assert.strictEqual(auditDestructive.status, 'REJECTED_DESTRUCTIVE_COMMAND');
+
+const auditAuditOpt = sentinel.runMetacognitiveAudit({
+  command: 'rm -rf /',
+  files: ['package.json']
+});
+assert.strictEqual(auditAuditOpt.status, 'REJECTED_DESTRUCTIVE_COMMAND');
+assert.strictEqual(auditAuditOpt.evaluation.preflightValidation.status, 'REJECTED_DESTRUCTIVE_COMMAND');
+
+console.log('✓ Integración y telemetría de preflight v3.0.0 con DriveEngine y Sentinel verificadas');
 
 console.log('\nPASS AX-F-062 — Invariantes de ejecución estructurada demostrados al 100%.\n');

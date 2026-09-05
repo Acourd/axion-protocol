@@ -10,6 +10,15 @@ description: Calibra y persiste el perfil del usuario en 5 dimensiones (profundi
 
 ---
 
+## 🛑 Cuándo se Activa
+
+- Primera sesión con un usuario nuevo o sin perfil en `.axion/PROFILE.json`.
+- Cuando el usuario expresa fricción: demasiada jerga, demasiada autonomía, formato equivocado.
+- Cambio de entorno de trabajo (voz ↔ teclado, IDE ↔ terminal).
+- Invocación explícita mediante `/profile` o `/profile set 1A 2B ...`.
+
+---
+
 ## 📋 Diagnóstico Conversacional (5 preguntas)
 
 ```markdown
@@ -42,7 +51,7 @@ Responde con tus opciones (ej: `1A 2A 3B 4C 5B`):
 
 ---
 
-## ⚙️ Persistencia
+## 💻 Ejecución por Herramienta
 
 ```bash
 node tools/profile_adapter.js set 1A 2A 3B 4C 5B
@@ -53,6 +62,15 @@ respuestas igual dos veces. Consultar el perfil activo: `node tools/profile_adap
 La escritura es **fusión, no reemplazo**: responder unas preguntas no borra los matices
 del perfil que el cuestionario no sabe expresar. Puedes calibrar una sola dimensión
 (`set 4B`) sin tocar las otras cuatro.
+
+---
+
+## ⚖️ Veredictos del Motor
+
+- `PERFIL_CALIBRADO` — el perfil activo se ajusta al usuario y se persiste.
+- `PERFIL_PARCIAL` — solo una o algunas dimensiones definidas; el resto con el valor de fábrica.
+- `PERFIL_INVALIDO` — opción fuera del rango (ej. `1Z`): rechazada, se indica la corrección.
+- `SIN_PERFIL` — no existe `.axion/PROFILE.json`: rige el de fábrica hasta calibrar.
 
 ---
 

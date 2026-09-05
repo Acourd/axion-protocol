@@ -36,3 +36,12 @@ node tools/memory.js list
 node tools/context_shield.js anchor
 ```
 Reinyecta las reglas P0 al final de la ventana de contexto para mantener la gobernanza activa y fail-closed.
+
+---
+
+## ⚖️ Veredictos del Motor
+
+- `MEMORIA_GUARDADA` — la entrada se persistió y será recuperable en sesiones futuras.
+- `MEMORIA_CONSULTADA` — lista de entradas activas devuelta sin ambigüedad.
+- `TIPO_INVALIDO` — el tipo no es `decision|convencion|limite|correccion`: rechazado.
+- `ANCLA_APLICADA` — las reglas P0 se reinyectaron al final del contexto (anti lost-in-the-middle).

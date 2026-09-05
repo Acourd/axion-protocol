@@ -2,7 +2,7 @@
 'use strict';
 
 /**
- * Axion Protocol - Preflight fail-closed.
+ * Axion Protocol — Preflight Fail-Closed Gate (v3.0.0 — Fase 3: Terminal Safety Shield)
  *
  * La clasificación nunca ejecuta la entrada. Las cadenas de shell crudas no son una ruta
  * autorizada: reciben DENY o NEEDS_HUMAN_REVIEW. ALLOW exige un comando estructurado con
@@ -15,12 +15,15 @@ const {
   classifyCommand,
 } = require('./structured_command.js');
 
+const PREFLIGHT_VERSION = '3.0.0';
+
 function runPreflight(command) {
   const classification = classifyCommand(command);
   return Object.freeze({
     status: classification.decision,
     decision: classification.decision,
     reason: classification.reason,
+    version: PREFLIGHT_VERSION,
   });
 }
 
@@ -29,24 +32,24 @@ const USAGE = [
   '  node tools/preflight.js "<cadena de shell>"   clasifica una cadena de shell cruda',
   '  node tools/preflight.js --json <comando>      clasifica un comando estructurado',
   '',
-  'Una cadena de shell cruda NUNCA obtiene ALLOW: no se puede determinar con certeza que',
-  'ejecutaria, asi que el mejor resultado posible es NEEDS_HUMAN_REVIEW. Para alcanzar',
-  'ALLOW hace falta un comando estructurado, y ademas estar en la allowlist:',
+  'Una cadena de shell cruda NUNCA obtiene ALLOW: no se puede determinar con certeza qué',
+  'ejecutaría, así que el mejor resultado posible es NEEDS_HUMAN_REVIEW. Para alcanzar',
+  'ALLOW hace falta un comando estructurado, y además estar en la allowlist:',
   '',
   '  node tools/preflight.js --json {"executable":"git","args":["status"],"cwd":".","shell":false}',
   '',
-  'Codigos de salida: 0 ALLOW, 1 DENY, 2 NEEDS_HUMAN_REVIEW o uso incorrecto.',
+  'Códigos de salida: 0 ALLOW, 1 DENY, 2 NEEDS_HUMAN_REVIEW o uso incorrecto.',
 ].join('\n');
 
-// Traduce los argumentos de linea de comandos a algo que classifyCommand entienda.
-// Con --json se espera un comando estructurado; sin el, una cadena de shell cruda.
+// Traduce los argumentos de línea de comandos a algo que classifyCommand entienda.
+// Con --json se espera un comando estructurado; sin él, una cadena de shell cruda.
 function parseArgs(args) {
   if (args[0] !== '--json') return { ok: true, command: args.join(' ') };
   if (args.length < 2) return { ok: false, reason: 'MISSING_JSON_PAYLOAD' };
   try {
     return { ok: true, command: JSON.parse(args.slice(1).join(' ')) };
   } catch (_) {
-    // Un JSON ilegible no es un comando: se deniega en vez de propagar la excepcion.
+    // Un JSON ilegible no es un comando: se deniega en vez de propagar la excepción.
     return { ok: false, reason: 'INVALID_JSON_PAYLOAD' };
   }
 }
@@ -60,7 +63,12 @@ function main() {
 
   const parsed = parseArgs(args);
   if (!parsed.ok) {
-    const denegado = { status: COMMAND_DECISION.DENY, decision: COMMAND_DECISION.DENY, reason: parsed.reason };
+    const denegado = {
+      status: COMMAND_DECISION.DENY,
+      decision: COMMAND_DECISION.DENY,
+      reason: parsed.reason,
+      version: PREFLIGHT_VERSION
+    };
     console.log(JSON.stringify(denegado, null, 2));
     process.exit(1);
   }
@@ -74,4 +82,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { COMMAND_DECISION, runPreflight, parseArgs, USAGE };
+module.exports = { COMMAND_DECISION, PREFLIGHT_VERSION, runPreflight, parseArgs, USAGE };
