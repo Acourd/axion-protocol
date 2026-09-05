@@ -1,7 +1,7 @@
 {
   "name": "axion-protocol",
-  "version": "1.3.1-rc.3",
-  "description": "Experimental local governance runtime for agentic AI operations: seven fail-closed phases, Ed25519 approvals, independent CHECK, SHA-256 evidence and in-toto attestations. No dependencies.",
+  "version": "1.3.2",
+  "description": "Local governance runtime for agentic AI operations: seven fail-closed phases, Ed25519 approvals, independent CHECK, SHA-256 evidence and in-toto attestations. No dependencies.",
   "keywords": [
     "ai-governance",
     "agentic",
@@ -25,9 +25,11 @@
   },
   "scripts": {
     "test": "node tests/run_all.js",
-    "test:functional": "node tests/run_all.js funcional",
-    "test:regression": "node tests/run_all.js regresion",
-    "test:phase-e": "node tests/run_all.js phase_e"
+    "test:governance": "node tests/run_all.js 01_governance_preflight",
+    "test:cryptography": "node tests/run_all.js 02_cryptography_attestation",
+    "test:intent": "node tests/run_all.js 03_intent_socratic",
+    "test:recovery": "node tests/run_all.js 04_state_recovery",
+    "test:adversarial": "node tests/run_all.js 05_adversarial_resilience"
   },
   "dependencies": {},
   "files": [
@@ -48,12 +50,16 @@
     ".cursor/",
     ".github/",
     "opencode.json",
+    "AGENTS.md",
     "install.js",
     "CLAUDE.md",
     "GOVERNANCE.md",
     "SECURITY.md",
     "ROADMAP.md",
     "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "CONTRIBUTING.es.md",
+    "CODE_OF_CONDUCT.md",
     "NOTICE",
     "README.es.md",
     "09_candidate_manifest.json",

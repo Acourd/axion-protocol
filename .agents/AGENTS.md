@@ -10,7 +10,7 @@
 
 ## Slash Commands de Gobernanza (Sinergia Cero-Colisión)
 
-Axion Protocol incorpora 12 comandos de gobernanza diseñados para coexistir sin conflicto con Antigravity, Claude Code y AG-Kit. En Antigravity se montan como skills desde `.agents/skills/<nombre>/SKILL.md`; en Claude Code desde `.claude/commands/<nombre>.md`:
+Axion Protocol incorpora 13 comandos de gobernanza diseñados para coexistir sin conflicto con Antigravity, Claude Code y AG-Kit. En Antigravity se montan como skills desde `.agents/skills/<nombre>/SKILL.md`; en Claude Code desde `.claude/commands/<nombre>.md`:
 
 | Comando | Qué hace |
 | :--- | :--- |
@@ -26,6 +26,7 @@ Axion Protocol incorpora 12 comandos de gobernanza diseñados para coexistir sin
 | **`/review`** | Auditoría de cambios por 4 lentes (Técnica, Funcional, UX/Producto, Arquitectura) aplicando solo las pertinentes. |
 | **`/snapshot`** | Guarda y restaura puntos de control deterministas verificados con SHA-256 independientes de Git (absorbe /checkpoint y /rollback). |
 | **`/verify`** | Verificación determinista por ejecución real de la suite, con exigencia de exit code 0. |
+| **`/critic`** | Evaluación asintótica de madurez soberana contra las 7 Fronteras de Excelencia, anti-complacencia de checklists. |
 
 ---
 

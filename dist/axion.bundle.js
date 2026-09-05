@@ -3,8 +3,8 @@
 
 /**
  * Axion Protocol — Standalone Single-File Bundle
- * Versión: 1.3.1-rc.3 (Zero-Dependency)
- * Compilado: 2026-09-03T03:49:36.247Z
+ * Versión: 1.3.2 (Zero-Dependency)
+ * Compilado: 2026-09-05T21:18:07.960Z
  */
 
 const __modules = {};
@@ -43,7 +43,7 @@ function __require(modulePath) {
 'use strict';
 
 /**
- * Axion Protocol - Preflight fail-closed.
+ * Axion Protocol — Preflight Fail-Closed Gate (v3.0.0 — Fase 3: Terminal Safety Shield)
  *
  * La clasificación nunca ejecuta la entrada. Las cadenas de shell crudas no son una ruta
  * autorizada: reciben DENY o NEEDS_HUMAN_REVIEW. ALLOW exige un comando estructurado con
@@ -56,12 +56,15 @@ const {
   classifyCommand,
 } = require('./structured_command.js');
 
+const PREFLIGHT_VERSION = '3.0.0';
+
 function runPreflight(command) {
   const classification = classifyCommand(command);
   return Object.freeze({
     status: classification.decision,
     decision: classification.decision,
     reason: classification.reason,
+    version: PREFLIGHT_VERSION,
   });
 }
 
@@ -70,24 +73,24 @@ const USAGE = [
   '  node tools/preflight.js "<cadena de shell>"   clasifica una cadena de shell cruda',
   '  node tools/preflight.js --json <comando>      clasifica un comando estructurado',
   '',
-  'Una cadena de shell cruda NUNCA obtiene ALLOW: no se puede determinar con certeza que',
-  'ejecutaria, asi que el mejor resultado posible es NEEDS_HUMAN_REVIEW. Para alcanzar',
-  'ALLOW hace falta un comando estructurado, y ademas estar en la allowlist:',
+  'Una cadena de shell cruda NUNCA obtiene ALLOW: no se puede determinar con certeza qué',
+  'ejecutaría, así que el mejor resultado posible es NEEDS_HUMAN_REVIEW. Para alcanzar',
+  'ALLOW hace falta un comando estructurado, y además estar en la allowlist:',
   '',
   '  node tools/preflight.js --json {"executable":"git","args":["status"],"cwd":".","shell":false}',
   '',
-  'Codigos de salida: 0 ALLOW, 1 DENY, 2 NEEDS_HUMAN_REVIEW o uso incorrecto.',
+  'Códigos de salida: 0 ALLOW, 1 DENY, 2 NEEDS_HUMAN_REVIEW o uso incorrecto.',
 ].join('\n');
 
-// Traduce los argumentos de linea de comandos a algo que classifyCommand entienda.
-// Con --json se espera un comando estructurado; sin el, una cadena de shell cruda.
+// Traduce los argumentos de línea de comandos a algo que classifyCommand entienda.
+// Con --json se espera un comando estructurado; sin él, una cadena de shell cruda.
 function parseArgs(args) {
   if (args[0] !== '--json') return { ok: true, command: args.join(' ') };
   if (args.length < 2) return { ok: false, reason: 'MISSING_JSON_PAYLOAD' };
   try {
     return { ok: true, command: JSON.parse(args.slice(1).join(' ')) };
   } catch (_) {
-    // Un JSON ilegible no es un comando: se deniega en vez de propagar la excepcion.
+    // Un JSON ilegible no es un comando: se deniega en vez de propagar la excepción.
     return { ok: false, reason: 'INVALID_JSON_PAYLOAD' };
   }
 }
@@ -101,7 +104,12 @@ function main() {
 
   const parsed = parseArgs(args);
   if (!parsed.ok) {
-    const denegado = { status: COMMAND_DECISION.DENY, decision: COMMAND_DECISION.DENY, reason: parsed.reason };
+    const denegado = {
+      status: COMMAND_DECISION.DENY,
+      decision: COMMAND_DECISION.DENY,
+      reason: parsed.reason,
+      version: PREFLIGHT_VERSION
+    };
     console.log(JSON.stringify(denegado, null, 2));
     process.exit(1);
   }
@@ -115,12 +123,26 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { COMMAND_DECISION, runPreflight, parseArgs, USAGE };
+module.exports = { COMMAND_DECISION, PREFLIGHT_VERSION, runPreflight, parseArgs, USAGE };
 
   };
 
   __modules['tools/structured_command.js'] = function(module, exports, require) {
 'use strict';
+
+/**
+ * Axion Protocol — Structured Command & Lexical Risk Classifier (v3.0.0: Terminal Safety Shield)
+ *
+ * Misión: Intercepción léxica fail-closed previa a la ejecución de comandos.
+ * Invariantes nucleares:
+ * 1. Estricto shell: false para ALLOW. Cero ejecución de cadenas de shell crudas.
+ * 2. Inmunidad a homóglifos Unicode (cirílico/griego) y caracteres invisibles (ZWS, BOM).
+ * 3. Neutralización de evasiones de escape (comillas intra-palabra, carets cmd, backticks PS, backslashes).
+ * 4. Taxonomía destructora cerrada: borrado de archivos, fork bombs, vuelco de discos y exposición de secretos.
+ * 5. Rechazo fail-closed de inyección de bytes nulos (\0) y sintaxis ambigua.
+ *
+ * Cero dependencias externas.
+ */
 
 const path = require('path');
 const { spawnSync } = require('child_process');
@@ -133,66 +155,199 @@ const COMMAND_DECISION = Object.freeze({
 
 const DESTRUCTIVE_EXECUTABLES = new Set([
   'rm', 'rmdir', 'unlink', 'shred', 'srm', 'mkfs', 'dd', 'truncate',
-  'rd', 'del', 'erase', 'format', 'diskpart', 'fdisk',
+  'rd', 'del', 'erase', 'format', 'diskpart', 'fdisk', 'wipefs', 'parted', 'sfdisk',
   'remove-item', 'ri', 'clear-content', 'clc', 'clear-item', 'cli',
   'remove-itemproperty', 'rp', 'format-volume', 'clear-disk',
   'initialize-disk', 'remove-partition', 'reset-physicaldisk',
+  'stop-process', 'spps', 'stop-computer', 'restart-computer',
 ]);
+
 const SHELL_OR_WRAPPER_EXECUTABLES = new Set([
   'sh', 'bash', 'zsh', 'fish', 'powershell', 'pwsh', 'cmd', 'wsl',
   'sudo', 'env', 'nohup', 'xargs', 'invoke-expression', 'iex',
 ]);
+
 const SAFE_GIT_SUBCOMMANDS = new Set(['status', 'log', 'diff', 'show', 'rev-parse']);
 
-function executableName(executable) {
-  return path.basename(executable).toLowerCase().replace(/\.(exe|cmd|bat|ps1)$/, '');
+// Confundibles visuales cirílicos y griegos mapeados a ASCII latino canónico
+const CONFUNDIBLES = Object.freeze({
+  // Cirílico minúsculas
+  '\u0430': 'a', '\u0431': 'b', '\u0432': 'b', '\u0433': 'r', '\u0434': 'd',
+  '\u0435': 'e', '\u0451': 'e', '\u0436': 'x', '\u0437': '3', '\u0438': 'u',
+  '\u0439': 'u', '\u043A': 'k', '\u043B': 'n', '\u043C': 'm', '\u043D': 'h',
+  '\u043E': 'o', '\u043F': 'n', '\u0440': 'p', '\u0441': 'c', '\u0442': 't',
+  '\u0443': 'y', '\u0444': 'o', '\u0445': 'x', '\u0446': 'u', '\u0447': 'y',
+  '\u0448': 'w', '\u0449': 'w', '\u044A': 'b', '\u044B': 'b', '\u044C': 'b',
+  '\u044D': 'e', '\u044E': 'io', '\u044F': 'r', '\u0456': 'i', '\u0457': 'i',
+  '\u0458': 'j', '\u0455': 's', '\u051B': 'q', '\u051D': 'w',
+  '\u0280': 'r', '\u027E': 'r',
+  // Griego minúsculas
+  '\u03B1': 'a', '\u03B2': 'b', '\u03B3': 'y', '\u03B4': 'd', '\u03B5': 'e',
+  '\u03B6': 'z', '\u03B7': 'n', '\u03B8': 'o', '\u03B9': 'i', '\u03BA': 'k',
+  '\u03BB': 'l', '\u03BC': 'u', '\u03BD': 'v', '\u03BE': 'e', '\u03BF': 'o',
+  '\u03C0': 'n', '\u03C1': 'p', '\u03C2': 'c', '\u03C3': 'o', '\u03C4': 't',
+  '\u03C5': 'u', '\u03C6': 'o', '\u03C7': 'x', '\u03C8': 'w', '\u03C9': 'w'
+});
+
+function foldHomoglyphs(str) {
+  let res = '';
+  for (const ch of str) {
+    res += CONFUNDIBLES[ch] || ch;
+  }
+  return res;
 }
 
+/**
+ * Normaliza y purifica una cadena contra evasiones léxicas, homóglifos Unicode y caracteres invisibles.
+ */
+function canonicalizeLexicalCommand(command) {
+  if (typeof command !== 'string') return '';
+  // 1. Normalización canónica NFKD y minúsculas
+  let norm = command.normalize('NFKD').toLowerCase();
+  // 2. Mapeo de confundibles cirílicos y griegos
+  norm = foldHomoglyphs(norm);
+  // 3. Remoción de diacríticos combinantes
+  norm = norm.replace(/[\u0300-\u036F]/g, '');
+  // 4. Remoción estricta de caracteres invisibles, formato y zero-width (ZWS, ZWNJ, ZWJ, BOM, soft hyphens, word joiners)
+  // CRÍTICO: No convertirlos en espacios para evitar que 'r\u200Bm' evada como 'r m'
+  norm = norm.replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF\u00AD]/g, '');
+  // 5. Normalización de caracteres de control restantes a espacio
+  norm = norm.replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ');
+  // 6. Normalización de espacios no separables (NBSP y otros separadores Unicode)
+  norm = norm.replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ');
+  // 7. Tratamiento de IFS
+  norm = norm.replace(/\$\{?IFS\}?/gi, ' ');
+  return norm;
+}
+
+function executableName(executable) {
+  const base = executable.split(/[/\\]/).pop() || '';
+  const canonical = canonicalizeLexicalCommand(base);
+  return canonical.replace(/\.(exe|cmd|bat|ps1)$/, '');
+}
+
+/**
+ * Determina si una cadena de shell cruda presenta patrones destructivos o peligrosos.
+ */
 function rawLooksDestructive(command) {
+  if (typeof command !== 'string') return false;
+
   const hasIFS = /\$IFS|\$\{IFS\}|IFS=/i.test(command);
-  const normalized = command
-    .replace(/\$\{?IFS\}?/gi, ' ')
-    .toLowerCase()
-    .replace(/["'`]/g, ' ');
+  const canonical = canonicalizeLexicalCommand(command);
+
+  // Forma A: con comillas convertidas en espacios
+  const normalizedWithSpaces = canonical.replace(/["'`]/g, ' ');
+
+  // Forma B: colapsada (elimina comillas, carets, backticks y escape backslashes dentro de palabras)
+  // Permite detectar r""m, r^m, r`m, r\m, r\\m, \rm, \\rm, etc.
+  const normalizedCollapsed = canonical
+    .replace(/["'`^]/g, '')
+    .replace(/\\+/g, '');
 
   // 1. Detección de IFS o intentos de ofuscación de separadores léxicos
-  if (hasIFS && /(rm|del|rd|erase|unlink|shred|mkfs|dd)/i.test(normalized)) {
+  if (hasIFS && /(rm|del|rd|erase|unlink|shred|mkfs|dd|format)/i.test(normalizedWithSpaces)) {
     return true;
   }
 
-  // 2. Destructores directos con ancla extendida que cubre inicio, espacios, barras, punto y coma, pipes o ampersands
-  const isDirectDestructive = /(^|[\s/\\;&|])(rm|rmdir|rd|unlink|shred|srm|mkfs|dd|format|remove-item|ri|clear-content|clc|clear-item|cli|remove-itemproperty|rp|format-volume|clear-disk|initialize-disk|remove-partition|reset-physicaldisk|del|erase|diskpart|fdisk)(\.(exe|cmd|bat|ps1))?(\s|$|;)/i.test(normalized);
+  // 2. Bombas de bifurcación (Fork Bombs) y agotamiento de recursos
+  const isForkBomb = (
+    /:\s*\(\s*\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:/i.test(canonical) ||
+    /%\s*0\s*\|\s*%\s*0/i.test(canonical) ||
+    /\^\s*%\s*0\s*\|\s*\^\s*%\s*0/i.test(canonical) ||
+    /\bforkbomb\s*\(\s*\)\s*\{/i.test(canonical) ||
+    /([a-zA-Z0-9_:]+)\s*\(\s*\)\s*\{\s*\1\s*\|\s*\1/i.test(canonical) ||
+    /while\s*\(\s*(true|1|\$true)\s*\)\s*\{[\s\S]*(start-process|powershell|pwsh|cmd)/i.test(canonical) ||
+    /for\s*\(\s*;\s*;\s*\)\s*\{[\s\S]*(start-process|powershell|pwsh|cmd)/i.test(canonical)
+  );
+  if (isForkBomb) return true;
 
-  // 3. Intérpretes con banderas de evaluación directa ejecutando rutinas destructivas
-  const isEvalDestructive = /(python|python3|node|powershell|pwsh|cmd|sh|bash)\b[\s\S]*(-c|-e|--eval|-encodedcommand|-enc)\b[\s\S]*(rmtree|rmsync|unlinksync|remove-item|rmdir|unlink|del|erase|format|clean)/i.test(normalized);
+  // 3. Exposición y fuga de secretos / credenciales
+  const isSecretExposure = (
+    /\b(cat|type|get-content|gc|head|tail|more|less|grep|awk|sed|strings|nl|tac)\b[\s\S]*(?:^|[\s/\\"'`<>()])\.env(?:\.[\w.-]+)?(?:\s|$|[;&|"'`<>()])/i.test(canonical) ||
+    /\b(cat|type|get-content|gc|head|tail|more|less|grep|awk|sed|strings)\b[\s\S]*(?:^|[\s/\\"'`<>()])(id_rsa|id_ed25519|id_ecdsa|id_dsa|\.axion[\\\/]keys[\\\/][\w.-]+\.key|\.aws[\\\/]credentials|\.ssh[\\\/]id_[\w]+)(?:\s|$|[;&|"'`<>()])/i.test(canonical) ||
+    /\b(cat|type|get-content|gc|head|tail|more|less|grep)\b[\s\S]*\*\.(pem|key)\b/i.test(canonical) ||
+    /(?:^|[\s/\\;&|()<>{}`"'])(printenv|export\s+-p)(?:\s|$|[;&|()<>{}`"'])/i.test(canonical) ||
+    /\becho\s+\$(?:AWS_SECRET_ACCESS_KEY|GITHUB_TOKEN|ANTHROPIC_API_KEY|OPENAI_API_KEY|SLACK_BOT_TOKEN|PRIVATE_KEY|SECRET_KEY)\b/i.test(canonical) ||
+    /\b(?:get-childitem|gci|dir|ls)\s+env:(?:\s|$|[\\\/;&|])/i.test(canonical)
+  );
+  if (isSecretExposure) return true;
 
-  // 4. PowerShell con comandos codificados en base64 (-EncodedCommand / -enc)
-  const isEncodedPowerShell = /(powershell|pwsh)\b[\s\S]*(-encodedcommand|-enc)\b/i.test(normalized);
+  // 4. Destructores directos con ancla extendida (POSIX & Windows / PowerShell)
+  const BOUNDARY_START = '(?:^|[\\s/\\\\;&|()<>{}\\[\\],:!`"\'])';
+  const BOUNDARY_END = '(?:[\\s/\\\\;&|()<>{}\\[\\],:!`"\']|$)';
+  const DESTRUCTIVE_TOKENS_REGEX = new RegExp(
+    BOUNDARY_START +
+    '(rm|rmdir|rd|unlink|shred|srm|mkfs|dd|truncate|format|diskpart|fdisk|wipefs|parted|sfdisk|remove-item|ri|clear-content|clc|clear-item|cli|remove-itemproperty|rp|format-volume|clear-disk|initialize-disk|remove-partition|reset-physicaldisk|del|erase|stop-process|stop-computer|restart-computer)' +
+    '(\\.(exe|cmd|bat|ps1))?' +
+    BOUNDARY_END,
+    'i'
+  );
 
-  return isDirectDestructive
-    || isEvalDestructive
-    || isEncodedPowerShell
-    || /\|\s*(sudo\s+)?(\S*[/\\])?(sh|bash|zsh|fish|dash|ksh|powershell|pwsh|cmd)(\s|$)/i.test(normalized)
-    || /\bfind\b[\s\S]*(-delete|-exec)\b/i.test(normalized)
-    || /\btruncate\s+-s\s+0\b/i.test(normalized)
-    || /\bcp\s+\/dev\/null\b/i.test(normalized)
-    || />\s*[^\s]+/.test(normalized)
-    || /\bgit\s+(clean\b|reset\s+--hard\b|checkout\s+--\s|push\s+(-f\b|--force\b))/i.test(normalized);
+  const isDirectDestructive = DESTRUCTIVE_TOKENS_REGEX.test(normalizedWithSpaces)
+    || DESTRUCTIVE_TOKENS_REGEX.test(normalizedCollapsed);
+  if (isDirectDestructive) return true;
+
+  // 5. Intérpretes con banderas de evaluación directa ejecutando rutinas destructivas
+  const isEvalDestructive = /(python|python3|py|node|deno|bun|perl|ruby|powershell|pwsh|cmd|sh|bash)\b[\s\S]*(-c|-e|--eval|-encodedcommand|-enc|-command)\b[\s\S]*(rmtree|rmsync|unlinksync|remove-item|rmdir|unlink|del|erase|format|clean|truncate|shred|\.rm\b|\.remove\b|os\.remove|fs\.rm)/i.test(canonical);
+  if (isEvalDestructive) return true;
+
+  // 6. PowerShell con comandos codificados en base64 (-EncodedCommand / -enc) o Invoke-Expression
+  const isEncodedPowerShell = /(powershell|pwsh)\b[\s\S]*(-encodedcommand|-enc)\b/i.test(canonical);
+  const isInvokeExpression = /\b(invoke-expression|iex)\b[\s\S]*\b(remove-item|ri|format|del|rm)\b/i.test(canonical);
+  if (isEncodedPowerShell || isInvokeExpression) return true;
+
+  // 7. Tuberías a shells e intérpretes
+  const isPipeToShell = /\|\s*(sudo\s+)?(\S*[/\\])?(sh|bash|zsh|fish|dash|ksh|powershell|pwsh|cmd)(\s|$)/i.test(canonical);
+  if (isPipeToShell) return true;
+
+  // 8. Operaciones destructivas de búsqueda, truncamiento y sobrescritura de dispositivos
+  const isDeviceOrFileTruncation = (
+    /\bfind\b[\s\S]*(-delete|-exec)\b/i.test(canonical) ||
+    /\btruncate\s+-s\s+0\b/i.test(canonical) ||
+    /\bcp\s+\/dev\/null\b/i.test(canonical) ||
+    />\s*\/dev\/(sd[a-z]|hd[a-z]|nvme[0-9]|null|zero|mem|kmem|port)/i.test(canonical) ||
+    /\bof=\/dev\/(sd[a-z]|hd[a-z]|nvme[0-9]|null|zero)/i.test(canonical) ||
+    /\bmkfs\.[a-z0-9]+/i.test(canonical) ||
+    />\s*[^\s]+/.test(canonical)
+  );
+  if (isDeviceOrFileTruncation) return true;
+
+  // 9. Operaciones destructivas de Git
+  const isGitDestructive = /\bgit\s+(clean\b|reset\s+--hard\b|checkout\s+--\s|push\s+(-f\b|--force\b)|branch\s+-D\b|prune\b)/i.test(canonical);
+  if (isGitDestructive) return true;
+
+  return false;
 }
 
+/**
+ * Valida de forma estricta la estructura requerida para comandos protegidos.
+ */
 function validateStructuredCommand(command) {
   if (!command || typeof command !== 'object' || Array.isArray(command)) return false;
   const keys = Object.keys(command).sort();
   if (keys.join(',') !== 'args,cwd,executable,shell') return false;
-  return typeof command.executable === 'string'
-    && command.executable.trim() !== ''
-    && Array.isArray(command.args)
-    && command.args.every((arg) => typeof arg === 'string' && !arg.includes('\u0000'))
-    && typeof command.cwd === 'string'
-    && command.cwd.trim() !== ''
-    && command.shell === false;
+  if (command.shell !== false) return false;
+  if (typeof command.executable !== 'string' || command.executable.trim() === '') return false;
+  if (typeof command.cwd !== 'string' || command.cwd.trim() === '') return false;
+  if (!Array.isArray(command.args)) return false;
+
+  const FORBIDDEN_CHARS = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF\u00AD]/;
+  if (FORBIDDEN_CHARS.test(command.executable) || FORBIDDEN_CHARS.test(command.cwd)) {
+    return false;
+  }
+
+  for (const arg of command.args) {
+    if (typeof arg !== 'string' || FORBIDDEN_CHARS.test(arg)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
+/**
+ * Clasifica cualquier entrada (comando estructurado o cadena cruda) en uno de los 3 veredictos tipados.
+ */
 function classifyCommand(command) {
   if (typeof command === 'string') {
     if (command.trim() === '') return { decision: COMMAND_DECISION.DENY, reason: 'EMPTY_RAW_COMMAND' };
@@ -200,38 +355,66 @@ function classifyCommand(command) {
       ? { decision: COMMAND_DECISION.DENY, reason: 'RAW_DESTRUCTIVE_COMMAND' }
       : { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'RAW_SHELL_NOT_AUTHORIZED' };
   }
+
   if (!validateStructuredCommand(command)) {
     return { decision: COMMAND_DECISION.DENY, reason: 'INVALID_STRUCTURED_COMMAND' };
   }
 
   const executable = executableName(command.executable);
+  const argsCanonical = command.args.map((arg) => canonicalizeLexicalCommand(arg));
   const argsLower = command.args.map((arg) => arg.toLowerCase());
+
   if (DESTRUCTIVE_EXECUTABLES.has(executable) || SHELL_OR_WRAPPER_EXECUTABLES.has(executable)) {
     return { decision: COMMAND_DECISION.DENY, reason: 'DESTRUCTIVE_OR_SHELL_EXECUTABLE' };
   }
+
   if (command.args.some((arg) => /\$\(|`|\|\||&&|[;|<>]/.test(arg))) {
     return { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'AMBIGUOUS_ARGUMENT_SYNTAX' };
   }
-  if (executable === 'find' && argsLower.some((arg) => arg === '-delete' || arg === '-exec')) {
+
+  if (executable === 'find' && (argsLower.includes('-delete') || argsLower.includes('-exec') || argsCanonical.includes('-delete') || argsCanonical.includes('-exec'))) {
     return { decision: COMMAND_DECISION.DENY, reason: 'DESTRUCTIVE_FIND_OPERATION' };
   }
-  if (executable === 'cp' && argsLower.includes('/dev/null')) {
+
+  if (executable === 'cp' && (argsLower.includes('/dev/null') || argsCanonical.includes('/dev/null'))) {
     return { decision: COMMAND_DECISION.DENY, reason: 'DESTRUCTIVE_NULL_COPY' };
   }
+
+  // Fuga de secretos en comandos estructurados
+  const isSecretReaderExecutable = [
+    'cat', 'type', 'get-content', 'gc', 'head', 'tail', 'more', 'less', 'grep', 'awk', 'sed', 'strings'
+  ].includes(executable);
+
+  const targetsSecrets = (arg) => {
+    const a = canonicalizeLexicalCommand(arg);
+    return a.includes('.env') || a.includes('id_rsa') || a.includes('id_ed25519') ||
+      a.endsWith('.key') || a.endsWith('.pem') || a.includes('.aws/credentials') ||
+      a.includes('.aws\\credentials') || a === 'env:';
+  };
+
+  if (isSecretReaderExecutable && (command.args.some(targetsSecrets))) {
+    return { decision: COMMAND_DECISION.DENY, reason: 'DESTRUCTIVE_OR_SHELL_EXECUTABLE' };
+  }
+
   if (executable === 'git') {
-    const subcommand = argsLower[0] || '';
+    const subcommand = argsCanonical[0] || argsLower[0] || '';
     return SAFE_GIT_SUBCOMMANDS.has(subcommand)
       ? { decision: COMMAND_DECISION.ALLOW, reason: 'STRUCTURED_READ_ONLY_GIT' }
       : { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'GIT_SUBCOMMAND_NOT_ALLOWLISTED' };
   }
+
   if (executable === 'node') {
-    return command.args.length === 1 && ['-v', '--version'].includes(argsLower[0])
+    return command.args.length === 1 && ['-v', '--version'].includes(argsCanonical[0] || argsLower[0])
       ? { decision: COMMAND_DECISION.ALLOW, reason: 'STRUCTURED_NODE_VERSION' }
       : { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'NODE_PROGRAM_NOT_ALLOWLISTED' };
   }
+
   return { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'EXECUTABLE_NOT_ALLOWLISTED' };
 }
 
+/**
+ * Ejecuta un comando estructurado exclusivamente si alcanzó la clasificación ALLOW.
+ */
 function executeStructuredCommand(command, options = {}) {
   const classification = classifyCommand(command);
   if (classification.decision !== COMMAND_DECISION.ALLOW) {
@@ -240,7 +423,11 @@ function executeStructuredCommand(command, options = {}) {
   const executor = typeof options.executor === 'function' ? options.executor : spawnSync;
   let execution;
   try {
-    execution = executor(command.executable, [...command.args], { cwd: command.cwd, shell: false });
+    execution = executor(command.executable, [...command.args], {
+      cwd: command.cwd,
+      shell: false,
+      windowsHide: true,
+    });
   } catch (_) {
     return Object.freeze({ status: 'EXECUTION_FAILED', exitCode: null });
   }
@@ -255,6 +442,11 @@ module.exports = {
   classifyCommand,
   executeStructuredCommand,
   validateStructuredCommand,
+  canonicalizeLexicalCommand,
+  rawLooksDestructive,
+  executableName,
+  DESTRUCTIVE_EXECUTABLES,
+  SHELL_OR_WRAPPER_EXECUTABLES,
 };
 
   };
@@ -3388,7 +3580,13 @@ class GovernanceDashboardGenerator {
     return `# 🛡️ Axion Protocol — Reporte de Gobernanza Agéntica
 
 **Fecha de Generación:** ${metrics.timestamp}
-**Protocolo:** Axion Protocol v1.2.0-beta.1 (Zero-Dependency)
+**Protocolo:** Axion Protocol v${(() => {
+    try {
+      return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')).version || 'unknown';
+    } catch (_) {
+      return 'unknown';
+    }
+  })()} (Zero-Dependency)
 
 ---
 
@@ -5012,14 +5210,27 @@ function sincronizarReadmeEs(totalSuites) {
 function sincronizarSitioWeb(totalSuites) {
   const rutaHtml = path.join(ROOT, 'docs', 'site', 'index.html');
   const rutaJs = path.join(ROOT, 'docs', 'site', 'script.js');
+  // La versión sale de package.json: los patrones con versión clavada dejaban de
+  // matchear en cuanto el site cambiaba de versión y la herramienta dejaba de
+  // actualizar el pill en silencio.
+  let version = 'unknown';
+  try {
+    version = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version || 'unknown';
+  } catch (_) {
+    version = 'unknown';
+  }
+  // Genérico: cualquier vX.Y.Z-... · N Suites PASS (v1.2.0-beta.1, v2.0.0-rc.1, …)
+  const patronPill = /v[0-9A-Za-z.-]+ · \d+ Suites PASS/g;
 
   if (fs.existsSync(rutaHtml)) {
     let html = fs.readFileSync(rutaHtml, 'utf8');
 
-    html = html.replace(/v1\.2\.0-beta\.1 · \d+ Suites PASS/g, `v1.2.0-beta.1 · ${totalSuites} Suites PASS`);
+    html = html.replace(patronPill, `${version} · ${totalSuites} Suites PASS`);
     html = html.replace(/GitHub · \d+\/\d+/g, `GitHub · ${totalSuites}/${totalSuites}`);
     html = html.replace(/<strong>\d+\/\d+<\/strong> suites PASS/g, `<strong>${totalSuites}/${totalSuites}</strong> suites PASS`);
     html = html.replace(/✓ \d+\/\d+ PASS<\/span> \d+ suites de prueba/g, `✓ ${totalSuites}/${totalSuites} PASS</span> ${totalSuites} suites de prueba`);
+    // Pills sin prefijo de versión (telemetry-text y afines).
+    html = html.replace(/\d+ Suites PASS/g, `${totalSuites} Suites PASS`);
 
     fs.writeFileSync(rutaHtml, html, 'utf8');
   }
@@ -5027,10 +5238,13 @@ function sincronizarSitioWeb(totalSuites) {
   if (fs.existsSync(rutaJs)) {
     let js = fs.readFileSync(rutaJs, 'utf8');
 
-    js = js.replace(/statusPill:\s*'v1\.2\.0-beta\.1 · \d+ Suites PASS'/g, `statusPill: 'v1.2.0-beta.1 · ${totalSuites} Suites PASS'`);
+    js = js.replace(/statusPill:\s*'v[0-9A-Za-z.-]+ · \d+ Suites PASS'/g, `statusPill: '${version} · ${totalSuites} Suites PASS'`);
     js = js.replace(/statSuites:\s*'<strong>\d+\/\d+<\/strong> suites PASS'/g, `statSuites: '<strong>${totalSuites}/${totalSuites}</strong> suites PASS'`);
     js = js.replace(/Executes \d+ automated test suites/g, `Executes ${totalSuites} automated test suites`);
     js = js.replace(/Ejecuta \d+ suites de prueba automáticas/g, `Ejecuta ${totalSuites} suites de prueba automáticas`);
+    // Telemetría sin prefijo de versión e historial de ejecuciones stale.
+    js = js.replace(/telemetryStatus: '\d+ Suites PASS'/g, `telemetryStatus: '${totalSuites} Suites PASS'`);
+    js = js.replace(/\d+\/\d+ suites PASS \(0 FAIL/g, `${totalSuites}/${totalSuites} suites PASS (0 FAIL`);
 
     fs.writeFileSync(rutaJs, js, 'utf8');
   }
@@ -5075,6 +5289,1489 @@ module.exports = { contarSuites, sincronizarTodo };
 
   };
 
+  __modules['tools/drive_metacognitive_sentinel.js'] = function(module, exports, require) {
+'use strict';
+
+/**
+ * Axion Protocol — Drive Metacognitive Sentinel Engine (M_META_001)
+ *
+ * Módulo metacognitivo de segundo orden para el motor /drive:
+ * 1. Detector heurístico de oscilación cíclica de mutaciones (Ping-Pong Loop Guard).
+ * 2. Guardián estricto de blast radius en Fast-Loop: previene bypass en archivos críticos.
+ * 3. Compactador de telemetría de fallos y poda de contexto (Token Economy Preservation).
+ * 4. Validador de no-tautología en pruebas y verificador formal de fase RED de TDD.
+ * 5. Emisión de DriveMetacognitiveReport_v1 sellado con SHA-256.
+ *
+ * Cero dependencias externas.
+ */
+
+const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
+
+const ROOT = path.resolve(__dirname, '..');
+
+const CRITICAL_SYSTEM_PATTERNS = [
+  /^tools\/(drive_engine|drive_metacognitive_sentinel|workflow_runner|workflow_state_machine)\.js$/i,
+  /^tools\/(killswitch|agent_shield|vibeguard_gate|fuzzer|preflight_validator|preflight)\.js$/i,
+  /^tools\/(attest|dsse|ed25519|canonical_json|evidence_hasher|crypto|key_revocation|key_rotation|approval_ed25519|check_ed25519)/i,
+  /^tools\/(repo_attestation_generator|sbom_sovereign_generator|bundle_compiler|sync_mirror_gate)\.js$/i,
+  /package(-lock)?\.json$/i,
+  /opencode\.json$/i,
+  /(^|\/)\.git\/hooks\//i,
+  /(^|\/)\.github\/workflows\//i,
+  /^tools\/git_governance_hook\.js$/i,
+  /^policies\//i,
+  /^schemas\//i,
+  /(^|\/)\.axion\//i,
+  /^bin\//i
+];
+
+class DriveMetacognitiveSentinel {
+  constructor(options = {}) {
+    this.projectRoot = path.resolve(options.projectRoot || ROOT);
+    this.history = [];
+    this.errorHistory = [];
+  }
+
+  /**
+   * Limpia el rastreador de ciclos y memoria de oscilación.
+   */
+  clearCycleTracker() {
+    this.history = [];
+    this.errorHistory = [];
+  }
+
+  /**
+   * Calcula un hash SHA-256 canónico y determinista para un descriptor de estado.
+   */
+  _hashState(state) {
+    if (state === null || state === undefined) {
+      return null;
+    }
+
+    if (typeof state === 'string') {
+      return crypto.createHash('sha256').update(state).digest('hex');
+    }
+
+    if (typeof state === 'object') {
+      try {
+        const sortedObj = {};
+        const keys = Object.keys(state).sort();
+        for (const k of keys) {
+          sortedObj[k] = state[k];
+        }
+        return crypto.createHash('sha256').update(JSON.stringify(sortedObj)).digest('hex');
+      } catch (_) {
+        return crypto.createHash('sha256').update(String(state)).digest('hex');
+      }
+    }
+
+    return crypto.createHash('sha256').update(String(state)).digest('hex');
+  }
+
+  /**
+   * Registra el estado de mutación de una iteración y comprueba si existe oscilación cíclica.
+   */
+  recordMutationState(state, metadata = {}) {
+    const stateDigest = this._hashState(state);
+    const currentIteration = this.history.length + 1;
+
+    // 1. Detección de ciclo de estados
+    let priorIndex = -1;
+    let isStateCycle = false;
+    let stateCycleLength = 0;
+
+    if (stateDigest !== null) {
+      priorIndex = this.history.findIndex((h) => h.stateDigest !== null && h.stateDigest === stateDigest);
+      if (priorIndex !== -1) {
+        isStateCycle = true;
+        stateCycleLength = currentIteration - (priorIndex + 1);
+      }
+    }
+
+    // 2. Detección de oscilación cíclica de firmas de error (Ping-Pong: Error A -> Error B -> Error A -> Error B)
+    let hasErrorOscillation = false;
+    if (metadata && metadata.errorSignature) {
+      this.errorHistory.push(String(metadata.errorSignature).trim());
+      const len = this.errorHistory.length;
+      if (len >= 4) {
+        // Oscilación de período 2: A -> B -> A -> B
+        if (
+          this.errorHistory[len - 1] === this.errorHistory[len - 3] &&
+          this.errorHistory[len - 2] === this.errorHistory[len - 4] &&
+          this.errorHistory[len - 1] !== this.errorHistory[len - 2]
+        ) {
+          hasErrorOscillation = true;
+        }
+      }
+      if (!hasErrorOscillation && len >= 6) {
+        // Oscilación de período 3: A -> B -> C -> A -> B -> C
+        if (
+          this.errorHistory[len - 1] === this.errorHistory[len - 4] &&
+          this.errorHistory[len - 2] === this.errorHistory[len - 5] &&
+          this.errorHistory[len - 3] === this.errorHistory[len - 6] &&
+          (this.errorHistory[len - 1] !== this.errorHistory[len - 2] || this.errorHistory[len - 2] !== this.errorHistory[len - 3])
+        ) {
+          hasErrorOscillation = true;
+        }
+      }
+    }
+
+    const isOscillating = isStateCycle || hasErrorOscillation;
+    const cycleDetected = isOscillating;
+    const cycleLength = isStateCycle ? stateCycleLength : (hasErrorOscillation ? 2 : 0);
+    const recommendation = isOscillating ? 'ABORT_CYCLE_DETECTED' : undefined;
+
+    const record = {
+      iteration: currentIteration,
+      stateDigest,
+      metadata,
+      timestamp: Date.now()
+    };
+    this.history.push(record);
+
+    if (isOscillating) {
+      return {
+        isOscillating: true,
+        cycleDetected: true,
+        cycleLength,
+        priorIteration: isStateCycle ? (priorIndex + 1) : Math.max(1, currentIteration - cycleLength),
+        currentIteration,
+        recommendation,
+        stateDigest,
+        hasErrorOscillation,
+        reason: isStateCycle
+          ? `Ciclo de estados de mutación detectado (longitud ${stateCycleLength}, repite iteración ${priorIndex + 1})`
+          : 'Oscilación de firmas de error (Ping-Pong Loop) detectada entre reintentos'
+      };
+    }
+
+    return {
+      isOscillating: false,
+      cycleDetected: false,
+      iteration: currentIteration,
+      stateDigest,
+      hasErrorOscillation: false
+    };
+  }
+
+  /**
+   * Clasifica si un archivo pertenece al núcleo crítico o estructural del sistema.
+   */
+  isCriticalFile(filePath) {
+    if (!filePath || typeof filePath !== 'string') return false;
+    let relPath = filePath.trim();
+    try {
+      const absPath = path.resolve(this.projectRoot, relPath);
+      relPath = path.relative(this.projectRoot, absPath);
+    } catch (_err) {
+      // Si la resolución relativa falla por formato de URI o permisos, preservar relPath intacto
+    }
+
+    let norm = relPath.split(path.sep).join('/').replace(/^\.\//, '').trim();
+
+    return CRITICAL_SYSTEM_PATTERNS.some((pattern) => pattern.test(norm));
+  }
+
+  /**
+   * Evalúa la seguridad de ejecutar en Fast-Loop según el conjunto de archivos afectados.
+   */
+  evaluateFastLoopSafety(files = [], options = {}) {
+    const list = Array.isArray(files) ? files : [files].filter(Boolean);
+    const criticalFiles = list.filter((f) => this.isCriticalFile(f));
+
+    if (criticalFiles.length > 0) {
+      return {
+        allowed: false,
+        escalatedMode: 'DEEP_LOOP',
+        reason: 'CRITICAL_FILE_PROTECTED',
+        requiresDeliberation: true,
+        criticalFiles,
+        blastRadius: 'SYSTEMIC_CRITICAL'
+      };
+    }
+
+    if (list.length > 2) {
+      return {
+        allowed: false,
+        escalatedMode: 'DEEP_LOOP',
+        reason: 'MULTI_FILE_CHANGE',
+        requiresDeliberation: true,
+        criticalFiles: [],
+        blastRadius: 'MODERATE_MULTI_FILE'
+      };
+    }
+
+    if (options.isStructural || options.hasSecurityRisk) {
+      return {
+        allowed: false,
+        escalatedMode: 'DEEP_LOOP',
+        reason: 'STRUCTURAL_OR_SECURITY_FLAG',
+        requiresDeliberation: true,
+        criticalFiles: [],
+        blastRadius: 'DECLARED_HIGH'
+      };
+    }
+
+    return {
+      allowed: true,
+      mode: 'FAST_LOOP',
+      reason: 'SAFE_ATOMIC_LOCAL_CHANGE',
+      requiresDeliberation: false,
+      criticalFiles: [],
+      blastRadius: 'LOW_LOCAL'
+    };
+  }
+
+  /**
+   * Poda quirúrgica de telemetría de fallos para evitar el desbordamiento de ventana de contexto.
+   */
+  compactFailureTelemetry(rawStdout = '', options = {}) {
+    const maxContextLines = options.maxContextLines || 25;
+    const raw = String(rawStdout || '');
+    if (!raw.trim()) {
+      return {
+        originalTokens: 0,
+        compactedTokens: 0,
+        savedTokens: 0,
+        savingsPercent: 0,
+        compactedOutput: '',
+        digest: crypto.createHash('sha256').update('').digest('hex')
+      };
+    }
+
+    const stripAnsi = (str) => str.replace(/\u001b\[[0-9;]*m/g, '');
+    const originalTokens = Math.ceil(raw.length / 4);
+    const lines = raw.split('\n');
+
+    let passLinesCount = 0;
+    const errorSection = [];
+    let capturing = false;
+
+    for (const line of lines) {
+      const clean = stripAnsi(line);
+      if (/FAIL|ERR_ASSERTION|AssertionError|Error:/.test(clean)) {
+        capturing = true;
+      }
+      if (capturing) {
+        errorSection.push(line);
+        if (errorSection.length >= maxContextLines) {
+          capturing = false;
+        }
+      } else if (/^\s*(✓|PASS)/.test(clean)) {
+        passLinesCount++;
+      }
+    }
+
+    const summaryLines = lines.filter((l) =>
+      /RESUMEN|TOTAL|suites totales|en verde|Tiempo:|EXIT CODE/i.test(stripAnsi(l))
+    );
+
+    const omittedPass = passLinesCount > 0
+      ? passLinesCount
+      : Math.max(0, lines.length - errorSection.length - summaryLines.length);
+
+    const compactedLines = [
+      '=== [DriveMetacognitiveSentinel] Telemetría Quirúrgica Compactada ===',
+      ...errorSection.slice(0, maxContextLines),
+      omittedPass > 0 ? `⚠️ (${omittedPass} líneas de PASS omitidas / podadas para preservación de tokens)` : null,
+      ...summaryLines
+    ].filter(Boolean);
+
+    const compactedOutput = compactedLines.join('\n');
+    const compactedTokens = Math.max(1, Math.ceil(compactedOutput.length / 4));
+    const savedTokens = Math.max(0, originalTokens - compactedTokens);
+    const savingsPercent = originalTokens > 0
+      ? Number(((savedTokens / originalTokens) * 100).toFixed(1))
+      : 0;
+
+    const digest = crypto.createHash('sha256').update(compactedOutput).digest('hex');
+
+    return {
+      originalTokens,
+      compactedTokens,
+      savedTokens,
+      savingsPercent,
+      compactedOutput,
+      digest
+    };
+  }
+
+  /**
+   * Genera un hunk diferencial compacto y verifica su reversibilidad.
+   */
+  compactMutationDiff(originalContent = '', modifiedContent = '', options = {}) {
+    try {
+      const DiffTokenCompactor = require('./diff_token_compactor.js');
+      const compactor = new DiffTokenCompactor({ projectRoot: this.projectRoot });
+      const hunk = compactor.createHunk(originalContent, modifiedContent, options);
+      return {
+        diffText: hunk.diffText,
+        isReversibleVerified: hunk.isReversibleVerified,
+        originalTokens: hunk.originalTokens,
+        diffTokens: hunk.diffTokens,
+        savedTokens: hunk.tokensSaved,
+        savingsPercent: parseFloat(hunk.reductionPercent || '0'),
+        reportDigest: hunk.reportDigest
+      };
+    } catch (_) {
+      // Fallback nativo
+      const orig = String(originalContent || '');
+      const mod = String(modifiedContent || '');
+      const diffText = `--- original\n+++ modified\n-  ${orig.trim()}\n+  ${mod.trim()}\n`;
+      const isReversibleVerified = (orig !== mod);
+      const originalTokens = Math.ceil(orig.length / 4);
+      const diffTokens = Math.ceil(diffText.length / 4);
+      const savedTokens = Math.max(0, originalTokens - diffTokens);
+      const digest = crypto.createHash('sha256').update(diffText).digest('hex');
+      return {
+        diffText,
+        isReversibleVerified,
+        originalTokens,
+        diffTokens,
+        savedTokens,
+        savingsPercent: originalTokens > 0 ? Number(((savedTokens / originalTokens) * 100).toFixed(1)) : 0,
+        reportDigest: digest
+      };
+    }
+  }
+
+  /**
+   * Valida que una prueba no contenga aserciones tautológicas o vacías.
+   */
+  validateTestNonTautology(testSourceCode = '') {
+    const src = String(testSourceCode || '');
+    const violations = [];
+
+    const lines = src.split('\n');
+    let assertionCount = 0;
+
+    lines.forEach((line, idx) => {
+      const lineNum = idx + 1;
+      const trimmed = line.trim();
+
+      if (/assert\.(ok|strictEqual|deepStrictEqual|equal|deepEqual|notStrictEqual|notEqual|match)|expect\(/.test(trimmed)) {
+        assertionCount++;
+      }
+
+      // 1. assert.ok(true) o assert(true) o assert.ok(1)
+      if (/assert(\.ok)?\(\s*(true|1)\s*[,)]/.test(trimmed)) {
+        violations.push({
+          type: 'TAUTOLOGICAL_BOOLEAN_LITERAL',
+          snippet: trimmed,
+          line: lineNum
+        });
+      }
+
+      // 2. assert.strictEqual(X, X) o assert.deepStrictEqual(X, X) con literales u operandos idénticos
+      const matchEqual = trimmed.match(/assert\.(strictEqual|deepStrictEqual|equal|deepEqual)\(\s*([^,]+?)\s*,\s*([^,)]+?)\s*[,)]/);
+      if (matchEqual) {
+        const lhs = matchEqual[2].trim();
+        const rhs = matchEqual[3].trim();
+        if (lhs === rhs) {
+          violations.push({
+            type: 'TAUTOLOGICAL_IDENTICAL_OPERANDS',
+            snippet: trimmed,
+            line: lineNum
+          });
+        }
+      }
+
+      // 3. assert.strictEqual(typeof X, '...') sin comprobación posterior de valor
+      const matchTypeof = trimmed.match(/assert\.(strictEqual|equal)\(\s*typeof\s+([a-zA-Z0-9_$]+)\s*,\s*['"]\w+['"]\s*[,)]/);
+      if (matchTypeof) {
+        const varName = matchTypeof[2];
+        const subsequentLines = lines.slice(idx + 1);
+        const nonTypeofSubsequent = subsequentLines.filter((l) => !new RegExp(`typeof\\s+${varName}\\b`).test(l));
+        const hasValueCheck = nonTypeofSubsequent.some((l) =>
+          new RegExp(`assert\\.[a-zA-Z]+\\([^)]*\\b${varName}\\b`).test(l) ||
+          new RegExp(`expect\\(\\s*${varName}\\b`).test(l)
+        );
+        if (!hasValueCheck) {
+          violations.push({
+            type: 'VACUOUS_TYPEOF_WITHOUT_VALUE_CHECK',
+            snippet: trimmed,
+            line: lineNum
+          });
+        }
+      }
+    });
+
+    if (assertionCount === 0) {
+      violations.push({
+        type: 'ZERO_ASSERTIONS',
+        snippet: 'No se encontraron aserciones ejecutables en la prueba',
+        line: 1
+      });
+    }
+
+    const isTautological = violations.length > 0;
+    const isValid = !isTautological;
+
+    return {
+      isValid,
+      isTautological,
+      violations,
+      assertionCount
+    };
+  }
+
+  /**
+   * Comprueba formalmente que una prueba cumpla la fase RED de TDD al ejecutarse contra una línea base no implementada.
+   */
+  verifyRedPhase(testRunnerFn, options = {}) {
+    if (typeof testRunnerFn !== 'function') {
+      return {
+        validRedPhase: false,
+        passedBaseline: false,
+        reason: 'INVALID_TEST_RUNNER',
+        warning: 'testRunnerFn debe ser una función ejecutable.'
+      };
+    }
+
+    try {
+      testRunnerFn();
+      // Si pasa en la línea base no implementada, es un falso verde / tautología
+      return {
+        validRedPhase: false,
+        passedBaseline: true,
+        reason: 'TAUTOLOGICAL_OR_PRE_PASSING',
+        warning: 'La prueba pasa sobre la línea base sin implementar — riesgo de falso verde.'
+      };
+    } catch (err) {
+      // Falló como corresponde en la fase RED
+      return {
+        validRedPhase: true,
+        passedBaseline: false,
+        status: 'GENUINE_RED_PHASE_VERIFIED',
+        failureReason: err.message
+      };
+    }
+  }
+
+  /**
+   * Verifica la integridad criptográfica y no ambigüedad del IntentContract (Fase 1: Socratic Intent Gate).
+   */
+  verifyIntentContract(contractOrRoot) {
+    let contract = null;
+    if (contractOrRoot && typeof contractOrRoot === 'object') {
+      contract = contractOrRoot;
+    } else {
+      const root = typeof contractOrRoot === 'string' ? contractOrRoot : this.projectRoot;
+      const contractPath = path.join(root, '.axion', 'state', 'intent-contract.json');
+      if (!fs.existsSync(contractPath)) {
+        return {
+          isValid: false,
+          status: 'MISSING_CONTRACT',
+          contract: null,
+          digest: null,
+          reason: 'No se encontró el contrato de intención sellado en .axion/state/intent-contract.json'
+        };
+      }
+      try {
+        contract = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
+      } catch (err) {
+        return {
+          isValid: false,
+          status: 'CORRUPTED_JSON',
+          contract: null,
+          digest: null,
+          reason: `Error al parsear el contrato de intención: ${err.message}`
+        };
+      }
+    }
+
+    if (!contract || typeof contract !== 'object') {
+      return {
+        isValid: false,
+        status: 'INVALID_CONTRACT_STRUCTURE',
+        contract: null,
+        digest: null,
+        reason: 'El contrato de intención no es un objeto válido.'
+      };
+    }
+
+    const requiredFields = ['contract_id', 'summary', 'expectedBehavior', 'scopeBoundary', 'digest'];
+    const missing = requiredFields.filter((f) => !contract[f] || typeof contract[f] !== 'string' || !contract[f].trim());
+    if (missing.length > 0) {
+      return {
+        isValid: false,
+        status: 'AMBIGUOUS_SCOPE',
+        contract,
+        digest: contract.digest || null,
+        reason: `Contrato ambiguo o incompleto: faltan campos obligatorios (${missing.join(', ')}).`
+      };
+    }
+
+    const { isAmbiguousScope } = require('./intent_clarifier.js');
+    if (isAmbiguousScope(contract.scopeBoundary)) {
+      return {
+        isValid: false,
+        status: 'AMBIGUOUS_BLAST_RADIUS',
+        contract,
+        digest: contract.digest || null,
+        reason: 'El límite de alcance (scopeBoundary) es ambiguo o excesivamente amplio.'
+      };
+    }
+
+    const { hashCanonical } = require('./canonical_json.js');
+    const { digest, ...payload } = contract;
+    const computedDigest = hashCanonical(payload);
+
+    if (digest !== computedDigest) {
+      return {
+        isValid: false,
+        status: 'CORRUPTED_DIGEST',
+        contract,
+        digest,
+        computedDigest,
+        reason: 'El digest SHA-256 no coincide con el payload canónico RFC 8785 (posible alteración o manipulación).'
+      };
+    }
+
+    return {
+      isValid: true,
+      status: 'SEALED_VALID',
+      contract,
+      digest,
+      reason: 'Contrato de intención íntegro y sellado canónicamente con SHA-256.'
+    };
+  }
+
+  /**
+   * Audita la seguridad de un comando de terminal mediante preflight (v3.0.0 — Fase 3: Terminal Safety Shield).
+   */
+  auditPreflightCommand(command) {
+    const { classifyCommand, COMMAND_DECISION } = require('./structured_command.js');
+    const classification = classifyCommand(command);
+    const isAllowed = classification.decision === COMMAND_DECISION.ALLOW;
+    return {
+      isValid: isAllowed,
+      decision: classification.decision,
+      reason: classification.reason,
+      status: classification.decision === COMMAND_DECISION.DENY
+        ? 'REJECTED_DESTRUCTIVE_COMMAND'
+        : (classification.decision === COMMAND_DECISION.NEEDS_HUMAN_REVIEW
+          ? 'ESCALATED_UNSTRUCTURED_COMMAND'
+          : 'APPROVED_STRUCTURED_COMMAND')
+    };
+  }
+
+  /**
+   * Ejecuta una auditoría metacognitiva holística de segundo orden para una tarea de /drive.
+   */
+  runMetacognitiveAudit(options = {}) {
+    const fastLoopSafety = this.evaluateFastLoopSafety(options.files || [], options);
+    const testValidation = options.testSourceCode
+      ? this.validateTestNonTautology(options.testSourceCode)
+      : { isValid: true, isTautological: false, violations: [] };
+
+    const telemetryCompacted = options.terminalOutput
+      ? this.compactFailureTelemetry(options.terminalOutput, options)
+      : { savedTokens: 0, savingsPercent: 0 };
+
+    let intentValidation = { isValid: true, status: 'SKIPPED' };
+    let preflightValidation = { isValid: true, status: 'SKIPPED' };
+    let status = 'APPROVED';
+
+    if (options.checkIntentContract || options.intentContract) {
+      intentValidation = this.verifyIntentContract(options.intentContract || this.projectRoot);
+      if (!intentValidation.isValid) {
+        if (intentValidation.status === 'CORRUPTED_DIGEST') {
+          status = 'REJECTED_CORRUPTED_CONTRACT';
+        } else if (intentValidation.status === 'MISSING_CONTRACT') {
+          status = 'REJECTED_UNSEALED_CONTRACT';
+        } else {
+          status = 'ESCALATED_AMBIGUOUS_INTENT';
+        }
+      }
+    }
+
+    if (options.command) {
+      preflightValidation = this.auditPreflightCommand(options.command);
+      if (!preflightValidation.isValid && status === 'APPROVED') {
+        status = preflightValidation.status;
+      }
+    }
+
+    if (status === 'APPROVED') {
+      if (!fastLoopSafety.allowed) {
+        status = 'ESCALATED_DEEP_LOOP';
+      } else if (!testValidation.isValid) {
+        status = 'REJECTED_TAUTOLOGICAL_TEST';
+      }
+    }
+
+    const payload = JSON.stringify({
+      status,
+      fastLoopSafety,
+      testValidation: {
+        isValid: testValidation.isValid,
+        violationsCount: testValidation.violations ? testValidation.violations.length : 0
+      },
+      telemetrySavedTokens: telemetryCompacted.savedTokens,
+      intentValidation: {
+        isValid: intentValidation.isValid,
+        status: intentValidation.status
+      },
+      preflightValidation: {
+        isValid: preflightValidation.isValid,
+        status: preflightValidation.status
+      },
+      timestamp: new Date().toISOString()
+    });
+
+    const reportDigest = crypto.createHash('sha256').update(payload).digest('hex');
+
+    return {
+      reportType: 'DriveMetacognitiveReport_v1',
+      timestamp: new Date().toISOString(),
+      status,
+      evaluation: {
+        fastLoopSafety,
+        testValidation,
+        telemetryCompacted,
+        intentValidation,
+        preflightValidation
+      },
+      reportDigest
+    };
+  }
+}
+
+if (require.main === module) {
+  const sentinel = new DriveMetacognitiveSentinel();
+  console.log('[DriveMetacognitiveSentinel] Auditoría demostrativa:');
+  const audit = sentinel.runMetacognitiveAudit({
+    files: ['tools/drive_engine.js'],
+    testSourceCode: 'assert.ok(true);'
+  });
+  console.log(JSON.stringify(audit, null, 2));
+}
+
+module.exports = DriveMetacognitiveSentinel;
+
+  };
+
+  __modules['tools/intent_clarifier.js'] = function(module, exports, require) {
+'use strict';
+
+
+/**
+ * Axion Protocol — Intent Clarifier & Sealed Contract Engine (Fase 1: ENTENDER / v3.0.0)
+ * 
+ * Puerta socrática de intención previa a la ejecución en /drive:
+ * 1) Freno cognitivo obligatorio antes de planificar o programar (Cero código antes del contrato).
+ * 2) Exactamente 2 preguntas socráticas (Flujo principal + Estética/Densidad UX) con opciones A/B/C + Personalizada.
+ * 3) Persistencia atómica y sellado canónico RFC 8785 con SHA-256 en .axion/state/intent-contract.json.
+ * 4) Tratamiento de 'Content is Data' contra bypass de prompt injection.
+ * 5) Soporte integral de perfiles de usuario y normalización tolerante de dictado por voz (VOICE_DICTATION).
+ * 6) Integración bidireccional con /drive y DriveMetacognitiveSentinel.
+ * 7) Taxonomía cerrada de veredictos tipados de Línea 0.
+ * 
+ * Zero dependencias externas.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const { hashCanonical } = require('./canonical_json.js');
+
+const ROOT = path.resolve(__dirname, '..');
+
+const CLOSED_VERDICTS = [
+  'CONTRATO_SELLADO',
+  'PREGUNTAS_DESPLEGADAS',
+  'ESPECIFICIDAD_INFERIDA',
+  'PERFIL_VOZ_PROCESADO',
+  'CONTRATO_INVALIDO',
+  'ESCALACION_HUMANA'
+];
+
+const INJECTION_PATTERNS = [
+  /ignore\s+(all\s+)?(previous\s+)?instructions/i,
+  /olvida\s+(todas\s+)?(las\s+)?instrucciones/i,
+  /system\s+override/i,
+  /skip\s+(clarify|socratic|questions|freno)/i,
+  /sin\s+pregunt(ar|as)/i,
+  /no\s+hagas\s+preguntas/i,
+  /do\s+not\s+ask\s+(any\s+)?questions/i,
+  /act\s+as\s+if\s+already\s+clarified/i
+];
+
+function sanitizeForPromptInjection(text) {
+  if (!text || typeof text !== 'string') return { cleaned: '', hasInjection: false };
+  let hasInjection = false;
+  let cleaned = text;
+  for (const pattern of INJECTION_PATTERNS) {
+    if (pattern.test(cleaned)) {
+      hasInjection = true;
+      cleaned = cleaned.replace(pattern, ' ');
+    }
+  }
+  return { cleaned: cleaned.replace(/\s+/g, ' ').trim(), hasInjection };
+}
+
+function readUserProfile(projectRoot = ROOT) {
+  try {
+    const profilePath = path.join(projectRoot, '.axion', 'PROFILE.json');
+    if (fs.existsSync(profilePath)) {
+      return JSON.parse(fs.readFileSync(profilePath, 'utf8'));
+    }
+    const { getProfile } = require('./profile_adapter.js');
+    return getProfile(projectRoot);
+  } catch (_) {
+    // Si no está disponible el adaptador, perfil de fábrica
+    return {
+      technical_depth: 'VISIONARY',
+      input_mode: 'VOICE_DICTATION',
+      environment: 'IDE_GUI',
+      cadence: 'COMPLETE_BLOCK',
+      creative_autonomy: 'HIGH'
+    };
+  }
+}
+
+function escribirAtomico(rutaDestino, contenido) {
+  const dir = path.dirname(rutaDestino);
+  fs.mkdirSync(dir, { recursive: true });
+  const tmp = `${rutaDestino}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  fs.writeFileSync(tmp, contenido, 'utf8');
+  try {
+    fs.renameSync(tmp, rutaDestino);
+  } catch (err) {
+    // Fallback multiplataforma para colisiones de renombrado en disco
+    fs.copyFileSync(tmp, rutaDestino);
+    if (fs.existsSync(tmp)) {
+      fs.unlinkSync(tmp);
+    }
+  }
+}
+
+function appendCustomOption(optionsList) {
+  const customOption = {
+    name: 'Opción Personalizada (Dictado Libre)',
+    description: 'Escribir o describir libremente tu propio criterio, combinación de estilos o dirección exacta sin acotarte a las opciones sugeridas.'
+  };
+  return [...optionsList, customOption];
+}
+
+function getTailoredStyleOptions(productCategory) {
+  const lower = (productCategory || '').toLowerCase();
+  let baseOptions = [];
+
+  // 1. Si es Dashboard / Panel de Datos / Herramienta Interna
+  if (/dashboard|panel|datos|tabla|admin|métricas|control/i.test(lower)) {
+    baseOptions = [
+      {
+        name: 'Estilo Slate Dark de Alta Legibilidad (Recomendado)',
+        description: 'Fondo gris oscuro mate (#111827), bordes sutiles de 1px, tarjetas densas de métricas y alta legibilidad de texto.'
+      },
+      {
+        name: 'Estilo Corporate Light Limpio',
+        description: 'Fondo blanco/gris claro, alto contraste para jornadas largas de trabajo y tarjetas estructuradas.'
+      },
+      {
+        name: 'Estilo Minimalist Grid',
+        description: 'Estructura plana sin sombras ni degradados, máxima velocidad de carga e información priorizada.'
+      }
+    ];
+  } else if (/landing|presentación|sitio|oficial|promocional|producto|web/i.test(lower)) {
+    // 2. Si es Landing Page / Presentación / Sitio Web Oficial
+    baseOptions = [
+      {
+        name: 'Estilo Apple Glassmorphism Minimalista (Recomendado)',
+        description: 'Grises oscuros pulidos (#0b0f19), vidrio esmerilado sutil, tipografía limpia e Inter-spacing elegante sin orbes recargados.'
+      },
+      {
+        name: 'Estilo Cyber Glow & Neón',
+        description: 'Fondo oscuro con gradientes vibrantes (índigo/cyan), esferas ambientales flotantes y tarjetas con resplandor glow.'
+      },
+      {
+        name: 'Estilo Editorial de Alto Contraste',
+        description: 'Tipografía prominente, líneas finas de separación, tono blanco/negro sobrio y lectura estructurada.'
+      }
+    ];
+  } else if (/móvil|mobile|app|interactiva|touch/i.test(lower)) {
+    // 3. Si es App Móvil / Web App Interactiva
+    baseOptions = [
+      {
+        name: 'Estilo Fluid Touch Glass (Recomendado)',
+        description: 'Controles adaptados para pantalla táctil, bordes redondeados (16px), micro-transiciones suaves.'
+      },
+      {
+        name: 'Estilo Native Clean',
+        description: 'Aspecto nativo de sistema móvil, colores planos de alto contraste y respuesta inmediata.'
+      }
+    ];
+  } else {
+    // Opción por defecto para cualquier otra interfaz visual
+    baseOptions = [
+      {
+        name: 'Estilo Modern Dark Glass (Recomendado)',
+        description: 'Fondo oscuro sobrio, vidrio esmerilado de 1px y tipografía limpia.'
+      },
+      {
+        name: 'Estilo Sobrio y Minimalista',
+        description: 'Diseño plano de alto contraste sin animaciones de movimiento.'
+      }
+    ];
+  }
+
+  return appendCustomOption(baseOptions);
+}
+
+/**
+ * Detecta si una petición contiene suficiente especificidad técnica
+ * (rutas de archivo, comandos, flags, identificadores) como para no requerir preguntas socráticas.
+ * Aplica el principio Content is Data para ignorar intentos de prompt injection.
+ */
+function hasTechnicalSpecificity(text) {
+  if (!text || typeof text !== 'string') return false;
+
+  const { cleaned, hasInjection } = sanitizeForPromptInjection(text);
+  if (!cleaned) return false;
+
+  const hasFileOrPath = /\b[\w-]+\.(js|ts|json|md|html|css|py|sh|ps1|yml|yaml)\b|tools\/|\.agents\/|\.claude\/|\.opencode\/|tests\//i.test(cleaned);
+  const hasCodeIdentifiers = /--[\w-]+|\b(sha256|sha-256|ed25519|fuzzer|preflight|rollback|attestation|killswitch|ast|git|npm|node)\b/i.test(cleaned);
+  const hasSpecificQuantityOrMetric = /\b\d+\s+(vectores|ataques|archivos|líneas|suites|tests|comandos)\b/i.test(cleaned);
+
+  // Si hubo inyección hostil, exigimos ruta o archivo explícito o métrica para no ser engañados por palabras sueltas
+  if (hasInjection) {
+    return hasFileOrPath || hasSpecificQuantityOrMetric;
+  }
+
+  return hasFileOrPath || hasCodeIdentifiers || hasSpecificQuantityOrMetric;
+}
+
+function analyzeUserIntent(requestText, options = {}) {
+  const userProfile = options.userProfile || readUserProfile(options.projectRoot || ROOT);
+
+  if (!requestText || typeof requestText !== 'string' || requestText.trim() === '') {
+    const baseDirectionOptions = [
+      {
+        name: 'Opción A (Solución Ágil y Directa)',
+        description: 'Implementación directa y minimalista enfocada en la función principal.'
+      },
+      {
+        name: 'Opción B (Solución Completa y Guiada)',
+        description: 'Incluir validaciones avanzadas, recuperación e interfaz detallada.'
+      },
+      {
+        name: 'Opción C (Landing Page / Presentación)',
+        description: 'Página web visual de alto impacto para presentar la propuesta de valor.'
+      }
+    ];
+
+    return {
+      status: 'NEEDS_CLARIFICATION',
+      verdict: 'PREGUNTAS_DESPLEGADAS',
+      substep: 1,
+      reason: 'No se ingresó ninguna solicitud.',
+      questions: [
+        '1. ¿Qué objetivo funcional o flujo principal te gustaría construir?',
+        '2. ¿Qué estilo visual y densidad de interfaz prefieres?'
+      ],
+      options: appendCustomOption(baseDirectionOptions),
+      rawRequest: ''
+    };
+  }
+
+  const trimmed = requestText.trim();
+  const substep = options.substep || 1;
+  const productCategory = options.productCategory || trimmed;
+
+  const { cleaned, hasInjection } = sanitizeForPromptInjection(trimmed);
+  const effectiveWordCount = cleaned ? cleaned.split(/\s+/).filter(Boolean).length : 0;
+
+  const isTechnicallySpecific = hasTechnicalSpecificity(trimmed);
+  const vagueVerbs = ['haz', 'crea', 'arregla', 'mejora', 'modifica', 'pon', 'agrega', 'hacer', 'make', 'create', 'fix', 'build', 'do', 'add', 'change'];
+  const hasVagueVerb = vagueVerbs.some(v => new RegExp(`\\b${v}\\b`, 'i').test(trimmed));
+  const isTooVague = !options.selectedOptions && !isTechnicallySpecific && (hasInjection || effectiveWordCount < 6 || (hasVagueVerb && effectiveWordCount < 12));
+
+  if ((isTooVague || options.forceClarification) && !isTechnicallySpecific && !options.selectedOptions) {
+    if (substep === 1) {
+      const baseDirectionOptions = [
+        {
+          name: 'Opción A (Solución Ágil y Directa)',
+          description: 'Implementación directa y minimalista enfocada en la función principal.'
+        },
+        {
+          name: 'Opción B (Solución Completa y Guiada)',
+          description: 'Incluir validaciones avanzadas, recuperación e interfaz detallada.'
+        },
+        {
+          name: 'Opción C (Landing Page / Presentación)',
+          description: 'Página web visual de alto impacto para presentar la propuesta de valor.'
+        }
+      ];
+
+      return {
+        status: 'NEEDS_CLARIFICATION',
+        verdict: 'PREGUNTAS_DESPLEGADAS',
+        substep: 1,
+        substepName: 'Sub-paso 1: Dirección de Producto',
+        reason: hasInjection
+          ? 'Tratamiento Content is Data: intento de bypass o evasión de clarificación detectado y neutralizado.'
+          : 'Aclaración de dirección general de producto.',
+        injectionDetected: hasInjection,
+        questions: [
+          `1. ¿Qué experiencia o resultado visual esperas ver cuando "${cleaned || trimmed}" esté listo?`,
+          '2. ¿Hay alguna regla o comportamiento especial que debamos cuidar para el usuario?'
+        ],
+        options: appendCustomOption(baseDirectionOptions),
+        styleOptions: getTailoredStyleOptions(productCategory),
+        nextSubstepPrompt: 'Tras elegir la dirección, pasaremos al Sub-paso 2: Clarificación de Diseño & UX.',
+        rawRequest: trimmed
+      };
+    }
+
+    if (substep === 2) {
+      const styleOptions = getTailoredStyleOptions(productCategory);
+      return {
+        status: 'NEEDS_CLARIFICATION',
+        verdict: 'PREGUNTAS_DESPLEGADAS',
+        substep: 2,
+        substepName: 'Sub-paso 2: Clarificación de Diseño & UX (Filtrado Dinámico + Opción Personalizada)',
+        reason: `Aclaración estética adaptada dinámicamente al tipo de producto: "${productCategory}".`,
+        injectionDetected: hasInjection,
+        questions: [
+          '¿Qué estilo visual y densidad encaja mejor con tu producto?'
+        ],
+        options: styleOptions,
+        rawRequest: trimmed
+      };
+    }
+  }
+
+  // Solicitud detallada o técnicamente específica -> Emitir Contrato de Entendimiento
+  const summary = trimmed.length > 90 ? trimmed.substring(0, 90) + '...' : trimmed;
+
+  const now = new Date().toISOString();
+  const contract = {
+    contract_id: crypto.randomBytes(6).toString('hex'),
+    summary: summary,
+    rawRequest: trimmed,
+    expectedBehavior: isTechnicallySpecific
+      ? `Ejecutar la tarea técnica específica: "${trimmed}".`
+      : `Desarrollar "${trimmed}" respetando el tipo de producto, estilo visual y animaciones acordadas.`,
+    targetAudience: 'Usuario final / Desarrollador del sistema',
+    scopeBoundary: 'Cambios acotados exclusivamente al área técnica autorizada.',
+    selectedOptions: options.selectedOptions || 'Parámetros técnicos inferidos directamente de la instrucción.',
+    clarifiedAt: now,
+    signed_at: now
+  };
+
+  if (options.voiceMeta) {
+    contract.voiceMeta = options.voiceMeta;
+  }
+
+  // Pre-calcular digest canónico RFC 8785 garantizando validez criptográfica inmediata
+  const clone = { ...contract };
+  delete clone.digest;
+  contract.digest = hashCanonical(clone);
+
+  let persistResult = null;
+  if (options.persist !== false) {
+    persistResult = persistContract(contract, trimmed, options.projectRoot || ROOT);
+    if (persistResult && persistResult.digest) {
+      contract.digest = persistResult.digest;
+    }
+  }
+
+  let verdict = 'CONTRATO_SELLADO';
+  if (options.voiceMeta && options.voiceMeta.recognized) {
+    verdict = 'PERFIL_VOZ_PROCESADO';
+  } else if (isTechnicallySpecific && !options.selectedOptions) {
+    verdict = 'ESPECIFICIDAD_INFERIDA';
+  }
+
+  return {
+    status: 'INTENT_CLARIFIED',
+    verdict,
+    substep: 3,
+    injectionDetected: hasInjection,
+    intentContract: contract,
+    voiceMeta: options.voiceMeta || null,
+    rawRequest: trimmed,
+    persistResult
+  };
+}
+
+/**
+ * Persiste el IntentContract en .axion/state/intent-contract.json
+ */
+function persistContract(contract, rawRequest, projectRoot = ROOT) {
+  try {
+    const stateDir = path.join(projectRoot, '.axion', 'state');
+    const targetPath = path.join(stateDir, 'intent-contract.json');
+
+    const payload = {
+      ...contract,
+      rawRequest: contract.rawRequest || rawRequest || '',
+      signed_at: contract.signed_at || new Date().toISOString()
+    };
+    contract.rawRequest = payload.rawRequest;
+    contract.signed_at = payload.signed_at;
+
+    delete payload.digest;
+    const digest = hashCanonical(payload);
+    payload.digest = digest;
+    contract.digest = digest;
+
+    escribirAtomico(targetPath, JSON.stringify(payload, null, 2) + '\n');
+    return { success: true, targetPath, digest };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Parsea y normaliza respuestas verbales de dictado por voz (VOICE_DICTATION).
+ * Mapea expresiones naturales a opciones estructuradas (A, B, C, estilos).
+ */
+function parseVoiceDictation(voiceInput, options = {}) {
+  if (!voiceInput || typeof voiceInput !== 'string') {
+    return {
+      recognized: false,
+      inputMode: 'VOICE_DICTATION',
+      raw: '',
+      selections: {},
+      summary: 'Sin entrada de voz detectada.'
+    };
+  }
+
+  const raw = voiceInput.trim();
+  const lower = raw.toLowerCase();
+
+  const ordinalToLetter = {
+    'primera': 'A',
+    'primero': 'A',
+    'primer': 'A',
+    'first': 'A',
+    'segunda': 'B',
+    'segundo': 'B',
+    'second': 'B',
+    'tercera': 'C',
+    'tercero': 'C',
+    'third': 'C',
+    'cuarta': 'D',
+    'cuarto': 'D',
+    'fourth': 'D'
+  };
+
+  let q1 = null;
+  let q2 = null;
+
+  // 1. Patrones numerados: "1A 2B", "1: A, 2: B", "1A2B", "pregunta 1 la A, pregunta 2 la B", "question 1 option A"
+  const p1Match = raw.match(/(?:(?:pregunta|question)\s*)?1\s*[:.-]?\s*(?:(?:la|el|the)\s+)?(?:(?:opci[oó]n|option)\s+)?([A-D]|primera|primero|primer|first|segunda|segundo|second|tercera|tercero|third|cuarta|cuarto|fourth)(?:\s+(?:opci[oó]n|option))?\b/i);
+  const p2Match = raw.match(/(?:(?:pregunta|question)\s*)?2\s*[:.-]?\s*(?:(?:la|el|the)\s+)?(?:(?:opci[oó]n|option)\s+)?([A-D]|primera|primero|primer|first|segunda|segundo|second|tercera|tercero|third|cuarta|cuarto|fourth)(?:\s+(?:opci[oó]n|option))?\b/i);
+
+  if (p1Match) {
+    const val = p1Match[1].toUpperCase();
+    q1 = ordinalToLetter[p1Match[1].toLowerCase()] || (['A', 'B', 'C', 'D'].includes(val) ? val : null);
+  }
+  if (p2Match) {
+    const val = p2Match[1].toUpperCase();
+    q2 = ordinalToLetter[p2Match[1].toLowerCase()] || (['A', 'B', 'C', 'D'].includes(val) ? val : null);
+  }
+
+  // 2. Patrón de secuencia coordinada: "la primera opción y la segunda opción", "option A and option B", "first and second", "A y C"
+  if (!q1 && !q2) {
+    const seqMatch = raw.match(/(?:(?:la|el|the)\s+)?(?:(?:opci[oó]n|option)\s+)?([A-D]|primera|primero|primer|first|segunda|segundo|second|tercera|tercero|third|cuarta|cuarto|fourth)(?:\s+(?:opci[oó]n|option))?\s*(?:y|e|con|,|-|and)\s*(?:(?:la|el|the)\s+)?(?:(?:opci[oó]n|option)\s+)?([A-D]|primera|primero|primer|first|segunda|segundo|second|tercera|tercero|third|cuarta|cuarto|fourth)(?:\s+(?:opci[oó]n|option))?\b/i);
+    if (seqMatch) {
+      const v1 = seqMatch[1].toUpperCase();
+      const v2 = seqMatch[2].toUpperCase();
+      q1 = ordinalToLetter[seqMatch[1].toLowerCase()] || (['A', 'B', 'C', 'D'].includes(v1) ? v1 : null);
+      q2 = ordinalToLetter[seqMatch[2].toLowerCase()] || (['A', 'B', 'C', 'D'].includes(v2) ? v2 : null);
+    }
+  }
+
+  // 3. Selección única o primera parte
+  if (!q1) {
+    const firstPart = raw.match(/(?:^|\b)(?:(?:la|el|the)\s+)?(?:(?:opci[oó]n|option)\s+)?([A-D]|primera|primero|primer|first|segunda|segundo|second|tercera|tercero|third|cuarta|cuarto|fourth)(?:\s+(?:opci[oó]n|option))?\b/i);
+    if (firstPart) {
+      const val = firstPart[1].toUpperCase();
+      q1 = ordinalToLetter[firstPart[1].toLowerCase()] || (['A', 'B', 'C', 'D'].includes(val) ? val : null);
+    }
+  }
+
+  // 4. Mapeo semántico de estilos para q2
+  if (!q2) {
+    if (/slate\s*dark/i.test(lower)) q2 = 'Slate Dark';
+    else if (/corporate\s*light/i.test(lower)) q2 = 'Corporate Light';
+    else if (/minimalist|minimalista/i.test(lower)) q2 = 'Minimalista';
+    else if (/glassmorphism|apple/i.test(lower)) q2 = 'Apple Glassmorphism';
+    else if (/cyber\s*glow|ne[oó]n|neon/i.test(lower)) q2 = 'Cyber Glow';
+    else if (/fluid\s*touch/i.test(lower)) q2 = 'Fluid Touch Glass';
+  }
+
+  const recognized = Boolean(q1 || q2);
+  const selections = {};
+  if (q1) selections.q1 = q1;
+  if (q2) selections.q2 = q2;
+
+  let summary = '';
+  if (q1 && q2) {
+    summary = `Pregunta 1: Opción ${q1} | Pregunta 2: Opción ${q2}`;
+  } else if (q1) {
+    summary = `Pregunta 1: Opción ${q1}`;
+  } else if (q2) {
+    summary = `Pregunta 2: Opción ${q2}`;
+  } else {
+    summary = raw;
+  }
+
+  return {
+    recognized,
+    inputMode: 'VOICE_DICTATION',
+    raw,
+    q1,
+    q2,
+    choiceQ1: q1,
+    choiceQ2: q2,
+    selections,
+    summary
+  };
+}
+
+/**
+ * Valida formalmente la estructura y la integridad criptográfica SHA-256 de un IntentContract.
+ */
+function validateContract(contract) {
+  if (!contract || typeof contract !== 'object') {
+    return {
+      isValid: false,
+      verdict: 'CONTRATO_INVALIDO',
+      status: 'INVALID_CONTRACT_STRUCTURE',
+      reason: 'El contrato de intención no es un objeto válido.'
+    };
+  }
+
+  const requiredFields = ['contract_id', 'summary', 'expectedBehavior', 'scopeBoundary', 'digest'];
+  const missing = requiredFields.filter((f) => !contract[f] || typeof contract[f] !== 'string' || !contract[f].trim());
+  if (missing.length > 0) {
+    return {
+      isValid: false,
+      verdict: 'CONTRATO_INVALIDO',
+      status: 'MISSING_FIELDS',
+      reason: `Campos obligatorios ausentes o vacíos: ${missing.join(', ')}.`
+    };
+  }
+
+  const clone = { ...contract };
+  const storedDigest = clone.digest;
+  delete clone.digest;
+  const computed = hashCanonical(clone);
+
+  if (storedDigest !== computed) {
+    return {
+      isValid: false,
+      verdict: 'CONTRATO_INVALIDO',
+      status: 'CORRUPTED_DIGEST',
+      reason: 'El digest SHA-256 no coincide con el hash canónico RFC 8785 (posible alteración o manipulación).',
+      storedDigest,
+      computedDigest: computed
+    };
+  }
+
+  return {
+    isValid: true,
+    verdict: 'CONTRATO_SELLADO',
+    status: 'SEALED_VALID',
+    contract,
+    digest: storedDigest
+  };
+}
+
+/**
+ * Verifica la invariante fundamental de 'Cero código antes del contrato'.
+ */
+function verifyContractBeforeCode(projectRoot = ROOT) {
+  const contractPath = path.join(projectRoot, '.axion', 'state', 'intent-contract.json');
+  if (!fs.existsSync(contractPath)) {
+    return {
+      allowed: false,
+      verdict: 'CONTRATO_INVALIDO',
+      status: 'NO_CONTRACT_IN_DISK',
+      reason: 'Cero código antes del contrato: no existe .axion/state/intent-contract.json en disco.'
+    };
+  }
+
+  try {
+    const raw = fs.readFileSync(contractPath, 'utf8');
+    const parsed = JSON.parse(raw);
+    const validation = validateContract(parsed);
+    if (!validation.isValid) {
+      return {
+        allowed: false,
+        verdict: 'CONTRATO_INVALIDO',
+        status: 'TAMPERED_OR_CORRUPT',
+        reason: validation.reason
+      };
+    }
+    return {
+      allowed: true,
+      verdict: 'CONTRATO_SELLADO',
+      status: 'CONTRACT_VERIFIED',
+      contract: validation.contract,
+      digest: validation.digest
+    };
+  } catch (err) {
+    return {
+      allowed: false,
+      verdict: 'CONTRATO_INVALIDO',
+      status: 'PARSE_ERROR',
+      reason: `Error al leer o parsear contrato: ${err.message}`
+    };
+  }
+}
+
+/**
+ * Comprueba si el límite de alcance (scopeBoundary) es ambiguo o excesivamente amplio.
+ */
+function isAmbiguousScope(scopeBoundary) {
+  if (!scopeBoundary || typeof scopeBoundary !== 'string') return true;
+  const lower = scopeBoundary.toLowerCase().trim();
+  if (lower.length < 5) return true;
+  return (
+    lower.includes('todo el sistema') ||
+    lower.includes('todo el repositorio') ||
+    lower.includes('todos los archivos') ||
+    lower.includes('cualquier archivo') ||
+    lower.includes('cualquier cosa') ||
+    lower.includes('all files') ||
+    lower.includes('whole repository') ||
+    lower.includes('whole system') ||
+    lower.includes('*')
+  );
+}
+
+/**
+ * Audita el contrato de intención listo para alimentar la fase F0/F1 de /drive.
+ */
+function auditContractForDrive(projectRoot = ROOT) {
+  const check = verifyContractBeforeCode(projectRoot);
+  if (!check.allowed) {
+    return {
+      readyForDrive: false,
+      verdict: check.verdict,
+      status: check.status,
+      reason: check.reason,
+      contract: null,
+      digest: null
+    };
+  }
+
+  const contract = check.contract;
+  if (isAmbiguousScope(contract.scopeBoundary)) {
+    return {
+      readyForDrive: false,
+      verdict: 'ESCALACION_HUMANA',
+      status: 'AMBIGUOUS_BLAST_RADIUS',
+      reason: 'El límite de alcance (scopeBoundary) es ambiguo o excesivamente amplio.',
+      contract,
+      digest: check.digest
+    };
+  }
+
+  return {
+    readyForDrive: true,
+    verdict: 'CONTRATO_SELLADO',
+    status: 'READY_FOR_DRIVE',
+    contract,
+    digest: check.digest,
+    reason: 'Contrato verificado con SHA-256 canónico y delimitado para F0/F1 de /drive.'
+  };
+}
+
+/**
+ * Formatea la declaración tipada de veredicto en Línea 0.
+ */
+function formatLineZeroVerdict(verdict, details = {}) {
+  if (!CLOSED_VERDICTS.includes(verdict)) {
+    throw new Error(`Veredicto desconocido: "${verdict}". Debe ser uno de: ${CLOSED_VERDICTS.join(', ')}`);
+  }
+
+  const lines = [`VEREDICTO: ${verdict}`];
+  if (details.summary) lines.push(`- Resumen: ${details.summary}`);
+  if (details.digest) lines.push(`- Digest SHA-256: ${details.digest}`);
+  if (details.reason) lines.push(`- Razón: ${details.reason}`);
+  return lines.join('\n');
+}
+
+/**
+ * Sella explícitamente una decisión tomada por el usuario, soportando voz y texto.
+ */
+function sealIntent(requestText, selectedOptions, projectRootOrOptions = ROOT) {
+  let projectRoot = ROOT;
+  let voiceMeta = null;
+  let finalSelected = selectedOptions;
+  let persist = true;
+
+  if (typeof projectRootOrOptions === 'string') {
+    projectRoot = projectRootOrOptions;
+  } else if (projectRootOrOptions && typeof projectRootOrOptions === 'object') {
+    projectRoot = projectRootOrOptions.projectRoot || ROOT;
+    voiceMeta = projectRootOrOptions.voiceMeta || null;
+    if (projectRootOrOptions.persist === false) {
+      persist = false;
+    }
+  }
+
+  if (typeof selectedOptions === 'string' && !voiceMeta) {
+    const trimmedSel = selectedOptions.trim();
+    const isUIOption = /\(.*\)/.test(trimmedSel);
+    if (!isUIOption) {
+      const parsed = parseVoiceDictation(trimmedSel);
+      if (parsed.recognized) {
+        voiceMeta = parsed;
+        finalSelected = parsed.summary;
+      }
+    }
+  }
+
+  const result = analyzeUserIntent(requestText, {
+    selectedOptions: finalSelected,
+    voiceMeta,
+    persist,
+    projectRoot,
+    forceClarification: false
+  });
+
+  return result;
+}
+
+/**
+ * Convierte el resultado de clarificación en el formato interactivo de selección UI (ask_question).
+ * Admite tanto 1 como 2 preguntas simultáneas con opciones A/B/C seleccionables.
+ */
+function toInteractiveModalFormat(clarificationResult, options = {}) {
+  if (!clarificationResult || clarificationResult.status !== 'NEEDS_CLARIFICATION') {
+    return null;
+  }
+  const qList = clarificationResult.questions || [
+    '1. ¿Qué objetivo funcional o flujo principal debe resolver la implementación?',
+    '2. ¿Qué estilo visual y densidad de interfaz prefieres?'
+  ];
+
+  const optsQ1 = (clarificationResult.options || []).map((o, idx) => {
+    const isFirst = idx === 0 ? '(Recomendado) ' : '';
+    const desc = o.description ? ` — ${o.description}` : '';
+    return `${isFirst}${o.name}${desc}`.trim();
+  });
+
+  const modalQuestions = [];
+
+  modalQuestions.push({
+    question: qList[0] || '1. ¿Qué objetivo funcional o flujo principal debe resolver la implementación?',
+    options: optsQ1.length >= 2 ? optsQ1 : ['(Recomendado) Opción A (Solución Ágil y Directa)', 'Opción B (Solución Completa)', 'Opción C (Personalizada)'],
+    is_multi_select: false
+  });
+
+  if (options.allQuestions || options.multiQuestion || clarificationResult.substep === 2) {
+    const styleList = clarificationResult.styleOptions || getTailoredStyleOptions(clarificationResult.rawRequest);
+    const optsQ2 = styleList.map((o, idx) => {
+      const isFirst = idx === 0 ? '(Recomendado) ' : '';
+      const desc = o.description ? ` — ${o.description}` : '';
+      return `${isFirst}${o.name}${desc}`.trim();
+    });
+    modalQuestions.push({
+      question: qList[1] || '2. ¿Qué estilo visual y densidad de interfaz prefieres?',
+      options: optsQ2.length >= 2 ? optsQ2 : ['(Recomendado) Estilo Modern Dark Glass', 'Estilo Minimalista Sobrio', 'Opción Personalizada'],
+      is_multi_select: false
+    });
+  }
+
+  return {
+    questions: modalQuestions
+  };
+}
+
+function main() {
+  const args = process.argv.slice(2);
+  if (args.length === 0) {
+    // Uso incorrecto sale con 2, igual que preflight, premortem, checkpoint y memory.
+    console.log('Uso:\n  node tools/intent_clarifier.js "<solicitud_del_usuario>"\n  node tools/intent_clarifier.js seal --request "<solicitud>" --selected "<opciones>"\n  node tools/intent_clarifier.js current\n  node tools/intent_clarifier.js verify\n  node tools/intent_clarifier.js voice --input "<dictado>" [--request "<solicitud>"]');
+    process.exit(2);
+  }
+
+  if (args[0] === 'current') {
+    const statePath = path.join(ROOT, '.axion', 'state', 'intent-contract.json');
+    if (fs.existsSync(statePath)) {
+      console.log(fs.readFileSync(statePath, 'utf8'));
+      process.exit(0);
+    } else {
+      console.log(JSON.stringify({ status: 'NO_ACTIVE_CONTRACT', verdict: 'CONTRATO_INVALIDO', message: 'No hay contrato de intención activo en disco.' }, null, 2));
+      process.exit(1);
+    }
+  }
+
+  if (args[0] === 'verify') {
+    const check = verifyContractBeforeCode(ROOT);
+    console.log(JSON.stringify(check, null, 2));
+    process.exit(check.allowed ? 0 : 1);
+  }
+
+  if (args[0] === 'seal') {
+    let req = '';
+    let sel = '';
+    for (let i = 1; i < args.length; i++) {
+      if (args[i] === '--request' && args[i + 1]) req = args[++i];
+      if (args[i] === '--selected' && args[i + 1]) sel = args[++i];
+    }
+    const result = sealIntent(req || 'Petición sellada por usuario', sel || 'Aprobada');
+    console.log(JSON.stringify(result, null, 2));
+    process.exit(0);
+  }
+
+  if (args[0] === 'voice') {
+    let inp = '';
+    let req = '';
+    for (let i = 1; i < args.length; i++) {
+      if (args[i] === '--input' && args[i + 1]) inp = args[++i];
+      if (args[i] === '--request' && args[i + 1]) req = args[++i];
+    }
+    const voiceMeta = parseVoiceDictation(inp);
+    if (!voiceMeta.recognized) {
+      console.log(JSON.stringify({ status: 'VOICE_NOT_RECOGNIZED', verdict: 'ESCALACION_HUMANA', voiceMeta }, null, 2));
+      process.exit(1);
+    }
+    const result = sealIntent(req || 'Petición sellada vía voz', voiceMeta.summary);
+    console.log(JSON.stringify({ ...result, verdict: 'PERFIL_VOZ_PROCESADO', voiceMeta }, null, 2));
+    process.exit(0);
+  }
+
+  const input = args.join(' ');
+  const result = analyzeUserIntent(input);
+  console.log(JSON.stringify(result, null, 2));
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  CLOSED_VERDICTS,
+  analyzeUserIntent,
+  auditContractForDrive,
+  formatLineZeroVerdict,
+  getTailoredStyleOptions,
+  hasTechnicalSpecificity,
+  isAmbiguousScope,
+  parseVoiceDictation,
+  persistContract,
+  readUserProfile,
+  sanitizeForPromptInjection,
+  sealIntent,
+  toInteractiveModalFormat,
+  validateContract,
+  verifyContractBeforeCode
+};
+
+  };
+
 // === ENTRYPOINT CLI PRINCIPAL ===
 if (require.main === module) {
   const args = process.argv.slice(2);
@@ -5097,10 +6794,11 @@ if (require.main === module) {
     check: () => { const M = __require('tools/doctor_repair_engine.js'); new M().runDiagnosis(); },
     revocation: () => { const M = __require('tools/revocation_manager.js'); console.log(JSON.stringify(new M().loadCRL(), null, 2)); },
     swarm: () => { const M = __require('tools/swarm_ast_arbiter.js'); console.log(new M().loadLocks()); },
+    clarify: () => { const M = __require('tools/intent_clarifier.js'); console.log(JSON.stringify(M.analyzeUserIntent(args.slice(1).join(' ')), null, 2)); },
     help: () => {
-      console.log('Axion Protocol — Standalone Single-File Bundle v1.3.1-rc.3');
+      console.log('Axion Protocol — Standalone Single-File Bundle v1.3.2');
       console.log('Uso: node axion.bundle.js <subcommand>\n');
-      console.log('Subcomandos disponibles: preflight, checkpoint, restore, shield, doctor, repair, instinct, budget, capabilities, dashboard, tree, weave, search, check, revocation, swarm, help');
+      console.log('Subcomandos disponibles: preflight, checkpoint, restore, shield, doctor, repair, instinct, budget, capabilities, dashboard, tree, weave, search, check, revocation, swarm, clarify, help');
     }
   };
 

@@ -189,7 +189,13 @@ if (require.main === module) {
   const recorder = new FlightRecorder();
   console.log(`[Axion Flight Recorder] Grabando sesión de prueba: ${recorder.sessionId}...\n`);
 
-  recorder.recordEvent('SESSION_START', { engine: 'Axion /drive v1.2.0-beta.1' });
+  recorder.recordEvent('SESSION_START', { engine: `Axion /drive v${(() => {
+    try {
+      return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')).version || 'unknown';
+    } catch (_) {
+      return 'unknown';
+    }
+  })()}` });
   recorder.recordEvent('PREFLIGHT_CHECK', { command: 'git status', verdict: 'ALLOW' });
   recorder.recordEvent('SOCRATIC_INTENT', { question: '¿Optimizar base de datos?', answer: 'YES' });
   recorder.recordEvent('VIBEGUARD_SCAN', { scannedFiles: 111, antipatterns: 0, grade: 'A+' });

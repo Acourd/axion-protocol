@@ -2,6 +2,45 @@
 
 Todos los cambios relevantes de Axion Protocol se documentarán aquí.
 
+## [1.3.2] — 2026-09-04 · Endurecimiento de Frontera, Autonomía Fractal & Circuit Breakers
+
+Lanzamiento de producción de Axion Protocol v1.3.2. Introduce modernización soberana de 5 skills nucleares bajo el currículum adversarial de 9 rondas, dos nuevos módulos de resiliencia y memoria fractal (`SelfHealingCircuitBreaker` y `FractalMemoryAnchor`), erradicación del defecto de checkpoint en `onboarding_wizard`, y expansión de la suite a **235 suites deterministas en verde** con exit code 0.
+
+### Added
+
+- **`SelfHealingCircuitBreaker` (`tools/self_healing_circuit_breaker.js`, M_RES_010 / AX-F-217)**: Máquina de estados determinista (`CLOSED` ➔ `OPEN` ➔ `HALF_OPEN`) con umbral de 3 fallos consecutivos en clúster, cooldown configurable y sonda de auto-recuperación atómica para el motor `/drive`.
+- **`FractalMemoryAnchor` (`tools/fractal_memory_anchor.js`, M_MEM_005 / AX-F-218)**: Arquitectura jerárquica de compresión de contexto en 4 niveles (Tier 0 crudo ➔ Tier 1 clústeres semánticos ➔ Tier 2 MicroAnchor < 150 tokens con cabecera `[AXION_MEMORY_ANCHOR]` ➔ Tier 3 MerkleDigest SHA-256 de 64 caracteres).
+- **Compilador Determinista de Skills (`tools/generate_skill.js` y `tools/vocab.json`)**: Fuente única de verdad para el ensamblado y sincronización multi-superficie de `/drive` v4.5.1, erradicando la evaporación de generadores en transcripciones de chat.
+- **Linter AST Semántico (`tools/prompt_lint.js`) y Evaluador Conductual (`tools/prompt_eval.js`)**: Pirámide de verificación de prompts en 4 pisos (AST, mutaciones con centinela fail-closed `[SECCION_AUSENTE_NUCLEAR]`, evaluación conductual y runtime).
+
+### Enhanced
+
+- **Endurecimiento Soberano de 5 Skills Nucleares**:
+  - `/drive` v4.5.1: 6 Invariantes Nucleares, acotamiento de presupuesto de corrección (máximo 3 por clúster, 5 global), principio Content is Data y protección anti-inyección.
+  - `/critic` v3.0.0: 5 Invariantes Nucleares, taxonomía cerrada de Línea 0, 7 Fronteras de Excelencia Asintótica y penalizaciones estrictas (-40%/-50%) por ausencia de falsacionismo.
+  - `/premortem` v3.0.0: 5 Invariantes Nucleares, cálculo determinista de radio de impacto (0-100), mitigaciones Nivel 3 y asimetría de códigos de salida (0/1/2).
+  - `/idea-maximizer` v3.0.0: Pre-Mortem Ofensivo, escalamiento 100x con complejidad $O(1)$/$O(\log n)$, filtro anti-vaporware y foso defensivo anti-comoditización.
+  - `prompt-engineering` v3.0.0: Manifiesto de frontera con 6 arquetipos de modelos, diseño de prompts como máquinas de estado y contención de sondas AT-19.
+- **Paridad Multi-Harness Criptográfica**: Sincronización al 100% (SHA-256 byte-a-byte) entre `.agents/skills/`, `.claude/commands/`, `.opencode/commands/`, `~/.claude/commands/` y `~/.gemini/config/skills/`.
+- **Suite Determinista Ampliada**: 235 de 235 suites en verde (144 en Gobernanza y Preflight, 27 Criptografía, 23 Intención, 23 Estado, 18 Adversarial).
+
+### Fixed
+
+- **Inversión de Argumentos en `tools/onboarding_wizard.js`**: Corregida llamada a `checkpoint.crear(this.targetDir, 'Initial Baseline 1-Click Setup')`, eliminando la creación de directorios parásitos en la raíz del proyecto y asegurando paridad perfecta en `sync_mirror_gate.js`.
+- **Cabecera de MicroAnchor en `FractalMemoryAnchor`**: Inclusión estricta de la etiqueta `[AXION_MEMORY_ANCHOR]` requerida por las aserciones de invariantes de `ax_f_218`.
+- **Sincronización de Versión en Herramientas de Inspección**: `semantic_cross_indexer.js`, `bundle_compiler.js` y `bin/axion.js` ahora leen dinámicamente la versión desde `package.json`.
+
+## [1.3.1] — 2026-09-03 · Lanzamiento General (GA)
+
+Lanzamiento General (GA) de Axion Protocol v1.3.1, promovido desde el candidato `1.3.1-rc.3`. Suite completa **233/233 en verde** con exit code 0, health 15/15 y SBOM regenerado en `1.3.1`.
+
+### GA Integration
+
+- **13 comandos de gobernanza** en todas las superficies: `/attest /clarify /critic /debug /drive /halt /memory /preflight /premortem /profile /review /snapshot /verify`.
+- **Gates fail-closed ejecutables**: Antigravity (hook PreToolUse), Claude Code (hook), **Codex (hook PreToolUse nuevo)**. OpenCode con comandos proyecto+global; Cursor con regla `alwaysApply` y 13 comandos; Copilot con instrucciones.
+- **Empaquetado corregido**: `AGENTS.md`, `.opencode/`, `.codex/`, `.cursor/`, `.github/` y `opencode.json` incluidos en el paquete npm.
+- **SBOM**: el generador lee la versión de `package.json` (se eliminó la versión hardcodeada) y cubre todas las superficies publicadas.
+
 ## [1.3.1-rc.3] — 2026-09-02 · Lanzamiento General (GA) & Blindaje Criptográfico Total
 
 Lanzamiento oficial de producción de Axion Protocol v1.3.1-rc.3 (Sovereign GA Candidate). Sella formalmente la resolución verificada de los 18 hallazgos de auditoría adversarial, blindaje de terminal fail-closed, consenso bizantino multi-agente, atestación in-toto Merkle y acabado visual Obsidian Glass.

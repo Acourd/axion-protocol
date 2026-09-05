@@ -19,7 +19,8 @@ const path = require('path');
 const fs = require('fs');
 
 const ROOT = path.resolve(__dirname, '..');
-const AXKERN = 'C:\\Users\\adria\\Shoshin\\Proyectos\\Axkern';
+// Axkern vive al nivel del proyecto: resolución relativa, no ruta de usuario.
+const AXKERN = path.resolve(ROOT, '..', 'Axkern');
 
 class PipelineFastGate {
   constructor(projectRoot = ROOT) {

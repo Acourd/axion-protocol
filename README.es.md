@@ -3,13 +3,13 @@
 > **El Arnés de Gobernanza Soberana y Motor de Seguridad Determinista para IA Agentiva.**  
 > *Convierte el desarrollo errático e impredecible con IA en ingeniería de software determinista, verificable y lista para producción.*
 >
-> **Estado**: Runtime EXPERIMENTAL. El enforcement no intercepta comandos de shell del sistema operativo automáticamente sin el hook de agente integrado. Requiere **Node.js 20** o superior. Cero dependencias externas de npm.
+> **Estado**: GA v1.3.2. Enforcement fail-closed activo en Antigravity, Claude Code y Codex (hooks PreToolUse); OpenCode con comandos y permisos nativos; Cursor y Copilot con directivas contextuales (no exponen hooks). Requiere **Node.js 20** o superior. Cero dependencias externas de npm.
 
-[![Estado de CI](https://img.shields.io/badge/CI-182%20En%20Verde-2ea44f.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
-[![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.3.1--rc.1-0969da.svg?style=flat-square)](package.json)
+[![Estado de CI](https://img.shields.io/badge/CI-238%20En%20Verde-2ea44f.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
+[![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.3.2-0969da.svg?style=flat-square)](package.json)
 [![Licencia](https://img.shields.io/badge/Licencia-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
 [![Cero Dependencias](https://img.shields.io/badge/Dependencias-0-success.svg?style=flat-square)](package.json)
-[![Velocidad](https://img.shields.io/badge/Velocidad-12s%20(8%20workers)-informational.svg?style=flat-square)](tests/run_all.js)
+[![Velocidad](https://img.shields.io/badge/Velocidad-15s%20(8%20workers)-informational.svg?style=flat-square)](tests/run_all.js)
 [![Tamaño](https://img.shields.io/badge/Tama%C3%B1o-535_kB-informational.svg?style=flat-square)](package.json)
 
 ---
@@ -122,10 +122,10 @@ Axion Protocol incorpora 12 slash commands diseñados para operar en sinergia. P
 
 ## Verificación Determinista e Invariantes
 
-Axion Protocol incluye **233 suites de prueba deterministas** que se ejecutan concurrentemente sin dependencias externas:
+Axion Protocol incluye **239 suites de prueba deterministas** que se ejecutan concurrentemente sin dependencias externas:
 
 ```bash
-# Ejecutar las 233 suites de prueba
+# Ejecutar las 239 suites de prueba
 npm test
 ```
 

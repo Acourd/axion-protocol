@@ -84,8 +84,15 @@ class SemanticCrossIndexer {
    * Compila el grafo completo de relaciones entre código, esquemas y pruebas.
    */
   buildIndex() {
+    let version = '1.3.2';
+    try {
+      version = JSON.parse(fs.readFileSync(path.join(this.root, 'package.json'), 'utf8')).version || '1.3.2';
+    } catch (_) {
+      // Fallback determinista a versión por defecto si package.json no está accesible
+    }
+
     const graph = {
-      version: '1.3.1',
+      version,
       generatedAt: new Date().toISOString(),
       modules: {},
       symbols: {},

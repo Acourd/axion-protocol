@@ -149,7 +149,13 @@ class GovernanceDashboardGenerator {
     return `# 🛡️ Axion Protocol — Reporte de Gobernanza Agéntica
 
 **Fecha de Generación:** ${metrics.timestamp}
-**Protocolo:** Axion Protocol v1.2.0-beta.1 (Zero-Dependency)
+**Protocolo:** Axion Protocol v${(() => {
+    try {
+      return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')).version || 'unknown';
+    } catch (_) {
+      return 'unknown';
+    }
+  })()} (Zero-Dependency)
 
 ---
 

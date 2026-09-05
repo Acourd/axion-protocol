@@ -111,12 +111,25 @@ Autonomous engineering and deterministic verification under Axion fail-closed pr
     generated.push({ path: agentsFile, content: CORE_DIRECTIVES_CONTENT });
 
     const confFile = path.join(codexDir, 'config.toml');
-    const confContent = `# Axion Protocol Codex Configuration
+    const HOOK_BLOQUE = `\n# Gate fail-closed: Codex ejecuta el hook antes de cada tool Bash.\n[features]\ncodex_hooks = true\n\n[[hooks.PreToolUse]]\nmatcher = "^Bash$"\nstatusMessage = "Axion: verificando comando"\n\n[[hooks.PreToolUse.hooks]]\ntype = "command"\ncommand = "node .codex/hooks/axion-gate.js"\ntimeout = 10\n`;
+    let confContent = `# Axion Protocol Codex Configuration
 [governance]
 mode = "fail-closed"
 deterministic_verification = true
 attestation = "in-toto-v1-dsse"
 `;
+    // Preservar el gate fail-closed: si ya existe un archivo con el hook, no se
+    // pisa; si no lo tiene, se anade. Sobrescribir a ciegas dejaba la puerta muerta.
+    if (fs.existsSync(confFile)) {
+      const previo = fs.readFileSync(confFile, 'utf8');
+      if (previo.includes('hooks.PreToolUse') && previo.includes('axion-gate.js')) {
+        confContent = previo;
+      } else {
+        confContent = previo.trimEnd() + HOOK_BLOQUE;
+      }
+    } else {
+      confContent = confContent + HOOK_BLOQUE;
+    }
     generated.push({ path: confFile, content: confContent });
 
     if (!dryRun) {

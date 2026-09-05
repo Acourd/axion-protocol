@@ -43,7 +43,7 @@ const BLOQUE_AGENTS_MD = `# Axion Protocol — Gobernanza Determinista (P0)
 5. **Rollback Semántico:** Ante cualquier petición de deshacer en lenguaje natural, ejecutar node tools/checkpoint.js restore latest y reportar el resultado real.
 6. **Reportes Ejecutivos de 3 Líneas:** Toda misión concluye con [Acción Cumplida], [Métricas] y [Próximo Vector Metacognitivo].
 
-Comandos disponibles: /attest /clarify /debug /drive /halt /memory /preflight /premortem /profile /review /snapshot /verify.
+Comandos disponibles: /attest /clarify /critic /debug /drive /halt /memory /preflight /premortem /profile /review /snapshot /verify.
 Herramientas: tools/preflight.js, tools/checkpoint.js, tools/attestation.js, tools/evidence_hasher.js, tools/killswitch.js.`;
 
 /**
@@ -75,6 +75,105 @@ function generarOpenCodeConfig(dirCommands, rutaSalida, ausentes) {
     command,
   }, null, 2) + '\n', 'utf8');
   return command;
+}
+
+/**
+ * Genera la superficie de Cursor (.cursor/rules + .cursor/commands) solo si no
+ * existe. Cursor lee reglas .mdc (alwaysApply) y slash commands en .cursor/commands.
+ */
+function generarCursor(rootDir) {
+  const regla = path.join(rootDir, '.cursor', 'rules', 'axion-governance.mdc');
+  const dirComandos = path.join(rootDir, '.cursor', 'commands');
+  fs.mkdirSync(path.dirname(regla), { recursive: true });
+  fs.mkdirSync(dirComandos, { recursive: true });
+  let creados = 0;
+
+  if (!fs.existsSync(regla)) {
+    fs.writeFileSync(regla, `---
+description: Axion Protocol Deterministic Governance
+globs: *
+alwaysApply: true
+---
+# Axion Protocol Universal Governance Directives (P0)
+
+1. **Custodia de Intención Original:** Prohibido mutar código ante peticiones vagas hasta que /clarify emita un IntentContract sellado con SHA-256.
+2. **Salvaguarda Fail-Closed:** Ante errores, excepciones o presencia de .axion/HALT, toda mutación se congela de inmediato.
+3. **Ejecución Estructurada de Terminal:** Todos los comandos deben ejecutarse sin sub-shell ({ executable, args, cwd, shell: false }) y pasar por node tools/preflight.js. Prohibido ejecutar rm -rf /, Remove-Item -Recurse, mkfs, dd of=/dev/, git clean -fdx, git reset --hard o pipes a sh/bash sin veredicto previo.
+4. **Verificación Determinista:** Exigir exit code 0 mediante la suite de pruebas real antes de declarar cualquier tarea como completada.
+5. **Rollback Semántico:** Ante cualquier petición de deshacer en lenguaje natural, ejecutar node tools/checkpoint.js restore latest.
+6. **Reportes Ejecutivos de 3 Líneas:** Toda misión concluye con [Acción Cumplida], [Métricas] y [Próximo Vector Metacognitivo].
+
+Comandos: /attest /clarify /debug /drive /halt /memory /preflight /premortem /profile /review /snapshot /verify.
+Herramientas: node tools/preflight.js, node tools/checkpoint.js, node tools/attestation.js, node tools/evidence_hasher.js.
+`, 'utf8');
+    creados++;
+  }
+
+  for (const wf of WORKFLOWS) {
+    const destino = path.join(dirComandos, wf);
+    if (fs.existsSync(destino)) continue;
+    const texto = fs.readFileSync(origenSkill(__dirname, wf), 'utf8');
+    const fm = texto.match(/^---\n([\s\S]*?)\n---/);
+    const descripcion = (fm && (fm[1].match(/^description:\s*(.+)$/m) || [])[1] || '').trim() || wf.replace(/\.md$/, '');
+    const cuerpo = fm ? texto.slice(fm[0].length).trim() : texto.trim();
+    fs.writeFileSync(destino, `---\ndescription: ${descripcion}\n---\n\n${cuerpo}\n`, 'utf8');
+    creados++;
+  }
+  return { created: creados };
+}
+
+/**
+ * Genera la puerta fail-closed de Codex: hook PreToolUse + registro en config.toml.
+ */
+function generarCodex(rootDir, ausentes, anotar) {
+  const dirHooks = path.join(rootDir, '.codex', 'hooks');
+  fs.mkdirSync(dirHooks, { recursive: true });
+  const hookSrc = path.join(__dirname, '.codex', 'hooks', 'axion-gate.js');
+  anotar(copiarProtegido(hookSrc, path.join(dirHooks, 'axion-gate.js'), ausentes));
+
+  const configPath = path.join(rootDir, '.codex', 'config.toml');
+  if (!fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, `# Axion Protocol Codex Configuration
+[governance]
+mode = "fail-closed"
+deterministic_verification = true
+attestation = "in-toto-v1-dsse"
+
+# Gate fail-closed: Codex ejecuta el hook antes de cada tool Bash.
+[features]
+codex_hooks = true
+
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+statusMessage = "Axion: verificando comando"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "node .codex/hooks/axion-gate.js"
+timeout = 10
+`, 'utf8');
+    return { created: true };
+  }
+  // Ya existe: registrar el hook solo si no está presente.
+  const previo = fs.readFileSync(configPath, 'utf8');
+  if (!previo.includes('hooks.PreToolUse') || !previo.includes('axion-gate.js')) {
+    fs.appendFileSync(configPath, `
+# Gate fail-closed: Codex ejecuta el hook antes de cada tool Bash.
+[features]
+codex_hooks = true
+
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+statusMessage = "Axion: verificando comando"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "node .codex/hooks/axion-gate.js"
+timeout = 10
+`);
+    return { created: true };
+  }
+  return { created: false };
 }
 
 /**
@@ -354,6 +453,10 @@ function runInstallation(targetDir) {
     ausentes,
   );
   const ocRegistrados = ocConfig ? Object.keys(ocConfig).length : 0;
+  const cursor = generarCursor(rootDir);
+  console.log(`  ✓ Cursor ${cursor.created > 0 ? `(${cursor.created} archivos creados)` : '(ya presente)'}`);
+  const codex = generarCodex(rootDir, ausentes, anotar);
+  console.log(`  ✓ Codex hook PreToolUse ${codex.created ? 'registrado en .codex/config.toml' : '(ya registrado)'}`);
   anotar(copiarProtegido(
     path.join(sourceRoot, '.opencode', 'plugins', 'axion-gate.ts.disabled'),
     path.join(rootDir, '.opencode', 'plugins', 'axion-gate.ts.disabled'), ausentes));
@@ -448,8 +551,7 @@ function runInstallation(targetDir) {
   }
 
   console.log('\n✅ [Axion Protocol] Instalación universal completada con éxito.');
-  console.log('   Superficies gobernadas: Antigravity, Claude Code, OpenCode, Codex y Copilot.');
-  console.log('   (Cursor se añade con `axion harness`; este instalador no fabrica archivos que no porta.)\n');
+  console.log('   Superficies gobernadas: Antigravity, Claude Code, OpenCode, Codex, Cursor y Copilot.\n');
 
   return {
     status: 'SUCCESS',

@@ -58,7 +58,13 @@ class AgentHeartbeatDaemon {
     const status = (p0Valid && !isHalted) ? 'HEALTHY' : (isHalted ? 'HALTED' : 'DEGRADED');
 
     const pulseData = {
-      version: '1.2.0-beta.1',
+      version: (() => {
+        try {
+          return JSON.parse(fs.readFileSync(path.join(this.root, 'package.json'), 'utf8')).version || 'unknown';
+        } catch (_) {
+          return 'unknown';
+        }
+      })(),
       pulseIndex: this.pulseCount,
       timestamp: new Date().toISOString(),
       status,

@@ -36,7 +36,8 @@ function versionInstalada() {
 
 const WORKFLOWS = [
   'drive.md', 'premortem.md', 'snapshot.md', 'halt.md', 'clarify.md', 'memory.md',
-  'verify.md', 'review.md', 'debug.md', 'attest.md', 'profile.md', 'preflight.md'
+  'verify.md', 'review.md', 'debug.md', 'attest.md', 'profile.md', 'preflight.md',
+  'critic.md'
 ];
 
 const leer = (p) => {
@@ -246,6 +247,26 @@ function runHealthCheck(targetDir) {
     ocOk
       ? `${enOc.length}/${WORKFLOWS.length} archivos + ${enRegistro.length}/${WORKFLOWS.length} registrados en opencode.json + AGENTS.md raíz`
       : `faltan ${WORKFLOWS.length - enOc.length} en .opencode/commands, ${WORKFLOWS.length - enRegistro.length} en opencode.json${agentsRaiz ? '' : ' y falta AGENTS.md raíz'}`);
+
+  // 9c. Gate Codex: hook PreToolUse real + registro en config.toml. Es el equivalente
+  //     funcional del hook de Claude/Antigravity para el CLI de OpenAI.
+  const codexHook = path.join(target, '.codex', 'hooks', 'axion-gate.js');
+  const codexCfg = leer(path.join(target, '.codex', 'config.toml')) || '';
+  const codexOk = fs.existsSync(codexHook)
+    && codexCfg.includes('hooks.PreToolUse')
+    && codexCfg.includes('axion-gate.js');
+  addCheck('Gate Codex (PreToolUse)', codexOk,
+    codexOk ? 'hook + registro en .codex/config.toml' : 'falta .codex/hooks/axion-gate.js o su registro');
+
+  // 9d. Superficie Cursor: regla alwaysApply + 12 comandos en .cursor/commands.
+  const dirCursor = path.join(target, '.cursor', 'commands');
+  const enCu = WORKFLOWS.filter((w) => fs.existsSync(path.join(dirCursor, w)));
+  const ruleCursor = leer(path.join(target, '.cursor', 'rules', 'axion-governance.mdc')) || '';
+  const cursorOk = enCu.length === WORKFLOWS.length && ruleCursor.includes('alwaysApply: true');
+  addCheck('Superficie Cursor', cursorOk,
+    cursorOk
+      ? `${enCu.length}/${WORKFLOWS.length} comandos en .cursor/commands + regla alwaysApply`
+      : `faltan ${WORKFLOWS.length - enCu.length} en .cursor/commands${ruleCursor.includes('alwaysApply') ? '' : ' o la regla no es alwaysApply'}`);
 
   // 10. Estado de parada. No es un fallo: es información que cambia lo que se puede hacer.
   const detenido = fs.existsSync(path.join(target, '.axion', 'HALT'));

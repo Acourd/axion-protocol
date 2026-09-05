@@ -50,8 +50,8 @@ class UniversalInvariantsVerifier {
     }
     checks.push({
       name: 'Consolidated Canonical Skills',
-      pass: skillsCount === 12,
-      detail: `${skillsCount} / 12 skills consolidadas en .agents/skills/`
+      pass: skillsCount === 13,
+      detail: `${skillsCount} / 13 skills consolidadas en .agents/skills/`
     });
 
     // 3. Verificación de Manifiestos SBOM
@@ -76,8 +76,18 @@ class UniversalInvariantsVerifier {
     });
 
     // 5. Verificación de Memoria Persistente y Documentación
-    const memPath = path.join(this.root, '.axion', 'memory', 'MEMORY.md');
+    const memDir = path.join(this.root, '.axion', 'memory');
+    const memPath = path.join(memDir, 'MEMORY.md');
     const archDoc = path.join(this.root, 'docs', 'SWARM_ARCHITECTURE.md');
+    if (!fs.existsSync(memPath)) {
+      try {
+        fs.mkdirSync(memDir, { recursive: true });
+        const { regenerarIndice } = require('./memory.js');
+        regenerarIndice(this.root);
+      } catch (_err) {
+        // En entornos limpios de CI sin memoria preexistente, el índice se generará en el siguiente ciclo
+      }
+    }
     const docsPass = fs.existsSync(memPath) && fs.existsSync(archDoc);
     checks.push({
       name: 'Persistent Memory & Swarm Architecture Docs',

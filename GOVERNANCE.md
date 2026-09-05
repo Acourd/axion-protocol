@@ -2,7 +2,7 @@
 
 ## Estado
 
-Esta gobernanza es `EXPERIMENTAL` y documental. No adquiere enforcement por encontrarse en este repositorio.
+Axion Protocol v1.3.2 (GA) declara **enforcement activo** de esta gobernanza en los harnesses con puerta ejecutable: Antigravity, Claude Code y Codex (hooks PreToolUse), y OpenCode (comandos + permisos nativos). Limitaciones conocidas documentadas: el plugin de gate de OpenCode permanece deshabilitado por inestabilidad del plugin host 1.18.x; Cursor y Copilot reciben las directivas como reglas contextuales (no exponen hooks). El enforcement se verifica con la suite completa y el health check.
 
 ## Roles
 

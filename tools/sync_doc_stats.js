@@ -107,14 +107,27 @@ function sincronizarReadmeEs(totalSuites) {
 function sincronizarSitioWeb(totalSuites) {
   const rutaHtml = path.join(ROOT, 'docs', 'site', 'index.html');
   const rutaJs = path.join(ROOT, 'docs', 'site', 'script.js');
+  // La versión sale de package.json: los patrones con versión clavada dejaban de
+  // matchear en cuanto el site cambiaba de versión y la herramienta dejaba de
+  // actualizar el pill en silencio.
+  let version = 'unknown';
+  try {
+    version = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version || 'unknown';
+  } catch (_) {
+    version = 'unknown';
+  }
+  // Genérico: cualquier vX.Y.Z-... · N Suites PASS (v1.2.0-beta.1, v2.0.0-rc.1, …)
+  const patronPill = /v[0-9A-Za-z.-]+ · \d+ Suites PASS/g;
 
   if (fs.existsSync(rutaHtml)) {
     let html = fs.readFileSync(rutaHtml, 'utf8');
 
-    html = html.replace(/v1\.2\.0-beta\.1 · \d+ Suites PASS/g, `v1.2.0-beta.1 · ${totalSuites} Suites PASS`);
+    html = html.replace(patronPill, `${version} · ${totalSuites} Suites PASS`);
     html = html.replace(/GitHub · \d+\/\d+/g, `GitHub · ${totalSuites}/${totalSuites}`);
     html = html.replace(/<strong>\d+\/\d+<\/strong> suites PASS/g, `<strong>${totalSuites}/${totalSuites}</strong> suites PASS`);
     html = html.replace(/✓ \d+\/\d+ PASS<\/span> \d+ suites de prueba/g, `✓ ${totalSuites}/${totalSuites} PASS</span> ${totalSuites} suites de prueba`);
+    // Pills sin prefijo de versión (telemetry-text y afines).
+    html = html.replace(/\d+ Suites PASS/g, `${totalSuites} Suites PASS`);
 
     fs.writeFileSync(rutaHtml, html, 'utf8');
   }
@@ -122,10 +135,13 @@ function sincronizarSitioWeb(totalSuites) {
   if (fs.existsSync(rutaJs)) {
     let js = fs.readFileSync(rutaJs, 'utf8');
 
-    js = js.replace(/statusPill:\s*'v1\.2\.0-beta\.1 · \d+ Suites PASS'/g, `statusPill: 'v1.2.0-beta.1 · ${totalSuites} Suites PASS'`);
+    js = js.replace(/statusPill:\s*'v[0-9A-Za-z.-]+ · \d+ Suites PASS'/g, `statusPill: '${version} · ${totalSuites} Suites PASS'`);
     js = js.replace(/statSuites:\s*'<strong>\d+\/\d+<\/strong> suites PASS'/g, `statSuites: '<strong>${totalSuites}/${totalSuites}</strong> suites PASS'`);
     js = js.replace(/Executes \d+ automated test suites/g, `Executes ${totalSuites} automated test suites`);
     js = js.replace(/Ejecuta \d+ suites de prueba automáticas/g, `Ejecuta ${totalSuites} suites de prueba automáticas`);
+    // Telemetría sin prefijo de versión e historial de ejecuciones stale.
+    js = js.replace(/telemetryStatus: '\d+ Suites PASS'/g, `telemetryStatus: '${totalSuites} Suites PASS'`);
+    js = js.replace(/\d+\/\d+ suites PASS \(0 FAIL/g, `${totalSuites}/${totalSuites} suites PASS (0 FAIL`);
 
     fs.writeFileSync(rutaJs, js, 'utf8');
   }
