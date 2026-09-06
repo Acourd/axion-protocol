@@ -19,7 +19,41 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { DatabaseSync } = require('node:sqlite');
+
+const ALLOWED_UNAVAILABLE_REASONS = Object.freeze(new Set([
+  'ERR_UNKNOWN_BUILTIN_MODULE',
+  'MODULE_NOT_FOUND',
+]));
+
+/**
+ * Carga segura de node:sqlite.
+ * options.sqliteModule permite inyección exclusivamente para pruebas herméticas de contratos
+ * de degradación, sin modificar variables globales ni el entorno del anfitrión.
+ */
+function loadSqliteCapability(injected = null) {
+  if (injected !== null && injected !== undefined) {
+    if (injected.error && ALLOWED_UNAVAILABLE_REASONS.has(injected.error.code)) {
+      return { available: false, reason: injected.error.code, DatabaseSync: null };
+    }
+    if (typeof injected.DatabaseSync === 'function') {
+      return { available: true, reason: null, DatabaseSync: injected.DatabaseSync };
+    }
+    return { available: false, reason: 'ERR_UNKNOWN_BUILTIN_MODULE', DatabaseSync: null };
+  }
+
+  try {
+    const sqlite = require('node:sqlite');
+    if (typeof sqlite.DatabaseSync === 'function') {
+      return { available: true, reason: null, DatabaseSync: sqlite.DatabaseSync };
+    }
+    return { available: false, reason: 'ERR_UNKNOWN_BUILTIN_MODULE', DatabaseSync: null };
+  } catch (err) {
+    if (err && ALLOWED_UNAVAILABLE_REASONS.has(err.code)) {
+      return { available: false, reason: err.code, DatabaseSync: null };
+    }
+    throw err; // Fail-closed ante cualquier error inesperado
+  }
+}
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -31,6 +65,33 @@ class SQLiteStressSimulator {
     this.defaultIterations = options.iterations !== undefined
       ? Math.max(0, Number(options.iterations) || 0)
       : 50000;
+
+    // Estado explícito e inmutable inicializado por instancia
+    const capability = loadSqliteCapability(options.sqliteModule || null);
+    Object.defineProperties(this, {
+      available: {
+        value: capability.available,
+        writable: false,
+        enumerable: true,
+        configurable: false,
+      },
+      reason: {
+        value: capability.reason,
+        writable: false,
+        enumerable: true,
+        configurable: false,
+      },
+      _DatabaseSync: {
+        value: capability.DatabaseSync,
+        writable: false,
+        enumerable: false,
+        configurable: false,
+      },
+    });
+  }
+
+  static isAvailable() {
+    return loadSqliteCapability().available;
   }
 
   /**
@@ -56,8 +117,11 @@ class SQLiteStressSimulator {
    * Inicializa la base de datos con pragmas de alto rendimiento y esquema de estrés.
    */
   initDatabase(dbInstance = null, dbPath = null) {
+    if (!this.available) {
+      return null;
+    }
     const targetPath = dbPath || this.dbPath;
-    const db = dbInstance || new DatabaseSync(targetPath);
+    const db = dbInstance || new this._DatabaseSync(targetPath);
 
     try {
       db.exec('PRAGMA journal_mode = WAL;');
@@ -158,6 +222,16 @@ class SQLiteStressSimulator {
    * Ejecuta la simulación de carga extrema y benchmarking asintótico.
    */
   runStressBenchmark(options = {}) {
+    if (!this.available) {
+      return {
+        status: 'UNAVAILABLE',
+        reportType: 'SQLiteStressReport_v1',
+        available: false,
+        reason: this.reason || 'ERR_UNKNOWN_BUILTIN_MODULE',
+        message: 'node:sqlite no está disponible en este runtime de Node.js'
+      };
+    }
+
     const iterations = options.iterations !== undefined
       ? Math.max(0, Number(options.iterations) || 0)
       : this.defaultIterations;
@@ -330,19 +404,37 @@ class SQLiteStressSimulator {
    * Verifica la integridad criptográfica de un reporte emitido.
    */
   verifyReportIntegrity(report) {
-    if (!report || typeof report !== 'object' || !report.reportDigest || !report.metrics) {
-      return { isValid: false, reason: 'Reporte sin estructura válida o sin digest criptográfico' };
+    if (!report || typeof report !== 'object') {
+      return { isValid: false, isStructurallyValid: false, benchmarkVerified: false, reason: 'Reporte no es un objeto válido' };
+    }
+    if (report.status === 'UNAVAILABLE') {
+      const isStructurallyValid = report.reportType === 'SQLiteStressReport_v1'
+        && report.available === false
+        && ALLOWED_UNAVAILABLE_REASONS.has(report.reason);
+      return {
+        isValid: false,
+        isStructurallyValid,
+        status: 'UNAVAILABLE',
+        benchmarkVerified: false,
+        reason: report.reason,
+        message: 'El reporte corresponde a una ejecución donde SQLite no estaba disponible; el benchmark no fue ejecutado.',
+      };
+    }
+    if (!report.reportDigest || !report.metrics) {
+      return { isValid: false, isStructurallyValid: false, benchmarkVerified: false, reason: 'Reporte sin estructura válida o sin digest criptográfico' };
     }
     try {
       const computed = this.computeReportDigest(report);
       const isValid = computed === report.reportDigest;
       return {
         isValid,
+        isStructurallyValid: true,
+        benchmarkVerified: isValid,
         expectedDigest: report.reportDigest,
-        computedDigest: computed
+        computedDigest: computed,
       };
     } catch (err) {
-      return { isValid: false, reason: err.message };
+      return { isValid: false, isStructurallyValid: false, benchmarkVerified: false, reason: err.message };
     }
   }
 }
@@ -390,6 +482,15 @@ if (require.main === module) {
     faultInjectionRate: faultRate,
     dbPath
   });
+
+  if (report.status === 'UNAVAILABLE') {
+    if (jsonOutput) {
+      console.log(JSON.stringify(report, null, 2));
+    } else {
+      console.log(`[Axion SQLite Stress Simulator] Módulo node:sqlite no disponible en este entorno (${report.reason}).`);
+    }
+    process.exit(0);
+  }
 
   if (jsonOutput) {
     console.log(JSON.stringify(report, null, 2));

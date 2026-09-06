@@ -18,7 +18,6 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
-const { DatabaseSync } = require('node:sqlite');
 const SQLiteStressSimulator = require('../../tools/sqlite_stress_simulator.js');
 const DriveEngine = require('../../tools/drive_engine.js');
 
@@ -27,37 +26,67 @@ console.log('=== AX-F-221 Invariantes del Simulador de Cargas Extremas SQLite (M
 const ROOT = path.resolve(__dirname, '..', '..');
 const simulator = new SQLiteStressSimulator({ projectRoot: ROOT });
 
-// Invariante 1 & 2: Benchmark de 10.000 transacciones con latencia sub-milisegundo (< 1.0 ms) y alto throughput
-const benchResult = simulator.runStressBenchmark({
-  iterations: 10000,
-  batchSize: 500,
-  faultInjectionRate: 0.0
-});
+if (!simulator.available) {
+  console.log(`[AX-F-221] Capacidad condicional: node:sqlite no disponible en este entorno (${process.version}).`);
+  console.log('Validando contrato formal de degradación tipada UNAVAILABLE...');
 
-assert.strictEqual(benchResult.reportType, 'SQLiteStressReport_v1');
-assert.strictEqual(benchResult.iterations, 10000);
-assert.strictEqual(benchResult.metrics.committedTransactions, 10000);
-assert.strictEqual(benchResult.metrics.rolledBackTransactions, 0);
-assert.strictEqual(benchResult.metrics.subMillisecondGuaranteed, true, 'El promedio de latencia debe ser sub-milisegundo (< 1.0 ms)');
-assert.ok(benchResult.metrics.latencyStats.avgMs < 1.0, `Latencia promedio observada (${benchResult.metrics.latencyStats.avgMs}ms) debe ser < 1.0ms`);
-assert.ok(benchResult.metrics.throughputOpsPerSec > 5000, `Throughput (${benchResult.metrics.throughputOpsPerSec} ops/s) debe superar 5000 ops/s`);
-console.log(`✓ Invariante 1 & 2: 10.000 transacciones ejecutadas a ${benchResult.metrics.throughputOpsPerSec} ops/s con latencia media de ${benchResult.metrics.latencyStats.avgMs}ms (sub-milisegundo)`);
+  // 1. Aserción de reporte tipado UNAVAILABLE en simulador
+  const benchResult = simulator.runStressBenchmark({ iterations: 1000 });
+  assert.strictEqual(benchResult.status, 'UNAVAILABLE');
+  assert.strictEqual(benchResult.available, false);
+  assert.ok(['ERR_UNKNOWN_BUILTIN_MODULE', 'MODULE_NOT_FOUND'].includes(benchResult.reason));
 
-// Invariante 3: Inyección de fallos adversariales y verificación directa SQL de cero registros huérfanos
-const sharedDb = new DatabaseSync(':memory:');
-const faultResult = simulator.runStressBenchmark({
-  db: sharedDb,
-  iterations: 2000,
-  batchSize: 100,
-  faultInjectionRate: 0.05 // 5% de fallos inducidos
-});
+  // 2. Aserción de verificación de reporte: separa validez estructural de verificación del benchmark
+  const verifyResult = simulator.verifyReportIntegrity(benchResult);
+  assert.strictEqual(verifyResult.isValid, false, 'Reporte UNAVAILABLE no debe computarse como verificado criptográficamente');
+  assert.strictEqual(verifyResult.isStructurallyValid, true, 'Reporte UNAVAILABLE debe cumplir la estructura formal');
+  assert.strictEqual(verifyResult.benchmarkVerified, false, 'No se ejecutaron transacciones');
+  assert.strictEqual(verifyResult.status, 'UNAVAILABLE');
 
-assert.ok(faultResult.metrics.rolledBackTransactions > 0, 'Deben registrarse transacciones revertidas ante fallos inducidos');
-assert.strictEqual(
-  faultResult.metrics.committedTransactions + faultResult.metrics.rolledBackTransactions,
-  2000,
-  'La suma de confirmadas y revertidas debe ser exactamente igual al total'
-);
+  // 3. Aserción de integración con DriveEngine
+  const drive = new DriveEngine(ROOT);
+  const driveRes = drive.simulateSQLiteStress({ iterations: 100 });
+  assert.strictEqual(driveRes.status, 'UNAVAILABLE');
+  assert.strictEqual(driveRes.available, false);
+
+  // 4. Aserción de initDatabase devolviendo null sin lanzar excepción
+  const nullDb = simulator.initDatabase(null, ':memory:');
+  assert.strictEqual(nullDb, null);
+
+  console.log('✓ Contrato tipado UNAVAILABLE formalmente validado en simulador y DriveEngine');
+  console.log(`\nPASS: AX-F-221 — Capacidad condicional SQLite certificada para runtimes sin node:sqlite (${process.version}).\n`);
+} else {
+  // Invariante 1 & 2: Benchmark de 10.000 transacciones con latencia sub-milisegundo (< 1.0 ms) y alto throughput
+  const benchResult = simulator.runStressBenchmark({
+    iterations: 10000,
+    batchSize: 500,
+    faultInjectionRate: 0.0
+  });
+
+  assert.strictEqual(benchResult.reportType, 'SQLiteStressReport_v1');
+  assert.strictEqual(benchResult.iterations, 10000);
+  assert.strictEqual(benchResult.metrics.committedTransactions, 10000);
+  assert.strictEqual(benchResult.metrics.rolledBackTransactions, 0);
+  assert.strictEqual(benchResult.metrics.subMillisecondGuaranteed, true, 'El promedio de latencia debe ser sub-milisegundo (< 1.0 ms)');
+  assert.ok(benchResult.metrics.latencyStats.avgMs < 1.0, `Latencia promedio observada (${benchResult.metrics.latencyStats.avgMs}ms) debe ser < 1.0ms`);
+  assert.ok(benchResult.metrics.throughputOpsPerSec > 5000, `Throughput (${benchResult.metrics.throughputOpsPerSec} ops/s) debe superar 5000 ops/s`);
+  console.log(`✓ Invariante 1 & 2: 10.000 transacciones ejecutadas a ${benchResult.metrics.throughputOpsPerSec} ops/s con latencia media de ${benchResult.metrics.latencyStats.avgMs}ms (sub-milisegundo)`);
+
+  // Invariante 3: Inyección de fallos adversariales y verificación directa SQL de cero registros huérfanos
+  const sharedDb = simulator.initDatabase(null, ':memory:');
+  const faultResult = simulator.runStressBenchmark({
+    db: sharedDb,
+    iterations: 2000,
+    batchSize: 100,
+    faultInjectionRate: 0.05 // 5% de fallos inducidos
+  });
+
+  assert.ok(faultResult.metrics.rolledBackTransactions > 0, 'Deben registrarse transacciones revertidas ante fallos inducidos');
+  assert.strictEqual(
+    faultResult.metrics.committedTransactions + faultResult.metrics.rolledBackTransactions,
+    2000,
+    'La suma de confirmadas y revertidas debe ser exactamente igual al total'
+  );
 assert.strictEqual(faultResult.integrity.isHealthy, true, 'La integridad de SQLite debe mantenerse sana tras fallos y rollbacks');
 
 // Verificación SQL directa de que el número de registros en la tabla coincide exactamente con los commits
@@ -133,6 +162,27 @@ assert.strictEqual(fullFaultRes.metrics.committedTransactions, 0);
 assert.strictEqual(fullFaultRes.metrics.rolledBackTransactions, 200);
 assert.ok(fullFaultRes.metrics.throughputOpsPerSec > 0, 'Debe registrar throughput de procesamiento ante reversión total');
 assert.strictEqual(fullFaultRes.metrics.committedThroughputOpsPerSec, 0);
-console.log('✓ Invariante 9: Casos límite (iteraciones 0 y tasa de fallos 100%) gestionados de forma determinista');
+  console.log('✓ Invariante 9: Casos límite (iteraciones 0 y tasa de fallos 100%) gestionados de forma determinista');
 
-console.log('\nPASS: AX-F-221 — Invariantes del Simulador de Cargas Extremas SQLite demostrados al 100%.');
+  // Invariante 10: Validación hermética del contrato UNAVAILABLE mediante inyección controlada de prueba
+  const mockUnavailableSim = new SQLiteStressSimulator({
+    projectRoot: ROOT,
+    sqliteModule: { error: { code: 'ERR_UNKNOWN_BUILTIN_MODULE' } }
+  });
+  assert.strictEqual(mockUnavailableSim.available, false);
+  assert.strictEqual(mockUnavailableSim.reason, 'ERR_UNKNOWN_BUILTIN_MODULE');
+
+  const mockReport = mockUnavailableSim.runStressBenchmark({ iterations: 50 });
+  assert.strictEqual(mockReport.status, 'UNAVAILABLE');
+  assert.strictEqual(mockReport.available, false);
+  assert.strictEqual(mockReport.reason, 'ERR_UNKNOWN_BUILTIN_MODULE');
+
+  const mockVerify = mockUnavailableSim.verifyReportIntegrity(mockReport);
+  assert.strictEqual(mockVerify.isValid, false);
+  assert.strictEqual(mockVerify.isStructurallyValid, true);
+  assert.strictEqual(mockVerify.benchmarkVerified, false);
+  assert.strictEqual(mockVerify.status, 'UNAVAILABLE');
+  console.log('✓ Invariante 10: Contrato de degradación UNAVAILABLE certificado mediante inyección hermética de prueba');
+
+  console.log('\nPASS: AX-F-221 — Invariantes del Simulador de Cargas Extremas SQLite demostrados al 100%.');
+}
