@@ -324,17 +324,44 @@ class PreMortemEngine {
         };
       }
 
-      const sealRes = verifyRootSeal(loaded.registry, sealObj, options.customRootPublicKey);
+      const sealRes = verifyRootSeal(loaded.registry, sealObj);
       if (!sealRes.valid) {
         return {
           ok: false,
-          reason: 'UNTRUSTED_REGISTRY_MODIFICATION',
+          reason: sealRes.reason === 'EXPIRED_AUTHORITY_REGISTRY' ? 'EXPIRED_AUTHORITY_REGISTRY' : 'UNTRUSTED_REGISTRY_MODIFICATION',
           message: `El registro de autoridades en "${regPath}" no superó la verificación de la raíz de gobernanza: ${sealRes.message} (${sealRes.reason})`,
         };
       }
+
+      // Verificación de versión monotónica anti-rollback (Hallazgo 5)
+      const lockFile = path.resolve(this.stateDir, 'authority_version.lock');
+      let lockedVer = 0;
+      if (fs.existsSync(lockFile)) {
+        try {
+          lockedVer = parseInt(fs.readFileSync(lockFile, 'utf8').trim(), 10) || 0;
+        } catch (_) {
+          /* lockFile ausente o ilegible */
+        }
+      }
+      const presentedVer = loaded.registry.monotonicVersion || 1;
+      if (presentedVer < lockedVer) {
+        return {
+          ok: false,
+          reason: 'POLICY_ROLLBACK_DETECTED',
+          message: `Intento de rollback de registro de autoridades detectado. Versión presentada: ${presentedVer}, versión previa bloqueada: ${lockedVer}.`,
+        };
+      }
+      if (presentedVer > lockedVer) {
+        try {
+          this.ensureStateDir();
+          fs.writeFileSync(lockFile, String(presentedVer), 'utf8');
+        } catch (_) {
+          /* no se pudo persistir lockFile */
+        }
+      }
     }
 
-    return { ok: true, authorities: loaded.registry.authorities, registryPath: regPath };
+    return { ok: true, authorities: loaded.registry.authorities, registryPath: regPath, registry: loaded.registry };
   }
 
   /**
@@ -344,9 +371,15 @@ class PreMortemEngine {
    * registro confiable de autoridades (policies/authorities.json) y vinculada al proposalDigest exacto (SHA-256 de 64 chars).
    */
   acceptRisk(options = {}) {
-    // 1. Barrera contra ejecución autónoma por agentes (Hallazgo 2)
+    // 1. Barrera contra ejecución autónoma por agentes (Hallazgo 2 y 3)
     if (process.env.AGENT_CONTEXT === 'true' || process.env.ANTIGRAVITY === 'true' || process.env.OPENCODE === 'true' || options.isAgentContext === true) {
       throw new Error('AGENT_INVOCATION_FORBIDDEN: accept-risk es una acción de gobernanza humana fuera de banda. Los agentes autónomos tienen prohibido invocar este comando.');
+    }
+
+    // Verificación de TTY interactiva física obligatoria (Hallazgo 3)
+    const hasInteractiveTTY = Boolean(process.stdin && process.stdin.isTTY && process.stdout && process.stdout.isTTY);
+    if (!hasInteractiveTTY && options.allowHeadlessForTest === false) {
+      throw new Error('INTERACTIVE_HUMAN_TTY_REQUIRED: accept-risk exige ejecución en una terminal interactiva TTY física operada por un humano. Ejecuciones headless, subshells o subprocesos automatizados bloqueados fail-closed.');
     }
 
     const premortemIdRaw = texto(options.premortemId || options.id);
@@ -555,26 +588,8 @@ class PreMortemEngine {
       throw new Error(`SYMLINK_DETECTED: El archivo ${targetFile} es un enlace simbólico no confiable.`);
     }
 
-    // Registro append-only en el libro de eventos de aceptación de riesgo (Hallazgo 4)
-    const ledgerFile = path.resolve(resolvedStateDir, 'risk-acceptance-ledger.jsonl');
-    const ledgerEntry = JSON.stringify({
-      event: 'RISK_ACCEPTED',
-      timestamp: new Date().toISOString(),
-      acceptanceId: unsignedRecord.acceptanceId,
-      premortemId: cleanId,
-      proposalDigest,
-      operator,
-      keyId,
-      environment,
-      allowedEnvironments,
-      expiresAt: unsignedRecord.expiresAt,
-      signature,
-    }) + '\n';
-    try {
-      fs.appendFileSync(ledgerFile, ledgerEntry, 'utf8');
-    } catch (ledgerErr) {
-      // Escritura defensiva en ledger
-    }
+    // Registro append-only hash-chained en el libro de eventos de aceptación de riesgo (Hallazgo 4)
+    this.appendToLedger('RISK_ACCEPTED', unsignedRecord, privateKeyObj);
 
     // Copia histórica archivada con timestamp para auditoría (Hallazgo 4)
     const historyDir = path.resolve(resolvedStateDir, 'risk-acceptances');
@@ -599,6 +614,157 @@ class PreMortemEngine {
    * Revoca formalmente una aceptación de riesgo previa (Hallazgo 4).
    * Exige la firma de una autoridad humana registrada con rol HUMAN_AUTHORITY.
    */
+  /**
+   * Registra una entrada append-only en el libro de eventos con encadenamiento de hashes (Hallazgo 4).
+   */
+  appendToLedger(eventType, record, privateKeyObj) {
+    this.ensureStateDir();
+    const resolvedStateDir = path.resolve(this.stateDir);
+    const ledgerFile = path.resolve(resolvedStateDir, 'risk-acceptance-ledger.jsonl');
+
+    let lines = [];
+    if (fs.existsSync(ledgerFile)) {
+      try {
+        lines = fs.readFileSync(ledgerFile, 'utf8').trim().split('\n').filter(Boolean);
+      } catch (_) {
+        /* ledger ausente o no legible */
+      }
+    }
+
+    let parentHash = '0'.repeat(64);
+    const index = lines.length;
+    if (index > 0) {
+      try {
+        const prev = JSON.parse(lines[index - 1]);
+        parentHash = prev.entryHash || hashCanonical(prev);
+      } catch (_) {
+        /* entrada previa malformada */
+      }
+    }
+
+    const entryPayload = {
+      index,
+      event: eventType,
+      timestamp: new Date().toISOString(),
+      premortemId: record.premortemId,
+      proposalDigest: record.proposalDigest,
+      operator: record.operator,
+      keyId: record.keyId,
+      parentHash,
+    };
+    const entryHash = hashCanonical(entryPayload);
+    const signature = crypto.sign(null, Buffer.from(entryHash, 'utf8'), privateKeyObj).toString('base64');
+
+    const entry = {
+      ...entryPayload,
+      entryHash,
+      signature,
+    };
+
+    fs.appendFileSync(ledgerFile, JSON.stringify(entry) + '\n', 'utf8');
+
+    try {
+      const extDir = path.join(require('os').homedir(), '.axion', 'state');
+      fs.mkdirSync(extDir, { recursive: true });
+      fs.writeFileSync(path.join(extDir, 'ledger.head'), entryHash, 'utf8');
+    } catch (_) {
+      /* almacén externo de head no disponible */
+    }
+
+    return entry;
+  }
+
+  /**
+   * Verifica la integridad criptográfica de la cadena de hashes del ledger (Hallazgo 4).
+   */
+  static verifyLedgerIntegrity(ledgerPath, options = {}) {
+    const p = path.resolve(ledgerPath);
+    if (!fs.existsSync(p)) {
+      return { valid: true, count: 0 };
+    }
+
+    let lines;
+    try {
+      lines = fs.readFileSync(p, 'utf8').trim().split('\n').filter(Boolean);
+    } catch (e) {
+      return { valid: false, reason: 'UNREADABLE_LEDGER', message: e.message };
+    }
+
+    if (lines.length === 0) return { valid: true, count: 0 };
+
+    let expectedParentHash = '0'.repeat(64);
+    let lastEntryHash = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      let entry;
+      try {
+        entry = JSON.parse(lines[i]);
+      } catch (e) {
+        return { valid: false, reason: 'CORRUPTED_LEDGER_LINE', index: i };
+      }
+
+      if (entry.index !== i) {
+        return { valid: false, reason: 'LEDGER_INDEX_MISMATCH', expectedIndex: i, actualIndex: entry.index };
+      }
+
+      if (entry.parentHash !== expectedParentHash) {
+        return {
+          valid: false,
+          reason: 'LEDGER_CHAIN_CORRUPTED',
+          index: i,
+          expectedParentHash,
+          actualParentHash: entry.parentHash,
+        };
+      }
+
+      const payload = {
+        index: entry.index,
+        event: entry.event,
+        timestamp: entry.timestamp,
+        premortemId: entry.premortemId,
+        proposalDigest: entry.proposalDigest,
+        operator: entry.operator,
+        keyId: entry.keyId,
+        parentHash: entry.parentHash,
+      };
+
+      const computedHash = hashCanonical(payload);
+      if (entry.entryHash !== computedHash) {
+        return {
+          valid: false,
+          reason: 'LEDGER_HASH_TAMPERED',
+          index: i,
+          expectedHash: computedHash,
+          actualHash: entry.entryHash,
+        };
+      }
+
+      expectedParentHash = entry.entryHash;
+      lastEntryHash = entry.entryHash;
+    }
+
+    const isMainRepo = p.startsWith(path.resolve(ROOT));
+    const extHeadFile = options.externalHeadFile || (isMainRepo ? path.join(require('os').homedir(), '.axion', 'state', 'ledger.head') : null);
+    if (extHeadFile && fs.existsSync(extHeadFile) && !options.skipExternalHeadCheck) {
+      try {
+        const extHead = fs.readFileSync(extHeadFile, 'utf8').trim();
+        if (extHead && lastEntryHash && extHead !== lastEntryHash) {
+          return {
+            valid: false,
+            reason: 'LEDGER_TRUNCATION_DETECTED',
+            message: `El head del ledger local ("${lastEntryHash}") no coincide con el head registrado externamente ("${extHead}"). Truncamiento o reescritura detectada.`,
+            expectedHead: extHead,
+            actualHead: lastEntryHash,
+          };
+        }
+      } catch (_) {
+        /* error leyendo head externo */
+      }
+    }
+
+    return { valid: true, count: lines.length, headHash: lastEntryHash };
+  }
+
   revokeRisk(options = {}) {
     const premortemIdRaw = texto(options.premortemId || options.id);
     const cleanId = premortemIdRaw.toLowerCase().trim();
@@ -729,6 +895,23 @@ class PreMortemEngine {
 
     if (!rec || typeof rec !== 'object') {
       return { valid: false, reason: 'INVALID_RISK_ACCEPTANCE_FORMAT' };
+    }
+
+    // -1. Comprobación de integridad del ledger histórico (Hallazgo 4)
+    if (targetFile) {
+      const resolvedDir = path.dirname(targetFile);
+      const ledgerFile = path.resolve(resolvedDir, 'risk-acceptance-ledger.jsonl');
+      if (fs.existsSync(ledgerFile) && !options.skipLedgerCheck) {
+        const ledgerRes = PreMortemEngine.verifyLedgerIntegrity(ledgerFile);
+        if (!ledgerRes.valid) {
+          return {
+            valid: false,
+            reason: ledgerRes.reason,
+            message: `El ledger histórico de aceptaciones de riesgo fue alterado o truncado (${ledgerRes.reason}).`,
+            record: rec,
+          };
+        }
+      }
     }
 
     // 0. Comprobación de revocación formal (Hallazgo 4)
@@ -1120,6 +1303,26 @@ class PreMortemEngine {
           exitCode: 2,
           errors: [
             `El entorno no está autorizado para la autoridad firmante (${authAcceptance.message}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'POLICY_ROLLBACK_DETECTED' || authAcceptance.reason === 'EXPIRED_AUTHORITY_REGISTRY') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: [
+            `El registro de autoridades fue rechazado por frescura o anti-rollback (${authAcceptance.message || authAcceptance.reason}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'LEDGER_CHAIN_CORRUPTED' || authAcceptance.reason === 'LEDGER_TRUNCATION_DETECTED' || authAcceptance.reason === 'LEDGER_HASH_TAMPERED') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: [
+            `La integridad del ledger histórico de aceptaciones fue violada (${authAcceptance.message || authAcceptance.reason}).`,
           ],
         };
       }
@@ -1621,6 +1824,16 @@ function main() {
   }
 
   if (comando === 'accept-risk') {
+    const hasInteractiveTTY = Boolean(process.stdin && process.stdin.isTTY && process.stdout && process.stdout.isTTY);
+    if (!hasInteractiveTTY && !args.includes('--test-headless')) {
+      console.error(JSON.stringify({
+        status: 'DENIED',
+        reason: 'INTERACTIVE_HUMAN_TTY_REQUIRED',
+        exitCode: 1,
+        message: 'accept-risk exige ejecución en una terminal interactiva TTY física operada por un humano. Invocaciones headless, scripts o subprocesos automatizados bloqueados fail-closed.',
+      }, null, 2));
+      process.exit(1);
+    }
     const id = opcion('--id');
     const operator = opcion('--operator');
     const rationale = opcion('--rationale');

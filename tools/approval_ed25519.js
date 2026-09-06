@@ -93,8 +93,13 @@ function loadRegistry(registryPath) {
     return { ok: false, error };
   }
 
+  const validRegistryKeys = new Set(['version', 'authorities', 'policyId', 'monotonicVersion', 'issuedAt', 'expiresAt']);
+  const parsedKeys = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? Object.keys(parsed) : [];
+  const hasRequiredRegistryKeys = parsedKeys.includes('version') && parsedKeys.includes('authorities');
+  const hasOnlyValidRegistryKeys = parsedKeys.every((k) => validRegistryKeys.has(k));
+
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)
-      || Object.keys(parsed).sort().join(',') !== 'authorities,version'
+      || !hasRequiredRegistryKeys || !hasOnlyValidRegistryKeys
       || parsed.version !== '1.0.0' || !Array.isArray(parsed.authorities)) {
     return { ok: false, error: new Error('Registro de autoridades malformado.') };
   }

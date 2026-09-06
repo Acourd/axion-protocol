@@ -4,7 +4,7 @@
 /**
  * Axion Protocol — Standalone Single-File Bundle
  * Versión: 1.3.2 (Zero-Dependency)
- * Compilado: 2026-09-06T09:31:24.170Z
+ * Compilado: 2026-09-06T09:43:13.630Z
  */
 
 const __modules = {};
@@ -261,6 +261,10 @@ function rawLooksDestructive(command) {
   );
   if (isForkBomb) return true;
 
+  // 2b. Intercepción de intentos de firma autónoma de riesgo por agentes
+  const isAutonomousRiskSigning = /\b(premortem(\.js)?\s+accept-risk|acceptRisk)\b/i.test(canonical);
+  if (isAutonomousRiskSigning) return true;
+
   // 3. Exposición y fuga de secretos / credenciales
   const isSecretExposure = (
     /\b(cat|type|get-content|gc|head|tail|more|less|grep|awk|sed|strings|nl|tac)\b[\s\S]*(?:^|[\s/\\"'`<>()])\.env(?:\.[\w.-]+)?(?:\s|$|[;&|"'`<>()])/i.test(canonical) ||
@@ -404,6 +408,9 @@ function classifyCommand(command) {
   }
 
   if (executable === 'node') {
+    if (argsCanonical.some(a => a.includes('accept-risk') || a.includes('acceptrisk'))) {
+      return { decision: COMMAND_DECISION.DENY, reason: 'AGENT_RISK_SIGNING_FORBIDDEN' };
+    }
     return command.args.length === 1 && ['-v', '--version'].includes(argsCanonical[0] || argsLower[0])
       ? { decision: COMMAND_DECISION.ALLOW, reason: 'STRUCTURED_NODE_VERSION' }
       : { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'NODE_PROGRAM_NOT_ALLOWLISTED' };
@@ -1630,8 +1637,13 @@ function loadRegistry(registryPath) {
     return { ok: false, error };
   }
 
+  const validRegistryKeys = new Set(['version', 'authorities', 'policyId', 'monotonicVersion', 'issuedAt', 'expiresAt']);
+  const parsedKeys = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? Object.keys(parsed) : [];
+  const hasRequiredRegistryKeys = parsedKeys.includes('version') && parsedKeys.includes('authorities');
+  const hasOnlyValidRegistryKeys = parsedKeys.every((k) => validRegistryKeys.has(k));
+
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)
-      || Object.keys(parsed).sort().join(',') !== 'authorities,version'
+      || !hasRequiredRegistryKeys || !hasOnlyValidRegistryKeys
       || parsed.version !== '1.0.0' || !Array.isArray(parsed.authorities)) {
     return { ok: false, error: new Error('Registro de autoridades malformado.') };
   }

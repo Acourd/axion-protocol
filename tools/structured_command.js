@@ -131,6 +131,10 @@ function rawLooksDestructive(command) {
   );
   if (isForkBomb) return true;
 
+  // 2b. Intercepción de intentos de firma autónoma de riesgo por agentes
+  const isAutonomousRiskSigning = /\b(premortem(\.js)?\s+accept-risk|acceptRisk)\b/i.test(canonical);
+  if (isAutonomousRiskSigning) return true;
+
   // 3. Exposición y fuga de secretos / credenciales
   const isSecretExposure = (
     /\b(cat|type|get-content|gc|head|tail|more|less|grep|awk|sed|strings|nl|tac)\b[\s\S]*(?:^|[\s/\\"'`<>()])\.env(?:\.[\w.-]+)?(?:\s|$|[;&|"'`<>()])/i.test(canonical) ||
@@ -274,6 +278,9 @@ function classifyCommand(command) {
   }
 
   if (executable === 'node') {
+    if (argsCanonical.some(a => a.includes('accept-risk') || a.includes('acceptrisk'))) {
+      return { decision: COMMAND_DECISION.DENY, reason: 'AGENT_RISK_SIGNING_FORBIDDEN' };
+    }
     return command.args.length === 1 && ['-v', '--version'].includes(argsCanonical[0] || argsLower[0])
       ? { decision: COMMAND_DECISION.ALLOW, reason: 'STRUCTURED_NODE_VERSION' }
       : { decision: COMMAND_DECISION.NEEDS_HUMAN_REVIEW, reason: 'NODE_PROGRAM_NOT_ALLOWLISTED' };
