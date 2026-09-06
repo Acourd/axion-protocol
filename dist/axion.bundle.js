@@ -4,7 +4,7 @@
 /**
  * Axion Protocol — Standalone Single-File Bundle
  * Versión: 1.3.2 (Zero-Dependency)
- * Compilado: 2026-09-06T09:09:17.626Z
+ * Compilado: 2026-09-06T09:17:27.543Z
  */
 
 const __modules = {};

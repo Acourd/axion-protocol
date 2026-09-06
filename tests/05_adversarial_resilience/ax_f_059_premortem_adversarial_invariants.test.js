@@ -4,9 +4,11 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 const PreMortemEngine = require('../../tools/premortem.js');
 const { VEREDICTOS } = PreMortemEngine;
 const { asEd25519PublicKey, computePublicKeyId } = require('../../tools/approval_ed25519.js');
+const { canonicalize } = require('../../tools/canonical_json.js');
 
 console.log('=== AX-F-059 Invariantes Adversariales y Derivación de Veredictos en PreMortem ===\n');
 
@@ -248,6 +250,7 @@ try {
 
   engine.acceptRisk({
     premortemId: hraPremortemId,
+    payload: payloadLimpioHRA,
     operator: 'Lead Architect (@adrian)',
     rationale: 'Riesgo aceptado formalmente por el arquitecto líder para validación de hipótesis de negocio',
     environment: 'development',
@@ -443,6 +446,78 @@ try {
   } finally {
     fs.lstatSync = originalLstat;
   }
+
+  // 15. Invariante de Registro de Autoridades: Ataque de Clave Autogenerada por el Agente (Hallazgo 1)
+  const agentGeneratedKeys = crypto.generateKeyPairSync('ed25519');
+  const agentKeyId = computePublicKeyId(agentGeneratedKeys.publicKey);
+  const agentPayload = {
+    feature_name: 'Propuesta Firmada con Clave de Agente No Autorizada',
+    anchors: {
+      security: ['Riesgo de escalamiento de privilegios por inyección de código binario en el runtime'],
+      performance: ['Consumo cuadrático de tiempo en cálculo de autovalores para matrices grandes'],
+      architecture: ['Acoplamiento excesivo con submódulos de persistencia rompiendo la arquitectura zero dependencias'],
+      ux: ['Mensajes de error crípticos que confunden al operador humano en la consola de comandos'],
+    },
+    competence_check: { justified: true, need_origin: 'Auditoría externa', bloat_risk: false },
+    worst_case_scenarios: [
+      'Corrupción silenciosa del estado de claves provocando pérdida irreversible de validaciones',
+      'Bloqueo catastrófico de hilos de ejecución en el runtime principal de Node.js',
+    ],
+    mandatory_mitigations: [
+      'Encapsular la generación de llaves en buffers inmutables con comprobación estricta de límites',
+    ],
+    depth_level: 2,
+  };
+  const agentProposalDigest = hashCanonical(agentPayload);
+  const agentPremortemId = agentProposalDigest.slice(0, 16);
+
+  const unsignedAgentRecord = {
+    contractVersion: '2.0.0',
+    acceptanceId: 'agent-acceptance-01',
+    premortemId: agentPremortemId,
+    proposalDigest: agentProposalDigest,
+    operator: 'Lead Architect (@adrian)', // El agente usurpa el nombre del operador
+    keyId: agentKeyId,
+    publicKeyPem: agentGeneratedKeys.publicKey.export({ type: 'spki', format: 'pem' }),
+    environment: 'development',
+    allowedEnvironments: ['development'],
+    issuedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 3600000).toISOString(),
+    nonce: 'agentnonce12345678901234567890',
+    rationale: 'El agente intenta auto-autorizarse generando su propia clave Ed25519 en memoria',
+  };
+  const agentSig = crypto.sign(null, Buffer.from(canonicalize(unsignedAgentRecord), 'utf8'), agentGeneratedKeys.privateKey).toString('base64');
+  const agentEnvelope = { ...unsignedAgentRecord, algorithm: 'Ed25519', signature: agentSig };
+
+  fs.writeFileSync(
+    path.join(tempDir, '.axion', 'state', `risk-acceptance-${agentPremortemId}.json`),
+    JSON.stringify(agentEnvelope, null, 2),
+    'utf8'
+  );
+  const rAgentUntrusted = engine.evaluateAssessment(agentPayload, { environment: 'development' });
+  assert.strictEqual(rAgentUntrusted.status, 'DENIED');
+  assert.strictEqual(rAgentUntrusted.reason, 'UNTRUSTED_KEY_ID');
+  assert.strictEqual(rAgentUntrusted.exitCode, 1);
+  console.log('✓ Invariante de autoridad verificada: clave autogenerada por el agente rechazada como UNTRUSTED_KEY_ID');
+
+  // 16. Invariante de Rechazo Estricto de proposalDigest Truncado (Hallazgo 2)
+  const truncatedDigests = [
+    agentProposalDigest.slice(0, 16),
+    agentProposalDigest.slice(0, 32),
+    agentProposalDigest.slice(0, 63),
+  ];
+  for (const td of truncatedDigests) {
+    assert.throws(
+      () => engine.acceptRisk({
+        premortemId: agentPremortemId,
+        proposalDigest: td,
+        operator: 'Lead Architect (@adrian)',
+        rationale: 'Intento de aceptación con digest truncado no permitido',
+      }),
+      /INVALID_PROPOSAL_DIGEST_FORMAT/
+    );
+  }
+  console.log('✓ Invariante de SHA-256 completo: digests truncados de 16, 32 y 63 chars rechazados fail-closed');
 
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });

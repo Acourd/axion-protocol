@@ -253,9 +253,58 @@ class PreMortemEngine {
 
 
     /**
+   * Obtiene la ruta del registro confiable de autoridades.
+   */
+  getRegistryPath(options = {}) {
+    if (options.registryPath && fs.existsSync(options.registryPath)) {
+      return options.registryPath;
+    }
+    const policiesReg = path.join(this.rootDir, 'policies', 'authorities.json');
+    if (fs.existsSync(policiesReg)) return policiesReg;
+
+    const keysReg = path.join(this.rootDir, '.axion', 'keys', 'authorities.json');
+    if (fs.existsSync(keysReg)) return keysReg;
+
+    const rootPoliciesReg = path.join(ROOT, 'policies', 'authorities.json');
+    if (fs.existsSync(rootPoliciesReg)) return rootPoliciesReg;
+
+    const rootKeysReg = path.join(ROOT, '.axion', 'keys', 'authorities.json');
+    if (fs.existsSync(rootKeysReg)) return rootKeysReg;
+
+    return null;
+  }
+
+  /**
+   * Carga y valida el registro confiable de autoridades.
+   */
+  loadAuthorities(options = {}) {
+    if (options.authorities && Array.isArray(options.authorities)) {
+      return { ok: true, authorities: options.authorities };
+    }
+    const regPath = this.getRegistryPath(options);
+    if (!regPath) {
+      return {
+        ok: false,
+        reason: 'AUTHORITY_REGISTRY_UNAVAILABLE',
+        message: 'No se encontró el registro confiable de autoridades (policies/authorities.json).'
+      };
+    }
+    const loaded = loadAuthorityRegistry(regPath);
+    if (!loaded.ok) {
+      return {
+        ok: false,
+        reason: 'MALFORMED_AUTHORITY_REGISTRY',
+        message: loaded.error ? loaded.error.message : 'Registro de autoridades malformado'
+      };
+    }
+    return { ok: true, authorities: loaded.registry.authorities, registryPath: regPath };
+  }
+
+  /**
    * Registra una aceptación deliberada y formal de riesgo fuera de banda.
    * El operador humano autentica la excepción para un entorno específico con vigencia acotada,
-   * sellada criptográficamente con una firma asimétrica Ed25519 y vinculada al digest exacto de la propuesta.
+   * sellada criptográficamente con una clave privada Ed25519 preexistente inscrita en el
+   * registro confiable de autoridades (policies/authorities.json) y vinculada al proposalDigest exacto (SHA-256 de 64 chars).
    */
   acceptRisk(options = {}) {
     const premortemIdRaw = texto(options.premortemId || options.id);
@@ -287,8 +336,8 @@ class PreMortemEngine {
     }
     const ttlHours = Number.isFinite(options.ttlHours) && options.ttlHours > 0 ? options.ttlHours : 24;
 
-    // Vinculación estricta con la propuesta exacta (Hallazgo 2)
-    let proposalDigest = options.proposalDigest ? texto(options.proposalDigest) : null;
+    // Vinculación estricta con la propuesta exacta: SHA-256 de 64 hex chars (Hallazgo 2)
+    let proposalDigest = null;
     let scopeHash = options.scopeHash ? texto(options.scopeHash) : null;
     let mitigationsHash = options.mitigationsHash ? texto(options.mitigationsHash) : null;
 
@@ -303,22 +352,26 @@ class PreMortemEngine {
       if (cleanPayload.mandatory_mitigations) {
         mitigationsHash = hashCanonical(cleanPayload.mandatory_mitigations);
       }
-    }
-
-    if (!proposalDigest && cleanId.length === 64) {
-      proposalDigest = cleanId;
-    }
-    if (!proposalDigest) {
+    } else if (options.proposalDigest) {
+      proposalDigest = texto(options.proposalDigest).toLowerCase().trim();
+    } else if (cleanId.length === 64) {
       proposalDigest = cleanId;
     }
 
-    // Firma asimétrica Ed25519 (Hallazgo 1)
+    if (!proposalDigest || !/^[a-f0-9]{64}$/.test(proposalDigest)) {
+      throw new Error(`INVALID_PROPOSAL_DIGEST_FORMAT: proposalDigest debe ser un SHA-256 completo de 64 caracteres hexadecimales. Recibido: ${JSON.stringify(proposalDigest)}`);
+    }
+
+    // Firma asimétrica Ed25519 con clave preexistente (Hallazgo 1 y 3)
     let privateKeyObj;
     if (options.privateKey) {
       privateKeyObj = options.privateKey instanceof crypto.KeyObject && options.privateKey.type === 'private'
         ? options.privateKey
         : crypto.createPrivateKey(options.privateKey);
-    } else if (options.privateKeyPath && fs.existsSync(options.privateKeyPath)) {
+    } else if (options.privateKeyPath) {
+      if (!fs.existsSync(options.privateKeyPath)) {
+        throw new Error(`MISSING_ED25519_PRIVATE_KEY: El archivo de clave privada especificado "${options.privateKeyPath}" no existe.`);
+      }
       privateKeyObj = crypto.createPrivateKey(fs.readFileSync(options.privateKeyPath, 'utf8'));
     } else if (options.key) {
       const rawKey = typeof options.key === 'string' && fs.existsSync(options.key)
@@ -330,19 +383,18 @@ class PreMortemEngine {
     } else {
       const opKeyPath = path.join(this.rootDir, '.axion', 'keys', 'operator_ed25519.key');
       const attKeyPath = path.join(this.rootDir, '.axion', 'keys', 'attestation_ed25519.key');
+      const rootOpKeyPath = path.join(ROOT, '.axion', 'keys', 'operator_ed25519.key');
+      const rootAttKeyPath = path.join(ROOT, '.axion', 'keys', 'attestation_ed25519.key');
       if (fs.existsSync(opKeyPath)) {
         privateKeyObj = crypto.createPrivateKey(fs.readFileSync(opKeyPath, 'utf8'));
       } else if (fs.existsSync(attKeyPath)) {
         privateKeyObj = crypto.createPrivateKey(fs.readFileSync(attKeyPath, 'utf8'));
-      } else if (options.generateKeyIfMissing === true || !options.strictKeyRequired) {
-        const pair = crypto.generateKeyPairSync('ed25519');
-        privateKeyObj = pair.privateKey;
-        const keysDir = path.join(this.rootDir, '.axion', 'keys');
-        if (!fs.existsSync(keysDir)) fs.mkdirSync(keysDir, { recursive: true });
-        fs.writeFileSync(opKeyPath, pair.privateKey.export({ type: 'pkcs8', format: 'pem' }), 'utf8');
-        fs.writeFileSync(path.join(keysDir, 'operator_ed25519.pub'), pair.publicKey.export({ type: 'spki', format: 'pem' }), 'utf8');
+      } else if (fs.existsSync(rootOpKeyPath)) {
+        privateKeyObj = crypto.createPrivateKey(fs.readFileSync(rootOpKeyPath, 'utf8'));
+      } else if (fs.existsSync(rootAttKeyPath)) {
+        privateKeyObj = crypto.createPrivateKey(fs.readFileSync(rootAttKeyPath, 'utf8'));
       } else {
-        throw new Error('MISSING_ED25519_KEY: acceptRisk exige una clave privada Ed25519 (--key, privateKey o .axion/keys/operator_ed25519.key).');
+        throw new Error('MISSING_ED25519_PRIVATE_KEY: acceptRisk exige una clave privada Ed25519 preexistente (--key, privateKey o privateKeyPath). La generación e inscripción de autoridades es una operación administrativa separada fuera de banda.');
       }
     }
 
@@ -353,6 +405,25 @@ class PreMortemEngine {
     const pubKeyObj = crypto.createPublicKey(privateKeyObj);
     const publicKeyPem = pubKeyObj.export({ type: 'spki', format: 'pem' });
     const keyId = computePublicKeyId(pubKeyObj);
+
+    // Validación de autoridad contra registro confiable (Hallazgo 1)
+    const authRes = this.loadAuthorities(options);
+    if (!authRes.ok) {
+      throw new Error(`AUTHORITY_REGISTRY_ERROR: ${authRes.message}`);
+    }
+    const authority = authRes.authorities.find((a) => a && a.keyId === keyId);
+    if (!authority) {
+      throw new Error(`UNTRUSTED_KEY_ID: La clave "${keyId}" no está registrada en ${authRes.registryPath || 'authorities.json'}.`);
+    }
+    if (authority.status !== 'TRUSTED') {
+      throw new Error(`REVOKED_OR_UNTRUSTED_AUTHORITY: La autoridad "${authority.actorId}" tiene estado "${authority.status}".`);
+    }
+    if (!Array.isArray(authority.roles) || !authority.roles.includes('HUMAN_AUTHORITY')) {
+      throw new Error(`UNAUTHORIZED_ROLE: La autoridad "${authority.actorId}" carece del rol HUMAN_AUTHORITY.`);
+    }
+    if (authority.actorId !== operator) {
+      throw new Error(`OPERATOR_IDENTITY_MISMATCH: El operador declarado "${operator}" no coincide con la autoridad "${authority.actorId}".`);
+    }
 
     const unsignedRecord = {
       contractVersion: '2.0.0',
@@ -381,7 +452,7 @@ class PreMortemEngine {
       signature,
     };
 
-    // Confinamiento de ruta y protección anti-traversal / symlinks (Hallazgo 3)
+    // Confinamiento de ruta y protección anti-symlink TOCTOU-safe (Hallazgo 3 y 4)
     this.ensureStateDir();
     const resolvedStateDir = path.resolve(this.stateDir);
     const targetFile = path.resolve(resolvedStateDir, `risk-acceptance-${cleanId}.json`);
@@ -390,25 +461,34 @@ class PreMortemEngine {
       throw new Error(`PATH_TRAVERSAL_DETECTED: La ruta resultante escapa de ${resolvedStateDir}`);
     }
 
-    if (fs.existsSync(targetFile)) {
-      const lstat = fs.lstatSync(targetFile);
-      if (lstat.isSymbolicLink()) {
-        throw new Error(`SYMLINK_DETECTED: El archivo ${targetFile} es un enlace simbólico no confiable.`);
-      }
+    // Escritura atómica exclusiva
+    const tmpFile = path.join(resolvedStateDir, `.tmp-risk-${cleanId}-${process.pid}-${Date.now()}-${crypto.randomBytes(6).toString('hex')}.json`);
+    const fd = fs.openSync(tmpFile, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL, 0o600);
+    try {
+      fs.writeFileSync(fd, JSON.stringify(envelope, null, 2), 'utf8');
+    } finally {
+      fs.closeSync(fd);
     }
-
-    // Escritura atómica (temp file + rename)
-    const tmpFile = path.join(resolvedStateDir, `.tmp-risk-${cleanId}-${process.pid}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.json`);
-    fs.writeFileSync(tmpFile, JSON.stringify(envelope, null, 2), 'utf8');
     fs.renameSync(tmpFile, targetFile);
+
+    // Verificación post-escritura inmediata
+    const stat = fs.lstatSync(targetFile);
+    if (stat.isSymbolicLink()) {
+      try {
+        fs.unlinkSync(targetFile);
+      } catch (unlinkErr) {
+        // Ignorar fallo de desvinculación si el archivo ya fue purgado por el sistema de archivos
+      }
+      throw new Error(`SYMLINK_DETECTED: El archivo ${targetFile} es un enlace simbólico no confiable.`);
+    }
 
     return { pass: true, record: envelope, targetFile, keyId };
   }
 
   /**
    * Carga y valida la autenticidad e integridad de una aceptación de riesgo fuera de banda.
-   * Verifica la firma asimétrica Ed25519, el confinamiento de rutas, ausencia de symlinks,
-   * y la vinculación criptográfica al proposalDigest exacto.
+   * Verifica la firma asimétrica Ed25519 contra la clave pública del registro confiable de autoridades,
+   * valida igualdad estricta de 64 chars de proposalDigest, y elimina ventanas de carrera anti-symlink.
    */
   loadRiskAcceptance(premortemId, options = {}, actualProposalDigest = null) {
     let rec = null;
@@ -432,13 +512,38 @@ class PreMortemEngine {
 
       if (!fs.existsSync(targetFile)) return null;
 
-      const lstat = fs.lstatSync(targetFile);
-      if (lstat.isSymbolicLink()) {
+      // Doble inspección pre y post lectura para prevenir carreras TOCTOU
+      let statBefore;
+      try {
+        statBefore = fs.lstatSync(targetFile);
+      } catch (_) {
+        return { valid: false, reason: 'UNREADABLE_RISK_ACCEPTANCE' };
+      }
+
+      if (statBefore.isSymbolicLink() || !statBefore.isFile()) {
         return { valid: false, reason: 'SYMLINK_DETECTED' };
       }
 
+      let rawContent;
       try {
-        rec = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
+        rawContent = fs.readFileSync(targetFile, 'utf8');
+      } catch (_) {
+        return { valid: false, reason: 'MALFORMED_RISK_ACCEPTANCE' };
+      }
+
+      let statAfter;
+      try {
+        statAfter = fs.lstatSync(targetFile);
+      } catch (_) {
+        return { valid: false, reason: 'SYMLINK_DETECTED' };
+      }
+
+      if (statAfter.isSymbolicLink() || statBefore.ino !== statAfter.ino || statBefore.mtimeMs !== statAfter.mtimeMs) {
+        return { valid: false, reason: 'SYMLINK_DETECTED', message: 'Archivo modificado o sustituido concurrentemente durante la lectura.' };
+      }
+
+      try {
+        rec = JSON.parse(rawContent);
       } catch (_) {
         return { valid: false, reason: 'MALFORMED_RISK_ACCEPTANCE' };
       }
@@ -448,7 +553,7 @@ class PreMortemEngine {
       return { valid: false, reason: 'INVALID_RISK_ACCEPTANCE_FORMAT' };
     }
 
-    // 1. Verificación de algoritmo y firma Ed25519 (Hallazgo 1)
+    // 1. Verificación de algoritmo y firma Ed25519
     if (rec.algorithm !== 'Ed25519' || typeof rec.signature !== 'string' || !rec.signature) {
       return {
         valid: false,
@@ -458,27 +563,113 @@ class PreMortemEngine {
       };
     }
 
-    if (typeof rec.publicKeyPem !== 'string' || typeof rec.keyId !== 'string') {
+    if (typeof rec.keyId !== 'string' || !rec.keyId) {
       return {
         valid: false,
         reason: 'INVALID_ED25519_SIGNATURE',
-        message: 'publicKeyPem y keyId son obligatorios para verificar la autenticidad.',
+        message: 'keyId es obligatorio en el registro de aceptación.',
         record: rec,
       };
     }
 
-    let pubKey;
-    try {
-      pubKey = asEd25519PublicKey(rec.publicKeyPem);
-      const computedKeyId = computePublicKeyId(pubKey);
-      if (computedKeyId !== rec.keyId) {
-        return { valid: false, reason: 'KEY_ID_MISMATCH', record: rec };
-      }
-    } catch (e) {
-      return { valid: false, reason: 'INVALID_ED25519_SIGNATURE', message: e.message, record: rec };
+    // 2. Validación de propuesta con igualdad estricta SHA-256 de 64 caracteres (Hallazgo 2)
+    if (!rec.proposalDigest || typeof rec.proposalDigest !== 'string' || !/^[a-f0-9]{64}$/.test(rec.proposalDigest)) {
+      return {
+        valid: false,
+        reason: 'INVALID_PROPOSAL_DIGEST_FORMAT',
+        expected: '64 hex chars',
+        found: rec.proposalDigest,
+        record: rec,
+      };
     }
 
-    // Reconstruir unsignedRecord
+    if (actualProposalDigest) {
+      if (!/^[a-f0-9]{64}$/.test(actualProposalDigest)) {
+        return {
+          valid: false,
+          reason: 'INVALID_PROPOSAL_DIGEST_FORMAT',
+          expected: '64 hex chars',
+          found: actualProposalDigest,
+          record: rec,
+        };
+      }
+      if (rec.proposalDigest !== actualProposalDigest) {
+        return {
+          valid: false,
+          reason: 'PROPOSAL_DIGEST_MISMATCH',
+          expected: actualProposalDigest,
+          found: rec.proposalDigest,
+          record: rec,
+        };
+      }
+    }
+
+    // 3. Autenticación de autoridad contra el registro confiable (Hallazgo 1)
+    const authRes = this.loadAuthorities(options);
+    if (!authRes.ok) {
+      return { valid: false, reason: 'AUTHORITY_REGISTRY_UNAVAILABLE', message: authRes.message, record: rec };
+    }
+
+    const authority = authRes.authorities.find((a) => a && a.keyId === rec.keyId);
+    if (!authority) {
+      return {
+        valid: false,
+        reason: 'UNTRUSTED_KEY_ID',
+        message: `La clave "${rec.keyId}" no existe en el registro confiable de autoridades.`,
+        record: rec,
+      };
+    }
+
+    if (authority.status !== 'TRUSTED') {
+      return {
+        valid: false,
+        reason: 'REVOKED_OR_UNTRUSTED_AUTHORITY',
+        message: `La autoridad "${authority.actorId}" tiene estado "${authority.status}".`,
+        record: rec,
+      };
+    }
+
+    if (!Array.isArray(authority.roles) || !authority.roles.includes('HUMAN_AUTHORITY')) {
+      return {
+        valid: false,
+        reason: 'UNAUTHORIZED_ROLE',
+        message: `La autoridad "${authority.actorId}" carece del rol HUMAN_AUTHORITY.`,
+        record: rec,
+      };
+    }
+
+    if (authority.actorId !== rec.operator) {
+      return {
+        valid: false,
+        reason: 'OPERATOR_IDENTITY_MISMATCH',
+        message: `El operador declarado "${rec.operator}" no coincide con el actor registrado "${authority.actorId}".`,
+        record: rec,
+      };
+    }
+
+    const now = options.now ? new Date(options.now) : new Date();
+    if (new Date(authority.expiresAt).getTime() <= now.getTime()) {
+      return {
+        valid: false,
+        reason: 'AUTHORITY_EXPIRED',
+        message: `La credencial de la autoridad "${authority.actorId}" expiró en ${authority.expiresAt}.`,
+        record: rec,
+      };
+    }
+
+    // Raíz de confianza: la clave pública se extrae del registro de autoridades, NUNCA del envelope
+    let pubKey;
+    try {
+      pubKey = asEd25519PublicKey(authority.publicKeyPem);
+      const computedKeyId = computePublicKeyId(pubKey);
+      if (computedKeyId !== authority.keyId) {
+        return { valid: false, reason: 'MALFORMED_AUTHORITY_REGISTRY', record: rec };
+      }
+    } catch (e) {
+      return { valid: false, reason: 'INVALID_AUTHORITY_PUBLIC_KEY', message: e.message, record: rec };
+    }
+
+    // 4. Verificación matemática de la firma
     const unsignedRecord = { ...rec };
     delete unsignedRecord.algorithm;
     delete unsignedRecord.signature;
@@ -500,47 +691,12 @@ class PreMortemEngine {
       return { valid: false, reason: 'INVALID_ED25519_SIGNATURE', record: rec };
     }
 
-    // 2. Comprobación de autoridad confiable (si está configurada)
-    if (options.trustedKeyIds && Array.isArray(options.trustedKeyIds)) {
-      if (!options.trustedKeyIds.includes(rec.keyId)) {
-        return { valid: false, reason: 'UNTRUSTED_OPERATOR_KEY', record: rec };
-      }
-    } else if (options.expectedOperatorKeyId) {
-      if (rec.keyId !== options.expectedOperatorKeyId) {
-        return { valid: false, reason: 'UNTRUSTED_OPERATOR_KEY', record: rec };
-      }
-    } else if (options.registryPath && fs.existsSync(options.registryPath)) {
-      const regRes = loadAuthorityRegistry(options.registryPath);
-      if (regRes.ok) {
-        const auth = regRes.registry.authorities.find((a) => a && a.keyId === rec.keyId);
-        if (!auth || auth.status !== 'TRUSTED' || !Array.isArray(auth.roles) || !auth.roles.includes('HUMAN_AUTHORITY')) {
-          return { valid: false, reason: 'UNTRUSTED_OPERATOR_KEY', record: rec };
-        }
-      }
-    }
-
-    // 3. Comprobación de vinculación exacta a la propuesta (Hallazgo 2)
-    if (actualProposalDigest && rec.proposalDigest) {
-      const matches = (rec.proposalDigest === actualProposalDigest)
-        || (rec.proposalDigest.length >= 16 && actualProposalDigest.startsWith(rec.proposalDigest));
-      if (!matches) {
-        return {
-          valid: false,
-          reason: 'PROPOSAL_DIGEST_MISMATCH',
-          expected: actualProposalDigest,
-          found: rec.proposalDigest,
-          record: rec,
-        };
-      }
-    }
-
-    // 4. Comprobación de TTL
-    const now = options.now ? new Date(options.now) : new Date();
+    // 5. Comprobación de TTL de la aceptación
     if (now > new Date(rec.expiresAt)) {
       return { valid: false, reason: 'RISK_ACCEPTANCE_EXPIRED', record: rec };
     }
 
-    // 5. Comprobación de entorno
+    // 6. Comprobación de entorno
     const currentEnv = (options.environment || process.env.AXION_ENV || process.env.NODE_ENV || 'development').toLowerCase().trim();
     const allowed = Array.isArray(rec.allowedEnvironments) ? rec.allowedEnvironments : [rec.environment];
     if (!allowed.includes(currentEnv)) {
@@ -553,8 +709,9 @@ class PreMortemEngine {
       };
     }
 
-    return { valid: true, currentEnvironment: currentEnv, record: rec };
+    return { valid: true, currentEnvironment: currentEnv, record: rec, authority };
   }
+
   evaluateAssessment(payload, options = {}) {
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
       return { status: 'DENIED', reason: 'INVALID_PAYLOAD', exitCode: 1, errors: ['El payload debe ser un objeto JSON.'] };
@@ -692,6 +849,26 @@ class PreMortemEngine {
           ],
         };
       }
+      if (authAcceptance.reason === 'UNTRUSTED_KEY_ID' || authAcceptance.reason === 'UNAUTHORIZED_ROLE' || authAcceptance.reason === 'REVOKED_OR_UNTRUSTED_AUTHORITY' || authAcceptance.reason === 'OPERATOR_IDENTITY_MISMATCH' || authAcceptance.reason === 'AUTHORITY_EXPIRED') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: [
+            `La clave del operador no pertenece a una autoridad humana confiable registrada (${authAcceptance.message || authAcceptance.reason}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'INVALID_PROPOSAL_DIGEST_FORMAT') {
+        return {
+          status: 'DENIED',
+          reason: 'INVALID_PROPOSAL_DIGEST_FORMAT',
+          exitCode: 1,
+          errors: [
+            `El proposalDigest debe ser un SHA-256 completo de 64 caracteres hexadecimales (recibido: ${authAcceptance.found || 'vacío'}).`,
+          ],
+        };
+      }
       if (authAcceptance.reason === 'PROPOSAL_DIGEST_MISMATCH') {
         return {
           status: 'DENIED',
@@ -712,24 +889,6 @@ class PreMortemEngine {
           ],
         };
       }
-      if (authAcceptance.reason === 'UNTRUSTED_OPERATOR_KEY') {
-        return {
-          status: 'DENIED',
-          reason: 'UNTRUSTED_OPERATOR_KEY',
-          exitCode: 1,
-          errors: [
-            'La clave Ed25519 del operador no pertenece a una autoridad humana confiable registrada.',
-          ],
-        };
-      }
-      if (authAcceptance.reason === 'KEY_ID_MISMATCH') {
-        return {
-          status: 'DENIED',
-          reason: 'KEY_ID_MISMATCH',
-          exitCode: 1,
-          errors: ['El keyId no coincide con la clave pública Ed25519 provista.'],
-        };
-      }
       if (authAcceptance.reason === 'RISK_ACCEPTANCE_EXPIRED') {
         return {
           status: 'DENIED',
@@ -743,7 +902,7 @@ class PreMortemEngine {
           status: 'DENIED',
           reason: 'SYMLINK_DETECTED',
           exitCode: 1,
-          errors: ['El archivo de aceptación de riesgo es un enlace simbólico no confiable.'],
+          errors: ['El archivo de aceptación de riesgo es un enlace simbólico no confiable o sufrió carrera TOCTOU.'],
         };
       }
       if (authAcceptance.reason === 'PATH_TRAVERSAL_DETECTED' || authAcceptance.reason === 'INVALID_PREMORTEM_ID_FORMAT') {
