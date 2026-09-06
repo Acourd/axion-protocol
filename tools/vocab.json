@@ -1,0 +1,77 @@
+{
+  "version": "5.0.0",
+  "skill": "drive",
+  "description": "Orquestador autónomo fail-closed para misiones de ingeniería multi-paso (features, bugs, refactor) con motor TDD de bucle cerrado, verificación determinista (exit code 0), guardas de contención y reporte tipado.",
+  "taxonomy_families": {
+    "mission_results": [
+      "MISION_ENTREGADA",
+      "PENDIENTE_VERIFICACION",
+      "REINTENTOS_AGOTADOS",
+      "EVIDENCIA_LIMITADA"
+    ],
+    "stop_causes": [
+      "HALTED",
+      "BLOQUEADO_PREFLIGHT",
+      "CONFLICTO_GIT",
+      "ESCALACION_HUMANA"
+    ]
+  },
+  "verdicts": [
+    {
+      "name": "MISION_ENTREGADA",
+      "family": "mission_results",
+      "desc": "DoD del IntentContract cumplido + aserciones de tests citadas y coherentes con DoD + suite exit 0 calibrada en sandbox dinámico + diff hygiene limpia + evidencia citada literalmente."
+    },
+    {
+      "name": "PENDIENTE_VERIFICACION",
+      "family": "mission_results",
+      "desc": "Implementación concluida pero suite con fallos no imputables al diff (flaky confirmado por doble corrida o fallo preexistente en rama base), o refactor con regresión no recuperable dentro del presupuesto. Exige hipótesis técnica, diff diagnóstico y pasos de reproducción."
+    },
+    {
+      "name": "REINTENTOS_AGOTADOS",
+      "family": "mission_results",
+      "desc": "Se consumió el presupuesto de auto-corrección (3 por cluster o 5 global) habiendo un camino plausible no alcanzado. Certifica que la tarea es técnicamente factible pero excedió la cota de iteración asignada."
+    },
+    {
+      "name": "EVIDENCIA_LIMITADA",
+      "family": "mission_results",
+      "desc": "Tarea completada en proyectos carentes de suite de pruebas o con suite no calibrable. Cerradura estricta: solo autorizada en riesgo MENOR. En riesgo CRÍTICO o CONTROLADO, exige escalación al usuario."
+    },
+    {
+      "name": "HALTED",
+      "family": "stop_causes",
+      "desc": "Presencia de archivo .axion/HALT detectada al inicio o entre fases; ejecución congelada de forma segura por señal de emergencia."
+    },
+    {
+      "name": "BLOQUEADO_PREFLIGHT",
+      "family": "stop_causes",
+      "desc": "Invocación de comando rechazada por filtro de seguridad o validación manual fail-closed antes de mutar el sistema."
+    },
+    {
+      "name": "CONFLICTO_GIT",
+      "family": "stop_causes",
+      "desc": "Divergencia del árbol o colisión de lock de sesión no resoluble de forma determinista con el estado del VCS o filesystem."
+    },
+    {
+      "name": "ESCALACION_HUMANA",
+      "family": "stop_causes",
+      "desc": "Detección de aserción hostil en tests (AT-16), intento de mutación en archivos protegidos de gobernanza, escalamiento autónomo de riesgo en enmiendas (AT-17), ausencia de suite en riesgo CRÍTICO/CONTROLADO, nuevas dependencias no solicitadas explícitamente, requerimiento de credenciales 2FA fuera de banda o ambigüedad destructiva sobre el QUÉ."
+    }
+  ],
+  "risk_levels": [
+    "CRÍTICO",
+    "CONTROLADO",
+    "MENOR"
+  ],
+  "tdd_phases": [
+    "ROJO",
+    "VERDE",
+    "REFACTOR"
+  ],
+  "diagram_terminals": [
+    "ESCALACION_HUMANA",
+    "REINTENTOS_AGOTADOS",
+    "PENDIENTE_VERIFICACION"
+  ],
+  "lock_collision_verdict": "CONFLICTO_GIT"
+}

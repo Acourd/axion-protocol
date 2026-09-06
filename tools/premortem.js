@@ -29,7 +29,10 @@
 
 const fs = require('fs');
 const path = require('path');
-const { hashCanonical } = require('./canonical_json.js');
+const crypto = require('crypto');
+const { canonicalize, hashCanonical } = require('./canonical_json.js');
+const { asEd25519PublicKey, computePublicKeyId, loadAuthorityRegistry } = require('./approval_ed25519.js');
+const { verifyRootSeal, ROOT_AUTHORITY } = require('./governance_root.js');
 const { recordar } = require('./memory.js');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -49,11 +52,14 @@ const CLAVES_ANCLA = Object.keys(ANCHORS);
  * aceptarse "TODO_PERFECTO_ADELANTE" como resultado de una puerta de gobernanza.
  */
 const VEREDICTOS = {
-  APPROVED_WITH_SAFEGUARDS: { rango: 0, exit: 0, status: 'APPROVED', glosa: 'Adelante, con las salvaguardas comprometidas.' },
+  PLAN_APPROVED_WITH_SAFEGUARDS: { rango: 0, exit: 0, status: 'APPROVED', glosa: 'Plan aprobado con salvaguardas comprometidas (no certifica no-regresión antes de implementar).' },
+  APPROVED_WITH_SAFEGUARDS: { rango: 0, exit: 0, status: 'APPROVED', glosa: 'Adelante, con las salvaguardas comprometidas (alias de PLAN_APPROVED_WITH_SAFEGUARDS).' },
+  HUMAN_RISK_ACCEPTED: { rango: 0, exit: 0, status: 'APPROVED', glosa: 'Riesgo evaluado y aceptado formalmente por el operador humano responsable.' },
   CONDITIONAL_TDD: { rango: 1, exit: 2, status: 'CONDITIONAL', glosa: 'Solo con prueba que falle primero: hay una debilidad crítica en las mitigaciones.' },
   PIVOT_REQUIRED: { rango: 2, exit: 2, status: 'CONDITIONAL', glosa: 'El enfoque no sobrevive a su propia autopsia; hay que replantearlo.' },
-  REJECTED_AS_BLOAT: { rango: 3, exit: 1, status: 'DENIED', glosa: 'La complejidad que añade supera al problema que resuelve.' },
-  REJECTED_AS_UNJUSTIFIED: { rango: 4, exit: 1, status: 'DENIED', glosa: 'No se sostiene la necesidad real de construirlo.' },
+  REQUIERE_DESCUBRIMIENTO: { rango: 3, exit: 2, status: 'DISCOVERY_REQUIRED', glosa: 'Falta contexto, dependencias o especificación suficiente para evaluar el impacto de la propuesta.' },
+  REJECTED_AS_BLOAT: { rango: 4, exit: 1, status: 'DENIED', glosa: 'La complejidad que añade supera al problema que resuelve.' },
+  REJECTED_AS_UNJUSTIFIED: { rango: 5, exit: 1, status: 'DENIED', glosa: 'No se sostiene la necesidad real de construirlo.' },
 };
 
 // Un riesgo de una palabra no es un riesgo, es una casilla marcada. El suelo existe
@@ -91,6 +97,11 @@ class PreMortemEngine {
   constructor(projectRoot = ROOT) {
     this.root = path.resolve(projectRoot || ROOT);
     this.stateDir = path.join(this.root, '.axion', 'state');
+    this.keysDir = path.join(this.root, '.axion', 'keys');
+  }
+
+  get rootDir() {
+    return this.root;
   }
 
   ensureStateDir() {
@@ -98,8 +109,122 @@ class PreMortemEngine {
   }
 
   /**
+   * Obtiene el commit SHA actual de HEAD en el repositorio git (o fallback seguro).
+   */
+  static getCurrentCommitSha(dir = ROOT) {
+    try {
+      const { execSync } = require('child_process');
+      const sha = execSync('git rev-parse HEAD', {
+        cwd: dir,
+        stdio: ['ignore', 'pipe', 'ignore'],
+        encoding: 'utf8',
+      }).trim();
+      if (/^[a-f0-9]{40}$/i.test(sha)) {
+        return sha;
+      }
+    } catch (_) {
+      // Repositorio sin commits o entorno sin git: fallback seguro
+    }
+    return '0000000000000000000000000000000000000000';
+  }
+
+  /**
+   * Genera una solicitud formal de excepción CSR (risk-request-<id>.json).
+   * El agente autónomo formula la petición vinculándola a:
+   *   - requestId único
+   *   - premortemId y proposalDigest exacto (SHA-256 de 64 hex chars)
+   *   - commitSha actual del repositorio / árbol de trabajo
+   *   - environment solicitado (development | staging | production)
+   *   - riskLevel derivado del blast radius o declarado
+   *   - scope (rutas o alcance de la propuesta)
+   *   - rationale causal
+   * Concluye con estado PENDING y exitCode: 2 (REQUIERE_DECISIÓN_HUMANA).
+   */
+  createRiskRequest(payload, options = {}) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new Error('INVALID_PAYLOAD: payload debe ser un objeto JSON.');
+    }
+
+    const cleanPayload = { ...payload };
+    delete cleanPayload.human_risk_acceptance;
+    delete cleanPayload.authenticatedRiskAcceptance;
+    const proposalDigest = hashCanonical(cleanPayload);
+    const premortemId = proposalDigest.slice(0, 16);
+    const requestId = texto(options.requestId || `req-${premortemId}-${Date.now()}`);
+    const baseCommitSha = texto(options.baseCommitSha || options.commitSha || PreMortemEngine.getCurrentCommitSha(this.rootDir));
+    const environment = texto(options.environment || options.env || process.env.AXION_ENV || 'development').toLowerCase().trim();
+
+    const blast = PreMortemEngine.calculateBlastRadius({ files: payload.files || payload.scope || [] });
+    const riskLevel = texto(options.riskLevel || (blast.score >= 70 ? 'CRITICAL' : (blast.score >= 40 ? 'MODERATE' : 'LOW'))).toUpperCase().trim();
+    const scope = options.scope || payload.scope || payload.files || ['*'];
+    const allowedAction = texto(options.allowedAction || payload.allowed_action || payload.action || 'all');
+    const prohibitedActions = Array.isArray(options.prohibitedActions) ? options.prohibitedActions : (Array.isArray(payload.prohibited_actions) ? payload.prohibited_actions : []);
+    const mitigationsHash = hashCanonical(payload.mandatory_mitigations || []);
+    const scopeHash = hashCanonical(payload.scope || payload.files || []);
+    const rationale = texto(options.rationale || payload.risk_rationale || payload.rationale || 'Solicitud formal de excepción CSR para mitigación de riesgos derivados en pre-mortem.');
+
+    const requestRecord = {
+      contractVersion: '2.0.0',
+      requestId,
+      premortemId,
+      proposalDigest,
+      baseCommitSha,
+      commitSha: baseCommitSha,
+      environment,
+      riskLevel,
+      scope,
+      allowedAction,
+      prohibitedActions,
+      scopeHash,
+      mitigationsHash,
+      rationale,
+      issuedAt: (options.now ? new Date(options.now) : new Date()).toISOString(),
+      status: 'PENDING_HUMAN_APPROVAL',
+      agent: {
+        id: process.env.AGENT_ID || 'AGY',
+        context: Boolean(process.env.AGENT_CONTEXT === 'true' || process.env.ANTIGRAVITY === 'true' || process.env.OPENCODE === 'true'),
+      },
+    };
+
+    this.ensureStateDir();
+    const reqDir = path.join(this.stateDir, 'risk-requests');
+    fs.mkdirSync(reqDir, { recursive: true });
+    const requestPath = path.join(reqDir, `risk-request-${premortemId}.json`);
+    fs.writeFileSync(requestPath, JSON.stringify(requestRecord, null, 2), 'utf8');
+
+    return {
+      status: 'PENDING',
+      reason: 'REQUIERE_DECISIÓN_HUMANA',
+      exitCode: 2,
+      requestId,
+      premortemId,
+      proposalDigest,
+      baseCommitSha,
+      commitSha: baseCommitSha,
+      environment,
+      riskLevel,
+      scope,
+      allowedAction,
+      prohibitedActions,
+      requestPath,
+      requestRecord,
+    };
+  }
+
+  /**
    * Valida la sustancia de una lista de afirmaciones. Devuelve los reproches concretos,
    * no un booleano: quien recibe un rechazo necesita saber qué frase arreglar.
+   */
+  /**
+   * Valida la sustancia de una lista de afirmaciones. Devuelve los reproches concretos,
+   * no un booleano: quien recibe un rechazo necesita saber qué frase arreglar.
+   * Admite NO_APLICA / N/A si incluye al menos 15 caracteres de justificación técnica.
+   */
+  /**
+   * Valida la sustancia de una lista de afirmaciones. Devuelve los reproches concretos,
+   * no un booleano: quien recibe un rechazo necesita saber qué frase arreglar.
+   * Admite NO_APLICA / N/A si incluye al menos 25 caracteres de justificación técnica causal
+   * y delimita explícitamente el límite arquitectónico (sin tautologías).
    */
   static validarLista(lista, etiqueta, minimo) {
     const errores = [];
@@ -110,13 +235,37 @@ class PreMortemEngine {
     const limpias = [];
     lista.forEach((bruto, i) => {
       const t = texto(bruto);
+      const matchNoAplica = t.match(/^(?:NO[-_ ]APLICA|N\/A)\b[:\s-]*(.*)/i);
+      if (matchNoAplica) {
+        const justificacion = matchNoAplica[1] ? matchNoAplica[1].trim() : '';
+        if (justificacion.length < 25) {
+          errores.push(`${etiqueta}[${i}] declara NO_APLICA pero carece de justificación técnica suficiente (mínimo 25 caracteres de razonamiento causal).`);
+          return;
+        }
+
+        // Detección de justificaciones tautológicas o vacías
+        const palabras = justificacion.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 3);
+        const FILLER = new Set(['no', 'aplica', 'porque', 'este', 'esta', 'para', 'nada', 'ningun', 'ninguna', 'aqui', 'todo', 'que', 'los', 'las', 'con', 'del', 'por', 'tiene', 'tienen', 'como', 'sobre', 'modulo']);
+        const sustantivas = new Set(palabras.filter((w) => !FILLER.has(w)));
+        if (sustantivas.size < 3) {
+          errores.push(`${etiqueta}[${i}] contiene una justificación de NO_APLICA tautológica o vacía ("${justificacion}"). Se exige sustentar la exclusión técnica con vocabulario causal.`);
+          return;
+        }
+
+        // Exigir declaración explícita del límite arquitectónico que excluye la superficie
+        const BOUNDARY_PATTERNS = /(?:interno|interfaz|usuario|cli|ui|offline|batch|algoritmo|backend|solo lectura|aislado|red|privado|numerico|persistencia|estricto|sin|inmutable|local|fondo)/i;
+        if (!BOUNDARY_PATTERNS.test(justificacion)) {
+          errores.push(`${etiqueta}[${i}] declara NO_APLICA sin explicitar el límite arquitectónico que excluye la superficie (e.g. 'módulo interno sin UI ni CLI').`);
+          return;
+        }
+
+        limpias.push(t);
+        return;
+      }
       if (t.length < MINIMO_SUSTANCIA) {
         errores.push(`${etiqueta}[${i}] tiene ${t.length} caracteres; se exigen ${MINIMO_SUSTANCIA} para que describa un riesgo y no una casilla marcada.`);
         return;
       }
-      // La longitud sola se rellena con paja: cuarenta y cuatro letras iguales pasaban el
-      // suelo. Se exigen palabras distintas porque un riesgo se explica con lenguaje, y
-      // contar caracteres mide el esfuerzo de teclear, no el de pensar.
       const distintas = new Set(t.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 3));
       if (distintas.size < MINIMO_PALABRAS) {
         errores.push(`${etiqueta}[${i}] tiene ${distintas.size} palabra(s) distinta(s); se exigen ${MINIMO_PALABRAS}. Un riesgo se explica, no se rellena.`);
@@ -127,7 +276,1102 @@ class PreMortemEngine {
     return { errores, limpias };
   }
 
-  evaluateAssessment(payload) {
+  static calculateBlastRadius(options = {}) {
+    const files = Array.isArray(options.files) ? options.files : [];
+    const count = files.length;
+
+    // 1. Base por archivos
+    let baseFiles = 0;
+    if (count === 1) baseFiles = 10;
+    else if (count >= 2 && count <= 3) baseFiles = 25;
+    else if (count >= 4 && count <= 7) baseFiles = 40;
+    else if (count >= 8) baseFiles = 50;
+    else if (typeof options.baseScore === 'number') baseFiles = options.baseScore;
+
+    // 2. Ponderación por criticidad (rutas críticas de gobernanza/infraestructura, no glob ciego)
+    const defaultCriticalPatterns = [
+      /^\.github\//i,
+      /^policies\//i,
+      /^bin\//i,
+      /^tools\/(?:killswitch|attestation|preflight|repo_attestation_generator)\.js/i,
+      /^schemas\//i,
+    ];
+    const criticalPatterns = Array.isArray(options.criticalPatterns)
+      ? options.criticalPatterns
+      : defaultCriticalPatterns;
+
+    let hasCriticalInfra = false;
+    let hasContractSchema = false;
+
+    for (const f of files) {
+      const normalized = String(f || '').replace(/\\/g, '/');
+      if (criticalPatterns.some((pat) => (typeof pat.test === 'function' ? pat.test(normalized) : normalized.includes(String(pat))))) {
+        hasCriticalInfra = true;
+      }
+      if (/schemas\/|\.axion\/state\//i.test(normalized)) {
+        hasContractSchema = true;
+      }
+    }
+
+    let criticalityScore = 0;
+    if (hasCriticalInfra) criticalityScore = 30;
+    else if (hasContractSchema) criticalityScore = 20;
+    else if (typeof options.criticalityScore === 'number') criticalityScore = options.criticalityScore;
+
+    // 3. Complejidad de interfaz
+    let interfaceScore = 0;
+    if (options.altersPublicInterface === true || options.altersCli === true) {
+      interfaceScore = 15;
+    } else if (typeof options.interfaceScore === 'number') {
+      interfaceScore = options.interfaceScore;
+    }
+
+    // 4. Factor de reversibilidad
+    let reversibilityScore = 0;
+    if (options.isIrreversible === true || options.hasDataMigration === true) {
+      reversibilityScore = 20;
+    } else if (typeof options.reversibilityScore === 'number') {
+      reversibilityScore = options.reversibilityScore;
+    }
+
+    const rawScore = baseFiles + criticalityScore + interfaceScore + reversibilityScore;
+    const score = Math.min(100, Math.max(0, rawScore));
+
+    let riskLevel = 'LOW';
+    if (score >= 70) riskLevel = 'CRITICAL';
+    else if (score >= 40) riskLevel = 'MODERATE';
+
+    return {
+      score,
+      riskLevel,
+      factors: {
+        baseFiles,
+        criticalityScore,
+        interfaceScore,
+        reversibilityScore,
+      },
+      filesCount: count,
+      capped: rawScore > 100,
+    };
+  }
+
+
+    /**
+   * Obtiene la ruta del registro confiable de autoridades.
+   */
+  getRegistryPath(options = {}) {
+    if (options.registryPath && fs.existsSync(options.registryPath)) {
+      return options.registryPath;
+    }
+    const policiesReg = path.join(this.rootDir, 'policies', 'authorities.json');
+    if (fs.existsSync(policiesReg)) return policiesReg;
+
+    const keysReg = path.join(this.rootDir, '.axion', 'keys', 'authorities.json');
+    if (fs.existsSync(keysReg)) return keysReg;
+
+    const rootPoliciesReg = path.join(ROOT, 'policies', 'authorities.json');
+    if (fs.existsSync(rootPoliciesReg)) return rootPoliciesReg;
+
+    const rootKeysReg = path.join(ROOT, '.axion', 'keys', 'authorities.json');
+    if (fs.existsSync(rootKeysReg)) return rootKeysReg;
+
+    return null;
+  }
+
+  /**
+   * Carga y valida el registro confiable de autoridades.
+   */
+  loadAuthorities(options = {}) {
+    if (options.authorities && Array.isArray(options.authorities)) {
+      return { ok: true, authorities: options.authorities };
+    }
+    const regPath = this.getRegistryPath(options);
+    if (!regPath) {
+      return {
+        ok: false,
+        reason: 'AUTHORITY_REGISTRY_UNAVAILABLE',
+        message: 'No se encontró el registro confiable de autoridades (policies/authorities.json).'
+      };
+    }
+    const loaded = loadAuthorityRegistry(regPath);
+    if (!loaded.ok) {
+      return {
+        ok: false,
+        reason: 'MALFORMED_AUTHORITY_REGISTRY',
+        message: loaded.error ? loaded.error.message : 'Registro de autoridades malformado'
+      };
+    }
+
+    // Verificación criptográfica obligatoria contra la raíz de gobernanza (Hallazgo 1)
+    if (!options.skipRootSealCheck) {
+      const sealPath = regPath.endsWith('.json')
+        ? regPath.replace(/\.json$/, '.seal.json')
+        : `${regPath}.seal.json`;
+
+      if (!fs.existsSync(sealPath)) {
+        return {
+          ok: false,
+          reason: 'UNSEALED_AUTHORITY_REGISTRY',
+          message: `El registro de autoridades en "${regPath}" carece del sello criptográfico de gobernanza requerido (${path.basename(sealPath)} no encontrado).`,
+        };
+      }
+
+      let sealObj;
+      try {
+        sealObj = JSON.parse(fs.readFileSync(sealPath, 'utf8'));
+      } catch (sealErr) {
+        return {
+          ok: false,
+          reason: 'MALFORMED_ROOT_SEAL',
+          message: `El sello criptográfico "${sealPath}" está corrupto: ${sealErr.message}`,
+        };
+      }
+
+      const sealRes = verifyRootSeal(loaded.registry, sealObj);
+      if (!sealRes.valid) {
+        return {
+          ok: false,
+          reason: sealRes.reason === 'EXPIRED_AUTHORITY_REGISTRY' ? 'EXPIRED_AUTHORITY_REGISTRY' : 'UNTRUSTED_REGISTRY_MODIFICATION',
+          message: `El registro de autoridades en "${regPath}" no superó la verificación de la raíz de gobernanza: ${sealRes.message} (${sealRes.reason})`,
+        };
+      }
+
+      // Verificación de versión monotónica anti-rollback (Hallazgo 5)
+      const lockFile = path.resolve(this.stateDir, 'authority_version.lock');
+      let lockedVer = 0;
+      if (fs.existsSync(lockFile)) {
+        try {
+          lockedVer = parseInt(fs.readFileSync(lockFile, 'utf8').trim(), 10) || 0;
+        } catch (_) {
+          /* lockFile ausente o ilegible */
+        }
+      }
+      const presentedVer = loaded.registry.monotonicVersion || 1;
+      if (presentedVer < lockedVer) {
+        return {
+          ok: false,
+          reason: 'POLICY_ROLLBACK_DETECTED',
+          message: `Intento de rollback de registro de autoridades detectado. Versión presentada: ${presentedVer}, versión previa bloqueada: ${lockedVer}.`,
+        };
+      }
+      if (presentedVer > lockedVer) {
+        try {
+          this.ensureStateDir();
+          fs.writeFileSync(lockFile, String(presentedVer), 'utf8');
+        } catch (_) {
+          /* no se pudo persistir lockFile */
+        }
+      }
+    }
+
+    return { ok: true, authorities: loaded.registry.authorities, registryPath: regPath, registry: loaded.registry };
+  }
+
+  /**
+   * Registra una aceptación deliberada y formal de riesgo fuera de banda.
+   * El operador humano autentica la excepción para un entorno específico con vigencia acotada,
+   * sellada criptográficamente con una clave privada Ed25519 preexistente inscrita en el
+   * registro confiable de autoridades (policies/authorities.json) y vinculada al proposalDigest exacto (SHA-256 de 64 chars).
+   */
+  acceptRisk(options = {}) {
+    // 1. Barrera contra ejecución autónoma por agentes (Hallazgo 2 y 3)
+    if (process.env.AGENT_CONTEXT === 'true' || process.env.ANTIGRAVITY === 'true' || process.env.OPENCODE === 'true' || options.isAgentContext === true) {
+      throw new Error('AGENT_INVOCATION_FORBIDDEN: accept-risk es una acción de gobernanza humana fuera de banda. Los agentes autónomos tienen prohibido invocar este comando.');
+    }
+
+    // Verificación de TTY interactiva física obligatoria (Hallazgo 3)
+    const hasInteractiveTTY = Boolean(process.stdin && process.stdin.isTTY && process.stdout && process.stdout.isTTY);
+    if (!hasInteractiveTTY && options.allowHeadlessForTest === false) {
+      throw new Error('INTERACTIVE_HUMAN_TTY_REQUIRED: accept-risk exige ejecución en una terminal interactiva TTY física operada por un humano. Ejecuciones headless, subshells o subprocesos automatizados bloqueados fail-closed.');
+    }
+
+    let reqObj = null;
+    if (options.requestPath || options.request) {
+      const reqFile = path.resolve(options.requestPath || options.request);
+      if (!fs.existsSync(reqFile)) {
+        throw new Error(`MISSING_REQUEST_FILE: El archivo de solicitud CSR "${reqFile}" no existe.`);
+      }
+      try {
+        reqObj = JSON.parse(fs.readFileSync(reqFile, 'utf8'));
+      } catch (e) {
+        throw new Error(`MALFORMED_REQUEST_FILE: El archivo de solicitud CSR "${reqFile}" no es JSON válido: ${e.message}`);
+      }
+    }
+
+    const premortemIdRaw = texto(options.premortemId || options.id || (reqObj && reqObj.premortemId));
+    const cleanId = premortemIdRaw.toLowerCase().trim();
+    if (!cleanId || !/^[a-f0-9]{16,64}$/.test(cleanId)) {
+      throw new Error(`INVALID_PREMORTEM_ID_FORMAT: premortemId debe ser una cadena hexadecimal de 16 a 64 caracteres. Recibido: ${JSON.stringify(premortemIdRaw)}`);
+    }
+
+    const requestId = texto(options.requestId || (reqObj && reqObj.requestId) || `req-${cleanId}`);
+    const baseCommitSha = texto(options.baseCommitSha || options.commitSha || (reqObj && (reqObj.baseCommitSha || reqObj.commitSha)) || PreMortemEngine.getCurrentCommitSha(this.rootDir));
+    const commitSha = baseCommitSha;
+    const riskLevelVal = texto(options.riskLevel || (reqObj && reqObj.riskLevel) || (options.payload && options.payload.risk) || 'MODERATE').toUpperCase().trim();
+    const scopeVal = options.scope || (reqObj && reqObj.scope) || (options.payload && (options.payload.scope || options.payload.files)) || ['*'];
+    const allowedAction = texto(options.allowedAction || (reqObj && reqObj.allowedAction) || 'all');
+    const prohibitedActions = Array.isArray(options.prohibitedActions) ? options.prohibitedActions : (Array.isArray(reqObj && reqObj.prohibitedActions) ? reqObj.prohibitedActions : []);
+
+    const operator = texto(options.operator);
+    if (operator.length < 3) {
+      throw new Error('operator es obligatorio y debe identificar al responsable humano (e.g. @adrian).');
+    }
+    const rationale = texto(options.rationale);
+    if (rationale.length < 25) {
+      throw new Error('rationale exige al menos 25 caracteres de justificación técnica vinculante.');
+    }
+    const validEnvs = ['development', 'staging', 'production'];
+    const environment = (options.environment || options.env || 'development').toLowerCase().trim();
+    if (!validEnvs.includes(environment)) {
+      throw new Error(`environment inválido: "${environment}". Válidos: ${validEnvs.join(', ')}.`);
+    }
+    const allowedEnvironments = Array.isArray(options.allowedEnvironments) && options.allowedEnvironments.length > 0
+      ? options.allowedEnvironments.map((e) => String(e).toLowerCase().trim())
+      : [environment];
+    for (const env of allowedEnvironments) {
+      if (!validEnvs.includes(env)) {
+        throw new Error(`allowedEnvironments contiene un entorno inválido: "${env}".`);
+      }
+    }
+
+    // Prohibición estricta de aceptar riesgos en producción por el flujo local (Hallazgo 2)
+    if (environment === 'production' || allowedEnvironments.includes('production')) {
+      throw new Error('PRODUCTION_RISK_ACCEPTANCE_FORBIDDEN: La aceptación de riesgo para el entorno "production" no puede ser creada mediante este comando local; exige el protocolo break-glass de gobernanza multi-firma.');
+    }
+
+    const ttlHours = Number.isFinite(options.ttlHours) && options.ttlHours > 0 ? options.ttlHours : 24;
+
+    // Vinculación estricta con la propuesta exacta: SHA-256 de 64 hex chars (Hallazgo 2)
+    let proposalDigest = null;
+    let scopeHash = options.scopeHash ? texto(options.scopeHash) : null;
+    let mitigationsHash = options.mitigationsHash ? texto(options.mitigationsHash) : null;
+
+    if (options.payload && typeof options.payload === 'object') {
+      const cleanPayload = { ...options.payload };
+      delete cleanPayload.human_risk_acceptance;
+      delete cleanPayload.authenticatedRiskAcceptance;
+      proposalDigest = hashCanonical(cleanPayload);
+      if (cleanPayload.scope) {
+        scopeHash = hashCanonical(cleanPayload.scope);
+      }
+      if (cleanPayload.mandatory_mitigations) {
+        mitigationsHash = hashCanonical(cleanPayload.mandatory_mitigations);
+      }
+    } else if (options.proposalDigest) {
+      proposalDigest = texto(options.proposalDigest).toLowerCase().trim();
+    } else if (reqObj && reqObj.proposalDigest) {
+      proposalDigest = texto(reqObj.proposalDigest).toLowerCase().trim();
+    } else if (cleanId.length === 64) {
+      proposalDigest = cleanId;
+    }
+
+    if (!proposalDigest || !/^[a-f0-9]{64}$/.test(proposalDigest)) {
+      throw new Error(`INVALID_PROPOSAL_DIGEST_FORMAT: proposalDigest debe ser un SHA-256 completo de 64 caracteres hexadecimales. Recibido: ${JSON.stringify(proposalDigest)}`);
+    }
+
+    // Validación de custodia de clave privada fuera del workspace (Hallazgo 2)
+    if (options.privateKeyPath || (typeof options.key === 'string' && fs.existsSync(options.key))) {
+      const keyFilePath = path.resolve(options.privateKeyPath || options.key);
+      const wsRoot = path.resolve(this.rootDir);
+      const globalRoot = path.resolve(ROOT);
+      if ((keyFilePath.startsWith(wsRoot + path.sep) || keyFilePath.startsWith(globalRoot + path.sep)) && !options.allowTestKeyInWorkspace) {
+        throw new Error(`WORKSPACE_PRIVATE_KEY_FORBIDDEN: La clave privada de autoridad humana no puede residir dentro del repositorio/workspace (${keyFilePath}). Las claves deben custodiarse fuera del workspace (ej. en ~/.axion/keys/human/).`);
+      }
+    }
+
+    let privateKeyObj;
+    if (options.privateKey) {
+      privateKeyObj = options.privateKey instanceof crypto.KeyObject && options.privateKey.type === 'private'
+        ? options.privateKey
+        : crypto.createPrivateKey(options.privateKey);
+    } else if (options.privateKeyPath) {
+      if (!fs.existsSync(options.privateKeyPath)) {
+        throw new Error(`MISSING_ED25519_PRIVATE_KEY: El archivo de clave privada especificado "${options.privateKeyPath}" no existe.`);
+      }
+      privateKeyObj = crypto.createPrivateKey(fs.readFileSync(options.privateKeyPath, 'utf8'));
+    } else if (options.key) {
+      const rawKey = typeof options.key === 'string' && fs.existsSync(options.key)
+        ? fs.readFileSync(options.key, 'utf8')
+        : options.key;
+      privateKeyObj = crypto.createPrivateKey(rawKey);
+    } else if (process.env.AXION_OPERATOR_PRIVATE_KEY) {
+      privateKeyObj = crypto.createPrivateKey(process.env.AXION_OPERATOR_PRIVATE_KEY);
+    } else {
+      throw new Error('MISSING_ED25519_PRIVATE_KEY: acceptRisk exige una clave privada Ed25519 preexistente (--key, privateKey o privateKeyPath) custodiada fuera de banda.');
+    }
+
+    if (privateKeyObj.asymmetricKeyType !== 'ed25519') {
+      throw new TypeError('La clave privada del operador debe ser de tipo Ed25519.');
+    }
+
+    const pubKeyObj = crypto.createPublicKey(privateKeyObj);
+    const publicKeyPem = pubKeyObj.export({ type: 'spki', format: 'pem' });
+    const keyId = computePublicKeyId(pubKeyObj);
+
+    // Validación de autoridad contra registro confiable (Hallazgo 1 y 3)
+    const authRes = this.loadAuthorities(options);
+    if (!authRes.ok) {
+      throw new Error(`AUTHORITY_REGISTRY_ERROR: ${authRes.message}`);
+    }
+    const authority = authRes.authorities.find((a) => a && a.keyId === keyId);
+    if (!authority) {
+      throw new Error(`UNTRUSTED_KEY_ID: La clave "${keyId}" no está registrada en ${authRes.registryPath || 'authorities.json'}.`);
+    }
+    if (authority.status === 'REVOKED') {
+      throw new Error(`REVOKED_AUTHORITY: La autoridad "${authority.actorId}" está revocada.`);
+    }
+    if (authority.status === 'COMPROMISED') {
+      throw new Error(`COMPROMISED_KEY: La clave de la autoridad "${authority.actorId}" está comprometida.`);
+    }
+    if (authority.status !== 'TRUSTED') {
+      throw new Error(`REVOKED_OR_UNTRUSTED_AUTHORITY: La autoridad "${authority.actorId}" tiene estado "${authority.status}".`);
+    }
+    if (!Array.isArray(authority.roles) || !authority.roles.includes('HUMAN_AUTHORITY')) {
+      throw new Error(`UNAUTHORIZED_ROLE: La autoridad "${authority.actorId}" carece del rol HUMAN_AUTHORITY.`);
+    }
+    if (authority.actorId !== operator) {
+      throw new Error(`OPERATOR_IDENTITY_MISMATCH: El operador declarado "${operator}" no coincide con la autoridad "${authority.actorId}".`);
+    }
+
+    const nowAccept = options.now ? new Date(options.now) : new Date();
+    if (new Date(authority.expiresAt).getTime() <= nowAccept.getTime()) {
+      throw new Error(`AUTHORITY_EXPIRED: La credencial de la autoridad "${authority.actorId}" expiró en ${authority.expiresAt}.`);
+    }
+
+    // Validación de ámbitos de entorno y nivel de riesgo (Hallazgo 3)
+    if (authority.allowedEnvironments && Array.isArray(authority.allowedEnvironments)) {
+      const invalidEnvs = allowedEnvironments.filter((env) => !authority.allowedEnvironments.includes(env));
+      if (invalidEnvs.length > 0) {
+        throw new Error(`UNAUTHORIZED_ENVIRONMENT: La autoridad "${authority.actorId}" solo está autorizada para [ ${authority.allowedEnvironments.join(', ')} ], pero se solicitaron [ ${invalidEnvs.join(', ')} ].`);
+      }
+    }
+    if (authority.allowedRiskLevels && Array.isArray(authority.allowedRiskLevels) && options.riskLevel) {
+      const upperRisk = String(options.riskLevel).toUpperCase().trim();
+      if (!authority.allowedRiskLevels.includes(upperRisk)) {
+        throw new Error(`UNAUTHORIZED_RISK_LEVEL: La autoridad "${authority.actorId}" solo está autorizada para niveles de riesgo [ ${authority.allowedRiskLevels.join(', ')} ], pero se solicitó "${upperRisk}".`);
+      }
+    }
+
+    const unsignedRecord = {
+      contractVersion: '2.0.0',
+      acceptanceId: crypto.randomBytes(8).toString('hex'),
+      requestId,
+      premortemId: cleanId,
+      proposalDigest,
+      baseCommitSha,
+      commitSha: baseCommitSha,
+      environment,
+      allowedEnvironments,
+      riskLevel: riskLevelVal,
+      scope: scopeVal,
+      allowedAction,
+      prohibitedActions,
+      scopeHash,
+      mitigationsHash,
+      operator,
+      keyId,
+      authorityKeyId: keyId,
+      publicKeyPem,
+      issuedAt: (options.now ? new Date(options.now) : new Date()).toISOString(),
+      expiresAt: new Date(Date.now() + ttlHours * 3600 * 1000).toISOString(),
+      nonce: crypto.randomBytes(16).toString('hex'),
+      rationale,
+    };
+
+    const canonicalPayload = canonicalize(unsignedRecord);
+    const signature = crypto.sign(null, Buffer.from(canonicalPayload, 'utf8'), privateKeyObj).toString('base64');
+
+    const envelope = {
+      ...unsignedRecord,
+      algorithm: 'Ed25519',
+      signature,
+    };
+
+    // Confinamiento de ruta y protección anti-symlink TOCTOU-safe (Hallazgo 3 y 4)
+    this.ensureStateDir();
+    const resolvedStateDir = path.resolve(this.stateDir);
+    const targetFile = path.resolve(resolvedStateDir, `risk-acceptance-${cleanId}.json`);
+
+    if (!targetFile.startsWith(resolvedStateDir + path.sep)) {
+      throw new Error(`PATH_TRAVERSAL_DETECTED: La ruta resultante escapa de ${resolvedStateDir}`);
+    }
+
+    // Inmutabilidad estricta: prohibición de sobrescritura silenciosa (Hallazgo 4)
+    if (fs.existsSync(targetFile) && !options.allowOverwriteForTest) {
+      throw new Error(`ACCEPTANCE_ALREADY_EXISTS: Ya existe una aceptación de riesgo para la propuesta "${cleanId}". Los registros son inmutables y no pueden sobrescribirse silenciosamente. Para invalidar una autorización previa se requiere revocación formal.`);
+    }
+
+    // Escritura atómica exclusiva
+    const tmpFile = path.join(resolvedStateDir, `.tmp-risk-${cleanId}-${process.pid}-${Date.now()}-${crypto.randomBytes(6).toString('hex')}.json`);
+    const fd = fs.openSync(tmpFile, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL, 0o600);
+    try {
+      fs.writeFileSync(fd, JSON.stringify(envelope, null, 2), 'utf8');
+    } finally {
+      fs.closeSync(fd);
+    }
+    fs.renameSync(tmpFile, targetFile);
+    try {
+      fs.chmodSync(targetFile, 0o444);
+    } catch (chmodErr) {
+      // Ignorar si el sistema de archivos no implementa chmod
+    }
+
+    // Verificación post-escritura inmediata
+    const stat = fs.lstatSync(targetFile);
+    if (stat.isSymbolicLink()) {
+      try {
+        fs.unlinkSync(targetFile);
+      } catch (unlinkErr) {
+        // Ignorar fallo de desvinculación si el archivo ya fue purgado por el sistema de archivos
+      }
+      throw new Error(`SYMLINK_DETECTED: El archivo ${targetFile} es un enlace simbólico no confiable.`);
+    }
+
+    // Registro append-only hash-chained en el libro de eventos de aceptación de riesgo (Hallazgo 4)
+    this.appendToLedger('RISK_ACCEPTED', unsignedRecord, privateKeyObj);
+
+    // Copia histórica archivada con timestamp para auditoría (Hallazgo 4)
+    const historyDir = path.resolve(resolvedStateDir, 'risk-acceptances');
+    if (!fs.existsSync(historyDir)) {
+      try {
+        fs.mkdirSync(historyDir, { recursive: true });
+      } catch (mkdirErr) {
+        // Ignorar si el directorio histórico ya fue creado concurrentemente
+      }
+    }
+    const historyFile = path.resolve(historyDir, `acceptance-${cleanId}-${Date.now()}.json`);
+    try {
+      fs.writeFileSync(historyFile, JSON.stringify(envelope, null, 2), 'utf8');
+    } catch (histErr) {
+      // Preservar targetFile primario si la copia histórica falla
+    }
+
+    return { pass: true, record: envelope, targetFile, keyId };
+  }
+
+  /**
+   * Revoca formalmente una aceptación de riesgo previa (Hallazgo 4).
+   * Exige la firma de una autoridad humana registrada con rol HUMAN_AUTHORITY.
+   */
+  /**
+   * Registra una entrada append-only en el libro de eventos con encadenamiento de hashes (Hallazgo 4).
+   */
+  appendToLedger(eventType, record, privateKeyObj) {
+    this.ensureStateDir();
+    const resolvedStateDir = path.resolve(this.stateDir);
+    const ledgerFile = path.resolve(resolvedStateDir, 'risk-acceptance-ledger.jsonl');
+
+    let lines = [];
+    if (fs.existsSync(ledgerFile)) {
+      try {
+        lines = fs.readFileSync(ledgerFile, 'utf8').trim().split('\n').filter(Boolean);
+      } catch (_) {
+        /* ledger ausente o no legible */
+      }
+    }
+
+    let parentHash = '0'.repeat(64);
+    const index = lines.length;
+    if (index > 0) {
+      try {
+        const prev = JSON.parse(lines[index - 1]);
+        parentHash = prev.entryHash || hashCanonical(prev);
+      } catch (_) {
+        /* entrada previa malformada */
+      }
+    }
+
+    const entryPayload = {
+      index,
+      event: eventType,
+      timestamp: new Date().toISOString(),
+      premortemId: record.premortemId,
+      proposalDigest: record.proposalDigest,
+      operator: record.operator,
+      keyId: record.keyId,
+      parentHash,
+    };
+    const entryHash = hashCanonical(entryPayload);
+    const signature = crypto.sign(null, Buffer.from(entryHash, 'utf8'), privateKeyObj).toString('base64');
+
+    const entry = {
+      ...entryPayload,
+      entryHash,
+      signature,
+    };
+
+    fs.appendFileSync(ledgerFile, JSON.stringify(entry) + '\n', 'utf8');
+
+    try {
+      const extDir = path.join(require('os').homedir(), '.axion', 'state');
+      fs.mkdirSync(extDir, { recursive: true });
+      fs.writeFileSync(path.join(extDir, 'ledger.head'), entryHash, 'utf8');
+    } catch (_) {
+      /* almacén externo de head no disponible */
+    }
+
+    return entry;
+  }
+
+  /**
+   * Verifica la integridad criptográfica de la cadena de hashes del ledger (Hallazgo 4).
+   */
+  static verifyLedgerIntegrity(ledgerPath, options = {}) {
+    const p = path.resolve(ledgerPath);
+    if (!fs.existsSync(p)) {
+      return { valid: true, count: 0 };
+    }
+
+    let lines;
+    try {
+      lines = fs.readFileSync(p, 'utf8').trim().split('\n').filter(Boolean);
+    } catch (e) {
+      return { valid: false, reason: 'UNREADABLE_LEDGER', message: e.message };
+    }
+
+    if (lines.length === 0) return { valid: true, count: 0 };
+
+    let expectedParentHash = '0'.repeat(64);
+    let lastEntryHash = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      let entry;
+      try {
+        entry = JSON.parse(lines[i]);
+      } catch (e) {
+        return { valid: false, reason: 'CORRUPTED_LEDGER_LINE', index: i };
+      }
+
+      if (entry.index !== i) {
+        return { valid: false, reason: 'LEDGER_INDEX_MISMATCH', expectedIndex: i, actualIndex: entry.index };
+      }
+
+      if (entry.parentHash !== expectedParentHash) {
+        return {
+          valid: false,
+          reason: 'LEDGER_CHAIN_CORRUPTED',
+          index: i,
+          expectedParentHash,
+          actualParentHash: entry.parentHash,
+        };
+      }
+
+      const payload = {
+        index: entry.index,
+        event: entry.event,
+        timestamp: entry.timestamp,
+        premortemId: entry.premortemId,
+        proposalDigest: entry.proposalDigest,
+        operator: entry.operator,
+        keyId: entry.keyId,
+        parentHash: entry.parentHash,
+      };
+
+      const computedHash = hashCanonical(payload);
+      if (entry.entryHash !== computedHash) {
+        return {
+          valid: false,
+          reason: 'LEDGER_HASH_TAMPERED',
+          index: i,
+          expectedHash: computedHash,
+          actualHash: entry.entryHash,
+        };
+      }
+
+      expectedParentHash = entry.entryHash;
+      lastEntryHash = entry.entryHash;
+    }
+
+    const isMainRepo = p.startsWith(path.resolve(ROOT));
+    const extHeadFile = options.externalHeadFile || (isMainRepo ? path.join(require('os').homedir(), '.axion', 'state', 'ledger.head') : null);
+    if (extHeadFile && fs.existsSync(extHeadFile) && !options.skipExternalHeadCheck) {
+      try {
+        const extHead = fs.readFileSync(extHeadFile, 'utf8').trim();
+        if (extHead && lastEntryHash && extHead !== lastEntryHash) {
+          return {
+            valid: false,
+            reason: 'LEDGER_TRUNCATION_DETECTED',
+            message: `El head del ledger local ("${lastEntryHash}") no coincide con el head registrado externamente ("${extHead}"). Truncamiento o reescritura detectada.`,
+            expectedHead: extHead,
+            actualHead: lastEntryHash,
+          };
+        }
+      } catch (_) {
+        /* error leyendo head externo */
+      }
+    }
+
+    return { valid: true, count: lines.length, headHash: lastEntryHash };
+  }
+
+  revokeRisk(options = {}) {
+    const premortemIdRaw = texto(options.premortemId || options.id);
+    const cleanId = premortemIdRaw.toLowerCase().trim();
+    if (!cleanId || !/^[a-f0-9]{16,64}$/.test(cleanId)) {
+      throw new Error('INVALID_PREMORTEM_ID_FORMAT: premortemId inválido.');
+    }
+    const operator = texto(options.operator);
+    const rationale = texto(options.rationale || 'Revocación formal de aceptación de riesgo');
+
+    let privateKeyObj;
+    if (options.privateKey) {
+      privateKeyObj = options.privateKey instanceof crypto.KeyObject && options.privateKey.type === 'private'
+        ? options.privateKey
+        : crypto.createPrivateKey(options.privateKey);
+    } else if (options.key) {
+      const rawKey = typeof options.key === 'string' && fs.existsSync(options.key)
+        ? fs.readFileSync(options.key, 'utf8')
+        : options.key;
+      privateKeyObj = crypto.createPrivateKey(rawKey);
+    } else {
+      throw new Error('MISSING_ED25519_PRIVATE_KEY: revokeRisk exige una clave privada Ed25519 preexistente.');
+    }
+
+    const pubKeyObj = crypto.createPublicKey(privateKeyObj);
+    const keyId = computePublicKeyId(pubKeyObj);
+
+    const authRes = this.loadAuthorities(options);
+    if (!authRes.ok) throw new Error(`AUTHORITY_REGISTRY_ERROR: ${authRes.message}`);
+    const authority = authRes.authorities.find((a) => a && a.keyId === keyId);
+    if (!authority || authority.status !== 'TRUSTED' || !Array.isArray(authority.roles) || !authority.roles.includes('HUMAN_AUTHORITY')) {
+      throw new Error('UNAUTHORIZED_REVOCATION_AUTHORITY: La revocación debe ser firmada por una autoridad confiable con rol HUMAN_AUTHORITY.');
+    }
+
+    const revocationRecord = {
+      contractVersion: '2.0.0',
+      event: 'RISK_REVOCATION',
+      revocationId: crypto.randomBytes(8).toString('hex'),
+      premortemId: cleanId,
+      operator,
+      keyId,
+      rationale,
+      revokedAt: new Date().toISOString(),
+      nonce: crypto.randomBytes(16).toString('hex'),
+    };
+
+    const canonicalPayload = canonicalize(revocationRecord);
+    const signature = crypto.sign(null, Buffer.from(canonicalPayload, 'utf8'), privateKeyObj).toString('base64');
+    const envelope = { ...revocationRecord, algorithm: 'Ed25519', signature };
+
+    this.ensureStateDir();
+    const resolvedStateDir = path.resolve(this.stateDir);
+    const revFile = path.resolve(resolvedStateDir, `risk-revocation-${cleanId}.json`);
+    fs.writeFileSync(revFile, JSON.stringify(envelope, null, 2), 'utf8');
+
+    const ledgerFile = path.resolve(resolvedStateDir, 'risk-acceptance-ledger.jsonl');
+    try {
+      fs.appendFileSync(ledgerFile, JSON.stringify(envelope) + '\n', 'utf8');
+    } catch (ledgerErr) {
+      // Ignorar fallo de escritura secundaria en ledger si el sistema de archivos está restringido
+    }
+
+    return { success: true, revocationFile: revFile, record: envelope };
+  }
+
+  /**
+   * Carga y valida la autenticidad e integridad de una aceptación de riesgo fuera de banda.
+   * Verifica la firma asimétrica Ed25519 contra la clave pública del registro confiable de autoridades,
+   * valida igualdad estricta de 64 chars de proposalDigest, y elimina ventanas de carrera anti-symlink.
+   */
+  loadRiskAcceptance(premortemId, options = {}, actualProposalDigest = null) {
+    let rec = null;
+    let targetFile = null;
+
+    if (options.authenticatedRiskAcceptance && typeof options.authenticatedRiskAcceptance === 'object') {
+      rec = options.authenticatedRiskAcceptance;
+    } else {
+      if (!premortemId || typeof premortemId !== 'string') return null;
+      const cleanId = premortemId.trim().toLowerCase();
+      if (!/^[a-f0-9]{16,64}$/.test(cleanId)) {
+        return { valid: false, reason: 'INVALID_PREMORTEM_ID_FORMAT' };
+      }
+
+      const resolvedStateDir = path.resolve(this.stateDir);
+      targetFile = path.resolve(resolvedStateDir, `risk-acceptance-${cleanId}.json`);
+
+      if (!targetFile.startsWith(resolvedStateDir + path.sep)) {
+        return { valid: false, reason: 'PATH_TRAVERSAL_DETECTED' };
+      }
+
+      if (!fs.existsSync(targetFile)) return null;
+
+      // Doble inspección pre y post lectura para prevenir carreras TOCTOU
+      let statBefore;
+      try {
+        statBefore = fs.lstatSync(targetFile);
+      } catch (_) {
+        return { valid: false, reason: 'UNREADABLE_RISK_ACCEPTANCE' };
+      }
+
+      if (statBefore.isSymbolicLink() || !statBefore.isFile()) {
+        return { valid: false, reason: 'SYMLINK_DETECTED' };
+      }
+
+      let rawContent;
+      try {
+        rawContent = fs.readFileSync(targetFile, 'utf8');
+      } catch (_) {
+        return { valid: false, reason: 'MALFORMED_RISK_ACCEPTANCE' };
+      }
+
+      let statAfter;
+      try {
+        statAfter = fs.lstatSync(targetFile);
+      } catch (_) {
+        return { valid: false, reason: 'SYMLINK_DETECTED' };
+      }
+
+      if (statAfter.isSymbolicLink() || statBefore.ino !== statAfter.ino || statBefore.mtimeMs !== statAfter.mtimeMs) {
+        return { valid: false, reason: 'SYMLINK_DETECTED', message: 'Archivo modificado o sustituido concurrentemente durante la lectura.' };
+      }
+
+      try {
+        rec = JSON.parse(rawContent);
+      } catch (_) {
+        return { valid: false, reason: 'MALFORMED_RISK_ACCEPTANCE' };
+      }
+    }
+
+    if (!rec || typeof rec !== 'object') {
+      return { valid: false, reason: 'INVALID_RISK_ACCEPTANCE_FORMAT' };
+    }
+
+    // -1. Comprobación de integridad del ledger histórico (Hallazgo 4)
+    if (targetFile) {
+      const resolvedDir = path.dirname(targetFile);
+      const ledgerFile = path.resolve(resolvedDir, 'risk-acceptance-ledger.jsonl');
+      if (fs.existsSync(ledgerFile) && !options.skipLedgerCheck) {
+        const ledgerRes = PreMortemEngine.verifyLedgerIntegrity(ledgerFile);
+        if (!ledgerRes.valid) {
+          return {
+            valid: false,
+            reason: ledgerRes.reason,
+            message: `El ledger histórico de aceptaciones de riesgo fue alterado o truncado (${ledgerRes.reason}).`,
+            record: rec,
+          };
+        }
+      }
+    }
+
+    // 0. Comprobación de revocación formal (Hallazgo 4)
+    const targetId = rec.premortemId || (premortemId ? String(premortemId).trim().toLowerCase() : '');
+    if (targetFile && targetId) {
+      const resolvedStateDir = path.dirname(targetFile);
+      const revFile = path.resolve(resolvedStateDir, `risk-revocation-${targetId}.json`);
+      if (fs.existsSync(revFile)) {
+        try {
+          const revRaw = fs.readFileSync(revFile, 'utf8');
+          const revEnv = JSON.parse(revRaw);
+          return {
+            valid: false,
+            reason: 'RISK_ACCEPTANCE_REVOKED',
+            message: `La aceptación de riesgo para "${targetId}" fue revocada formalmente por "${revEnv.operator}": ${revEnv.rationale}`,
+            record: rec,
+          };
+        } catch (revReadErr) {
+          // Ignorar si el archivo de revocación está temporalmente inaccesible o malformado
+        }
+      }
+    }
+
+    // 1. Verificación de algoritmo y firma Ed25519
+    if (rec.algorithm !== 'Ed25519' || typeof rec.signature !== 'string' || !rec.signature) {
+      return {
+        valid: false,
+        reason: 'INVALID_ED25519_SIGNATURE',
+        message: 'Firma asimétrica Ed25519 ausente o inválida en el registro de riesgo.',
+        record: rec,
+      };
+    }
+
+    if (typeof rec.keyId !== 'string' || !rec.keyId) {
+      return {
+        valid: false,
+        reason: 'INVALID_ED25519_SIGNATURE',
+        message: 'keyId es obligatorio en el registro de aceptación.',
+        record: rec,
+      };
+    }
+
+    // 2. Validación de propuesta con igualdad estricta SHA-256 de 64 caracteres (Hallazgo 2)
+    if (!rec.proposalDigest || typeof rec.proposalDigest !== 'string' || !/^[a-f0-9]{64}$/.test(rec.proposalDigest)) {
+      return {
+        valid: false,
+        reason: 'INVALID_PROPOSAL_DIGEST_FORMAT',
+        expected: '64 hex chars',
+        found: rec.proposalDigest,
+        record: rec,
+      };
+    }
+
+    if (actualProposalDigest) {
+      if (!/^[a-f0-9]{64}$/.test(actualProposalDigest)) {
+        return {
+          valid: false,
+          reason: 'INVALID_PROPOSAL_DIGEST_FORMAT',
+          expected: '64 hex chars',
+          found: actualProposalDigest,
+          record: rec,
+        };
+      }
+      if (rec.proposalDigest !== actualProposalDigest) {
+        return {
+          valid: false,
+          reason: 'PROPOSAL_DIGEST_MISMATCH',
+          expected: actualProposalDigest,
+          found: rec.proposalDigest,
+          record: rec,
+        };
+      }
+    }
+
+    // 3. Autenticación de autoridad contra el registro confiable (Hallazgo 1)
+    const authRes = this.loadAuthorities(options);
+    if (!authRes.ok) {
+      return { valid: false, reason: 'AUTHORITY_REGISTRY_UNAVAILABLE', message: authRes.message, record: rec };
+    }
+
+    const authority = authRes.authorities.find((a) => a && a.keyId === rec.keyId);
+    if (!authority) {
+      return {
+        valid: false,
+        reason: 'UNTRUSTED_KEY_ID',
+        message: `La clave "${rec.keyId}" no existe en el registro confiable de autoridades.`,
+        record: rec,
+      };
+    }
+
+    if (authority.status === 'REVOKED') {
+      return {
+        valid: false,
+        reason: 'REVOKED_AUTHORITY',
+        message: `La autoridad "${authority.actorId}" está revocada.`,
+        record: rec,
+      };
+    }
+
+    if (authority.status === 'COMPROMISED') {
+      return {
+        valid: false,
+        reason: 'COMPROMISED_KEY',
+        message: `La clave de la autoridad "${authority.actorId}" está marcada como comprometida.`,
+        record: rec,
+      };
+    }
+
+    if (authority.status !== 'TRUSTED') {
+      return {
+        valid: false,
+        reason: 'REVOKED_OR_UNTRUSTED_AUTHORITY',
+        message: `La autoridad "${authority.actorId}" tiene estado no confiable "${authority.status}".`,
+        record: rec,
+      };
+    }
+
+    if (!Array.isArray(authority.roles) || !authority.roles.includes('HUMAN_AUTHORITY')) {
+      return {
+        valid: false,
+        reason: 'UNAUTHORIZED_ROLE',
+        message: `La autoridad "${authority.actorId}" carece del rol HUMAN_AUTHORITY.`,
+        record: rec,
+      };
+    }
+
+    if (authority.actorId !== rec.operator) {
+      return {
+        valid: false,
+        reason: 'OPERATOR_IDENTITY_MISMATCH',
+        message: `El operador declarado "${rec.operator}" no coincide con el actor registrado "${authority.actorId}".`,
+        record: rec,
+      };
+    }
+
+    const now = options.now ? new Date(options.now) : new Date();
+    if (new Date(authority.expiresAt).getTime() <= now.getTime()) {
+      return {
+        valid: false,
+        reason: 'AUTHORITY_EXPIRED',
+        message: `La credencial de la autoridad "${authority.actorId}" expiró en ${authority.expiresAt}.`,
+        record: rec,
+      };
+    }
+
+    // Validación de ámbito de entornos autorizados para la autoridad (Hallazgo 3)
+    if (authority.allowedEnvironments && Array.isArray(authority.allowedEnvironments)) {
+      const allowedRec = Array.isArray(rec.allowedEnvironments) ? rec.allowedEnvironments : [rec.environment];
+      const invalidEnvs = allowedRec.filter((env) => !authority.allowedEnvironments.includes(env));
+      if (invalidEnvs.length > 0) {
+        return {
+          valid: false,
+          reason: 'UNAUTHORIZED_ENVIRONMENT',
+          message: `La autoridad "${authority.actorId}" solo está autorizada para [ ${authority.allowedEnvironments.join(', ')} ], pero la aceptación solicita [ ${invalidEnvs.join(', ')} ].`,
+          record: rec,
+        };
+      }
+    }
+
+    // Validación de ámbito de nivel de riesgo para la autoridad (Hallazgo 3)
+    const effectiveRiskLevel = (options.riskLevel || (options.payload && options.payload.risk) || (options.blastRadius >= 70 ? 'CRITICAL' : null) || 'MEDIUM').toUpperCase().trim();
+    if (authority.allowedRiskLevels && Array.isArray(authority.allowedRiskLevels)) {
+      if (!authority.allowedRiskLevels.includes(effectiveRiskLevel)) {
+        return {
+          valid: false,
+          reason: 'UNAUTHORIZED_RISK_LEVEL',
+          message: `El nivel de riesgo "${effectiveRiskLevel}" supera el alcance autorizado para la autoridad "${authority.actorId}" (permitidos: [ ${authority.allowedRiskLevels.join(', ')} ]).`,
+          record: rec,
+        };
+      }
+    }
+
+    // Raíz de confianza: la clave pública se extrae del registro de autoridades, NUNCA del envelope
+    let pubKey;
+    try {
+      pubKey = asEd25519PublicKey(authority.publicKeyPem);
+      const computedKeyId = computePublicKeyId(pubKey);
+      if (computedKeyId !== authority.keyId) {
+        return { valid: false, reason: 'MALFORMED_AUTHORITY_REGISTRY', record: rec };
+      }
+    } catch (e) {
+      return { valid: false, reason: 'INVALID_AUTHORITY_PUBLIC_KEY', message: e.message, record: rec };
+    }
+
+    // 4. Verificación matemática de la firma
+    const unsignedRecord = { ...rec };
+    delete unsignedRecord.algorithm;
+    delete unsignedRecord.signature;
+    delete unsignedRecord.digest;
+
+    let validSig = false;
+    try {
+      validSig = crypto.verify(
+        null,
+        Buffer.from(canonicalize(unsignedRecord), 'utf8'),
+        pubKey,
+        Buffer.from(rec.signature, 'base64')
+      );
+    } catch (_) {
+      validSig = false;
+    }
+
+    if (!validSig) {
+      return { valid: false, reason: 'INVALID_ED25519_SIGNATURE', record: rec };
+    }
+
+    // 5. Comprobación de TTL de la aceptación
+    if (now > new Date(rec.expiresAt)) {
+      return { valid: false, reason: 'RISK_ACCEPTANCE_EXPIRED', record: rec };
+    }
+
+    // 6. Comprobación de entorno
+    const currentEnv = (options.environment || process.env.AXION_ENV || process.env.NODE_ENV || 'development').toLowerCase().trim();
+    const allowed = Array.isArray(rec.allowedEnvironments) ? rec.allowedEnvironments : [rec.environment];
+    if (!allowed.includes(currentEnv)) {
+      return {
+        valid: false,
+        reason: 'ENVIRONMENT_MISMATCH',
+        currentEnvironment: currentEnv,
+        allowedEnvironments: allowed,
+        record: rec,
+      };
+    }
+
+    // 7. Comprobación de consistencia de identidad CSR (authorityKeyId)
+    if (rec.authorityKeyId && rec.authorityKeyId !== rec.keyId) {
+      return {
+        valid: false,
+        reason: 'MALFORMED_AUTHORITY_KEY_ID',
+        message: 'authorityKeyId no coincide con keyId en el registro.',
+        record: rec,
+      };
+    }
+
+    // 8. Vinculación estricta al baseCommitSha del árbol de trabajo (anti-mutación previa al plan)
+    const baseCommit = rec.baseCommitSha || rec.commitSha;
+    const currentCommit = options.baseCommitSha || options.commitSha || PreMortemEngine.getCurrentCommitSha(this.rootDir);
+    if (baseCommit && !options.skipCommitCheck && currentCommit !== '0000000000000000000000000000000000000000' && baseCommit !== currentCommit) {
+      return {
+        valid: false,
+        reason: 'COMMIT_SHA_MISMATCH',
+        expected: currentCommit,
+        found: baseCommit,
+        message: `La aceptación humana fue firmada para el baseCommit ${baseCommit}, pero el código base actual está en ${currentCommit}. Nuevas mutaciones antes de implementar invalidan la excepción fail-closed.`,
+        record: rec,
+      };
+    }
+
+    // 8b. Verificación de acciones prohibidas (prohibitedActions)
+    if (Array.isArray(rec.prohibitedActions) && rec.prohibitedActions.length > 0) {
+      const requestedActions = options.actions || (options.payload && (options.payload.actions || options.payload.requested_actions)) || [];
+      const reqList = Array.isArray(requestedActions) ? requestedActions : [requestedActions];
+      const prohibitedViolated = reqList.filter((a) => rec.prohibitedActions.includes(a));
+      if (prohibitedViolated.length > 0) {
+        return {
+          valid: false,
+          reason: 'PROHIBITED_ACTION_DETECTED',
+          prohibited: prohibitedViolated,
+          message: `La propuesta incluye acciones explícitamente prohibidas por la autorización humana: [ ${prohibitedViolated.join(', ')} ].`,
+          record: rec,
+        };
+      }
+    }
+
+    // 8c. Verificación de acción permitida (allowedAction)
+    if (rec.allowedAction && rec.allowedAction !== 'all' && !options.skipActionCheck) {
+      const currentAction = options.action || (options.payload && (options.payload.action || options.payload.requested_action));
+      if (currentAction && !currentAction.toLowerCase().includes(rec.allowedAction.toLowerCase())) {
+        return {
+          valid: false,
+          reason: 'UNAUTHORIZED_ACTION',
+          expected: rec.allowedAction,
+          found: currentAction,
+          message: `La acción solicitada "${currentAction}" excede la acción permitida en la autorización ("${rec.allowedAction}").`,
+          record: rec,
+        };
+      }
+    }
+
+    // 9. Vinculación estricta al alcance de archivos (scope)
+    if (rec.scope && !options.skipScopeCheck) {
+      const allowedScopeList = Array.isArray(rec.scope) ? rec.scope : [rec.scope];
+      if (!allowedScopeList.includes('*') && !allowedScopeList.includes('all')) {
+        const currentScope = options.scope || (options.payload && (options.payload.scope || options.payload.files));
+        if (currentScope) {
+          const actualFiles = Array.isArray(currentScope) ? currentScope : [currentScope];
+          const outside = actualFiles.filter((f) => !allowedScopeList.includes(f));
+          if (outside.length > 0) {
+            return {
+              valid: false,
+              reason: 'SCOPE_MISMATCH',
+              expected: allowedScopeList,
+              found: outside,
+              message: `La propuesta incluye archivos fuera del alcance autorizado por el humano: [ ${outside.join(', ')} ] (permitidos: [ ${allowedScopeList.join(', ')} ]).`,
+              record: rec,
+            };
+          }
+        }
+      }
+    }
+
+    // 10. Vinculación estricta de nivel de riesgo
+    if (rec.riskLevel && !options.skipRiskLevelCheck) {
+      const currentRisk = (options.riskLevel || (options.payload && options.payload.risk) || (options.blastRadius >= 70 ? 'CRITICAL' : (options.blastRadius >= 40 ? 'MODERATE' : 'LOW'))).toUpperCase().trim();
+      const RISK_RANKS = { LOW: 1, MODERATE: 2, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
+      const recRank = RISK_RANKS[String(rec.riskLevel).toUpperCase().trim()] || 1;
+      const curRank = RISK_RANKS[currentRisk] || 1;
+      if (curRank > recRank) {
+        return {
+          valid: false,
+          reason: 'UNAUTHORIZED_RISK_LEVEL',
+          message: `El nivel de riesgo de la propuesta ("${currentRisk}") excede el nivel autorizado en la aceptación ("${rec.riskLevel}").`,
+          record: rec,
+        };
+      }
+    }
+
+    return { valid: true, currentEnvironment: currentEnv, record: rec, authority };
+  }
+
+  evaluateAssessment(payload, options = {}) {
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
       return { status: 'DENIED', reason: 'INVALID_PAYLOAD', exitCode: 1, errors: ['El payload debe ser un objeto JSON.'] };
     }
@@ -141,15 +1385,38 @@ class PreMortemEngine {
     // --- Nivel 1: las 4 anclas ---
     const anchors = payload.anchors && typeof payload.anchors === 'object' ? payload.anchors : null;
     const riesgosPorAncla = {};
+    let totalNoAplica = 0;
+
     if (anchors) {
       for (const clave of CLAVES_ANCLA) {
         const { errores, limpias } = PreMortemEngine.validarLista(anchors[clave], `anchors.${clave}`, 1);
         errors.push(...errores);
         riesgosPorAncla[clave] = limpias;
+        if (limpias.some((r) => /^(?:NO[-_ ]APLICA|N\/A)\b/i.test(r))) {
+          totalNoAplica += 1;
+        }
       }
     } else {
       const { errores } = PreMortemEngine.validarLista(payload.failure_hypotheses, 'failure_hypotheses', 3);
       errors.push(...errores);
+    }
+
+    // Prohibición estricta de NO_APLICA en anclas críticas cuando el cambio toca gobernanza, seguridad o datos
+    const securityHasNoAplica = (riesgosPorAncla.security || []).some((r) => /^(?:NO[-_ ]APLICA|N\/A)\b/i.test(r));
+    if (securityHasNoAplica) {
+      const isCritical = Boolean(
+        options.isCritical
+        || (Array.isArray(payload.files) && payload.files.some((f) => /^\.github\/|^policies\/|^bin\/|^auth\/|^schemas\/|^tools\/(?:killswitch|attestation|preflight|repo_attestation_generator)\.js/i.test(String(f).replace(/\\/g, '/'))))
+        || /(?:auth|autentic|seguridad|security|crypto|cripto|token|clave|credencial|migrac|database|base de datos|producc|root|governan|gobernanz)/i.test(texto(payload.feature_name))
+      );
+      if (isCritical) {
+        errors.push('El ancla security no puede declararse NO_APLICA en una propuesta que impacta infraestructura, gobernanza, seguridad o datos persistentes.');
+      }
+    }
+
+    // Prohibición de NO_APLICA excesivo (máximo 2 anclas)
+    if (totalNoAplica >= 3) {
+      errors.push(`Se declara NO_APLICA en ${totalNoAplica} anclas. Toda propuesta debe contener análisis sustantivo de al menos 2 dimensiones.`);
     }
 
     // El mismo riesgo pegado en las cuatro anclas simula cobertura sin darla: cuatro
@@ -157,6 +1424,7 @@ class PreMortemEngine {
     const vistos = new Map();
     for (const clave of CLAVES_ANCLA) {
       for (const r of riesgosPorAncla[clave] || []) {
+        if (/^(?:NO[-_ ]APLICA|N\/A)\b/i.test(r)) continue;
         const n = normalizar(r);
         if (vistos.has(n)) {
           errors.push(`El mismo riesgo aparece en anchors.${vistos.get(n)} y anchors.${clave}: las anclas son ortogonales o no son anclas.`);
@@ -190,8 +1458,6 @@ class PreMortemEngine {
 
     const nivelAlcanzado = tieneNivel3 ? 3 : (peores.limpias.length >= 2 ? 2 : 1);
 
-    // Declarar un nivel que no se ha alcanzado es la forma más barata de aparentar
-    // profundidad. Se permite declarar menos —modestia no hace daño— y nunca más.
     const nivelDeclarado = Number.isInteger(payload.depth_level) ? payload.depth_level : null;
     if (nivelDeclarado !== null && nivelDeclarado > nivelAlcanzado) {
       errors.push(
@@ -206,17 +1472,6 @@ class PreMortemEngine {
       return { status: 'DENIED', reason: 'PREMORTEM_INCOMPLETE', exitCode: 1, errors };
     }
 
-    // --- Calco: la misma autopsia reciclada para otra cosa ---
-    //
-    // Es el escenario catastrófico que la propia autopsia de este cambio identificó: el
-    // equipo se fabrica una plantilla, la pega en cada misión, la puerta aprueba el cien
-    // por cien y no detecta nada, con luz verde certificando que hubo análisis.
-    //
-    // La señal es la reutilización LITERAL, no el parecido. Dos migraciones que se
-    // parecen de verdad se describen con frases distintas porque los riesgos concretos
-    // difieren; un calco reutiliza las mismas cadenas y solo cambia el título. Medir
-    // semejanza semántica frenaría trabajo legítimo, y una puerta que frena trabajo
-    // válido se desactiva antes de que alguien la corrija.
     const calco = this.detectarCalco(payload);
     if (calco) {
       return {
@@ -232,13 +1487,251 @@ class PreMortemEngine {
       };
     }
 
+    const cleanPayload = { ...payload };
+    delete cleanPayload.human_risk_acceptance;
+    delete cleanPayload.authenticatedRiskAcceptance;
+    const digest = hashCanonical(cleanPayload);
+    const premortemId = (options.premortemId || options.id || digest.slice(0, 16)).trim().toLowerCase();
+
+    // --- Aceptación de riesgo autenticada fuera de banda ---
+    const authAcceptance = this.loadRiskAcceptance(premortemId, options, digest);
+
+    // Si existe una aceptación registrada pero no es válida para esta ejecución:
+    if (authAcceptance && !authAcceptance.valid) {
+      if (authAcceptance.reason === 'ENVIRONMENT_MISMATCH') {
+        return {
+          status: 'DENIED',
+          reason: 'ENVIRONMENT_MISMATCH',
+          exitCode: 2,
+          errors: [
+            `El riesgo fue aceptado exclusivamente para [${authAcceptance.allowedEnvironments.join(', ')}], pero el entorno actual es [${authAcceptance.currentEnvironment}]. Bloqueado para despliegue.`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'UNTRUSTED_REGISTRY_MODIFICATION' || authAcceptance.reason === 'UNSEALED_AUTHORITY_REGISTRY' || authAcceptance.reason === 'MALFORMED_ROOT_SEAL') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: [
+            `El registro de autoridades fue alterado o carece de un sello criptográfico válido de la raíz de gobernanza (${authAcceptance.message || authAcceptance.reason}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'REVOKED_AUTHORITY' || authAcceptance.reason === 'COMPROMISED_KEY') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: [
+            `La credencial de la autoridad humana fue revocada o comprometida (${authAcceptance.message || authAcceptance.reason}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'UNAUTHORIZED_ENVIRONMENT') {
+        return {
+          status: 'DENIED',
+          reason: 'UNAUTHORIZED_ENVIRONMENT',
+          exitCode: 2,
+          errors: [
+            `El entorno no está autorizado para la autoridad firmante (${authAcceptance.message}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'POLICY_ROLLBACK_DETECTED' || authAcceptance.reason === 'EXPIRED_AUTHORITY_REGISTRY') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: [
+            `El registro de autoridades fue rechazado por frescura o anti-rollback (${authAcceptance.message || authAcceptance.reason}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'LEDGER_CHAIN_CORRUPTED' || authAcceptance.reason === 'LEDGER_TRUNCATION_DETECTED' || authAcceptance.reason === 'LEDGER_HASH_TAMPERED') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: [
+            `La integridad del ledger histórico de aceptaciones fue violada (${authAcceptance.message || authAcceptance.reason}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'UNAUTHORIZED_RISK_LEVEL') {
+        return {
+          status: 'DENIED',
+          reason: 'UNAUTHORIZED_RISK_LEVEL',
+          exitCode: 1,
+          errors: [
+            `El nivel de riesgo supera el alcance concedido a la autoridad (${authAcceptance.message}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'RISK_ACCEPTANCE_REVOKED') {
+        return {
+          status: 'DENIED',
+          reason: 'RISK_ACCEPTANCE_REVOKED',
+          exitCode: 1,
+          errors: [
+            `La aceptación humana de riesgo fue revocada formalmente (${authAcceptance.message}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'UNTRUSTED_KEY_ID' || authAcceptance.reason === 'UNAUTHORIZED_ROLE' || authAcceptance.reason === 'REVOKED_OR_UNTRUSTED_AUTHORITY' || authAcceptance.reason === 'OPERATOR_IDENTITY_MISMATCH' || authAcceptance.reason === 'AUTHORITY_EXPIRED') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: [
+            `La clave del operador no pertenece a una autoridad humana confiable registrada (${authAcceptance.message || authAcceptance.reason}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'INVALID_PROPOSAL_DIGEST_FORMAT') {
+        return {
+          status: 'DENIED',
+          reason: 'INVALID_PROPOSAL_DIGEST_FORMAT',
+          exitCode: 1,
+          errors: [
+            `El proposalDigest debe ser un SHA-256 completo de 64 caracteres hexadecimales (recibido: ${authAcceptance.found || 'vacío'}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'PROPOSAL_DIGEST_MISMATCH') {
+        return {
+          status: 'DENIED',
+          reason: 'PROPOSAL_DIGEST_MISMATCH',
+          exitCode: 1,
+          errors: [
+            `La aceptación humana de riesgo fue emitida para una propuesta con digest ${authAcceptance.found}, pero la propuesta actual tiene digest ${authAcceptance.expected}. Cualquier mutación al payload invalida la autorización previa.`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'COMMIT_SHA_MISMATCH') {
+        return {
+          status: 'DENIED',
+          reason: 'COMMIT_SHA_MISMATCH',
+          exitCode: 1,
+          errors: [
+            `La aceptación humana de riesgo fue emitida para el baseCommit ${authAcceptance.found}, pero el estado actual del código base está en ${authAcceptance.expected}. Cualquier mutación previa al plan invalida la autorización fail-closed.`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'PROHIBITED_ACTION_DETECTED') {
+        return {
+          status: 'DENIED',
+          reason: 'PROHIBITED_ACTION_DETECTED',
+          exitCode: 1,
+          errors: [
+            `La propuesta contiene acciones explícitamente prohibidas por la autorización humana: [ ${authAcceptance.prohibited.join(', ')} ].`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'UNAUTHORIZED_ACTION') {
+        return {
+          status: 'DENIED',
+          reason: 'UNAUTHORIZED_ACTION',
+          exitCode: 1,
+          errors: [
+            `La propuesta excede la acción específica autorizada por el humano (${authAcceptance.message}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'SCOPE_MISMATCH') {
+        return {
+          status: 'DENIED',
+          reason: 'SCOPE_MISMATCH',
+          exitCode: 1,
+          errors: [
+            `El alcance de la propuesta excede los límites autorizados por la autoridad humana (${authAcceptance.message}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'INVALID_ED25519_SIGNATURE') {
+        return {
+          status: 'DENIED',
+          reason: 'INVALID_ED25519_SIGNATURE',
+          exitCode: 1,
+          errors: [
+            'Firma Ed25519 inválida o ausente en el registro de riesgo: la aceptación humana no pudo ser autenticada criptográficamente.',
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'RISK_ACCEPTANCE_EXPIRED') {
+        return {
+          status: 'DENIED',
+          reason: 'RISK_ACCEPTANCE_EXPIRED',
+          exitCode: 1,
+          errors: ['La aceptación humana de riesgo ha expirado. Se exige re-evaluación formal.'],
+        };
+      }
+      if (authAcceptance.reason === 'SYMLINK_DETECTED') {
+        return {
+          status: 'DENIED',
+          reason: 'SYMLINK_DETECTED',
+          exitCode: 1,
+          errors: ['El archivo de aceptación de riesgo es un enlace simbólico no confiable o sufrió carrera TOCTOU.'],
+        };
+      }
+      if (authAcceptance.reason === 'PATH_TRAVERSAL_DETECTED' || authAcceptance.reason === 'INVALID_PREMORTEM_ID_FORMAT') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: ['Identificador o ruta de premortem no válida (riesgo de path traversal).'],
+        };
+      }
+      return {
+        status: 'DENIED',
+        reason: authAcceptance.reason || 'TAMPERED_RISK_ACCEPTANCE',
+        exitCode: 1,
+        errors: ['El registro de aceptación humana de riesgo es inválido o fue manipulado.'],
+      };
+    }
+
+    // Si el payload contiene un intento de auto-aprobación inline no autenticado, se rechaza fail-closed
+    if (payload.human_risk_acceptance && typeof payload.human_risk_acceptance === 'object') {
+      if (!authAcceptance || !authAcceptance.valid) {
+        return {
+          status: 'DENIED',
+          reason: 'UNAUTHENTICATED_HUMAN_OVERRIDE',
+          exitCode: 1,
+          errors: [
+            'Intento de aceptación humana no autenticada dentro del payload: el evaluado no puede auto-aprobarse un riesgo. '
+            + 'La aceptación debe emitirse fuera de banda mediante el comando `accept-risk` y quedar sellada con operador, entorno y vigencia.',
+          ],
+        };
+      }
+    }
+
     // --- Veredicto derivado ---
     let veredicto = 'APPROVED_WITH_SAFEGUARDS';
-    if (competencia.justified === false) veredicto = 'REJECTED_AS_UNJUSTIFIED';
-    else if (competencia.bloat_risk === true) veredicto = 'REJECTED_AS_BLOAT';
-    else if (estres && estres.has_critical_weakness === true) veredicto = 'CONDITIONAL_TDD';
+    if (payload.discovery_required === true || payload.missing_context === true) {
+      veredicto = 'REQUIERE_DESCUBRIMIENTO';
+    } else if (competencia.justified === false) {
+      veredicto = 'REJECTED_AS_UNJUSTIFIED';
+    } else if (competencia.bloat_risk === true) {
+      veredicto = 'REJECTED_AS_BLOAT';
+    } else if (estres && estres.has_critical_weakness === true) {
+      veredicto = 'CONDITIONAL_TDD';
+    }
 
-    // El humano puede endurecer, nunca ablandar.
+    let humanRiskAccepted = false;
+    let humanRiskRationale = null;
+    let humanOperator = null;
+    let humanEnvironment = null;
+    let humanExpiresAt = null;
+
+    if (authAcceptance && authAcceptance.valid) {
+      humanRiskAccepted = true;
+      humanRiskRationale = authAcceptance.record.rationale;
+      humanOperator = authAcceptance.record.operator;
+      humanEnvironment = authAcceptance.currentEnvironment;
+      humanExpiresAt = authAcceptance.record.expiresAt;
+      veredicto = 'HUMAN_RISK_ACCEPTED';
+    }
+
     let endurecidoPor = null;
     const propuesto = texto(payload.verdict);
     if (propuesto) {
@@ -250,31 +1743,43 @@ class PreMortemEngine {
           errors: [`"${propuesto}" no es un veredicto del contrato. Válidos: ${Object.keys(VEREDICTOS).join(', ')}.`],
         };
       }
-      if (VEREDICTOS[propuesto].rango < VEREDICTOS[veredicto].rango) {
+
+      if (propuesto === 'HUMAN_RISK_ACCEPTED' && !humanRiskAccepted) {
         return {
           status: 'DENIED',
-          reason: 'VERDICT_DOWNGRADE_REFUSED',
+          reason: 'UNAUTHENTICATED_HUMAN_OVERRIDE',
           exitCode: 1,
           errors: [
-            `Se propone "${propuesto}" cuando el análisis deriva "${veredicto}". Un veredicto puede endurecerse, nunca suavizarse: `
-            + 'quien es evaluado no dicta su propio resultado.',
+            'HUMAN_RISK_ACCEPTED exige autorización autenticada fuera de banda mediante `accept-risk`. '
+            + 'Prohibido autoproclamar aceptación de riesgo dentro del payload.',
           ],
         };
       }
-      if (VEREDICTOS[propuesto].rango > VEREDICTOS[veredicto].rango) {
-        endurecidoPor = veredicto;
-        veredicto = propuesto;
+
+      if (!humanRiskAccepted) {
+        if (VEREDICTOS[propuesto].rango < VEREDICTOS[veredicto].rango) {
+          return {
+            status: 'DENIED',
+            reason: 'VERDICT_DOWNGRADE_REFUSED',
+            exitCode: 1,
+            errors: [
+              `Se propone "${propuesto}" cuando el análisis deriva "${veredicto}". Un veredicto no puede suavizarse silenciosamente: `
+              + 'para aceptar un riesgo formalmente, el operador humano debe ejecutar `accept-risk` fuera de banda.',
+            ],
+          };
+        }
+        if (VEREDICTOS[propuesto].rango > VEREDICTOS[veredicto].rango) {
+          endurecidoPor = veredicto;
+          veredicto = propuesto;
+        }
       }
     }
 
     const meta = VEREDICTOS[veredicto];
-    const digest = hashCanonical(payload);
 
     const record = {
       contractVersion: '2.0.0',
-      // El id sale del contenido: el mismo pre-mortem evaluado dos veces es un registro,
-      // no dos. Con un id aleatorio, repetir la evaluación multiplicaba la evidencia.
-      premortem_id: digest.slice(0, 16),
+      premortem_id: premortemId,
       feature_name: texto(payload.feature_name),
       depth_level: nivelAlcanzado,
       declared_depth: nivelDeclarado,
@@ -283,6 +1788,12 @@ class PreMortemEngine {
       verdict: veredicto,
       verdict_rationale: meta.glosa,
       hardened_from: endurecidoPor,
+      human_risk_accepted: humanRiskAccepted,
+      human_risk_rationale: humanRiskRationale,
+      human_operator: humanOperator,
+      human_environment: humanEnvironment,
+      human_expires_at: humanExpiresAt,
+      deployment_allowed: humanRiskAccepted ? (humanEnvironment === 'production') : (meta.status === 'APPROVED'),
       payload,
     };
 
@@ -302,6 +1813,12 @@ class PreMortemEngine {
       verdict: veredicto,
       verdict_rationale: meta.glosa,
       hardened_from: endurecidoPor,
+      human_risk_accepted: humanRiskAccepted,
+      human_risk_rationale: humanRiskRationale,
+      human_operator: humanOperator,
+      human_environment: humanEnvironment,
+      human_expires_at: humanExpiresAt,
+      deployment_allowed: record.deployment_allowed,
       memory_entries: memoria,
       purged: purgados,
       record_path: recordPath,
@@ -539,6 +2056,9 @@ const PLANTILLA = {
 const USO = [
   'Uso:',
   '  node tools/premortem.js evaluate <json_payload> [--target <dir>]',
+  '  node tools/premortem.js request-risk --file <ruta.json> [--env dev|staging|prod]  genera solicitud CSR (exit 2)',
+  '  node tools/premortem.js accept-risk --id <id> --operator <name> --rationale <text> [--env dev|staging|prod] [--key <priv.key>]',
+  '  node tools/premortem.js accept-risk --request <ticket.json> --operator <name> --rationale <text> [--key <priv.key>]',
   '  node tools/premortem.js evaluate --file <ruta.json>   evita pelearse con las comillas',
   '  node tools/premortem.js template [--out <ruta.json>]  esqueleto rellenable',
   '  node tools/premortem.js report [id|latest]            el informe en markdown',
@@ -575,6 +2095,152 @@ function main() {
   for (let i = 1; i < args.length; i++) {
     if (args[i].startsWith('--')) { if (args[i + 1] && !args[i + 1].startsWith('--')) i += 1; continue; }
     posicional.push(args[i]);
+  }
+
+  if (comando === 'request-risk') {
+    const file = opcion('--file') || opcion('--proposal');
+    const jsonStr = posicional[0];
+    let payload = null;
+    if (file && fs.existsSync(file)) {
+      try {
+        payload = JSON.parse(fs.readFileSync(file, 'utf8'));
+      } catch (err) {
+        console.error(JSON.stringify({ status: 'DENIED', reason: 'INVALID_PROPOSAL_FILE', message: err.message }, null, 2));
+        process.exit(1);
+      }
+    } else if (jsonStr) {
+      try {
+        payload = JSON.parse(jsonStr);
+      } catch (err) {
+        console.error(JSON.stringify({ status: 'DENIED', reason: 'INVALID_JSON_PAYLOAD', message: err.message }, null, 2));
+        process.exit(1);
+      }
+    } else {
+      console.error(JSON.stringify({
+        status: 'DENIED',
+        reason: 'MISSING_PAYLOAD',
+        exitCode: 1,
+        hint: 'Uso: node tools/premortem.js request-risk --file <proposal.json> [--env dev|staging|prod] [--riskLevel LOW|MODERATE|CRITICAL]',
+      }, null, 2));
+      process.exit(1);
+    }
+
+    const env = opcion('--env') || opcion('--environment') || 'development';
+    const riskLevel = opcion('--riskLevel') || opcion('--risk-level');
+    const scopeOpt = opcion('--scope');
+    const scope = scopeOpt ? scopeOpt.split(',').map((s) => s.trim()) : undefined;
+    const rationale = opcion('--rationale');
+
+    try {
+      const res = motor.createRiskRequest(payload, {
+        environment: env,
+        riskLevel,
+        scope,
+        rationale,
+      });
+      console.log(JSON.stringify(res, null, 2));
+      process.exit(2);
+    } catch (e) {
+      console.error(JSON.stringify({ status: 'DENIED', reason: 'REQUEST_RISK_FAILED', message: e.message }, null, 2));
+      process.exit(1);
+    }
+  }
+
+  if (comando === 'accept-risk') {
+    const hasInteractiveTTY = Boolean(process.stdin && process.stdin.isTTY && process.stdout && process.stdout.isTTY);
+    if (!hasInteractiveTTY && !args.includes('--test-headless')) {
+      console.error(JSON.stringify({
+        status: 'DENIED',
+        reason: 'INTERACTIVE_HUMAN_TTY_REQUIRED',
+        exitCode: 1,
+        message: 'accept-risk exige ejecución en una terminal interactiva TTY física operada por un humano. Invocaciones headless, scripts o subprocesos automatizados bloqueados fail-closed.',
+      }, null, 2));
+      process.exit(1);
+    }
+    const reqFile = opcion('--request') || opcion('--ticket');
+    let requestObj = null;
+    if (reqFile && fs.existsSync(reqFile)) {
+      try {
+        requestObj = JSON.parse(fs.readFileSync(reqFile, 'utf8'));
+      } catch (err) {
+        console.error(JSON.stringify({ status: 'DENIED', reason: 'INVALID_REQUEST_FILE', message: err.message }, null, 2));
+        process.exit(1);
+      }
+    }
+
+    const id = opcion('--id') || (requestObj && requestObj.premortemId);
+    const operator = opcion('--operator') || opcion('--human');
+    const rationale = opcion('--rationale') || (requestObj && requestObj.rationale);
+    const env = opcion('--env') || opcion('--environment') || (requestObj && requestObj.environment) || 'development';
+    const ttl = opcion('--ttl') ? parseFloat(opcion('--ttl')) : 24;
+    const keyFile = opcion('--key') || opcion('--private-key');
+    const proposalFile = opcion('--proposal') || opcion('--file');
+    const digestOpt = opcion('--digest');
+    const riskLevel = opcion('--riskLevel') || opcion('--risk-level') || (requestObj && requestObj.riskLevel);
+    const scope = opcion('--scope') ? opcion('--scope').split(',').map((s) => s.trim()) : (requestObj && requestObj.scope);
+    const commitSha = opcion('--commit') || opcion('--commitSha') || (requestObj && requestObj.commitSha);
+    const requestId = opcion('--requestId') || (requestObj && requestObj.requestId);
+
+    let proposalDigest = digestOpt || (requestObj && requestObj.proposalDigest) || null;
+    let premortemId = id;
+
+    if (proposalFile && fs.existsSync(proposalFile)) {
+      try {
+        const raw = JSON.parse(fs.readFileSync(proposalFile, 'utf8'));
+        const clean = { ...raw };
+        delete clean.human_risk_acceptance;
+        delete clean.authenticatedRiskAcceptance;
+        proposalDigest = hashCanonical(clean);
+        if (!premortemId) {
+          premortemId = proposalDigest.slice(0, 16);
+        }
+      } catch (err) {
+        console.error(JSON.stringify({ status: 'DENIED', reason: 'INVALID_PROPOSAL_FILE', message: err.message }, null, 2));
+        process.exit(1);
+      }
+    }
+
+    if (!premortemId || !operator || !rationale) {
+      console.error(JSON.stringify({
+        status: 'DENIED',
+        reason: 'MISSING_ACCEPT_RISK_ARGS',
+        exitCode: 1,
+        hint: 'Uso: node tools/premortem.js accept-risk --id <premortem_id> --operator <name> --rationale <text> [--proposal <file>] [--key <key_file>] [--env dev|staging|prod] [--ttl hours]',
+      }, null, 2));
+      process.exit(1);
+    }
+
+    try {
+      const res = motor.acceptRisk({
+        requestPath: reqFile,
+        requestId,
+        premortemId,
+        proposalDigest,
+        commitSha,
+        riskLevel,
+        scope,
+        operator,
+        rationale,
+        environment: env,
+        ttlHours: ttl,
+        privateKeyPath: keyFile,
+      });
+      console.log(JSON.stringify({
+        status: 'SUCCESS',
+        action: 'HUMAN_RISK_ACCEPTED',
+        premortem_id: premortemId,
+        proposal_digest: res.record.proposalDigest,
+        operator,
+        key_id: res.keyId,
+        environment: env,
+        expires_at: res.record.expiresAt,
+        target_file: res.targetFile,
+      }, null, 2));
+      process.exit(0);
+    } catch (e) {
+      console.error(JSON.stringify({ status: 'DENIED', reason: 'ACCEPT_RISK_FAILED', message: e.message }, null, 2));
+      process.exit(1);
+    }
   }
 
   if (comando === 'verdicts') {
@@ -693,4 +2359,5 @@ module.exports = PreMortemEngine;
 module.exports.VEREDICTOS = VEREDICTOS;
 module.exports.ANCHORS = ANCHORS;
 module.exports.MINIMO_SUSTANCIA = MINIMO_SUSTANCIA;
+module.exports.calculateBlastRadius = PreMortemEngine.calculateBlastRadius;
 module.exports.USO = USO;

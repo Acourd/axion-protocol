@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
       toastSoundOff: '✕ Haptic audio muted',
       toastCopied: '✓ Command copied to clipboard',
       toastCopyFail: 'Could not copy to clipboard automatically.',
-      statusPill: 'v2.0.0-rc.1 · 201 Suites PASS',
+      statusPill: '1.3.2 · 238 Suites PASS',
       navHero: 'Home',
       navSwarm: 'Swarm Engine',
       navSandbox: 'CLI Sandbox',
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
       heroLead: 'Execution engine operating in <code>fail-closed</code> mode (95.7 KB). Intercepts terminal tool calls with <code>shell: false</code>, arbitrates concurrent AST namespace collisions, and guarantees SHA-256 byte-accurate state rollback.',
       installBoxLabel: 'QUICKSTART COMMAND',
       copyLabel: 'Copy',
-      telemetryStatus: '201 Suites PASS',
+      telemetryStatus: '239 Suites PASS',
       metricSuites: 'Suites in Green (100%)',
       metricDeps: 'External Dependencies',
       metricRollback: 'Rollback SHA-256',
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
       toastSoundOff: '✕ Sonido háptico silenciado',
       toastCopied: '✓ Comando copiado al portapapeles',
       toastCopyFail: 'No se pudo copiar automáticamente.',
-      statusPill: 'v2.0.0-rc.1 · 201 Suites PASS',
+      statusPill: '1.3.2 · 238 Suites PASS',
       navHero: 'Inicio',
       navSwarm: 'Swarm Engine',
       navSandbox: 'Simulador CLI',
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
       heroLead: 'Motor de ejecución en modo <code>fail-closed</code> (95.7 KB). Intercepta llamadas de terminal sin sub-shell, arbitra colisiones concurrentes en el árbol AST y garantiza reversión atómica verificada con SHA-256.',
       installBoxLabel: 'COMANDO DE INICIO RÁPIDO',
       copyLabel: 'Copiar',
-      telemetryStatus: '201 Suites PASS',
+      telemetryStatus: '239 Suites PASS',
       metricSuites: 'Suites en Verde (100%)',
       metricDeps: 'Dependencias Externas',
       metricRollback: 'Rollback SHA-256',
@@ -717,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
       playSuccessChime();
       appendTerminalLinesStaggered([
         { type: 'info', text: '[/verify] Ejecutando suite de 203 pruebas deterministas en 8 workers...' },
-        { type: 'pass', text: '✓ 203/203 suites PASS (0 FAIL, tiempo: 14.12s, exit code 0)' }
+        { type: 'pass', text: '✓ 239/239 suites PASS (0 FAIL, tiempo: 14.12s, exit code 0)' }
       ]);
     } else if (clean.includes('rm -rf') || clean.includes('drop database') || clean.includes(':(){ :|:& };:')) {
       playAlertBeep();

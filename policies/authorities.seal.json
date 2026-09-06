@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "format": "AXION_AUTHORITY_ROOT_SEAL_V1",
+  "rootKeyId": "ed25519:c711dd47f603e8ef17921fc4605a8c22e0c0650e935481cecdb96086598d8ec1",
+  "policyId": "axion-authority-governance-v1",
+  "monotonicVersion": 2,
+  "canonicalPayloadHash": "816241111fc76d8374e986ffad3bcd0f47b8adec6bc42ae7fb13031b6b9b4847",
+  "sealedAt": "2026-09-06T09:38:07.061Z",
+  "algorithm": "Ed25519",
+  "signature": "mrWAUyjpjGjouiiyGZgtKkatCzxsGT8FVK7AilGvnLqnnqzbMIOgCmbspObXkFogcVnY3T0PH1IKikcmgnfwAA=="
+}

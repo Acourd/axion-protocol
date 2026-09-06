@@ -23,6 +23,7 @@ class ProvenanceSbomGenerator {
   constructor(projectRoot = ROOT) {
     this.root = path.resolve(projectRoot);
     this.reportsDir = path.join(this.root, '.axion', 'reports');
+    this.pkg = this.loadPackageInfo();
     this.ensureReportsDir();
   }
 
@@ -44,7 +45,7 @@ class ProvenanceSbomGenerator {
 
   loadPackageInfo() {
     const pkgJsonPath = path.join(this.root, 'package.json');
-    const fallback = { name: 'axion-protocol', version: '1.2.0-beta.1', description: 'Agentic Safety & Governance Protocol' };
+    const fallback = { name: 'axion-protocol', version: '0.0.0', description: 'Agentic Safety & Governance Protocol' };
     if (!fs.existsSync(pkgJsonPath)) return fallback;
     try {
       const parsed = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
@@ -81,8 +82,8 @@ class ProvenanceSbomGenerator {
             type: d === 'tools' || d === 'bin' ? 'application' : 'file',
             name: e.name,
             group: `axion-protocol.${d}`,
-            version: '1.2.0-beta.1',
-            purl: `pkg:generic/axion-protocol/${relPath}@1.2.0-beta.1`,
+            version: this.pkg.version,
+            purl: `pkg:generic/axion-protocol/${relPath}@${this.pkg.version}`,
             hashes: [
               {
                 alg: 'SHA-256',
@@ -119,7 +120,7 @@ class ProvenanceSbomGenerator {
           {
             vendor: 'Axion Protocol Security',
             name: 'ProvenanceSbomGenerator',
-            version: '1.2.0-beta.1'
+            version: this.pkg.version
           }
         ],
         component: {
@@ -189,7 +190,7 @@ class ProvenanceSbomGenerator {
         },
         runDetails: {
           builder: {
-            id: 'https://axion-protocol.dev/builders/autonomous-orchestrator@1.2.0-beta.1'
+            id: `https://axion-protocol.dev/builders/autonomous-orchestrator@${this.pkg.version}`
           },
           metadata: {
             invocationId: this.generateUuid(),

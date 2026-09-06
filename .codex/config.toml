@@ -3,3 +3,16 @@
 mode = "fail-closed"
 deterministic_verification = true
 attestation = "in-toto-v1-dsse"
+
+# Gate fail-closed: Codex ejecuta el hook antes de cada tool Bash.
+[features]
+codex_hooks = true
+
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+statusMessage = "Axion: verificando comando"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "node .codex/hooks/axion-gate.js"
+timeout = 10

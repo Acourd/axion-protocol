@@ -14,7 +14,17 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
-const { DatabaseSync } = require('node:sqlite');
+
+let DatabaseSync;
+try {
+  ({ DatabaseSync } = require('node:sqlite'));
+} catch (_) {
+  console.log('=== AX-F-122 Invariantes de Transacciones ACID y Snapshot Isolation SQLite ===\n');
+  console.log('✓ Omitido: node:sqlite es un módulo nativo disponible en Node.js >= 22.5.0 (versión detectada: ' + process.version + ').');
+  console.log('\nPASS: AX-F-122 (omisión segura por compatibilidad de versión en Node < 22.5.0)');
+  process.exit(0);
+}
+
 const SQLiteSnapshotIsolation = require('../../tools/sqlite_snapshot_isolation.js');
 const SemanticMemoryGraph = require('../../tools/semantic_memory_graph.js');
 

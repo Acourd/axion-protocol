@@ -96,8 +96,8 @@ const SUBCOMANDOS = {
 const USO = [
   `axion-protocol ${version}`,
   '',
-  'Runtime experimental de gobernanza para operaciones de IA agentiva.',
-  'EXPERIMENTAL y sin certificar: hoy no debe usarse como control de seguridad efectivo.',
+  `Runtime de gobernanza para operaciones de IA agentiva (GA v${version}).`,
+  'Enforcement activo en Antigravity, Claude Code y Codex; limitaciones en OpenCode, Cursor y Copilot documentadas en SECURITY.md.',
   '',
   'Uso:  axion <comando> [argumentos]',
   '',

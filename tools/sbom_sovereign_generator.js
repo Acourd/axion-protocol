@@ -17,9 +17,18 @@ const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
 
+function leerVersion(raiz) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(raiz, 'package.json'), 'utf8')).version || '0.0.0';
+  } catch (_) {
+    return '0.0.0';
+  }
+}
+
 class SovereignSBOMGenerator {
   constructor(projectRoot = ROOT) {
     this.root = path.resolve(projectRoot);
+    this.version = leerVersion(this.root);
   }
 
   /**
@@ -27,7 +36,11 @@ class SovereignSBOMGenerator {
    */
   collectProjectFiles() {
     const files = [];
-    const scanDirs = ['tools', 'bin', '.agents/skills'];
+    const scanDirs = [
+      'tools', 'bin', '.agents/skills',
+      '.claude/commands', '.opencode/commands', '.cursor/commands',
+      '.codex', '.github', '.opencode',
+    ];
 
     for (const dir of scanDirs) {
       const fullDir = path.join(this.root, dir);
@@ -55,6 +68,22 @@ class SovereignSBOMGenerator {
       walk(fullDir);
     }
 
+    // Archivos raíz del release que también se publican.
+    const rootFiles = [
+      'AGENTS.md', 'opencode.json', 'install.js', 'package.json',
+      'CLAUDE.md', 'GOVERNANCE.md', 'SECURITY.md', 'README.md', 'CHANGELOG.md',
+    ];
+    for (const rf of rootFiles) {
+      const fullPath = path.join(this.root, rf);
+      if (!fs.existsSync(fullPath)) continue;
+      const content = fs.readFileSync(fullPath);
+      files.push({
+        path: rf,
+        sizeBytes: content.length,
+        sha256: crypto.createHash('sha256').update(content).digest('hex'),
+      });
+    }
+
     return files.sort((a, b) => a.path.localeCompare(b.path));
   }
 
@@ -70,7 +99,7 @@ class SovereignSBOMGenerator {
       type: 'file',
       'bom-ref': `pkg:generic/axion-protocol/${f.path}`,
       name: f.path,
-      version: '1.3.1-rc.2',
+      version: this.version,
       hashes: [
         { alg: 'SHA-256', content: f.sha256 }
       ],
@@ -95,7 +124,7 @@ class SovereignSBOMGenerator {
         component: {
           type: 'application',
           name: 'axion-protocol',
-          version: '1.3.1-rc.2',
+          version: this.version,
           description: 'Local governance runtime for agentic AI operations with zero dependencies',
           licenses: [{ license: { id: 'Apache-2.0' } }]
         },
@@ -139,7 +168,7 @@ class SovereignSBOMGenerator {
         {
           name: 'axion-protocol',
           SPDXID: 'SPDXRef-Package-Axion',
-          versionInfo: '1.3.1-rc.2',
+          versionInfo: this.version,
           downloadLocation: 'git+https://github.com/Acourd/axion-protocol.git',
           filesAnalyzed: true,
           licenseConcluded: 'Apache-2.0',

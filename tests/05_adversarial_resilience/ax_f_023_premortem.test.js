@@ -124,7 +124,7 @@ console.log('=== AX-F-023 /premortem: simulador de fracaso ===\n');
   const d = arenal();
   const r = new PreMortemEngine(d).evaluateAssessment(base({ verdict: 'TODO_PERFECTO_ADELANTE' }));
   ok(r.status === 'DENIED' && r.reason === 'UNKNOWN_VERDICT', 'un veredicto fuera del contrato debe rechazarse');
-  ok(Object.keys(VEREDICTOS).length === 5, 'el contrato declara cinco veredictos');
+  ok(Object.keys(VEREDICTOS).length === 8, 'el contrato declara ocho veredictos');
   fs.rmSync(d, { recursive: true, force: true });
   console.log('✓ solo admite los veredictos del contrato');
 }
@@ -134,7 +134,10 @@ console.log('=== AX-F-023 /premortem: simulador de fracaso ===\n');
 // otro. Un rechazo que salia con 0 dejaba pasar la idea rechazada en cualquier CI.
 {
   ok(VEREDICTOS.APPROVED_WITH_SAFEGUARDS.exit === 0, 'la aprobacion sale con 0');
+  ok(VEREDICTOS.PLAN_APPROVED_WITH_SAFEGUARDS.exit === 0, 'la aprobacion del plan sale con 0');
+  ok(VEREDICTOS.HUMAN_RISK_ACCEPTED.exit === 0, 'la aceptacion de riesgo sale con 0');
   ok(VEREDICTOS.CONDITIONAL_TDD.exit === 2 && VEREDICTOS.PIVOT_REQUIRED.exit === 2, 'lo condicional sale con 2');
+  ok(VEREDICTOS.REQUIERE_DESCUBRIMIENTO.exit === 2, 'la solicitud de descubrimiento sale con 2');
   ok(VEREDICTOS.REJECTED_AS_BLOAT.exit === 1 && VEREDICTOS.REJECTED_AS_UNJUSTIFIED.exit === 1, 'el rechazo sale con 1');
 
   const d = arenal();

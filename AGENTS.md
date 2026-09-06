@@ -12,7 +12,7 @@
 6. **Reportes Ejecutivos de 3 Líneas:** Toda misión concluye con [Acción Cumplida], [Métricas] y [Próximo Vector Metacognitivo].
 7. **Anclaje Empírico en Tiempo Real:** Prohibido aseverar datos sobre el ecosistema vivo, modelos o versiones basándose en memoria estática de entrenamiento. Consulta obligatoria con herramientas de búsqueda activa (`search_web`).
 
-Comandos disponibles: /attest /clarify /debug /drive /halt /memory /preflight /premortem /profile /review /snapshot /verify.
+Comandos disponibles: /attest /clarify /critic /debug /drive /halt /memory /preflight /premortem /profile /review /snapshot /verify.
 Herramientas: tools/preflight.js, tools/checkpoint.js, tools/attestation.js, tools/evidence_hasher.js, tools/killswitch.js.
 
 <!-- axion-protocol:gobernanza -->

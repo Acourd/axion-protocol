@@ -74,9 +74,9 @@ class RepoAttestationGenerator {
   getVersion() {
     try {
       const pkg = JSON.parse(fs.readFileSync(path.join(this.root, 'package.json'), 'utf8'));
-      return pkg.version || '1.3.1';
+      return pkg.version || '1.3.2';
     } catch (_) {
-      return '1.3.1';
+      return '1.3.2';
     }
   }
 

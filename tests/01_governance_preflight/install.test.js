@@ -50,6 +50,9 @@ const expectedFiles = [
   path.join(scratchDir, 'tools', 'deep_reasoning.js'),
   path.join(scratchDir, 'tools', 'fuzzer.js'),
   path.join(scratchDir, 'tools', 'premortem.js'),
+  path.join(scratchDir, 'tools', 'governance_root.js'),
+  path.join(scratchDir, 'policies', 'authorities.json'),
+  path.join(scratchDir, 'policies', 'authorities.seal.json'),
   // El hook solo corre si esta registrado; sin este archivo, en Claude Code no corre.
   path.join(scratchDir, '.claude', 'settings.json'),
   path.join(scratchDir, '.agents', 'hooks', 'validate-tool-call.mjs')

@@ -2,7 +2,7 @@
 
 ## Estado
 
-Axion incluye un runtime funcional experimental. No es un interceptor global ni un control certificado: el enforcement solo existe cuando un consumidor invoca `tools/workflow_runner.js` con un contexto confiable.
+Axion Protocol v1.3.2 (GA). El enforcement fail-closed opera donde existe puerta ejecutable: hooks PreToolUse en Antigravity, Claude Code y Codex, y comandos/permisos nativos en OpenCode. **Limitaciones conocidas:** no es un interceptor global certificado — Cursor y Copilot reciben directivas contextuales (no exponen hooks), el plugin de gate de OpenCode está deshabilitado (inestabilidad del plugin host 1.18.x), y Codex requiere el CLI de Codex instalado. Revisa la sección Frontera de confianza antes de asumir cobertura en un harness.
 
 ## Frontera de confianza
 

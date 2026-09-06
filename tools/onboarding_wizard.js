@@ -70,7 +70,7 @@ class OnboardingWizard {
     let initialDigest = null;
     try {
       const { crear } = require('./checkpoint.js');
-      const snap = crear('Initial Baseline 1-Click Setup', this.targetDir);
+      const snap = crear(this.targetDir, 'Initial Baseline 1-Click Setup');
       snapshotCreated = !!snap;
       initialDigest = snap ? snap.digest : null;
     } catch (_) {

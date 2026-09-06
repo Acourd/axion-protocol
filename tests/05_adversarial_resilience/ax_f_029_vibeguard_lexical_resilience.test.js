@@ -9,7 +9,7 @@ const { inspectFileContent, scanFile } = require('../../tools/vibeguard.js');
 console.log('=== AX-F-029 Resiliencia Léxica y Códigos de Salida en VibeGuard ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const scratchDir = path.join(ROOT, 'scratch', 'test_vibeguard');
+const scratchDir = path.join(ROOT, 'scratch', `test_vibeguard_${process.pid}`);
 if (!fs.existsSync(scratchDir)) {
   fs.mkdirSync(scratchDir, { recursive: true });
 }
@@ -63,5 +63,9 @@ assert.strictEqual(rCliHelp.status, 2, '--help debe salir con 2');
 const rCliMissing = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'vibeguard.js'), path.join(scratchDir, 'no_existe.js')]);
 assert.strictEqual(rCliMissing.status, 1, 'archivo inexistente debe salir con 1');
 console.log('✓ Códigos de salida deterministas (0 / 1 / 2) en CLI verificados');
+
+if (fs.existsSync(scratchDir)) {
+  fs.rmSync(scratchDir, { recursive: true, force: true });
+}
 
 console.log('\nPASS AX-F-029 — VibeGuard inspección léxica y códigos de salida verificados al 100%.\n');

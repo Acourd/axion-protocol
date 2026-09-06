@@ -42,7 +42,9 @@ const CORE_MODULES = [
   'tools/swarm_ast_arbiter.js',
   'tools/swarm_consensus_arbiter.js',
   'tools/swarm_p2p_channel.js',
-  'tools/sync_doc_stats.js'
+  'tools/sync_doc_stats.js',
+  'tools/drive_metacognitive_sentinel.js',
+  'tools/intent_clarifier.js'
 ];
 
 class BundleCompiler {
@@ -86,7 +88,7 @@ ${code}
       }
     }
 
-    let pkgVersion = '1.3.1-rc.2';
+    let pkgVersion = '1.3.2';
     try {
       const pkg = JSON.parse(fs.readFileSync(path.join(this.root, 'package.json'), 'utf8'));
       if (pkg.version) pkgVersion = pkg.version;
@@ -158,10 +160,11 @@ if (require.main === module) {
     check: () => { const M = __require('tools/doctor_repair_engine.js'); new M().runDiagnosis(); },
     revocation: () => { const M = __require('tools/revocation_manager.js'); console.log(JSON.stringify(new M().loadCRL(), null, 2)); },
     swarm: () => { const M = __require('tools/swarm_ast_arbiter.js'); console.log(new M().loadLocks()); },
+    clarify: () => { const M = __require('tools/intent_clarifier.js'); console.log(JSON.stringify(M.analyzeUserIntent(args.slice(1).join(' ')), null, 2)); },
     help: () => {
       console.log('Axion Protocol — Standalone Single-File Bundle v${pkgVersion}');
       console.log('Uso: node axion.bundle.js <subcommand>\\n');
-      console.log('Subcomandos disponibles: preflight, checkpoint, restore, shield, doctor, repair, instinct, budget, capabilities, dashboard, tree, weave, search, check, revocation, swarm, help');
+      console.log('Subcomandos disponibles: preflight, checkpoint, restore, shield, doctor, repair, instinct, budget, capabilities, dashboard, tree, weave, search, check, revocation, swarm, clarify, help');
     }
   };
 

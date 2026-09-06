@@ -39,9 +39,11 @@ jobs:
       - name: Desglose por tanda
         if: failure()
         run: |
-          node tests/run_all.js funcional || true
-          node tests/run_all.js regresion || true
-          node tests/run_all.js phase_e || true
+          node tests/run_all.js 01_governance_preflight || true
+          node tests/run_all.js 02_cryptography_attestation || true
+          node tests/run_all.js 03_intent_socratic || true
+          node tests/run_all.js 04_state_recovery || true
+          node tests/run_all.js 05_adversarial_resilience || true
 
   puertas:
     name: Puertas de calidad y salud
@@ -118,48 +120,65 @@ jobs:
         shell: bash
         run: |
           set -e
-          mkdir -p /tmp/axion-dist
-          npm pack --pack-destination /tmp/axion-dist
-          TARBALL=$(ls /tmp/axion-dist/*.tgz)
-          mkdir -p /tmp/axion-consumer && cd /tmp/axion-consumer
+          DIST_DIR="${{ runner.temp }}/axion-dist"
+          CONSUMER_DIR="${{ runner.temp }}/axion-consumer"
+          mkdir -p "$DIST_DIR" "$CONSUMER_DIR"
+          npm pack --pack-destination "$DIST_DIR"
+          TARBALL=$(ls "$DIST_DIR"/*.tgz | head -n 1)
+          cd "$CONSUMER_DIR"
           npm init -y > /dev/null
           npm install "$TARBALL"
-          npx axion init
+          npx --no-install axion init
 
       - name: El proyecto instalado goza de salud
         shell: bash
-        working-directory: /tmp/axion-consumer
-        run: npx axion check
-
-      - name: El proyecto instalado pasa la suite
-        shell: bash
-        working-directory: /tmp/axion-consumer
-        run: npx axion test
+        working-directory: ${{ runner.temp }}/axion-consumer
+        run: npx --no-install axion check
 
       - name: Los comandos llegaron a las dos superficies que los agentes leen
         shell: bash
-        working-directory: /tmp/axion-consumer
+        working-directory: ${{ runner.temp }}/axion-consumer
         run: |
           set -e
           esperados=$(ls -d .agents/skills/*/ | wc -l)
-          test "$esperados" -eq 12 || { echo "FALLO: esperaba exactamente 12 skills consolidadas, encontradas $esperados"; exit 1; }
+          test "$esperados" -eq 13 || { echo "FALLO: esperaba exactamente 13 skills consolidadas, encontradas $esperados"; exit 1; }
           sk=$(find .agents/skills -name SKILL.md | wc -l)
-          test "$sk" -eq 12 || { echo "FALLO: $sk SKILL.md para 12 directorios"; exit 1; }
+          test "$sk" -eq 13 || { echo "FALLO: $sk SKILL.md para 13 directorios"; exit 1; }
           cc=$(ls .claude/commands/*.md | wc -l)
-          test "$cc" -eq 12 || { echo "FALLO: .claude/commands tiene $cc, esperaba 12"; exit 1; }
+          test "$cc" -eq 13 || { echo "FALLO: .claude/commands tiene $cc, esperaba 13"; exit 1; }
           test ! -d .agents/workflows || { echo "FALLO: sobrevive .agents/workflows obsoleto"; exit 1; }
           echo "OK: $esperados skills en .agents/skills y $cc comandos en .claude/commands"
           grep -q validate-tool-call.mjs .claude/settings.json
 
+      - name: Preflight clasifica comandos en el consumidor
+        shell: bash
+        working-directory: ${{ runner.temp }}/axion-consumer
+        run: |
+          set -e
+          echo "Demostrando versión y ruta del binario instalado:"
+          npx --no-install axion --version
+          ls -la node_modules/.bin/axion*
+
+          # 1. Comando estructurado permitido con shell:false -> ALLOW (exit code 0)
+          npx --no-install axion preflight --json '{"executable":"git","args":["status"],"cwd":".","shell":false}'
+
+          # 2. Cadena de shell cruda no autorizada -> NEEDS_HUMAN_REVIEW (exit code 2)
+          set +e
+          npx --no-install axion preflight "git status"
+          RC=$?
+          set -e
+          test "$RC" -eq 2 || { echo "FALLO: esperaba exit code 2 para shell crudo, recibido $RC"; exit 1; }
+          echo "OK: preflight operativo en el consumidor (ALLOW exit 0 en estructurado, NEEDS_HUMAN_REVIEW exit 2 en shell crudo)"
+
       - name: Checkpoint y rollback sobre archivos reales
         shell: bash
-        working-directory: /tmp/axion-consumer
+        working-directory: ${{ runner.temp }}/axion-consumer
         run: |
           set -e
           echo "v1" > app.js
-          npx axion checkpoint create ci
+          npx --no-install axion checkpoint create ci
           echo "roto" > app.js
-          npx axion rollback latest
+          npx --no-install axion rollback latest
           test "$(cat app.js)" = "v1"
           echo "OK: rollback verificado en el producto instalado"
 

@@ -131,8 +131,6 @@ console.log('=== AX-F-014 - contrato del paquete ===\n');
   const licencia = fs.readFileSync(path.join(ROOT, 'LICENSE'), 'utf8');
   assert.match(licencia, /Apache License/i, 'el LICENSE real debe ser Apache');
   assert.match(pkg.version, /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/, 'la version debe ser semver valido');
-  assert.match(pkg.version, /-(alpha|beta|rc)/,
-    'mientras el proyecto sea experimental, la version debe llevar etiqueta de preestreno');
   ok(`licencia Apache-2.0 y version ${pkg.version} coherentes con el estado del proyecto`);
 }
 

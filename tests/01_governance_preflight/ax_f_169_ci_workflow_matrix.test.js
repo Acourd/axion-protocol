@@ -36,9 +36,9 @@ assert.ok(ciContent.includes('22.x'), 'Debe soportar Node.js 22.x');
 assert.ok(ciContent.includes('24.x'), 'Debe soportar Node.js 24.x');
 console.log('  ✓ Invariante 2: Matriz de versiones de Node.js (20, 22, 24) verificada.');
 
-// Invariante 3: 12 Skills Canónicas Consolidadas
-assert.ok(ciContent.includes('test "$esperados" -eq 12'), 'Debe validar exactamente 12 skills');
-console.log('  ✓ Invariante 3: Conteo estricto de 12 skills canónicas verificado.');
+// Invariante 3: 13 Skills Canónicas Consolidadas
+assert.ok(ciContent.includes('test "$esperados" -eq 13'), 'Debe validar exactamente 13 skills');
+console.log('  ✓ Invariante 3: Conteo estricto de 13 skills canónicas verificado.');
 
 // Invariante 4: Compuertas de Calidad en CI
 assert.ok(ciContent.includes('node tests/run_all.js'), 'Debe correr la suite completa');
