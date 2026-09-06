@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "format": "AXION_AUTHORITY_ROOT_SEAL_V1",
+  "rootKeyId": "ed25519:c711dd47f603e8ef17921fc4605a8c22e0c0650e935481cecdb96086598d8ec1",
+  "canonicalPayloadHash": "56a485e44fbef1124226271a071d136579445bcdaa548156de42966eef551c6f",
+  "sealedAt": "2026-09-06T09:21:45.997Z",
+  "algorithm": "Ed25519",
+  "signature": "NqkDapmfRzz6cUNuQMef4qfjKe7VPdWqQvAU0s6QslKtA27pByar4dQWp4Gwrel0vVun/Ve+/kf3Sp9eiCQaBg=="
+}

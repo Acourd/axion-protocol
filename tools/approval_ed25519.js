@@ -100,11 +100,17 @@ function loadRegistry(registryPath) {
   }
   const seenKeyIds = new Set();
   const allowedRoles = new Set(['HUMAN_AUTHORITY', 'INDEPENDENT_AUDITOR']);
-  const expectedAuthorityKeys = 'actorId,expiresAt,keyId,publicKeyPem,roles,status';
+  const requiredAuthorityKeys = ['actorId', 'expiresAt', 'keyId', 'publicKeyPem', 'roles', 'status'];
+  const validAuthorityKeys = new Set([...requiredAuthorityKeys, 'allowedEnvironments', 'allowedRiskLevels']);
   try {
     for (const authority of parsed.authorities) {
-      if (!authority || typeof authority !== 'object' || Array.isArray(authority)
-          || Object.keys(authority).sort().join(',') !== expectedAuthorityKeys
+      if (!authority || typeof authority !== 'object' || Array.isArray(authority)) {
+        throw new Error('Entrada de autoridad malformada o ambigua.');
+      }
+      const authKeys = Object.keys(authority);
+      const hasAllRequired = requiredAuthorityKeys.every((k) => authKeys.includes(k));
+      const hasOnlyValid = authKeys.every((k) => validAuthorityKeys.has(k));
+      if (!hasAllRequired || !hasOnlyValid
           || typeof authority.actorId !== 'string' || authority.actorId.trim() === ''
           || typeof authority.keyId !== 'string' || !/^ed25519:[a-f0-9]{64}$/.test(authority.keyId)
           || !REGISTRY_STATES.has(authority.status)
@@ -113,6 +119,8 @@ function loadRegistry(registryPath) {
           || authority.roles.some((role) => !allowedRoles.has(role))
           || new Set(authority.roles).size !== authority.roles.length
           || typeof authority.publicKeyPem !== 'string'
+          || (authority.allowedEnvironments && (!Array.isArray(authority.allowedEnvironments) || authority.allowedEnvironments.some((e) => typeof e !== 'string')))
+          || (authority.allowedRiskLevels && (!Array.isArray(authority.allowedRiskLevels) || authority.allowedRiskLevels.some((r) => typeof r !== 'string')))
           || seenKeyIds.has(authority.keyId)) {
         throw new Error('Entrada de autoridad malformada o ambigua.');
       }

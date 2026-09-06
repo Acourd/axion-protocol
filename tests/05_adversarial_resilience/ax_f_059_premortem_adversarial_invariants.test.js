@@ -248,10 +248,12 @@ try {
   delete payloadLimpioHRA.human_risk_acceptance;
   const hraPremortemId = hashCanonical(payloadLimpioHRA).slice(0, 16);
 
+  const leadPrivKey = crypto.createPrivateKey(fs.readFileSync(path.join(__dirname, '..', '..', '.axion', 'keys', 'attestation_ed25519.key'), 'utf8'));
   engine.acceptRisk({
     premortemId: hraPremortemId,
     payload: payloadLimpioHRA,
     operator: 'Lead Architect (@adrian)',
+    privateKey: leadPrivKey,
     rationale: 'Riesgo aceptado formalmente por el arquitecto líder para validación de hipótesis de negocio',
     environment: 'development',
     allowedEnvironments: ['development'],
@@ -382,6 +384,7 @@ try {
     premortemId: idA,
     payload: proposalA,
     operator: 'Lead Architect (@adrian)',
+    privateKey: leadPrivKey,
     rationale: 'Riesgo aceptado formalmente para la propuesta legítima A en desarrollo',
     environment: 'development',
     allowedEnvironments: ['development'],

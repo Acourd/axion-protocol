@@ -3,13 +3,23 @@
   "authorities": [
     {
       "actorId": "Lead Architect (@adrian)",
-      "expiresAt": "2030-01-01T00:00:00.000Z",
       "keyId": "ed25519:71ce32cf437b976b6261e3bad668c8fcd66a739d5f650748c64f15b98a14c275",
       "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEArC3uRWATcw6CUrrb6DvQjUfJ3IHkWfFWxbwysx6t/sc=\n-----END PUBLIC KEY-----\n",
       "roles": [
         "HUMAN_AUTHORITY"
       ],
-      "status": "TRUSTED"
+      "status": "TRUSTED",
+      "expiresAt": "2030-01-01T00:00:00.000Z",
+      "allowedEnvironments": [
+        "development",
+        "staging"
+      ],
+      "allowedRiskLevels": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
     }
   ]
 }

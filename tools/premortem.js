@@ -32,6 +32,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { canonicalize, hashCanonical } = require('./canonical_json.js');
 const { asEd25519PublicKey, computePublicKeyId, loadAuthorityRegistry } = require('./approval_ed25519.js');
+const { verifyRootSeal, ROOT_AUTHORITY } = require('./governance_root.js');
 const { recordar } = require('./memory.js');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -297,6 +298,42 @@ class PreMortemEngine {
         message: loaded.error ? loaded.error.message : 'Registro de autoridades malformado'
       };
     }
+
+    // Verificación criptográfica obligatoria contra la raíz de gobernanza (Hallazgo 1)
+    if (!options.skipRootSealCheck) {
+      const sealPath = regPath.endsWith('.json')
+        ? regPath.replace(/\.json$/, '.seal.json')
+        : `${regPath}.seal.json`;
+
+      if (!fs.existsSync(sealPath)) {
+        return {
+          ok: false,
+          reason: 'UNSEALED_AUTHORITY_REGISTRY',
+          message: `El registro de autoridades en "${regPath}" carece del sello criptográfico de gobernanza requerido (${path.basename(sealPath)} no encontrado).`,
+        };
+      }
+
+      let sealObj;
+      try {
+        sealObj = JSON.parse(fs.readFileSync(sealPath, 'utf8'));
+      } catch (sealErr) {
+        return {
+          ok: false,
+          reason: 'MALFORMED_ROOT_SEAL',
+          message: `El sello criptográfico "${sealPath}" está corrupto: ${sealErr.message}`,
+        };
+      }
+
+      const sealRes = verifyRootSeal(loaded.registry, sealObj, options.customRootPublicKey);
+      if (!sealRes.valid) {
+        return {
+          ok: false,
+          reason: 'UNTRUSTED_REGISTRY_MODIFICATION',
+          message: `El registro de autoridades en "${regPath}" no superó la verificación de la raíz de gobernanza: ${sealRes.message} (${sealRes.reason})`,
+        };
+      }
+    }
+
     return { ok: true, authorities: loaded.registry.authorities, registryPath: regPath };
   }
 
@@ -307,6 +344,11 @@ class PreMortemEngine {
    * registro confiable de autoridades (policies/authorities.json) y vinculada al proposalDigest exacto (SHA-256 de 64 chars).
    */
   acceptRisk(options = {}) {
+    // 1. Barrera contra ejecución autónoma por agentes (Hallazgo 2)
+    if (process.env.AGENT_CONTEXT === 'true' || process.env.ANTIGRAVITY === 'true' || process.env.OPENCODE === 'true' || options.isAgentContext === true) {
+      throw new Error('AGENT_INVOCATION_FORBIDDEN: accept-risk es una acción de gobernanza humana fuera de banda. Los agentes autónomos tienen prohibido invocar este comando.');
+    }
+
     const premortemIdRaw = texto(options.premortemId || options.id);
     const cleanId = premortemIdRaw.toLowerCase().trim();
     if (!cleanId || !/^[a-f0-9]{16,64}$/.test(cleanId)) {
@@ -334,6 +376,12 @@ class PreMortemEngine {
         throw new Error(`allowedEnvironments contiene un entorno inválido: "${env}".`);
       }
     }
+
+    // Prohibición estricta de aceptar riesgos en producción por el flujo local (Hallazgo 2)
+    if (environment === 'production' || allowedEnvironments.includes('production')) {
+      throw new Error('PRODUCTION_RISK_ACCEPTANCE_FORBIDDEN: La aceptación de riesgo para el entorno "production" no puede ser creada mediante este comando local; exige el protocolo break-glass de gobernanza multi-firma.');
+    }
+
     const ttlHours = Number.isFinite(options.ttlHours) && options.ttlHours > 0 ? options.ttlHours : 24;
 
     // Vinculación estricta con la propuesta exacta: SHA-256 de 64 hex chars (Hallazgo 2)
@@ -362,7 +410,16 @@ class PreMortemEngine {
       throw new Error(`INVALID_PROPOSAL_DIGEST_FORMAT: proposalDigest debe ser un SHA-256 completo de 64 caracteres hexadecimales. Recibido: ${JSON.stringify(proposalDigest)}`);
     }
 
-    // Firma asimétrica Ed25519 con clave preexistente (Hallazgo 1 y 3)
+    // Validación de custodia de clave privada fuera del workspace (Hallazgo 2)
+    if (options.privateKeyPath || (typeof options.key === 'string' && fs.existsSync(options.key))) {
+      const keyFilePath = path.resolve(options.privateKeyPath || options.key);
+      const wsRoot = path.resolve(this.rootDir);
+      const globalRoot = path.resolve(ROOT);
+      if ((keyFilePath.startsWith(wsRoot + path.sep) || keyFilePath.startsWith(globalRoot + path.sep)) && !options.allowTestKeyInWorkspace) {
+        throw new Error(`WORKSPACE_PRIVATE_KEY_FORBIDDEN: La clave privada de autoridad humana no puede residir dentro del repositorio/workspace (${keyFilePath}). Las claves deben custodiarse fuera del workspace (ej. en ~/.axion/keys/human/).`);
+      }
+    }
+
     let privateKeyObj;
     if (options.privateKey) {
       privateKeyObj = options.privateKey instanceof crypto.KeyObject && options.privateKey.type === 'private'
@@ -381,21 +438,7 @@ class PreMortemEngine {
     } else if (process.env.AXION_OPERATOR_PRIVATE_KEY) {
       privateKeyObj = crypto.createPrivateKey(process.env.AXION_OPERATOR_PRIVATE_KEY);
     } else {
-      const opKeyPath = path.join(this.rootDir, '.axion', 'keys', 'operator_ed25519.key');
-      const attKeyPath = path.join(this.rootDir, '.axion', 'keys', 'attestation_ed25519.key');
-      const rootOpKeyPath = path.join(ROOT, '.axion', 'keys', 'operator_ed25519.key');
-      const rootAttKeyPath = path.join(ROOT, '.axion', 'keys', 'attestation_ed25519.key');
-      if (fs.existsSync(opKeyPath)) {
-        privateKeyObj = crypto.createPrivateKey(fs.readFileSync(opKeyPath, 'utf8'));
-      } else if (fs.existsSync(attKeyPath)) {
-        privateKeyObj = crypto.createPrivateKey(fs.readFileSync(attKeyPath, 'utf8'));
-      } else if (fs.existsSync(rootOpKeyPath)) {
-        privateKeyObj = crypto.createPrivateKey(fs.readFileSync(rootOpKeyPath, 'utf8'));
-      } else if (fs.existsSync(rootAttKeyPath)) {
-        privateKeyObj = crypto.createPrivateKey(fs.readFileSync(rootAttKeyPath, 'utf8'));
-      } else {
-        throw new Error('MISSING_ED25519_PRIVATE_KEY: acceptRisk exige una clave privada Ed25519 preexistente (--key, privateKey o privateKeyPath). La generación e inscripción de autoridades es una operación administrativa separada fuera de banda.');
-      }
+      throw new Error('MISSING_ED25519_PRIVATE_KEY: acceptRisk exige una clave privada Ed25519 preexistente (--key, privateKey o privateKeyPath) custodiada fuera de banda.');
     }
 
     if (privateKeyObj.asymmetricKeyType !== 'ed25519') {
@@ -406,7 +449,7 @@ class PreMortemEngine {
     const publicKeyPem = pubKeyObj.export({ type: 'spki', format: 'pem' });
     const keyId = computePublicKeyId(pubKeyObj);
 
-    // Validación de autoridad contra registro confiable (Hallazgo 1)
+    // Validación de autoridad contra registro confiable (Hallazgo 1 y 3)
     const authRes = this.loadAuthorities(options);
     if (!authRes.ok) {
       throw new Error(`AUTHORITY_REGISTRY_ERROR: ${authRes.message}`);
@@ -414,6 +457,12 @@ class PreMortemEngine {
     const authority = authRes.authorities.find((a) => a && a.keyId === keyId);
     if (!authority) {
       throw new Error(`UNTRUSTED_KEY_ID: La clave "${keyId}" no está registrada en ${authRes.registryPath || 'authorities.json'}.`);
+    }
+    if (authority.status === 'REVOKED') {
+      throw new Error(`REVOKED_AUTHORITY: La autoridad "${authority.actorId}" está revocada.`);
+    }
+    if (authority.status === 'COMPROMISED') {
+      throw new Error(`COMPROMISED_KEY: La clave de la autoridad "${authority.actorId}" está comprometida.`);
     }
     if (authority.status !== 'TRUSTED') {
       throw new Error(`REVOKED_OR_UNTRUSTED_AUTHORITY: La autoridad "${authority.actorId}" tiene estado "${authority.status}".`);
@@ -423,6 +472,25 @@ class PreMortemEngine {
     }
     if (authority.actorId !== operator) {
       throw new Error(`OPERATOR_IDENTITY_MISMATCH: El operador declarado "${operator}" no coincide con la autoridad "${authority.actorId}".`);
+    }
+
+    const nowAccept = options.now ? new Date(options.now) : new Date();
+    if (new Date(authority.expiresAt).getTime() <= nowAccept.getTime()) {
+      throw new Error(`AUTHORITY_EXPIRED: La credencial de la autoridad "${authority.actorId}" expiró en ${authority.expiresAt}.`);
+    }
+
+    // Validación de ámbitos de entorno y nivel de riesgo (Hallazgo 3)
+    if (authority.allowedEnvironments && Array.isArray(authority.allowedEnvironments)) {
+      const invalidEnvs = allowedEnvironments.filter((env) => !authority.allowedEnvironments.includes(env));
+      if (invalidEnvs.length > 0) {
+        throw new Error(`UNAUTHORIZED_ENVIRONMENT: La autoridad "${authority.actorId}" solo está autorizada para [ ${authority.allowedEnvironments.join(', ')} ], pero se solicitaron [ ${invalidEnvs.join(', ')} ].`);
+      }
+    }
+    if (authority.allowedRiskLevels && Array.isArray(authority.allowedRiskLevels) && options.riskLevel) {
+      const upperRisk = String(options.riskLevel).toUpperCase().trim();
+      if (!authority.allowedRiskLevels.includes(upperRisk)) {
+        throw new Error(`UNAUTHORIZED_RISK_LEVEL: La autoridad "${authority.actorId}" solo está autorizada para niveles de riesgo [ ${authority.allowedRiskLevels.join(', ')} ], pero se solicitó "${upperRisk}".`);
+      }
     }
 
     const unsignedRecord = {
@@ -461,6 +529,11 @@ class PreMortemEngine {
       throw new Error(`PATH_TRAVERSAL_DETECTED: La ruta resultante escapa de ${resolvedStateDir}`);
     }
 
+    // Inmutabilidad estricta: prohibición de sobrescritura silenciosa (Hallazgo 4)
+    if (fs.existsSync(targetFile) && !options.allowOverwriteForTest) {
+      throw new Error(`ACCEPTANCE_ALREADY_EXISTS: Ya existe una aceptación de riesgo para la propuesta "${cleanId}". Los registros son inmutables y no pueden sobrescribirse silenciosamente. Para invalidar una autorización previa se requiere revocación formal.`);
+    }
+
     // Escritura atómica exclusiva
     const tmpFile = path.join(resolvedStateDir, `.tmp-risk-${cleanId}-${process.pid}-${Date.now()}-${crypto.randomBytes(6).toString('hex')}.json`);
     const fd = fs.openSync(tmpFile, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL, 0o600);
@@ -482,7 +555,112 @@ class PreMortemEngine {
       throw new Error(`SYMLINK_DETECTED: El archivo ${targetFile} es un enlace simbólico no confiable.`);
     }
 
+    // Registro append-only en el libro de eventos de aceptación de riesgo (Hallazgo 4)
+    const ledgerFile = path.resolve(resolvedStateDir, 'risk-acceptance-ledger.jsonl');
+    const ledgerEntry = JSON.stringify({
+      event: 'RISK_ACCEPTED',
+      timestamp: new Date().toISOString(),
+      acceptanceId: unsignedRecord.acceptanceId,
+      premortemId: cleanId,
+      proposalDigest,
+      operator,
+      keyId,
+      environment,
+      allowedEnvironments,
+      expiresAt: unsignedRecord.expiresAt,
+      signature,
+    }) + '\n';
+    try {
+      fs.appendFileSync(ledgerFile, ledgerEntry, 'utf8');
+    } catch (ledgerErr) {
+      // Escritura defensiva en ledger
+    }
+
+    // Copia histórica archivada con timestamp para auditoría (Hallazgo 4)
+    const historyDir = path.resolve(resolvedStateDir, 'risk-acceptances');
+    if (!fs.existsSync(historyDir)) {
+      try {
+        fs.mkdirSync(historyDir, { recursive: true });
+      } catch (mkdirErr) {
+        // Ignorar si el directorio histórico ya fue creado concurrentemente
+      }
+    }
+    const historyFile = path.resolve(historyDir, `acceptance-${cleanId}-${Date.now()}.json`);
+    try {
+      fs.writeFileSync(historyFile, JSON.stringify(envelope, null, 2), 'utf8');
+    } catch (histErr) {
+      // Preservar targetFile primario si la copia histórica falla
+    }
+
     return { pass: true, record: envelope, targetFile, keyId };
+  }
+
+  /**
+   * Revoca formalmente una aceptación de riesgo previa (Hallazgo 4).
+   * Exige la firma de una autoridad humana registrada con rol HUMAN_AUTHORITY.
+   */
+  revokeRisk(options = {}) {
+    const premortemIdRaw = texto(options.premortemId || options.id);
+    const cleanId = premortemIdRaw.toLowerCase().trim();
+    if (!cleanId || !/^[a-f0-9]{16,64}$/.test(cleanId)) {
+      throw new Error('INVALID_PREMORTEM_ID_FORMAT: premortemId inválido.');
+    }
+    const operator = texto(options.operator);
+    const rationale = texto(options.rationale || 'Revocación formal de aceptación de riesgo');
+
+    let privateKeyObj;
+    if (options.privateKey) {
+      privateKeyObj = options.privateKey instanceof crypto.KeyObject && options.privateKey.type === 'private'
+        ? options.privateKey
+        : crypto.createPrivateKey(options.privateKey);
+    } else if (options.key) {
+      const rawKey = typeof options.key === 'string' && fs.existsSync(options.key)
+        ? fs.readFileSync(options.key, 'utf8')
+        : options.key;
+      privateKeyObj = crypto.createPrivateKey(rawKey);
+    } else {
+      throw new Error('MISSING_ED25519_PRIVATE_KEY: revokeRisk exige una clave privada Ed25519 preexistente.');
+    }
+
+    const pubKeyObj = crypto.createPublicKey(privateKeyObj);
+    const keyId = computePublicKeyId(pubKeyObj);
+
+    const authRes = this.loadAuthorities(options);
+    if (!authRes.ok) throw new Error(`AUTHORITY_REGISTRY_ERROR: ${authRes.message}`);
+    const authority = authRes.authorities.find((a) => a && a.keyId === keyId);
+    if (!authority || authority.status !== 'TRUSTED' || !Array.isArray(authority.roles) || !authority.roles.includes('HUMAN_AUTHORITY')) {
+      throw new Error('UNAUTHORIZED_REVOCATION_AUTHORITY: La revocación debe ser firmada por una autoridad confiable con rol HUMAN_AUTHORITY.');
+    }
+
+    const revocationRecord = {
+      contractVersion: '2.0.0',
+      event: 'RISK_REVOCATION',
+      revocationId: crypto.randomBytes(8).toString('hex'),
+      premortemId: cleanId,
+      operator,
+      keyId,
+      rationale,
+      revokedAt: new Date().toISOString(),
+      nonce: crypto.randomBytes(16).toString('hex'),
+    };
+
+    const canonicalPayload = canonicalize(revocationRecord);
+    const signature = crypto.sign(null, Buffer.from(canonicalPayload, 'utf8'), privateKeyObj).toString('base64');
+    const envelope = { ...revocationRecord, algorithm: 'Ed25519', signature };
+
+    this.ensureStateDir();
+    const resolvedStateDir = path.resolve(this.stateDir);
+    const revFile = path.resolve(resolvedStateDir, `risk-revocation-${cleanId}.json`);
+    fs.writeFileSync(revFile, JSON.stringify(envelope, null, 2), 'utf8');
+
+    const ledgerFile = path.resolve(resolvedStateDir, 'risk-acceptance-ledger.jsonl');
+    try {
+      fs.appendFileSync(ledgerFile, JSON.stringify(envelope) + '\n', 'utf8');
+    } catch (ledgerErr) {
+      // Ignorar fallo de escritura secundaria en ledger si el sistema de archivos está restringido
+    }
+
+    return { success: true, revocationFile: revFile, record: envelope };
   }
 
   /**
@@ -553,6 +731,27 @@ class PreMortemEngine {
       return { valid: false, reason: 'INVALID_RISK_ACCEPTANCE_FORMAT' };
     }
 
+    // 0. Comprobación de revocación formal (Hallazgo 4)
+    const targetId = rec.premortemId || (premortemId ? String(premortemId).trim().toLowerCase() : '');
+    if (targetFile && targetId) {
+      const resolvedStateDir = path.dirname(targetFile);
+      const revFile = path.resolve(resolvedStateDir, `risk-revocation-${targetId}.json`);
+      if (fs.existsSync(revFile)) {
+        try {
+          const revRaw = fs.readFileSync(revFile, 'utf8');
+          const revEnv = JSON.parse(revRaw);
+          return {
+            valid: false,
+            reason: 'RISK_ACCEPTANCE_REVOKED',
+            message: `La aceptación de riesgo para "${targetId}" fue revocada formalmente por "${revEnv.operator}": ${revEnv.rationale}`,
+            record: rec,
+          };
+        } catch (revReadErr) {
+          // Ignorar si el archivo de revocación está temporalmente inaccesible o malformado
+        }
+      }
+    }
+
     // 1. Verificación de algoritmo y firma Ed25519
     if (rec.algorithm !== 'Ed25519' || typeof rec.signature !== 'string' || !rec.signature) {
       return {
@@ -620,11 +819,29 @@ class PreMortemEngine {
       };
     }
 
+    if (authority.status === 'REVOKED') {
+      return {
+        valid: false,
+        reason: 'REVOKED_AUTHORITY',
+        message: `La autoridad "${authority.actorId}" está revocada.`,
+        record: rec,
+      };
+    }
+
+    if (authority.status === 'COMPROMISED') {
+      return {
+        valid: false,
+        reason: 'COMPROMISED_KEY',
+        message: `La clave de la autoridad "${authority.actorId}" está marcada como comprometida.`,
+        record: rec,
+      };
+    }
+
     if (authority.status !== 'TRUSTED') {
       return {
         valid: false,
         reason: 'REVOKED_OR_UNTRUSTED_AUTHORITY',
-        message: `La autoridad "${authority.actorId}" tiene estado "${authority.status}".`,
+        message: `La autoridad "${authority.actorId}" tiene estado no confiable "${authority.status}".`,
         record: rec,
       };
     }
@@ -655,6 +872,33 @@ class PreMortemEngine {
         message: `La credencial de la autoridad "${authority.actorId}" expiró en ${authority.expiresAt}.`,
         record: rec,
       };
+    }
+
+    // Validación de ámbito de entornos autorizados para la autoridad (Hallazgo 3)
+    if (authority.allowedEnvironments && Array.isArray(authority.allowedEnvironments)) {
+      const allowedRec = Array.isArray(rec.allowedEnvironments) ? rec.allowedEnvironments : [rec.environment];
+      const invalidEnvs = allowedRec.filter((env) => !authority.allowedEnvironments.includes(env));
+      if (invalidEnvs.length > 0) {
+        return {
+          valid: false,
+          reason: 'UNAUTHORIZED_ENVIRONMENT',
+          message: `La autoridad "${authority.actorId}" solo está autorizada para [ ${authority.allowedEnvironments.join(', ')} ], pero la aceptación solicita [ ${invalidEnvs.join(', ')} ].`,
+          record: rec,
+        };
+      }
+    }
+
+    // Validación de ámbito de nivel de riesgo para la autoridad (Hallazgo 3)
+    const effectiveRiskLevel = (options.riskLevel || (options.payload && options.payload.risk) || (options.blastRadius >= 70 ? 'CRITICAL' : null) || 'MEDIUM').toUpperCase().trim();
+    if (authority.allowedRiskLevels && Array.isArray(authority.allowedRiskLevels)) {
+      if (!authority.allowedRiskLevels.includes(effectiveRiskLevel)) {
+        return {
+          valid: false,
+          reason: 'UNAUTHORIZED_RISK_LEVEL',
+          message: `El nivel de riesgo "${effectiveRiskLevel}" supera el alcance autorizado para la autoridad "${authority.actorId}" (permitidos: [ ${authority.allowedRiskLevels.join(', ')} ]).`,
+          record: rec,
+        };
+      }
     }
 
     // Raíz de confianza: la clave pública se extrae del registro de autoridades, NUNCA del envelope
@@ -846,6 +1090,56 @@ class PreMortemEngine {
           exitCode: 2,
           errors: [
             `El riesgo fue aceptado exclusivamente para [${authAcceptance.allowedEnvironments.join(', ')}], pero el entorno actual es [${authAcceptance.currentEnvironment}]. Bloqueado para despliegue.`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'UNTRUSTED_REGISTRY_MODIFICATION' || authAcceptance.reason === 'UNSEALED_AUTHORITY_REGISTRY' || authAcceptance.reason === 'MALFORMED_ROOT_SEAL') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: [
+            `El registro de autoridades fue alterado o carece de un sello criptográfico válido de la raíz de gobernanza (${authAcceptance.message || authAcceptance.reason}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'REVOKED_AUTHORITY' || authAcceptance.reason === 'COMPROMISED_KEY') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: [
+            `La credencial de la autoridad humana fue revocada o comprometida (${authAcceptance.message || authAcceptance.reason}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'UNAUTHORIZED_ENVIRONMENT') {
+        return {
+          status: 'DENIED',
+          reason: 'UNAUTHORIZED_ENVIRONMENT',
+          exitCode: 2,
+          errors: [
+            `El entorno no está autorizado para la autoridad firmante (${authAcceptance.message}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'UNAUTHORIZED_RISK_LEVEL') {
+        return {
+          status: 'DENIED',
+          reason: 'UNAUTHORIZED_RISK_LEVEL',
+          exitCode: 1,
+          errors: [
+            `El nivel de riesgo supera el alcance concedido a la autoridad (${authAcceptance.message}).`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'RISK_ACCEPTANCE_REVOKED') {
+        return {
+          status: 'DENIED',
+          reason: 'RISK_ACCEPTANCE_REVOKED',
+          exitCode: 1,
+          errors: [
+            `La aceptación humana de riesgo fue revocada formalmente (${authAcceptance.message}).`,
           ],
         };
       }

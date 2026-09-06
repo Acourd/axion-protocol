@@ -508,6 +508,7 @@ function runInstallation(targetDir) {
     'deep_reasoning.js',
     'fuzzer.js',
     'premortem.js',
+    'governance_root.js',
     'asymptotic_critic.js',
     'scout_engine.js',
     'license_auditor.js',
@@ -524,6 +525,8 @@ function runInstallation(targetDir) {
   // 4. Inyectar Políticas y Esquemas
   console.log('\n📦 4. Inyectar Políticas y Esquemas...');
   anotar(copiarProtegido(path.join(sourceRoot, 'policies', 'risk.yaml'), path.join(rootDir, 'policies', 'risk.yaml'), ausentes));
+  anotar(copiarProtegido(path.join(sourceRoot, 'policies', 'authorities.json'), path.join(rootDir, 'policies', 'authorities.json'), ausentes));
+  anotar(copiarProtegido(path.join(sourceRoot, 'policies', 'authorities.seal.json'), path.join(rootDir, 'policies', 'authorities.seal.json'), ausentes));
   anotar(copiarProtegido(path.join(sourceRoot, 'adapters', 'prompt_bridge.json'), path.join(rootDir, 'adapters', 'prompt_bridge.json'), ausentes));
 
   const schemas = [
