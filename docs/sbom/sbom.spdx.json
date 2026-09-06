@@ -3,9 +3,9 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "axion-protocol",
-  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/1788684726579",
+  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/1788685189601",
   "creationInfo": {
-    "created": "2026-09-06T08:52:06.579Z",
+    "created": "2026-09-06T08:59:49.601Z",
     "creators": [
       "Tool: SovereignSBOMGenerator-2.0.0",
       "Organization: Axion Protocol"
@@ -141,7 +141,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "698586891133a46c73ca28c1e11172fe2d94318842e427d2b12d4c32375ebb40"
+          "checksumValue": "cdd12cc4b511ee35365a5b2301dd381f52e1679048bf2cde2dadee8a8983774c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -323,7 +323,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "698586891133a46c73ca28c1e11172fe2d94318842e427d2b12d4c32375ebb40"
+          "checksumValue": "cdd12cc4b511ee35365a5b2301dd381f52e1679048bf2cde2dadee8a8983774c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -533,7 +533,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "698586891133a46c73ca28c1e11172fe2d94318842e427d2b12d4c32375ebb40"
+          "checksumValue": "cdd12cc4b511ee35365a5b2301dd381f52e1679048bf2cde2dadee8a8983774c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -883,7 +883,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "698586891133a46c73ca28c1e11172fe2d94318842e427d2b12d4c32375ebb40"
+          "checksumValue": "cdd12cc4b511ee35365a5b2301dd381f52e1679048bf2cde2dadee8a8983774c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -897,7 +897,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "698586891133a46c73ca28c1e11172fe2d94318842e427d2b12d4c32375ebb40"
+          "checksumValue": "cdd12cc4b511ee35365a5b2301dd381f52e1679048bf2cde2dadee8a8983774c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -14449,7 +14449,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "678fe0d107f5284bf9ecfb95e074b366beed425e4c980a4a8254a8549a6b9583"
+          "checksumValue": "8afee7673844d1ebefcebe87347d7c2f0b7bdba656e3a6f24cb8d23ff5978d82"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -16003,7 +16003,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "4ba6790665bcc8959d5b37f81508914e3200d164d02cd09f1a3de3695fc1a230"
+          "checksumValue": "550aaaabfdeb72b6544ba8a3d79415bbd86ade952b5ca32e23eb720edac9f42e"
         }
       ],
       "licenseConcluded": "Apache-2.0",

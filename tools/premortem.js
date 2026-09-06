@@ -29,6 +29,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { hashCanonical } = require('./canonical_json.js');
 const { recordar } = require('./memory.js');
 
@@ -109,6 +110,12 @@ class PreMortemEngine {
    * no un booleano: quien recibe un rechazo necesita saber qué frase arreglar.
    * Admite NO_APLICA / N/A si incluye al menos 15 caracteres de justificación técnica.
    */
+  /**
+   * Valida la sustancia de una lista de afirmaciones. Devuelve los reproches concretos,
+   * no un booleano: quien recibe un rechazo necesita saber qué frase arreglar.
+   * Admite NO_APLICA / N/A si incluye al menos 25 caracteres de justificación técnica causal
+   * y delimita explícitamente el límite arquitectónico (sin tautologías).
+   */
   static validarLista(lista, etiqueta, minimo) {
     const errores = [];
     if (!Array.isArray(lista) || lista.length < minimo) {
@@ -121,10 +128,27 @@ class PreMortemEngine {
       const matchNoAplica = t.match(/^(?:NO[-_ ]APLICA|N\/A)\b[:\s-]*(.*)/i);
       if (matchNoAplica) {
         const justificacion = matchNoAplica[1] ? matchNoAplica[1].trim() : '';
-        if (justificacion.length < 15) {
-          errores.push(`${etiqueta}[${i}] declara NO_APLICA pero carece de justificación técnica suficiente (mínimo 15 caracteres de razonamiento).`);
+        if (justificacion.length < 25) {
+          errores.push(`${etiqueta}[${i}] declara NO_APLICA pero carece de justificación técnica suficiente (mínimo 25 caracteres de razonamiento causal).`);
           return;
         }
+
+        // Detección de justificaciones tautológicas o vacías
+        const palabras = justificacion.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 3);
+        const FILLER = new Set(['no', 'aplica', 'porque', 'este', 'esta', 'para', 'nada', 'ningun', 'ninguna', 'aqui', 'todo', 'que', 'los', 'las', 'con', 'del', 'por', 'tiene', 'tienen', 'como', 'sobre', 'modulo']);
+        const sustantivas = new Set(palabras.filter((w) => !FILLER.has(w)));
+        if (sustantivas.size < 3) {
+          errores.push(`${etiqueta}[${i}] contiene una justificación de NO_APLICA tautológica o vacía ("${justificacion}"). Se exige sustentar la exclusión técnica con vocabulario causal.`);
+          return;
+        }
+
+        // Exigir declaración explícita del límite arquitectónico que excluye la superficie
+        const BOUNDARY_PATTERNS = /(?:interno|interfaz|usuario|cli|ui|offline|batch|algoritmo|backend|solo lectura|aislado|red|privado|numerico|persistencia|estricto|sin|inmutable|local|fondo)/i;
+        if (!BOUNDARY_PATTERNS.test(justificacion)) {
+          errores.push(`${etiqueta}[${i}] declara NO_APLICA sin explicitar el límite arquitectónico que excluye la superficie (e.g. 'módulo interno sin UI ni CLI').`);
+          return;
+        }
+
         limpias.push(t);
         return;
       }
@@ -132,9 +156,6 @@ class PreMortemEngine {
         errores.push(`${etiqueta}[${i}] tiene ${t.length} caracteres; se exigen ${MINIMO_SUSTANCIA} para que describa un riesgo y no una casilla marcada.`);
         return;
       }
-      // La longitud sola se rellena con paja: cuarenta y cuatro letras iguales pasaban el
-      // suelo. Se exigen palabras distintas porque un riesgo se explica con lenguaje, y
-      // contar caracteres mide el esfuerzo de teclear, no el de pensar.
       const distintas = new Set(t.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 3));
       if (distintas.size < MINIMO_PALABRAS) {
         errores.push(`${etiqueta}[${i}] tiene ${distintas.size} palabra(s) distinta(s); se exigen ${MINIMO_PALABRAS}. Un riesgo se explica, no se rellena.`);
@@ -145,10 +166,6 @@ class PreMortemEngine {
     return { errores, limpias };
   }
 
-  /**
-   * Calcula el Blast Radius Score de una propuesta de forma determinista y acotada en [0, 100].
-   * Fórmula: min(100, Base por archivos + Ponderación por criticidad + Complejidad de interfaz + Factor de reversibilidad)
-   */
   static calculateBlastRadius(options = {}) {
     const files = Array.isArray(options.files) ? options.files : [];
     const count = files.length;
@@ -228,7 +245,110 @@ class PreMortemEngine {
     };
   }
 
-  evaluateAssessment(payload) {
+
+  /**
+   * Registra una aceptación deliberada y formal de riesgo fuera de banda.
+   * El operador humano autentica la excepción para un entorno específico con vigencia acotada.
+   */
+  acceptRisk(options = {}) {
+    const premortemId = texto(options.premortemId || options.id);
+    if (!premortemId || premortemId.length < 8) {
+      throw new Error('premortemId es obligatorio (mínimo 8 caracteres).');
+    }
+    const operator = texto(options.operator);
+    if (operator.length < 3) {
+      throw new Error('operator es obligatorio y debe identificar al responsable (e.g. @adrian).');
+    }
+    const rationale = texto(options.rationale);
+    if (rationale.length < 25) {
+      throw new Error('rationale exige al menos 25 caracteres de justificación técnica vinculante.');
+    }
+    const validEnvs = ['development', 'staging', 'production'];
+    const environment = (options.environment || options.env || 'development').toLowerCase().trim();
+    if (!validEnvs.includes(environment)) {
+      throw new Error(`environment inválido: "${environment}". Válidos: ${validEnvs.join(', ')}.`);
+    }
+    const allowedEnvironments = Array.isArray(options.allowedEnvironments)
+      ? options.allowedEnvironments
+      : [environment];
+    const ttlHours = Number.isFinite(options.ttlHours) && options.ttlHours > 0 ? options.ttlHours : 24;
+
+    const record = {
+      contractVersion: '1.0.0',
+      acceptanceId: crypto.randomBytes(8).toString('hex'),
+      premortemId,
+      operator,
+      rationale,
+      environment,
+      allowedEnvironments,
+      issuedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + ttlHours * 3600 * 1000).toISOString(),
+      nonce: crypto.randomBytes(16).toString('hex'),
+    };
+    record.digest = hashCanonical(record);
+
+    this.ensureStateDir();
+    const targetFile = path.join(this.stateDir, `risk-acceptance-${premortemId}.json`);
+    fs.writeFileSync(targetFile, JSON.stringify(record, null, 2), 'utf8');
+    return { pass: true, record, targetFile };
+  }
+
+  /**
+   * Carga y valida la autenticidad e integridad de una aceptación de riesgo fuera de banda.
+   */
+  loadRiskAcceptance(premortemId, options = {}) {
+    if (options.authenticatedRiskAcceptance && typeof options.authenticatedRiskAcceptance === 'object') {
+      const rec = options.authenticatedRiskAcceptance;
+      const copy = { ...rec };
+      delete copy.digest;
+      const expectedDigest = hashCanonical(copy);
+      if (rec.digest && rec.digest !== expectedDigest) {
+        return { valid: false, reason: 'TAMPERED_RISK_ACCEPTANCE', record: rec };
+      }
+      return this._validateRiskAcceptanceRecord(rec, options);
+    }
+
+    if (!premortemId) return null;
+    const cleanId = String(premortemId).replace(/[^a-f0-9]/gi, '');
+    const targetFile = path.join(this.stateDir, `risk-acceptance-${cleanId}.json`);
+    if (!fs.existsSync(targetFile)) return null;
+
+    let rec;
+    try {
+      rec = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
+    } catch (_) {
+      return { valid: false, reason: 'MALFORMED_RISK_ACCEPTANCE' };
+    }
+
+    const copy = { ...rec };
+    delete copy.digest;
+    const expectedDigest = hashCanonical(copy);
+    if (rec.digest !== expectedDigest) {
+      return { valid: false, reason: 'TAMPERED_RISK_ACCEPTANCE', record: rec };
+    }
+
+    return this._validateRiskAcceptanceRecord(rec, options);
+  }
+
+  _validateRiskAcceptanceRecord(rec, options = {}) {
+    const now = options.now ? new Date(options.now) : new Date();
+    if (now > new Date(rec.expiresAt)) {
+      return { valid: false, reason: 'RISK_ACCEPTANCE_EXPIRED', record: rec };
+    }
+    const currentEnv = (options.environment || process.env.AXION_ENV || process.env.NODE_ENV || 'development').toLowerCase().trim();
+    const allowed = Array.isArray(rec.allowedEnvironments) ? rec.allowedEnvironments : [rec.environment];
+    if (!allowed.includes(currentEnv)) {
+      return {
+        valid: false,
+        reason: 'ENVIRONMENT_MISMATCH',
+        currentEnvironment: currentEnv,
+        allowedEnvironments: allowed,
+        record: rec,
+      };
+    }
+    return { valid: true, currentEnvironment: currentEnv, record: rec };
+  }
+  evaluateAssessment(payload, options = {}) {
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
       return { status: 'DENIED', reason: 'INVALID_PAYLOAD', exitCode: 1, errors: ['El payload debe ser un objeto JSON.'] };
     }
@@ -242,15 +362,38 @@ class PreMortemEngine {
     // --- Nivel 1: las 4 anclas ---
     const anchors = payload.anchors && typeof payload.anchors === 'object' ? payload.anchors : null;
     const riesgosPorAncla = {};
+    let totalNoAplica = 0;
+
     if (anchors) {
       for (const clave of CLAVES_ANCLA) {
         const { errores, limpias } = PreMortemEngine.validarLista(anchors[clave], `anchors.${clave}`, 1);
         errors.push(...errores);
         riesgosPorAncla[clave] = limpias;
+        if (limpias.some((r) => /^(?:NO[-_ ]APLICA|N\/A)\b/i.test(r))) {
+          totalNoAplica += 1;
+        }
       }
     } else {
       const { errores } = PreMortemEngine.validarLista(payload.failure_hypotheses, 'failure_hypotheses', 3);
       errors.push(...errores);
+    }
+
+    // Prohibición estricta de NO_APLICA en anclas críticas cuando el cambio toca gobernanza, seguridad o datos
+    const securityHasNoAplica = (riesgosPorAncla.security || []).some((r) => /^(?:NO[-_ ]APLICA|N\/A)\b/i.test(r));
+    if (securityHasNoAplica) {
+      const isCritical = Boolean(
+        options.isCritical
+        || (Array.isArray(payload.files) && payload.files.some((f) => /^\.github\/|^policies\/|^bin\/|^auth\/|^schemas\/|^tools\/(?:killswitch|attestation|preflight|repo_attestation_generator)\.js/i.test(String(f).replace(/\\/g, '/'))))
+        || /(?:auth|autentic|seguridad|security|crypto|cripto|token|clave|credencial|migrac|database|base de datos|producc|root|governan|gobernanz)/i.test(texto(payload.feature_name))
+      );
+      if (isCritical) {
+        errors.push('El ancla security no puede declararse NO_APLICA en una propuesta que impacta infraestructura, gobernanza, seguridad o datos persistentes.');
+      }
+    }
+
+    // Prohibición de NO_APLICA excesivo (máximo 2 anclas)
+    if (totalNoAplica >= 3) {
+      errors.push(`Se declara NO_APLICA en ${totalNoAplica} anclas. Toda propuesta debe contener análisis sustantivo de al menos 2 dimensiones.`);
     }
 
     // El mismo riesgo pegado en las cuatro anclas simula cobertura sin darla: cuatro
@@ -292,8 +435,6 @@ class PreMortemEngine {
 
     const nivelAlcanzado = tieneNivel3 ? 3 : (peores.limpias.length >= 2 ? 2 : 1);
 
-    // Declarar un nivel que no se ha alcanzado es la forma más barata de aparentar
-    // profundidad. Se permite declarar menos —modestia no hace daño— y nunca más.
     const nivelDeclarado = Number.isInteger(payload.depth_level) ? payload.depth_level : null;
     if (nivelDeclarado !== null && nivelDeclarado > nivelAlcanzado) {
       errors.push(
@@ -308,17 +449,6 @@ class PreMortemEngine {
       return { status: 'DENIED', reason: 'PREMORTEM_INCOMPLETE', exitCode: 1, errors };
     }
 
-    // --- Calco: la misma autopsia reciclada para otra cosa ---
-    //
-    // Es el escenario catastrófico que la propia autopsia de este cambio identificó: el
-    // equipo se fabrica una plantilla, la pega en cada misión, la puerta aprueba el cien
-    // por cien y no detecta nada, con luz verde certificando que hubo análisis.
-    //
-    // La señal es la reutilización LITERAL, no el parecido. Dos migraciones que se
-    // parecen de verdad se describen con frases distintas porque los riesgos concretos
-    // difieren; un calco reutiliza las mismas cadenas y solo cambia el título. Medir
-    // semejanza semántica frenaría trabajo legítimo, y una puerta que frena trabajo
-    // válido se desactiva antes de que alguien la corrija.
     const calco = this.detectarCalco(payload);
     if (calco) {
       return {
@@ -334,6 +464,57 @@ class PreMortemEngine {
       };
     }
 
+    const digest = hashCanonical(payload);
+    const premortemId = digest.slice(0, 16);
+
+    // --- Aceptación de riesgo autenticada fuera de banda ---
+    const authAcceptance = this.loadRiskAcceptance(premortemId, options);
+
+    // Si existe una aceptación registrada pero no es válida para esta ejecución:
+    if (authAcceptance && !authAcceptance.valid) {
+      if (authAcceptance.reason === 'ENVIRONMENT_MISMATCH') {
+        return {
+          status: 'DENIED',
+          reason: 'ENVIRONMENT_MISMATCH',
+          exitCode: 2,
+          errors: [
+            `El riesgo fue aceptado exclusivamente para [${authAcceptance.allowedEnvironments.join(', ')}], pero el entorno actual es [${authAcceptance.currentEnvironment}]. Bloqueado para despliegue.`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'RISK_ACCEPTANCE_EXPIRED') {
+        return {
+          status: 'DENIED',
+          reason: 'RISK_ACCEPTANCE_EXPIRED',
+          exitCode: 1,
+          errors: ['La aceptación humana de riesgo ha expirado. Se exige re-evaluación formal.'],
+        };
+      }
+      if (authAcceptance.reason === 'TAMPERED_RISK_ACCEPTANCE') {
+        return {
+          status: 'DENIED',
+          reason: 'TAMPERED_RISK_ACCEPTANCE',
+          exitCode: 1,
+          errors: ['El registro de aceptación humana de riesgo fue manipulado o su firma no coincide.'],
+        };
+      }
+    }
+
+    // Si el payload contiene un intento de auto-aprobación inline no autenticado, se rechaza fail-closed
+    if (payload.human_risk_acceptance && typeof payload.human_risk_acceptance === 'object') {
+      if (!authAcceptance || !authAcceptance.valid) {
+        return {
+          status: 'DENIED',
+          reason: 'UNAUTHENTICATED_HUMAN_OVERRIDE',
+          exitCode: 1,
+          errors: [
+            'Intento de aceptación humana no autenticada dentro del payload: el evaluado no puede auto-aprobarse un riesgo. '
+            + 'La aceptación debe emitirse fuera de banda mediante el comando `accept-risk` y quedar sellada con operador, entorno y vigencia.',
+          ],
+        };
+      }
+    }
+
     // --- Veredicto derivado ---
     let veredicto = 'APPROVED_WITH_SAFEGUARDS';
     if (payload.discovery_required === true || payload.missing_context === true) {
@@ -346,23 +527,21 @@ class PreMortemEngine {
       veredicto = 'CONDITIONAL_TDD';
     }
 
-    // Aceptación explícita y formal de riesgo por el operador humano responsable
     let humanRiskAccepted = false;
     let humanRiskRationale = null;
     let humanOperator = null;
+    let humanEnvironment = null;
+    let humanExpiresAt = null;
 
-    if (payload.human_risk_acceptance && typeof payload.human_risk_acceptance === 'object') {
-      const hra = payload.human_risk_acceptance;
-      if (hra.accepted === true && texto(hra.rationale).length >= 15) {
-        humanRiskAccepted = true;
-        humanRiskRationale = texto(hra.rationale);
-        humanOperator = texto(hra.operator) || 'HUMAN_OPERATOR';
-        veredicto = 'HUMAN_RISK_ACCEPTED';
-      }
+    if (authAcceptance && authAcceptance.valid) {
+      humanRiskAccepted = true;
+      humanRiskRationale = authAcceptance.record.rationale;
+      humanOperator = authAcceptance.record.operator;
+      humanEnvironment = authAcceptance.currentEnvironment;
+      humanExpiresAt = authAcceptance.record.expiresAt;
+      veredicto = 'HUMAN_RISK_ACCEPTED';
     }
 
-    // El humano puede endurecer, o registrar aceptación explícita de riesgo.
-    // Un intento de suavizado silencioso (sin human_risk_acceptance formal) se rechaza.
     let endurecidoPor = null;
     const propuesto = texto(payload.verdict);
     if (propuesto) {
@@ -375,16 +554,19 @@ class PreMortemEngine {
         };
       }
 
-      if (propuesto === 'HUMAN_RISK_ACCEPTED') {
-        if (!humanRiskAccepted) {
-          return {
-            status: 'DENIED',
-            reason: 'HUMAN_RISK_ACCEPTANCE_MISSING_RATIONALE',
-            exitCode: 1,
-            errors: ['HUMAN_RISK_ACCEPTED exige human_risk_acceptance con { accepted: true, rationale } de al menos 15 caracteres.'],
-          };
-        }
-      } else if (!humanRiskAccepted) {
+      if (propuesto === 'HUMAN_RISK_ACCEPTED' && !humanRiskAccepted) {
+        return {
+          status: 'DENIED',
+          reason: 'UNAUTHENTICATED_HUMAN_OVERRIDE',
+          exitCode: 1,
+          errors: [
+            'HUMAN_RISK_ACCEPTED exige autorización autenticada fuera de banda mediante `accept-risk`. '
+            + 'Prohibido autoproclamar aceptación de riesgo dentro del payload.',
+          ],
+        };
+      }
+
+      if (!humanRiskAccepted) {
         if (VEREDICTOS[propuesto].rango < VEREDICTOS[veredicto].rango) {
           return {
             status: 'DENIED',
@@ -392,7 +574,7 @@ class PreMortemEngine {
             exitCode: 1,
             errors: [
               `Se propone "${propuesto}" cuando el análisis deriva "${veredicto}". Un veredicto no puede suavizarse silenciosamente: `
-              + 'para aceptar un riesgo formalmente, declare human_risk_acceptance con justificación técnica vinculante.',
+              + 'para aceptar un riesgo formalmente, el operador humano debe ejecutar `accept-risk` fuera de banda.',
             ],
           };
         }
@@ -404,13 +586,10 @@ class PreMortemEngine {
     }
 
     const meta = VEREDICTOS[veredicto];
-    const digest = hashCanonical(payload);
 
     const record = {
       contractVersion: '2.0.0',
-      // El id sale del contenido: el mismo pre-mortem evaluado dos veces es un registro,
-      // no dos. Con un id aleatorio, repetir la evaluación multiplicaba la evidencia.
-      premortem_id: digest.slice(0, 16),
+      premortem_id: premortemId,
       feature_name: texto(payload.feature_name),
       depth_level: nivelAlcanzado,
       declared_depth: nivelDeclarado,
@@ -422,6 +601,9 @@ class PreMortemEngine {
       human_risk_accepted: humanRiskAccepted,
       human_risk_rationale: humanRiskRationale,
       human_operator: humanOperator,
+      human_environment: humanEnvironment,
+      human_expires_at: humanExpiresAt,
+      deployment_allowed: humanRiskAccepted ? (humanEnvironment === 'production') : (meta.status === 'APPROVED'),
       payload,
     };
 
@@ -444,6 +626,9 @@ class PreMortemEngine {
       human_risk_accepted: humanRiskAccepted,
       human_risk_rationale: humanRiskRationale,
       human_operator: humanOperator,
+      human_environment: humanEnvironment,
+      human_expires_at: humanExpiresAt,
+      deployment_allowed: record.deployment_allowed,
       memory_entries: memoria,
       purged: purgados,
       record_path: recordPath,
@@ -681,6 +866,7 @@ const PLANTILLA = {
 const USO = [
   'Uso:',
   '  node tools/premortem.js evaluate <json_payload> [--target <dir>]',
+  '  node tools/premortem.js accept-risk --id <id> --operator <name> --rationale <text> [--env dev|staging|prod] [--ttl h]',
   '  node tools/premortem.js evaluate --file <ruta.json>   evita pelearse con las comillas',
   '  node tools/premortem.js template [--out <ruta.json>]  esqueleto rellenable',
   '  node tools/premortem.js report [id|latest]            el informe en markdown',
@@ -717,6 +903,48 @@ function main() {
   for (let i = 1; i < args.length; i++) {
     if (args[i].startsWith('--')) { if (args[i + 1] && !args[i + 1].startsWith('--')) i += 1; continue; }
     posicional.push(args[i]);
+  }
+
+  if (comando === 'accept-risk') {
+    const id = opcion('--id');
+    const operator = opcion('--operator');
+    const rationale = opcion('--rationale');
+    const env = opcion('--env') || opcion('--environment') || 'development';
+    const ttl = opcion('--ttl') ? parseFloat(opcion('--ttl')) : 24;
+
+    if (!id || !operator || !rationale) {
+      console.error(JSON.stringify({
+        status: 'DENIED',
+        reason: 'MISSING_ACCEPT_RISK_ARGS',
+        exitCode: 1,
+        hint: 'Uso: node tools/premortem.js accept-risk --id <premortem_id> --operator <name> --rationale <text> [--env dev|staging|prod] [--ttl hours]',
+      }, null, 2));
+      process.exit(1);
+    }
+
+    try {
+      const res = motor.acceptRisk({
+        premortemId: id,
+        operator,
+        rationale,
+        environment: env,
+        ttlHours: ttl,
+      });
+      console.log(JSON.stringify({
+        status: 'SUCCESS',
+        action: 'HUMAN_RISK_ACCEPTED',
+        premortem_id: id,
+        operator,
+        environment: env,
+        expires_at: res.record.expiresAt,
+        digest: res.record.digest,
+        target_file: res.targetFile,
+      }, null, 2));
+      process.exit(0);
+    } catch (e) {
+      console.error(JSON.stringify({ status: 'DENIED', reason: 'ACCEPT_RISK_FAILED', message: e.message }, null, 2));
+      process.exit(1);
+    }
   }
 
   if (comando === 'verdicts') {

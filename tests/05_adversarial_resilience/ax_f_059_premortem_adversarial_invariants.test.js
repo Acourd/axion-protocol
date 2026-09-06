@@ -173,15 +173,43 @@ try {
     feature_name: 'Optimizador con Justificación Pobre',
     anchors: {
       ...payloadNoAplica.anchors,
-      ux: ['NO_APLICA'] // Sin justificación (menos de 15 chars)
+      ux: ['NO_APLICA: Muy corto'] // Menos de 25 caracteres
     }
   };
   const rBadNoAplica = engine.evaluateAssessment(payloadBadNoAplica);
   assert.strictEqual(rBadNoAplica.status, 'DENIED');
   assert.strictEqual(rBadNoAplica.reason, 'PREMORTEM_INCOMPLETE');
-  console.log('✓ Invariante de proporcionalidad con NO_APLICA y justificación técnica demostrada');
 
-  // 9. Invariante de Aceptación Humana Trazable (HUMAN_RISK_ACCEPTED)
+  // 8b. Rechazo de justificación tautológica / vacía
+  const payloadTautologico = {
+    ...payloadNoAplica,
+    feature_name: 'Optimizador Tautológico',
+    anchors: {
+      ...payloadNoAplica.anchors,
+      ux: ['NO_APLICA: Esta ancla no aplica porque no aplica en este proyecto y no tiene nada que ver con esto aquí']
+    }
+  };
+  const rTautologico = engine.evaluateAssessment(payloadTautologico);
+  assert.strictEqual(rTautologico.status, 'DENIED');
+  assert.strictEqual(rTautologico.reason, 'PREMORTEM_INCOMPLETE');
+
+  // 8c. Prohibición de NO_APLICA en security para cambios críticos
+  const payloadCriticoNoAplica = {
+    ...payloadNoAplica,
+    feature_name: 'Actualización de Autenticación Crítica',
+    anchors: {
+      security: ['NO_APLICA: Módulo interno de fondo que no requiere análisis de seguridad'],
+      performance: payloadNoAplica.anchors.performance,
+      architecture: payloadNoAplica.anchors.architecture,
+      ux: payloadNoAplica.anchors.ux,
+    }
+  };
+  const rCriticoNoAplica = engine.evaluateAssessment(payloadCriticoNoAplica);
+  assert.strictEqual(rCriticoNoAplica.status, 'DENIED');
+  assert.strictEqual(rCriticoNoAplica.reason, 'PREMORTEM_INCOMPLETE');
+  console.log('✓ Invariante de proporcionalidad con NO_APLICA protegida contra tautologías y bypass crítico');
+
+  // 9. Invariante de Aceptación Humana Autenticada y No Falsificable (HUMAN_RISK_ACCEPTED)
   const payloadHRA = {
     feature_name: 'Spike Experimental Aprobado por Humano',
     anchors: {
@@ -203,13 +231,44 @@ try {
     },
     depth_level: 2
   };
-  const rHRA = engine.evaluateAssessment(payloadHRA);
-  assert.strictEqual(rHRA.status, 'APPROVED');
-  assert.strictEqual(rHRA.exitCode, 0);
-  assert.strictEqual(rHRA.verdict, 'HUMAN_RISK_ACCEPTED');
-  assert.strictEqual(rHRA.human_risk_accepted, true);
-  assert.strictEqual(rHRA.human_operator, 'Lead Architect (@adrian)');
-  console.log('✓ Invariante de aceptación formal de riesgo por operador humano demostrada');
+
+  // 9a. Intento de falsificación inline por el agente: debe ser RECHAZADO fail-closed
+  const rFalsificado = engine.evaluateAssessment(payloadHRA);
+  assert.strictEqual(rFalsificado.status, 'DENIED');
+  assert.strictEqual(rFalsificado.reason, 'UNAUTHENTICATED_HUMAN_OVERRIDE');
+  assert.strictEqual(rFalsificado.exitCode, 1);
+  console.log('✓ Bloqueo fail-closed de intento de auto-aprobación inline por el agente verificado');
+
+  // 9b. Emisión formal fuera de banda exclusivamente para development
+  const { hashCanonical } = require('../../tools/canonical_json.js');
+  const payloadLimpioHRA = { ...payloadHRA };
+  delete payloadLimpioHRA.human_risk_acceptance;
+  const hraPremortemId = hashCanonical(payloadLimpioHRA).slice(0, 16);
+
+  engine.acceptRisk({
+    premortemId: hraPremortemId,
+    operator: 'Lead Architect (@adrian)',
+    rationale: 'Riesgo aceptado formalmente por el arquitecto líder para validación de hipótesis de negocio',
+    environment: 'development',
+    allowedEnvironments: ['development'],
+    ttlHours: 24,
+  });
+
+  // En development: debe ser aprobado para dev con exit 0 y deployment_allowed: false
+  const rHraDev = engine.evaluateAssessment(payloadLimpioHRA, { environment: 'development' });
+  assert.strictEqual(rHraDev.status, 'APPROVED');
+  assert.strictEqual(rHraDev.exitCode, 0);
+  assert.strictEqual(rHraDev.verdict, 'HUMAN_RISK_ACCEPTED');
+  assert.strictEqual(rHraDev.human_risk_accepted, true);
+  assert.strictEqual(rHraDev.human_operator, 'Lead Architect (@adrian)');
+  assert.strictEqual(rHraDev.deployment_allowed, false);
+
+  // En production: el mismo pre-mortem DEBE ser bloqueado con exit 2 (ENVIRONMENT_MISMATCH)
+  const rHraProd = engine.evaluateAssessment(payloadLimpioHRA, { environment: 'production' });
+  assert.strictEqual(rHraProd.status, 'DENIED');
+  assert.strictEqual(rHraProd.reason, 'ENVIRONMENT_MISMATCH');
+  assert.strictEqual(rHraProd.exitCode, 2);
+  console.log('✓ Aceptación humana autenticada y delimitada por entorno (dev exit 0 vs prod exit 2) demostrada');
 
   // 10. Invariante de Estado Intermedio (REQUIERE_DESCUBRIMIENTO)
   const payloadDiscovery = {
