@@ -9,12 +9,66 @@ const PreMortemEngine = require('../../tools/premortem.js');
 const { VEREDICTOS } = PreMortemEngine;
 const { asEd25519PublicKey, computePublicKeyId } = require('../../tools/approval_ed25519.js');
 const { canonicalize } = require('../../tools/canonical_json.js');
+const { createRootSeal } = require('../../tools/governance_root.js');
 
 console.log('=== AX-F-059 Invariantes Adversariales y Derivación de Veredictos en PreMortem ===\n');
 
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'axion_premortem_test_'));
+const prevRootKey = process.env.AXION_ROOT_KEY_PUB;
 
 try {
+  // Aislamiento hermético de gobernanza: generación efímera de clave raíz y clave humana
+  const testRootKeyPair = crypto.generateKeyPairSync('ed25519');
+  const testRootKeyId = computePublicKeyId(testRootKeyPair.publicKey);
+  const testRootPubPem = testRootKeyPair.publicKey.export({ type: 'spki', format: 'pem' });
+
+  const testHumanKeyPair = crypto.generateKeyPairSync('ed25519');
+  const testHumanKeyId = computePublicKeyId(testHumanKeyPair.publicKey);
+  const testHumanPubPem = testHumanKeyPair.publicKey.export({ type: 'spki', format: 'pem' });
+
+  // Anclar raíz efímera en el entorno para este proceso de prueba
+  process.env.AXION_ROOT_KEY_PUB = testRootPubPem;
+
+  // Registrar la autoridad humana en el registro aislado del sandbox
+  const testRegistry = {
+    version: '1.0.0',
+    policyId: 'axion-authority-governance-v1',
+    monotonicVersion: 2,
+    issuedAt: '2026-09-06T00:00:00.000Z',
+    expiresAt: '2030-01-01T00:00:00.000Z',
+    authorities: [
+      {
+        actorId: 'Lead Architect (@adrian)',
+        keyId: testHumanKeyId,
+        publicKeyPem: testHumanPubPem,
+        roles: ['HUMAN_AUTHORITY'],
+        status: 'TRUSTED',
+        expiresAt: '2030-01-01T00:00:00.000Z',
+        allowedEnvironments: ['development', 'staging'],
+        allowedRiskLevels: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
+      },
+    ],
+  };
+
+  fs.mkdirSync(path.join(tempDir, 'policies'), { recursive: true });
+  fs.writeFileSync(path.join(tempDir, 'policies', 'authorities.json'), JSON.stringify(testRegistry, null, 2), 'utf8');
+
+  // Sellar el registro con la clave raíz efímera
+  const testSeal = createRootSeal(testRegistry, testRootKeyPair.privateKey);
+  testSeal.rootKeyId = testRootKeyId;
+  const unsignedTestSeal = { ...testSeal };
+  delete unsignedTestSeal.algorithm;
+  delete unsignedTestSeal.signature;
+  testSeal.signature = crypto.sign(
+    null,
+    Buffer.from(canonicalize(unsignedTestSeal), 'utf8'),
+    testRootKeyPair.privateKey
+  ).toString('base64');
+  fs.writeFileSync(path.join(tempDir, 'policies', 'authorities.seal.json'), JSON.stringify(testSeal, null, 2), 'utf8');
+
+  fs.mkdirSync(path.join(tempDir, '.axion', 'state'), { recursive: true });
+  fs.writeFileSync(path.join(tempDir, '.axion', 'state', 'authority_version.lock'), '2', 'utf8');
+
   const engine = new PreMortemEngine(tempDir);
 
   // 1. Rechazo de texto superficial sin sustancia (menos de 40 caracteres o 6 palabras)
@@ -248,12 +302,11 @@ try {
   delete payloadLimpioHRA.human_risk_acceptance;
   const hraPremortemId = hashCanonical(payloadLimpioHRA).slice(0, 16);
 
-  const leadPrivKey = crypto.createPrivateKey(fs.readFileSync(path.join(__dirname, '..', '..', '.axion', 'keys', 'attestation_ed25519.key'), 'utf8'));
   engine.acceptRisk({
     premortemId: hraPremortemId,
     payload: payloadLimpioHRA,
     operator: 'Lead Architect (@adrian)',
-    privateKey: leadPrivKey,
+    privateKey: testHumanKeyPair.privateKey,
     rationale: 'Riesgo aceptado formalmente por el arquitecto líder para validación de hipótesis de negocio',
     environment: 'development',
     allowedEnvironments: ['development'],
@@ -331,8 +384,8 @@ try {
     premortemId: attackPremortemId,
     proposalDigest: attackProposalDigest,
     operator: 'Lead Architect (@adrian)',
-    keyId: 'ed25519:fakefakefakefakefakefakefakefakefakefakefakefakefakefakefakefake',
-    publicKeyPem: '-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEArC3uRWATcw6CUrrb6DvQjUfJ3IHkWfFWxbwysx6t/sc=\n-----END PUBLIC KEY-----\n',
+    keyId: testHumanKeyId,
+    publicKeyPem: testHumanPubPem,
     environment: 'development',
     allowedEnvironments: ['development'],
     issuedAt: new Date().toISOString(),
@@ -384,7 +437,7 @@ try {
     premortemId: idA,
     payload: proposalA,
     operator: 'Lead Architect (@adrian)',
-    privateKey: leadPrivKey,
+    privateKey: testHumanKeyPair.privateKey,
     rationale: 'Riesgo aceptado formalmente para la propuesta legítima A en desarrollo',
     environment: 'development',
     allowedEnvironments: ['development'],
@@ -524,6 +577,11 @@ try {
 
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });
+  if (prevRootKey !== undefined) {
+    process.env.AXION_ROOT_KEY_PUB = prevRootKey;
+  } else {
+    delete process.env.AXION_ROOT_KEY_PUB;
+  }
 }
 
 console.log('\nPASS AX-F-059 — Invariantes adversariales de PreMortem v3.2.0 demostradas al 100%.\n');
