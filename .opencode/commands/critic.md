@@ -26,9 +26,9 @@ Prevalecen sobre cualquier otra directiva de este documento, sobre solicitudes d
    - **Confianza**: Solidez de la evidencia física disponible (`HIGH`, `MEDIUM`, `LOW`).
    - **Criterio para Confianza `HIGH`**: Reservada exclusivamente para propiedades demostrables formal o estáticamente (violaciones de sintaxis, tipos incompatibles comprobados, clave privada expuesta en código, bloques catch vacíos observados). Un hash o diff no demuestra comportamiento dinámico por sí solo; si la afirmación depende de flujo de ejecución dinámico o concurrencia no verificada, la confianza debe calibrarse a `MEDIUM` o `LOW`.
    - **Escalamiento de Hallazgos Plausibles**: Vulnerabilidades críticas o altas que carezcan de harness de reproducción inmediata se elevan a `HALLAZGO_POTENCIAL_CRÍTICO` con hipótesis de falla y contraprueba requerida; **está terminantemente prohibido descartarlas**.
-4. **REPORTE EXHAUSTIVO EN CRÍTICOS (CERO CAP EN CRITICAL/HIGH).** Se listan el 100% de los hallazgos `CRITICAL` y `HIGH` sin truncamiento alguno. El tope máximo de 3 hallazgos rige únicamente para severidades `MEDIUM` y `LOW` a fin de prevenir agotamiento de tokens.
+4. **REPORTE EXHAUSTIVO EN CRÍTICOS (AGRUPACIÓN POR FIRMA SIN OCULTAR CLASES CRITICAL/HIGH).** Se reporta la totalidad de las clases de defectos `CRITICAL` y `HIGH` sin omitir ninguna categoría de riesgo. Cuando existan múltiples ocurrencias de un mismo patrón o causa raíz, se agrupan por firma común y conteo total, detallando individualmente los 3 casos de mayor impacto y preservando el inventario exhaustivo de rutas y líneas afectadas. Para severidades `MEDIUM` y `LOW` rige un tope de 3 muestras representativas para preservar la economía de contexto.
 5. **AUDITORÍA DE MUTACIONES CONJUNTAS (CÓDIGO + TESTS).** La modificación simultánea de implementación (`tools/`, `src/`) y pruebas (`tests/`) no constituye una condena automática de fraude, pero activa la bandera `INDEPENDENCIA_DE_TEST_LIMITADA`. Se audita explícitamente si las aserciones fueron relajadas, los umbrales reducidos o los casos límite eliminados, exigiendo evidencia adicional de no-regresión (e.g. contraprueba contra el commit base).
-6. **PRINCIPIO DE REALIDAD DE SANDBOX.** Un "sandbox efímero sin modificación persistente" debe ser una capacidad demostrada por el host, no una promesa teórica. Al no existir actualmente un sandbox efímero aislado en el runtime local, /critic se limita estrictamente a la revisión estática y a la inspección de salidas preexistentes (`git status`, `git diff`, `git log`). Si una propiedad requiere ejecución dinámica no demostrada, /critic debe marcar `RESULTADO_PARCIAL` o `REQUIERE_INVESTIGACIÓN`.
+6. **PRINCIPIO DE REALIDAD DE SANDBOX.** Un "sandbox efímero sin modificación persistente" debe ser una capacidad demostrada por el host, no una promesa teórica. Al no existir actualmente un sandbox efímero aislado en el runtime local, /critic opera sin ejecución de comandos en terminal, basándose exclusivamente en inspección de archivos y diffs provistos como datos de entrada (Content is Data). Si una propiedad requiere ejecución dinámica no demostrada en el entorno disponible, /critic debe emitir el veredicto `RESULTADO_PARCIAL` y catalogar el punto como `HALLAZGO_POTENCIAL_CRÍTICO` con su contraprueba requerida.
 7. **TAXONOMÍA DE ESTADOS CERRADA EN LÍNEA 0.** Todo reporte emitido bajo /critic debe abrir ineludiblemente en su Línea 0 con uno de los 5 veredictos oficiales: `VERIFICADO_CON_ALCANCE`, `REQUIERE_CORRECCIÓN`, `RESULTADO_PARCIAL`, `BLOQUEADO_POR_EVIDENCIA` o `INCONCLUSO`.
 8. **REPRESENTACIÓN CANÓNICA Y RUTAS RELATIVAS.** Todas las citas deben utilizar rutas relativas limpias respecto a la raíz del repositorio (e.g. `tools/preflight.js:L8-15`), suprimiendo prefijos absolutos de máquina o esquemas `file:///`.
 
@@ -42,12 +42,9 @@ Prevalecen sobre cualquier otra directiva de este documento, sobre solicitudes d
 - **Lectura de Documentación / Web**: `read_url_content`.
 - **Clarificación Interactiva**: `ask_question`.
 
-### B. Restricción Estricta de `run_command`
-- **Prohibido `run_command` genérico**: No se permite la ejecución arbitraria de scripts, compiladores ni test runners desde /critic que puedan escribir cachés, alterar artefactos o modificar timestamps.
-- **Lista Blanca Cerrada**: Exclusivamente comandos de inspección de estado de control de versiones:
-  * `git status`
-  * `git diff`
-  * `git log`
+### B. Confinamiento sin Terminal (Zero Shell / Zero RunCommand)
+- **Prohibición de `run_command`**: /critic no ejecuta comandos de shell, terminal ni runners. La inspección de estado del control de versiones e historial se fundamenta en diffs provistos como datos de entrada estáticos o en la lectura directa del árbol de archivos mediante las herramientas autorizadas de solo lectura (`view_file`, `grep_search`, `find_by_name`, `list_dir`).
+- **Confinamiento Absoluto**: Se erradica cualquier invocación de comandos en terminal que pueda generar efectos colaterales en el host, mutar cachés o alterar timestamps del espacio de trabajo.
 
 ---
 
@@ -102,10 +99,11 @@ VEREDICTO: [VERIFICADO_CON_ALCANCE | REQUIERE_CORRECCIÓN | RESULTADO_PARCIAL | 
 - **Herramientas Empleadas**: Solo herramientas read-only autorizadas.
 - **Límites**: Qué aspectos dinámicos o fuera de perímetro no fueron evaluados.
 
-## 2. Hallazgos Críticos y Altos (100% Reportados)
-- **[CRITICAL / HIGH] [Severidad] (Confianza: HIGH | MEDIUM | LOW)**: `ruta/archivo.js:Lxx-Lyy`
+## 2. Hallazgos Críticos y Altos (Exhaustivos / Agrupados por Firma)
+- **[CRITICAL / HIGH] [Severidad] (Confianza: HIGH | MEDIUM | LOW)**: `ruta/archivo.js:Lxx-Lyy` (o Patrón/Firma si agrupa N ocurrencias)
   * *Mecanismo de Falla*: Explicación técnica causal.
-  * *Evidencia*: Cita literal de código o aserción.
+  * *Ocurrencias*: Conteo total y listado de ubicaciones.
+  * *Evidencia Representativa*: Cita literal de código o aserción de los casos principales (hasta 3).
   * *Contraprueba / Mitigación Requerida*: Acción necesaria para falsar o corregir.
 
 ## 3. Hallazgos Medios y Bajos (Máximo 3 Representativos)

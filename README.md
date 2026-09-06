@@ -5,7 +5,7 @@
 >
 > **Status**: GA v1.3.2. Enforcement fail-closed activo en Antigravity, Claude Code y Codex (hooks PreToolUse); OpenCode con comandos y permisos nativos; Cursor y Copilot con directivas contextuales (no exponen hooks). Requiere **Node.js 20** o later. Zero external npm dependencies.
 
-[![CI Status](https://img.shields.io/badge/CI-238%20Passing-2ea44f.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
+[![CI Status](https://img.shields.io/badge/CI-241%20Passing-2ea44f.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
 [![Version](https://img.shields.io/badge/Version-v1.3.2-0969da.svg?style=flat-square)](package.json)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0-success.svg?style=flat-square)](package.json)

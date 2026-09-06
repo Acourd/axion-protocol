@@ -127,6 +127,9 @@ AGY evalúa propuesta
 → /premortem verifica aceptación firmada con vinculación matemática estricta
 ```
 
+> [!IMPORTANT]
+> **Delimitación de Garantías del Host**: Los campos `allowedAction` y `prohibitedActions` constituyen restricciones formales de intención pactadas en la solicitud y firmadas por la autoridad humana. En entornos de desarrollo local bajo la misma cuenta de usuario del sistema operativo (`AYCO\adria`), representan controles de integridad y trazabilidad cooperativa del protocolo, **NO un aislamiento técnico de procesos ni un confinamiento forzado por el kernel del sistema operativo**. El aislamiento real de privilegios exige hardware externo (Opción B) o infraestructura de CI (Opción C).
+
 ### A. Solicitud CSR por el Agente (`request-risk`)
 ```bash
 node tools/premortem.js request-risk --file <proposal.json> [--env dev|staging] [--riskLevel MODERATE|HIGH]
@@ -180,7 +183,7 @@ Para garantizar una separación de privilegios real frente al agente autónomo (
 #### 1. [ACTIVO] Protocolo CSR y Ledger Criptográfico
 - **Solicitud Tipada (`request-risk`)**: El agente emite `risk-request-<id>.json` con digest de 64 caracteres, `baseCommitSha`, `scopeHash`, `mitigationsHash`, `allowedAction` y `prohibitedActions`. Concluye con `exit 2` (`REQUIERE_DECISIÓN_HUMANA`).
 - **Amarre a `baseCommitSha`**: La excepción de plan vincula estrictamente el commit base sobre el que se formuló la propuesta. Si el working tree muta antes de la ejecución, el motor rechaza la autorización (`COMMIT_SHA_MISMATCH`).
-- **Restricciones de Acción**: Se registran formalmente `allowedAction` (operación autorizada) y `prohibitedActions` (operaciones vetadas), evaluadas en runtime con `PROHIBITED_ACTION_DETECTED` y `UNAUTHORIZED_ACTION`.
+- **Restricciones de Acción (Compromiso Lógico de Intención)**: Se registran formalmente `allowedAction` (operación autorizada) y `prohibitedActions` (operaciones vetadas), evaluadas en tiempo de ejecución por el arnés (`PROHIBITED_ACTION_DETECTED` y `UNAUTHORIZED_ACTION`). Constituyen compromisos normativos firmados en el ticket, verificados cooperativamente por el protocolo; no representan un aislamiento de procesos forzado por el sistema operativo.
 - **Ledger Append-Only (Merkle Hash-Chaining)**: Registro secuencial en `risk-acceptance-ledger.jsonl` encadenando `parentHash -> entryHash` y reflejando el head en almacén externo (`LEDGER_HASH_TAMPERED` / `LEDGER_TRUNCATION_DETECTED`).
 - **Anti-Rollback Monotónico**: Validación estricta de `monotonicVersion` en `policies/authorities.json` respaldada por el sello criptográfico de la raíz soberana (`POLICY_ROLLBACK_DETECTED` / `UNTRUSTED_REGISTRY_MODIFICATION`).
 
@@ -232,6 +235,9 @@ Para garantizar una separación de privilegios real frente al agente autónomo (
 }
 ```
 El verificador rechaza la aceptación fail-closed si cualquiera de estos campos discrepa de la propuesta o si el código base sufre mutaciones no autorizadas (`COMMIT_SHA_MISMATCH`, `SCOPE_MISMATCH`, `PROPOSAL_DIGEST_MISMATCH`, exit 1).
+
+> [!NOTE]
+> **Naturaleza de los Controles de Acción**: Los campos `allowedAction` y `prohibitedActions` son restricciones de intención acordadas y verificadas por la lógica del protocolo. Garantizan trazabilidad e invalidación matemática si se detecta una operación fuera de contrato, pero no constituyen aislamiento de privilegios a nivel de sistema operativo frente al agente ejecutor.
 
 ---
 
