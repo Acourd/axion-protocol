@@ -111,20 +111,54 @@ $$\text{Blast Radius} = \min(100, \text{Base por Archivos} + \text{Ponderación 
 
 ---
 
-## 5 · Protocolo de Aceptación de Riesgo Autenticada (`accept-risk`)
+## 5 · Patrón CSR y Aceptación de Riesgo Fuera de Banda (`request-risk` / `accept-risk`)
 
-Para evitar que el agente falsifique una autorización dentro del JSON de la propuesta, la aceptación humana de riesgo opera estrictamente **fuera de banda**:
+Para evitar que el agente falsifique una autorización dentro del JSON de la propuesta o simule la autoridad del operador, el protocolo desacopla la **solicitud** de la **autorización** mediante el patrón CSR (*Certificate / Exception Signing Request*):
 
+```
+AGY evalúa propuesta
+→ detecta que requiere excepción humana
+→ genera solicitud CSR (`risk-request-<id>.json`)
+→ concluye con REQUIERE_DECISIÓN_HUMANA / exit 2
+→ operador humano revisa y firma fuera del entorno del agente (`human_sign_risk.js`)
+→ /premortem verifica aceptación firmada con vinculación matemática estricta
+```
+
+### A. Solicitud CSR por el Agente (`request-risk`)
 ```bash
-node tools/premortem.js accept-risk \
-  --id <premortem_id> \
-  --operator "@adrian-lead" \
+node tools/premortem.js request-risk --file <proposal.json> [--env dev|staging] [--riskLevel MODERATE|HIGH]
+# Salida: JSON con requestId, proposalDigest, commitSha, environment, riskLevel, scope
+# Código de salida: exit 2 (REQUIERE_DECISIÓN_HUMANA)
+```
+Un `risk-request` no necesita ser inmutable ni secreto; puede ser formulado por el agente porque representa una petición, nunca una autorización.
+
+### B. Revisión y Firma Humana Fuera de Banda (`human_sign_risk.js`)
+El operador humano ejecuta la herramienta interactiva bajo su propia identidad, con clave privada fuera del alcance del agente:
+```bash
+node tools/human_sign_risk.js \
+  --request .axion/state/risk-requests/risk-request-<id>.json \
   --key ~/.axion/keys/human/operator_ed25519.key \
-  --proposal-digest <sha256_hex_64_chars> \
-  --rationale "Spike acotado a 24 horas para probar rendimiento de nuevo driver en rama aislada" \
+  --operator "Lead Architect (@adrian)" \
   --env development \
   --ttl 24
 ```
+
+### C. Campos Mínimos Inmutables en la Aceptación Firmada
+La aceptación firmada sella de forma inmutable la relación exacta entre lo revisado por el humano y el estado del código:
+```json
+{
+  "requestId": "identificador único de la solicitud",
+  "proposalDigest": "sha256 completo de 64 caracteres",
+  "commitSha": "commit exacto o árbol de trabajo declarado al autorizar",
+  "environment": "development | staging",
+  "riskLevel": "nivel autorizado (LOW | MODERATE | HIGH | CRITICAL)",
+  "scope": ["archivos o componentes autorizados"],
+  "issuedAt": "fecha ISO de emisión",
+  "expiresAt": "fecha ISO de caducidad",
+  "authorityKeyId": "clave humana autorizada en policies/authorities.json"
+}
+```
+El verificador rechaza la aceptación fail-closed si cualquiera de estos campos discrepa de la propuesta o si el código sufre mutaciones posteriores a la aprobación (`COMMIT_SHA_MISMATCH`, `SCOPE_MISMATCH`, `PROPOSAL_DIGEST_MISMATCH`, exit 1).
 
 1. **Anclaje Criptográfico de la Raíz Soberana Externa**: La clave pública raíz se resuelve prioritariamente desde fuera del workspace (`~/.axion/governance_root.json` o `AXION_ROOT_KEY_PUB`), respaldada por la clave fija inmutable en código. Se prohíben raíces alternativas en runtime (`CUSTOM_ROOT_FORBIDDEN`). Un auditor externo (`verifyWorkspaceExternal`) verifica desde fuera que el agente no haya manipulado la raíz local (`WORKSPACE_ROOT_TAMPERING_DETECTED`, exit 1).
 2. **Custodia de Claves y Requisito Físico de TTY**: Las claves privadas jamás residen en el workspace (`WORKSPACE_PRIVATE_KEY_FORBIDDEN`). `accept-risk` exige obligatoriamente ejecución en una terminal física interactiva (`INTERACTIVE_HUMAN_TTY_REQUIRED`), bloqueando invocaciones headless, subshells o scripts de agentes. Preflight deniega intentos de ejecución de firma por agentes (`AGENT_RISK_SIGNING_FORBIDDEN`). La aceptación para `production` está bloqueada localmente (`PRODUCTION_RISK_ACCEPTANCE_FORBIDDEN`).

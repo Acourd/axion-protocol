@@ -109,6 +109,97 @@ class PreMortemEngine {
   }
 
   /**
+   * Obtiene el commit SHA actual de HEAD en el repositorio git (o fallback seguro).
+   */
+  static getCurrentCommitSha(dir = ROOT) {
+    try {
+      const { execSync } = require('child_process');
+      const sha = execSync('git rev-parse HEAD', {
+        cwd: dir,
+        stdio: ['ignore', 'pipe', 'ignore'],
+        encoding: 'utf8',
+      }).trim();
+      if (/^[a-f0-9]{40}$/i.test(sha)) {
+        return sha;
+      }
+    } catch (_) {
+      // Repositorio sin commits o entorno sin git: fallback seguro
+    }
+    return '0000000000000000000000000000000000000000';
+  }
+
+  /**
+   * Genera una solicitud formal de excepción CSR (risk-request-<id>.json).
+   * El agente autónomo formula la petición vinculándola a:
+   *   - requestId único
+   *   - premortemId y proposalDigest exacto (SHA-256 de 64 hex chars)
+   *   - commitSha actual del repositorio / árbol de trabajo
+   *   - environment solicitado (development | staging | production)
+   *   - riskLevel derivado del blast radius o declarado
+   *   - scope (rutas o alcance de la propuesta)
+   *   - rationale causal
+   * Concluye con estado PENDING y exitCode: 2 (REQUIERE_DECISIÓN_HUMANA).
+   */
+  createRiskRequest(payload, options = {}) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new Error('INVALID_PAYLOAD: payload debe ser un objeto JSON.');
+    }
+
+    const cleanPayload = { ...payload };
+    delete cleanPayload.human_risk_acceptance;
+    delete cleanPayload.authenticatedRiskAcceptance;
+    const proposalDigest = hashCanonical(cleanPayload);
+    const premortemId = proposalDigest.slice(0, 16);
+    const requestId = texto(options.requestId || `req-${premortemId}-${Date.now()}`);
+    const commitSha = texto(options.commitSha || PreMortemEngine.getCurrentCommitSha(this.rootDir));
+    const environment = texto(options.environment || options.env || process.env.AXION_ENV || 'development').toLowerCase().trim();
+
+    const blast = PreMortemEngine.calculateBlastRadius({ files: payload.files || payload.scope || [] });
+    const riskLevel = texto(options.riskLevel || (blast.score >= 70 ? 'CRITICAL' : (blast.score >= 40 ? 'MODERATE' : 'LOW'))).toUpperCase().trim();
+    const scope = options.scope || payload.scope || payload.files || ['*'];
+    const rationale = texto(options.rationale || payload.risk_rationale || payload.rationale || 'Solicitud formal de excepción CSR para mitigación de riesgos derivados en pre-mortem.');
+
+    const requestRecord = {
+      contractVersion: '2.0.0',
+      requestId,
+      premortemId,
+      proposalDigest,
+      commitSha,
+      environment,
+      riskLevel,
+      scope,
+      rationale,
+      issuedAt: (options.now ? new Date(options.now) : new Date()).toISOString(),
+      status: 'PENDING_HUMAN_APPROVAL',
+      agent: {
+        id: process.env.AGENT_ID || 'AGY',
+        context: Boolean(process.env.AGENT_CONTEXT === 'true' || process.env.ANTIGRAVITY === 'true' || process.env.OPENCODE === 'true'),
+      },
+    };
+
+    this.ensureStateDir();
+    const reqDir = path.join(this.stateDir, 'risk-requests');
+    fs.mkdirSync(reqDir, { recursive: true });
+    const requestPath = path.join(reqDir, `risk-request-${premortemId}.json`);
+    fs.writeFileSync(requestPath, JSON.stringify(requestRecord, null, 2), 'utf8');
+
+    return {
+      status: 'PENDING',
+      reason: 'REQUIERE_DECISIÓN_HUMANA',
+      exitCode: 2,
+      requestId,
+      premortemId,
+      proposalDigest,
+      commitSha,
+      environment,
+      riskLevel,
+      scope,
+      requestPath,
+      requestRecord,
+    };
+  }
+
+  /**
    * Valida la sustancia de una lista de afirmaciones. Devuelve los reproches concretos,
    * no un booleano: quien recibe un rechazo necesita saber qué frase arreglar.
    */
@@ -382,11 +473,29 @@ class PreMortemEngine {
       throw new Error('INTERACTIVE_HUMAN_TTY_REQUIRED: accept-risk exige ejecución en una terminal interactiva TTY física operada por un humano. Ejecuciones headless, subshells o subprocesos automatizados bloqueados fail-closed.');
     }
 
-    const premortemIdRaw = texto(options.premortemId || options.id);
+    let reqObj = null;
+    if (options.requestPath || options.request) {
+      const reqFile = path.resolve(options.requestPath || options.request);
+      if (!fs.existsSync(reqFile)) {
+        throw new Error(`MISSING_REQUEST_FILE: El archivo de solicitud CSR "${reqFile}" no existe.`);
+      }
+      try {
+        reqObj = JSON.parse(fs.readFileSync(reqFile, 'utf8'));
+      } catch (e) {
+        throw new Error(`MALFORMED_REQUEST_FILE: El archivo de solicitud CSR "${reqFile}" no es JSON válido: ${e.message}`);
+      }
+    }
+
+    const premortemIdRaw = texto(options.premortemId || options.id || (reqObj && reqObj.premortemId));
     const cleanId = premortemIdRaw.toLowerCase().trim();
     if (!cleanId || !/^[a-f0-9]{16,64}$/.test(cleanId)) {
       throw new Error(`INVALID_PREMORTEM_ID_FORMAT: premortemId debe ser una cadena hexadecimal de 16 a 64 caracteres. Recibido: ${JSON.stringify(premortemIdRaw)}`);
     }
+
+    const requestId = texto(options.requestId || (reqObj && reqObj.requestId) || `req-${cleanId}`);
+    const commitSha = texto(options.commitSha || (reqObj && reqObj.commitSha) || PreMortemEngine.getCurrentCommitSha(this.rootDir));
+    const riskLevelVal = texto(options.riskLevel || (reqObj && reqObj.riskLevel) || (options.payload && options.payload.risk) || 'MODERATE').toUpperCase().trim();
+    const scopeVal = options.scope || (reqObj && reqObj.scope) || (options.payload && (options.payload.scope || options.payload.files)) || ['*'];
 
     const operator = texto(options.operator);
     if (operator.length < 3) {
@@ -435,6 +544,8 @@ class PreMortemEngine {
       }
     } else if (options.proposalDigest) {
       proposalDigest = texto(options.proposalDigest).toLowerCase().trim();
+    } else if (reqObj && reqObj.proposalDigest) {
+      proposalDigest = texto(reqObj.proposalDigest).toLowerCase().trim();
     } else if (cleanId.length === 64) {
       proposalDigest = cleanId;
     }
@@ -529,16 +640,21 @@ class PreMortemEngine {
     const unsignedRecord = {
       contractVersion: '2.0.0',
       acceptanceId: crypto.randomBytes(8).toString('hex'),
+      requestId,
       premortemId: cleanId,
       proposalDigest,
+      commitSha,
+      environment,
+      allowedEnvironments,
+      riskLevel: riskLevelVal,
+      scope: scopeVal,
       scopeHash,
       mitigationsHash,
       operator,
       keyId,
+      authorityKeyId: keyId,
       publicKeyPem,
-      environment,
-      allowedEnvironments,
-      issuedAt: new Date().toISOString(),
+      issuedAt: (options.now ? new Date(options.now) : new Date()).toISOString(),
       expiresAt: new Date(Date.now() + ttlHours * 3600 * 1000).toISOString(),
       nonce: crypto.randomBytes(16).toString('hex'),
       rationale,
@@ -1136,6 +1252,67 @@ class PreMortemEngine {
       };
     }
 
+    // 7. Comprobación de consistencia de identidad CSR (authorityKeyId)
+    if (rec.authorityKeyId && rec.authorityKeyId !== rec.keyId) {
+      return {
+        valid: false,
+        reason: 'MALFORMED_AUTHORITY_KEY_ID',
+        message: 'authorityKeyId no coincide con keyId en el registro.',
+        record: rec,
+      };
+    }
+
+    // 8. Vinculación estricta al commitSha del árbol de trabajo (anti-mutación tras aprobación)
+    const currentCommit = options.commitSha || PreMortemEngine.getCurrentCommitSha(this.rootDir);
+    if (rec.commitSha && !options.skipCommitCheck && currentCommit !== '0000000000000000000000000000000000000000' && rec.commitSha !== currentCommit) {
+      return {
+        valid: false,
+        reason: 'COMMIT_SHA_MISMATCH',
+        expected: currentCommit,
+        found: rec.commitSha,
+        message: `La aceptación humana fue firmada para el commit ${rec.commitSha}, pero el código actual está en ${currentCommit}. La excepción queda invalidada fail-closed tras nuevas mutaciones.`,
+        record: rec,
+      };
+    }
+
+    // 9. Vinculación estricta al alcance de archivos (scope)
+    if (rec.scope && !options.skipScopeCheck) {
+      const allowedScopeList = Array.isArray(rec.scope) ? rec.scope : [rec.scope];
+      if (!allowedScopeList.includes('*') && !allowedScopeList.includes('all')) {
+        const currentScope = options.scope || (options.payload && (options.payload.scope || options.payload.files));
+        if (currentScope) {
+          const actualFiles = Array.isArray(currentScope) ? currentScope : [currentScope];
+          const outside = actualFiles.filter((f) => !allowedScopeList.includes(f));
+          if (outside.length > 0) {
+            return {
+              valid: false,
+              reason: 'SCOPE_MISMATCH',
+              expected: allowedScopeList,
+              found: outside,
+              message: `La propuesta incluye archivos fuera del alcance autorizado por el humano: [ ${outside.join(', ')} ] (permitidos: [ ${allowedScopeList.join(', ')} ]).`,
+              record: rec,
+            };
+          }
+        }
+      }
+    }
+
+    // 10. Vinculación estricta de nivel de riesgo
+    if (rec.riskLevel && !options.skipRiskLevelCheck) {
+      const currentRisk = (options.riskLevel || (options.payload && options.payload.risk) || (options.blastRadius >= 70 ? 'CRITICAL' : (options.blastRadius >= 40 ? 'MODERATE' : 'LOW'))).toUpperCase().trim();
+      const RISK_RANKS = { LOW: 1, MODERATE: 2, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
+      const recRank = RISK_RANKS[String(rec.riskLevel).toUpperCase().trim()] || 1;
+      const curRank = RISK_RANKS[currentRisk] || 1;
+      if (curRank > recRank) {
+        return {
+          valid: false,
+          reason: 'UNAUTHORIZED_RISK_LEVEL',
+          message: `El nivel de riesgo de la propuesta ("${currentRisk}") excede el nivel autorizado en la aceptación ("${rec.riskLevel}").`,
+          record: rec,
+        };
+      }
+    }
+
     return { valid: true, currentEnvironment: currentEnv, record: rec, authority };
   }
 
@@ -1259,7 +1436,7 @@ class PreMortemEngine {
     delete cleanPayload.human_risk_acceptance;
     delete cleanPayload.authenticatedRiskAcceptance;
     const digest = hashCanonical(cleanPayload);
-    const premortemId = digest.slice(0, 16);
+    const premortemId = (options.premortemId || options.id || digest.slice(0, 16)).trim().toLowerCase();
 
     // --- Aceptación de riesgo autenticada fuera de banda ---
     const authAcceptance = this.loadRiskAcceptance(premortemId, options, digest);
@@ -1373,6 +1550,26 @@ class PreMortemEngine {
           exitCode: 1,
           errors: [
             `La aceptación humana de riesgo fue emitida para una propuesta con digest ${authAcceptance.found}, pero la propuesta actual tiene digest ${authAcceptance.expected}. Cualquier mutación al payload invalida la autorización previa.`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'COMMIT_SHA_MISMATCH') {
+        return {
+          status: 'DENIED',
+          reason: 'COMMIT_SHA_MISMATCH',
+          exitCode: 1,
+          errors: [
+            `La aceptación humana de riesgo fue emitida para el commit ${authAcceptance.found}, pero el estado actual del código está en ${authAcceptance.expected}. Cualquier mutación posterior a la aprobación invalida la autorización fail-closed.`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'SCOPE_MISMATCH') {
+        return {
+          status: 'DENIED',
+          reason: 'SCOPE_MISMATCH',
+          exitCode: 1,
+          errors: [
+            `El alcance de la propuesta excede los límites autorizados por la autoridad humana (${authAcceptance.message}).`,
           ],
         };
       }
@@ -1784,7 +1981,9 @@ const PLANTILLA = {
 const USO = [
   'Uso:',
   '  node tools/premortem.js evaluate <json_payload> [--target <dir>]',
-  '  node tools/premortem.js accept-risk --id <id> --operator <name> --rationale <text> [--env dev|staging|prod] [--ttl h]',
+  '  node tools/premortem.js request-risk --file <ruta.json> [--env dev|staging|prod]  genera solicitud CSR (exit 2)',
+  '  node tools/premortem.js accept-risk --id <id> --operator <name> --rationale <text> [--env dev|staging|prod] [--key <priv.key>]',
+  '  node tools/premortem.js accept-risk --request <ticket.json> --operator <name> --rationale <text> [--key <priv.key>]',
   '  node tools/premortem.js evaluate --file <ruta.json>   evita pelearse con las comillas',
   '  node tools/premortem.js template [--out <ruta.json>]  esqueleto rellenable',
   '  node tools/premortem.js report [id|latest]            el informe en markdown',
@@ -1823,6 +2022,55 @@ function main() {
     posicional.push(args[i]);
   }
 
+  if (comando === 'request-risk') {
+    const file = opcion('--file') || opcion('--proposal');
+    const jsonStr = posicional[0];
+    let payload = null;
+    if (file && fs.existsSync(file)) {
+      try {
+        payload = JSON.parse(fs.readFileSync(file, 'utf8'));
+      } catch (err) {
+        console.error(JSON.stringify({ status: 'DENIED', reason: 'INVALID_PROPOSAL_FILE', message: err.message }, null, 2));
+        process.exit(1);
+      }
+    } else if (jsonStr) {
+      try {
+        payload = JSON.parse(jsonStr);
+      } catch (err) {
+        console.error(JSON.stringify({ status: 'DENIED', reason: 'INVALID_JSON_PAYLOAD', message: err.message }, null, 2));
+        process.exit(1);
+      }
+    } else {
+      console.error(JSON.stringify({
+        status: 'DENIED',
+        reason: 'MISSING_PAYLOAD',
+        exitCode: 1,
+        hint: 'Uso: node tools/premortem.js request-risk --file <proposal.json> [--env dev|staging|prod] [--riskLevel LOW|MODERATE|CRITICAL]',
+      }, null, 2));
+      process.exit(1);
+    }
+
+    const env = opcion('--env') || opcion('--environment') || 'development';
+    const riskLevel = opcion('--riskLevel') || opcion('--risk-level');
+    const scopeOpt = opcion('--scope');
+    const scope = scopeOpt ? scopeOpt.split(',').map((s) => s.trim()) : undefined;
+    const rationale = opcion('--rationale');
+
+    try {
+      const res = motor.createRiskRequest(payload, {
+        environment: env,
+        riskLevel,
+        scope,
+        rationale,
+      });
+      console.log(JSON.stringify(res, null, 2));
+      process.exit(2);
+    } catch (e) {
+      console.error(JSON.stringify({ status: 'DENIED', reason: 'REQUEST_RISK_FAILED', message: e.message }, null, 2));
+      process.exit(1);
+    }
+  }
+
   if (comando === 'accept-risk') {
     const hasInteractiveTTY = Boolean(process.stdin && process.stdin.isTTY && process.stdout && process.stdout.isTTY);
     if (!hasInteractiveTTY && !args.includes('--test-headless')) {
@@ -1834,16 +2082,31 @@ function main() {
       }, null, 2));
       process.exit(1);
     }
-    const id = opcion('--id');
-    const operator = opcion('--operator');
-    const rationale = opcion('--rationale');
-    const env = opcion('--env') || opcion('--environment') || 'development';
+    const reqFile = opcion('--request') || opcion('--ticket');
+    let requestObj = null;
+    if (reqFile && fs.existsSync(reqFile)) {
+      try {
+        requestObj = JSON.parse(fs.readFileSync(reqFile, 'utf8'));
+      } catch (err) {
+        console.error(JSON.stringify({ status: 'DENIED', reason: 'INVALID_REQUEST_FILE', message: err.message }, null, 2));
+        process.exit(1);
+      }
+    }
+
+    const id = opcion('--id') || (requestObj && requestObj.premortemId);
+    const operator = opcion('--operator') || opcion('--human');
+    const rationale = opcion('--rationale') || (requestObj && requestObj.rationale);
+    const env = opcion('--env') || opcion('--environment') || (requestObj && requestObj.environment) || 'development';
     const ttl = opcion('--ttl') ? parseFloat(opcion('--ttl')) : 24;
     const keyFile = opcion('--key') || opcion('--private-key');
     const proposalFile = opcion('--proposal') || opcion('--file');
     const digestOpt = opcion('--digest');
+    const riskLevel = opcion('--riskLevel') || opcion('--risk-level') || (requestObj && requestObj.riskLevel);
+    const scope = opcion('--scope') ? opcion('--scope').split(',').map((s) => s.trim()) : (requestObj && requestObj.scope);
+    const commitSha = opcion('--commit') || opcion('--commitSha') || (requestObj && requestObj.commitSha);
+    const requestId = opcion('--requestId') || (requestObj && requestObj.requestId);
 
-    let proposalDigest = digestOpt || null;
+    let proposalDigest = digestOpt || (requestObj && requestObj.proposalDigest) || null;
     let premortemId = id;
 
     if (proposalFile && fs.existsSync(proposalFile)) {
@@ -1874,8 +2137,13 @@ function main() {
 
     try {
       const res = motor.acceptRisk({
+        requestPath: reqFile,
+        requestId,
         premortemId,
         proposalDigest,
+        commitSha,
+        riskLevel,
+        scope,
         operator,
         rationale,
         environment: env,

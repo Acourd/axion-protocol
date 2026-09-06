@@ -4,7 +4,7 @@
 /**
  * Axion Protocol — Standalone Single-File Bundle
  * Versión: 1.3.2 (Zero-Dependency)
- * Compilado: 2026-09-06T09:43:13.630Z
+ * Compilado: 2026-09-06T19:43:29.991Z
  */
 
 const __modules = {};
@@ -262,7 +262,7 @@ function rawLooksDestructive(command) {
   if (isForkBomb) return true;
 
   // 2b. Intercepción de intentos de firma autónoma de riesgo por agentes
-  const isAutonomousRiskSigning = /\b(premortem(\.js)?\s+accept-risk|acceptRisk)\b/i.test(canonical);
+  const isAutonomousRiskSigning = /\b(premortem(\.js)?\s+accept-risk|acceptRisk|human_sign_risk(\.js)?|sign_risk_request(\.js)?)\b/i.test(canonical);
   if (isAutonomousRiskSigning) return true;
 
   // 3. Exposición y fuga de secretos / credenciales
@@ -408,7 +408,7 @@ function classifyCommand(command) {
   }
 
   if (executable === 'node') {
-    if (argsCanonical.some(a => a.includes('accept-risk') || a.includes('acceptrisk'))) {
+    if (argsCanonical.some(a => a.includes('accept-risk') || a.includes('acceptrisk') || a.includes('human_sign_risk') || a.includes('sign_risk_request'))) {
       return { decision: COMMAND_DECISION.DENY, reason: 'AGENT_RISK_SIGNING_FORBIDDEN' };
     }
     return command.args.length === 1 && ['-v', '--version'].includes(argsCanonical[0] || argsLower[0])

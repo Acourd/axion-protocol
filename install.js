@@ -508,6 +508,7 @@ function runInstallation(targetDir) {
     'deep_reasoning.js',
     'fuzzer.js',
     'premortem.js',
+    'human_sign_risk.js',
     'governance_root.js',
     'asymptotic_critic.js',
     'scout_engine.js',

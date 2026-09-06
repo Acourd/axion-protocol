@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:fa6a2ca4-6b57-47d9-b518-093cd7d2ea2d",
+  "serialNumber": "urn:uuid:52438225-bbd5-4fd7-8a9a-63182723a63e",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-09-06T09:43:16.925Z",
+    "timestamp": "2026-09-06T19:43:34.001Z",
     "tools": [
       {
         "vendor": "Axion Protocol",
@@ -245,7 +245,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "048809d086a68d6b326641b5c3f6e39fb5c442b061b50105db4a6d96631c7537"
+          "content": "e2439ca210aecae0228e6b202161fd44864b1b8291c7d921b1e97f1c837a3432"
         }
       ],
       "licenses": [
@@ -258,7 +258,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "23923"
+          "value": "26648"
         }
       ]
     },
@@ -570,7 +570,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "048809d086a68d6b326641b5c3f6e39fb5c442b061b50105db4a6d96631c7537"
+          "content": "e2439ca210aecae0228e6b202161fd44864b1b8291c7d921b1e97f1c837a3432"
         }
       ],
       "licenses": [
@@ -583,7 +583,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "23923"
+          "value": "26648"
         }
       ]
     },
@@ -945,7 +945,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "048809d086a68d6b326641b5c3f6e39fb5c442b061b50105db4a6d96631c7537"
+          "content": "92330f41c42b9856033f7ea4feadf45a32b3ae5ef03ac543383e8ef15e0462dd"
         }
       ],
       "licenses": [
@@ -958,7 +958,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "23923"
+          "value": "24667"
         }
       ]
     },
@@ -1570,7 +1570,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "048809d086a68d6b326641b5c3f6e39fb5c442b061b50105db4a6d96631c7537"
+          "content": "e2439ca210aecae0228e6b202161fd44864b1b8291c7d921b1e97f1c837a3432"
         }
       ],
       "licenses": [
@@ -1583,7 +1583,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "23923"
+          "value": "26648"
         }
       ]
     },
@@ -1595,7 +1595,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "048809d086a68d6b326641b5c3f6e39fb5c442b061b50105db4a6d96631c7537"
+          "content": "e2439ca210aecae0228e6b202161fd44864b1b8291c7d921b1e97f1c837a3432"
         }
       ],
       "licenses": [
@@ -1608,7 +1608,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "23923"
+          "value": "26648"
         }
       ]
     },
@@ -25770,7 +25770,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "d393fe0ecd54efa8eae3272fdb8b7ca8a70fc64cb123ef6f5434bd895e02be5c"
+          "content": "a351f703092c3d2eaf14b8ba735326204a4dc39bbcbc9186d019d0b63566178b"
         }
       ],
       "licenses": [
@@ -25783,7 +25783,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "27325"
+          "value": "27351"
         }
       ]
     },
@@ -27889,6 +27889,31 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/human_sign_risk.js",
+      "name": "tools/human_sign_risk.js",
+      "version": "1.3.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4e8714fc01857715d084cef04ff243a00b7af7e1329fcb262dc52006c3c53706"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "9047"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/humanizer_engine.js",
       "name": "tools/humanizer_engine.js",
       "version": "1.3.2",
@@ -28595,7 +28620,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "3354ce58473ef3cf511dc1cddd7d56187fe059ffa123d8e259e2e0e88fbca5ee"
+          "content": "840894b82b4062df4ade4dfffa9846ffefe0d0124ff766721c3f9ac0ca643178"
         }
       ],
       "licenses": [
@@ -28608,7 +28633,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "83267"
+          "value": "95168"
         }
       ]
     },
@@ -29420,7 +29445,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "3f9d0149792c1c024f15ebff504ae80f68183e0e374aa7b2873979666a825832"
+          "content": "54d790bc3f5f896a66846ac498e9ce33687a57295245297dd6e67c9398e17030"
         }
       ],
       "licenses": [
@@ -29433,7 +29458,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "15195"
+          "value": "15311"
         }
       ]
     },
