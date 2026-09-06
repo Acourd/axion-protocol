@@ -391,10 +391,12 @@ try {
 
   // 6a. AGY genera la solicitud CSR (risk-request) y se detiene con exit 2 (REQUIERE_DECISIÓN_HUMANA)
   const csrRequest = engine.createRiskRequest(csrProposal, {
-    commitSha: initialCommitSha,
+    baseCommitSha: initialCommitSha,
     environment: 'development',
     riskLevel: 'HIGH',
     scope: ['tools/schema_migrator.js'],
+    allowedAction: 'shadow migration only',
+    prohibitedActions: ['production write', 'schema deletion'],
     rationale: 'Excepcion solicitada formalmente para validar la migracion shadow de esquema en staging/dev.'
   });
 
@@ -404,22 +406,23 @@ try {
   assert.strictEqual(fs.existsSync(csrRequest.requestPath), true);
   const persistedReq = JSON.parse(fs.readFileSync(csrRequest.requestPath, 'utf8'));
   assert.strictEqual(persistedReq.proposalDigest, csrRequest.proposalDigest);
-  assert.strictEqual(persistedReq.commitSha, initialCommitSha);
+  assert.strictEqual(persistedReq.baseCommitSha, initialCommitSha);
+  assert.strictEqual(persistedReq.allowedAction, 'shadow migration only');
   console.log('✓ 6a: AGY genera solicitud CSR (risk-request) y concluye con exit 2 (REQUIERE_DECISIÓN_HUMANA)');
 
-  // 6b. Preflight bloquea a AGY si intenta invocar la herramienta interactiva de firma
+  // 6b. Preflight bloquea a AGY si intenta invocar comandos de firma autónoma
   const agentSignAttempt = classifyCommand({
     executable: 'node',
-    args: ['tools/human_sign_risk.js', '--request', csrRequest.requestPath],
+    args: ['tools/premortem.js', 'accept-risk', '--id', csrRequest.premortemId],
     cwd: sandbox,
     shell: false,
   });
   assert.strictEqual(agentSignAttempt.decision, COMMAND_DECISION.DENY);
   assert.strictEqual(agentSignAttempt.reason, 'AGENT_RISK_SIGNING_FORBIDDEN');
 
-  const agentSignAttemptRaw = classifyCommand('node tools/human_sign_risk.js --request ' + csrRequest.requestPath);
+  const agentSignAttemptRaw = classifyCommand('node tools/premortem.js accept-risk --id ' + csrRequest.premortemId);
   assert.strictEqual(agentSignAttemptRaw.decision, COMMAND_DECISION.DENY);
-  console.log('✓ 6b: Preflight intercepta e impide que AGY invoque human_sign_risk (AGENT_RISK_SIGNING_FORBIDDEN)');
+  console.log('✓ 6b: Preflight intercepta e impide que AGY invoque accept-risk (AGENT_RISK_SIGNING_FORBIDDEN)');
 
   // 6c. El operador humano firma la solicitud CSR fuera de banda usando su clave privada externa
   const humanSignResult = engine.acceptRisk({
@@ -435,14 +438,16 @@ try {
 
   assert.strictEqual(humanSignResult.record.requestId, csrRequest.requestId);
   assert.strictEqual(humanSignResult.record.proposalDigest, csrRequest.proposalDigest);
-  assert.strictEqual(humanSignResult.record.commitSha, initialCommitSha);
+  assert.strictEqual(humanSignResult.record.baseCommitSha, initialCommitSha);
   assert.strictEqual(humanSignResult.record.riskLevel, 'HIGH');
+  assert.strictEqual(humanSignResult.record.allowedAction, 'shadow migration only');
+  assert.deepStrictEqual(humanSignResult.record.prohibitedActions, ['production write', 'schema deletion']);
   assert.deepStrictEqual(humanSignResult.record.scope, ['tools/schema_migrator.js']);
-  console.log('✓ 6c: Operador humano autoriza y firma la solicitud CSR vinculando digest, commitSha, entorno y scope');
+  console.log('✓ 6c: Operador humano autoriza y firma la solicitud CSR vinculando digest, baseCommitSha, entorno y scope');
 
   // 6d. Evaluación legítima con estado de código correspondiente: APROBADO exit 0
   const evalLegit = engine.evaluateAssessment(csrProposal, {
-    commitSha: initialCommitSha,
+    baseCommitSha: initialCommitSha,
     environment: 'development'
   });
   assert.strictEqual(evalLegit.status, 'APPROVED');
@@ -450,20 +455,20 @@ try {
   assert.strictEqual(evalLegit.exitCode, 0);
   console.log('✓ 6d: Evaluacion legitima de pre-mortem con aceptacion CSR validada exitosamente (exit 0)');
 
-  // 6e. Anti-mutación de código post-aprobación: Modificación de commitSha rechazada fail-closed
+  // 6e. Anti-mutación de código previo al plan: Modificación de baseCommitSha rechazada fail-closed
   const mutatedCommitSha = 'f9e8d7c6b5a4f9e8d7c6b5a4f9e8d7c6b5a4f9e8';
   const evalMutatedCommit = engine.evaluateAssessment(csrProposal, {
-    commitSha: mutatedCommitSha,
+    baseCommitSha: mutatedCommitSha,
     environment: 'development'
   });
   assert.strictEqual(evalMutatedCommit.status, 'DENIED');
   assert.strictEqual(evalMutatedCommit.reason, 'COMMIT_SHA_MISMATCH');
   assert.strictEqual(evalMutatedCommit.exitCode, 1);
-  console.log('✓ 6e: Mutacion del commit de codigo tras la aprobacion humana detectada fail-closed (COMMIT_SHA_MISMATCH)');
+  console.log('✓ 6e: Mutacion del baseCommit tras la aprobacion humana detectada fail-closed (COMMIT_SHA_MISMATCH)');
 
   // 6f. Anti-expansión de alcance (scope tampering): Agregar archivos no autorizados rechazado fail-closed
   const evalExpandedScope = engine.evaluateAssessment(csrProposal, {
-    commitSha: initialCommitSha,
+    baseCommitSha: initialCommitSha,
     environment: 'development',
     scope: ['tools/schema_migrator.js', 'tools/secret_vault.js']
   });
@@ -479,13 +484,35 @@ try {
   };
   const evalTampered = engine.evaluateAssessment(proposalTampered, {
     premortemId: csrRequest.premortemId,
-    commitSha: initialCommitSha,
+    baseCommitSha: initialCommitSha,
     environment: 'development'
   });
   assert.strictEqual(evalTampered.status, 'DENIED');
   assert.strictEqual(evalTampered.reason, 'PROPOSAL_DIGEST_MISMATCH');
   assert.strictEqual(evalTampered.exitCode, 1);
   console.log('✓ 6g: Alteracion del contenido o mitigaciones de la propuesta rechazada fail-closed (PROPOSAL_DIGEST_MISMATCH)');
+
+  // 6h. Prohibición explícita: Intento de acción prohibida rechazado fail-closed
+  const evalProhibited = engine.evaluateAssessment(csrProposal, {
+    baseCommitSha: initialCommitSha,
+    environment: 'development',
+    actions: ['production write']
+  });
+  assert.strictEqual(evalProhibited.status, 'DENIED');
+  assert.strictEqual(evalProhibited.reason, 'PROHIBITED_ACTION_DETECTED');
+  assert.strictEqual(evalProhibited.exitCode, 1);
+  console.log('✓ 6h: Accion explicitamente prohibida detectada fail-closed (PROHIBITED_ACTION_DETECTED)');
+
+  // 6i. Desviación de acción permitida: Intento no contemplado rechazado fail-closed
+  const evalUnauthorizedAction = engine.evaluateAssessment(csrProposal, {
+    baseCommitSha: initialCommitSha,
+    environment: 'development',
+    action: 'direct schema purge'
+  });
+  assert.strictEqual(evalUnauthorizedAction.status, 'DENIED');
+  assert.strictEqual(evalUnauthorizedAction.reason, 'UNAUTHORIZED_ACTION');
+  assert.strictEqual(evalUnauthorizedAction.exitCode, 1);
+  console.log('✓ 6i: Desviacion de accion permitida rechazada fail-closed (UNAUTHORIZED_ACTION)');
 
 } finally {
   // Limpieza defensiva de sandboxes

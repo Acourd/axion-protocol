@@ -151,12 +151,16 @@ class PreMortemEngine {
     const proposalDigest = hashCanonical(cleanPayload);
     const premortemId = proposalDigest.slice(0, 16);
     const requestId = texto(options.requestId || `req-${premortemId}-${Date.now()}`);
-    const commitSha = texto(options.commitSha || PreMortemEngine.getCurrentCommitSha(this.rootDir));
+    const baseCommitSha = texto(options.baseCommitSha || options.commitSha || PreMortemEngine.getCurrentCommitSha(this.rootDir));
     const environment = texto(options.environment || options.env || process.env.AXION_ENV || 'development').toLowerCase().trim();
 
     const blast = PreMortemEngine.calculateBlastRadius({ files: payload.files || payload.scope || [] });
     const riskLevel = texto(options.riskLevel || (blast.score >= 70 ? 'CRITICAL' : (blast.score >= 40 ? 'MODERATE' : 'LOW'))).toUpperCase().trim();
     const scope = options.scope || payload.scope || payload.files || ['*'];
+    const allowedAction = texto(options.allowedAction || payload.allowed_action || payload.action || 'all');
+    const prohibitedActions = Array.isArray(options.prohibitedActions) ? options.prohibitedActions : (Array.isArray(payload.prohibited_actions) ? payload.prohibited_actions : []);
+    const mitigationsHash = hashCanonical(payload.mandatory_mitigations || []);
+    const scopeHash = hashCanonical(payload.scope || payload.files || []);
     const rationale = texto(options.rationale || payload.risk_rationale || payload.rationale || 'Solicitud formal de excepción CSR para mitigación de riesgos derivados en pre-mortem.');
 
     const requestRecord = {
@@ -164,10 +168,15 @@ class PreMortemEngine {
       requestId,
       premortemId,
       proposalDigest,
-      commitSha,
+      baseCommitSha,
+      commitSha: baseCommitSha,
       environment,
       riskLevel,
       scope,
+      allowedAction,
+      prohibitedActions,
+      scopeHash,
+      mitigationsHash,
       rationale,
       issuedAt: (options.now ? new Date(options.now) : new Date()).toISOString(),
       status: 'PENDING_HUMAN_APPROVAL',
@@ -190,10 +199,13 @@ class PreMortemEngine {
       requestId,
       premortemId,
       proposalDigest,
-      commitSha,
+      baseCommitSha,
+      commitSha: baseCommitSha,
       environment,
       riskLevel,
       scope,
+      allowedAction,
+      prohibitedActions,
       requestPath,
       requestRecord,
     };
@@ -493,9 +505,12 @@ class PreMortemEngine {
     }
 
     const requestId = texto(options.requestId || (reqObj && reqObj.requestId) || `req-${cleanId}`);
-    const commitSha = texto(options.commitSha || (reqObj && reqObj.commitSha) || PreMortemEngine.getCurrentCommitSha(this.rootDir));
+    const baseCommitSha = texto(options.baseCommitSha || options.commitSha || (reqObj && (reqObj.baseCommitSha || reqObj.commitSha)) || PreMortemEngine.getCurrentCommitSha(this.rootDir));
+    const commitSha = baseCommitSha;
     const riskLevelVal = texto(options.riskLevel || (reqObj && reqObj.riskLevel) || (options.payload && options.payload.risk) || 'MODERATE').toUpperCase().trim();
     const scopeVal = options.scope || (reqObj && reqObj.scope) || (options.payload && (options.payload.scope || options.payload.files)) || ['*'];
+    const allowedAction = texto(options.allowedAction || (reqObj && reqObj.allowedAction) || 'all');
+    const prohibitedActions = Array.isArray(options.prohibitedActions) ? options.prohibitedActions : (Array.isArray(reqObj && reqObj.prohibitedActions) ? reqObj.prohibitedActions : []);
 
     const operator = texto(options.operator);
     if (operator.length < 3) {
@@ -643,11 +658,14 @@ class PreMortemEngine {
       requestId,
       premortemId: cleanId,
       proposalDigest,
-      commitSha,
+      baseCommitSha,
+      commitSha: baseCommitSha,
       environment,
       allowedEnvironments,
       riskLevel: riskLevelVal,
       scope: scopeVal,
+      allowedAction,
+      prohibitedActions,
       scopeHash,
       mitigationsHash,
       operator,
@@ -692,6 +710,11 @@ class PreMortemEngine {
       fs.closeSync(fd);
     }
     fs.renameSync(tmpFile, targetFile);
+    try {
+      fs.chmodSync(targetFile, 0o444);
+    } catch (chmodErr) {
+      // Ignorar si el sistema de archivos no implementa chmod
+    }
 
     // Verificación post-escritura inmediata
     const stat = fs.lstatSync(targetFile);
@@ -1262,17 +1285,49 @@ class PreMortemEngine {
       };
     }
 
-    // 8. Vinculación estricta al commitSha del árbol de trabajo (anti-mutación tras aprobación)
-    const currentCommit = options.commitSha || PreMortemEngine.getCurrentCommitSha(this.rootDir);
-    if (rec.commitSha && !options.skipCommitCheck && currentCommit !== '0000000000000000000000000000000000000000' && rec.commitSha !== currentCommit) {
+    // 8. Vinculación estricta al baseCommitSha del árbol de trabajo (anti-mutación previa al plan)
+    const baseCommit = rec.baseCommitSha || rec.commitSha;
+    const currentCommit = options.baseCommitSha || options.commitSha || PreMortemEngine.getCurrentCommitSha(this.rootDir);
+    if (baseCommit && !options.skipCommitCheck && currentCommit !== '0000000000000000000000000000000000000000' && baseCommit !== currentCommit) {
       return {
         valid: false,
         reason: 'COMMIT_SHA_MISMATCH',
         expected: currentCommit,
-        found: rec.commitSha,
-        message: `La aceptación humana fue firmada para el commit ${rec.commitSha}, pero el código actual está en ${currentCommit}. La excepción queda invalidada fail-closed tras nuevas mutaciones.`,
+        found: baseCommit,
+        message: `La aceptación humana fue firmada para el baseCommit ${baseCommit}, pero el código base actual está en ${currentCommit}. Nuevas mutaciones antes de implementar invalidan la excepción fail-closed.`,
         record: rec,
       };
+    }
+
+    // 8b. Verificación de acciones prohibidas (prohibitedActions)
+    if (Array.isArray(rec.prohibitedActions) && rec.prohibitedActions.length > 0) {
+      const requestedActions = options.actions || (options.payload && (options.payload.actions || options.payload.requested_actions)) || [];
+      const reqList = Array.isArray(requestedActions) ? requestedActions : [requestedActions];
+      const prohibitedViolated = reqList.filter((a) => rec.prohibitedActions.includes(a));
+      if (prohibitedViolated.length > 0) {
+        return {
+          valid: false,
+          reason: 'PROHIBITED_ACTION_DETECTED',
+          prohibited: prohibitedViolated,
+          message: `La propuesta incluye acciones explícitamente prohibidas por la autorización humana: [ ${prohibitedViolated.join(', ')} ].`,
+          record: rec,
+        };
+      }
+    }
+
+    // 8c. Verificación de acción permitida (allowedAction)
+    if (rec.allowedAction && rec.allowedAction !== 'all' && !options.skipActionCheck) {
+      const currentAction = options.action || (options.payload && (options.payload.action || options.payload.requested_action));
+      if (currentAction && !currentAction.toLowerCase().includes(rec.allowedAction.toLowerCase())) {
+        return {
+          valid: false,
+          reason: 'UNAUTHORIZED_ACTION',
+          expected: rec.allowedAction,
+          found: currentAction,
+          message: `La acción solicitada "${currentAction}" excede la acción permitida en la autorización ("${rec.allowedAction}").`,
+          record: rec,
+        };
+      }
     }
 
     // 9. Vinculación estricta al alcance de archivos (scope)
@@ -1559,7 +1614,27 @@ class PreMortemEngine {
           reason: 'COMMIT_SHA_MISMATCH',
           exitCode: 1,
           errors: [
-            `La aceptación humana de riesgo fue emitida para el commit ${authAcceptance.found}, pero el estado actual del código está en ${authAcceptance.expected}. Cualquier mutación posterior a la aprobación invalida la autorización fail-closed.`,
+            `La aceptación humana de riesgo fue emitida para el baseCommit ${authAcceptance.found}, pero el estado actual del código base está en ${authAcceptance.expected}. Cualquier mutación previa al plan invalida la autorización fail-closed.`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'PROHIBITED_ACTION_DETECTED') {
+        return {
+          status: 'DENIED',
+          reason: 'PROHIBITED_ACTION_DETECTED',
+          exitCode: 1,
+          errors: [
+            `La propuesta contiene acciones explícitamente prohibidas por la autorización humana: [ ${authAcceptance.prohibited.join(', ')} ].`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'UNAUTHORIZED_ACTION') {
+        return {
+          status: 'DENIED',
+          reason: 'UNAUTHORIZED_ACTION',
+          exitCode: 1,
+          errors: [
+            `La propuesta excede la acción específica autorizada por el humano (${authAcceptance.message}).`,
           ],
         };
       }

@@ -135,7 +135,7 @@ Un `risk-request` no necesita ser inmutable ni secreto; puede ser formulado por 
 ### B. Revisión y Firma Humana Fuera de Banda (`human_sign_risk.js`)
 El operador humano ejecuta la herramienta interactiva bajo su propia identidad, con clave privada fuera del alcance del agente:
 ```bash
-node tools/human_sign_risk.js \
+node ~/.axion/bin/human_sign_risk.js \
   --request .axion/state/risk-requests/risk-request-<id>.json \
   --key ~/.axion/keys/human/operator_ed25519.key \
   --operator "Lead Architect (@adrian)" \
@@ -149,10 +149,13 @@ La aceptación firmada sella de forma inmutable la relación exacta entre lo rev
 {
   "requestId": "identificador único de la solicitud",
   "proposalDigest": "sha256 completo de 64 caracteres",
-  "commitSha": "commit exacto o árbol de trabajo declarado al autorizar",
+  "baseCommitSha": "commit base del árbol de trabajo sobre el cual se aprueba el plan",
   "environment": "development | staging",
   "riskLevel": "nivel autorizado (LOW | MODERATE | HIGH | CRITICAL)",
   "scope": ["archivos o componentes autorizados"],
+  "allowedAction": "acción específica autorizada (ej. shadow migration only)",
+  "prohibitedActions": ["acciones explícitamente prohibidas (ej. production write)"],
+  "mitigationsHash": "sha256 canónico de las mitigaciones comprometidas",
   "issuedAt": "fecha ISO de emisión",
   "expiresAt": "fecha ISO de caducidad",
   "authorityKeyId": "clave humana autorizada en policies/authorities.json"
