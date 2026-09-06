@@ -128,12 +128,12 @@ jobs:
           cd "$CONSUMER_DIR"
           npm init -y > /dev/null
           npm install "$TARBALL"
-          npx axion init
+          npx --no-install axion init
 
       - name: El proyecto instalado goza de salud
         shell: bash
         working-directory: ${{ runner.temp }}/axion-consumer
-        run: npx axion check
+        run: npx --no-install axion check
 
       - name: Los comandos llegaron a las dos superficies que los agentes leen
         shell: bash
@@ -155,8 +155,20 @@ jobs:
         working-directory: ${{ runner.temp }}/axion-consumer
         run: |
           set -e
-          npx axion preflight "git status"
-          echo "OK: preflight operativo en el consumidor"
+          echo "Demostrando versión y ruta del binario instalado:"
+          npx --no-install axion --version
+          ls -la node_modules/.bin/axion*
+
+          # 1. Comando estructurado permitido con shell:false -> ALLOW (exit code 0)
+          npx --no-install axion preflight --json '{"executable":"git","args":["status"],"cwd":".","shell":false}'
+
+          # 2. Cadena de shell cruda no autorizada -> NEEDS_HUMAN_REVIEW (exit code 2)
+          set +e
+          npx --no-install axion preflight "git status"
+          RC=$?
+          set -e
+          test "$RC" -eq 2 || { echo "FALLO: esperaba exit code 2 para shell crudo, recibido $RC"; exit 1; }
+          echo "OK: preflight operativo en el consumidor (ALLOW exit 0 en estructurado, NEEDS_HUMAN_REVIEW exit 2 en shell crudo)"
 
       - name: Checkpoint y rollback sobre archivos reales
         shell: bash
@@ -164,9 +176,9 @@ jobs:
         run: |
           set -e
           echo "v1" > app.js
-          npx axion checkpoint create ci
+          npx --no-install axion checkpoint create ci
           echo "roto" > app.js
-          npx axion rollback latest
+          npx --no-install axion rollback latest
           test "$(cat app.js)" = "v1"
           echo "OK: rollback verificado en el producto instalado"
 
