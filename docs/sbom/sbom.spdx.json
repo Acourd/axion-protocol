@@ -3,9 +3,9 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "axion-protocol",
-  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/1788685189601",
+  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/1788685763386",
   "creationInfo": {
-    "created": "2026-09-06T08:59:49.601Z",
+    "created": "2026-09-06T09:09:23.386Z",
     "creators": [
       "Tool: SovereignSBOMGenerator-2.0.0",
       "Organization: Axion Protocol"
@@ -141,7 +141,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "cdd12cc4b511ee35365a5b2301dd381f52e1679048bf2cde2dadee8a8983774c"
+          "checksumValue": "6ec02bdc006c5c5b85cb8ed40fd37230286e4fc19e081c3d3f143487db54d380"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -323,7 +323,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "cdd12cc4b511ee35365a5b2301dd381f52e1679048bf2cde2dadee8a8983774c"
+          "checksumValue": "6ec02bdc006c5c5b85cb8ed40fd37230286e4fc19e081c3d3f143487db54d380"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -533,7 +533,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "cdd12cc4b511ee35365a5b2301dd381f52e1679048bf2cde2dadee8a8983774c"
+          "checksumValue": "6ec02bdc006c5c5b85cb8ed40fd37230286e4fc19e081c3d3f143487db54d380"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -883,7 +883,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "cdd12cc4b511ee35365a5b2301dd381f52e1679048bf2cde2dadee8a8983774c"
+          "checksumValue": "6ec02bdc006c5c5b85cb8ed40fd37230286e4fc19e081c3d3f143487db54d380"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -897,7 +897,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "cdd12cc4b511ee35365a5b2301dd381f52e1679048bf2cde2dadee8a8983774c"
+          "checksumValue": "6ec02bdc006c5c5b85cb8ed40fd37230286e4fc19e081c3d3f143487db54d380"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -16003,7 +16003,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "550aaaabfdeb72b6544ba8a3d79415bbd86ade952b5ca32e23eb720edac9f42e"
+          "checksumValue": "8434ed58283aa08ae74a6879c7e65aed271c5aeb9c0f937bb4663c977e77e44a"
         }
       ],
       "licenseConcluded": "Apache-2.0",

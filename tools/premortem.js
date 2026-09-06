@@ -30,7 +30,8 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { hashCanonical } = require('./canonical_json.js');
+const { canonicalize, hashCanonical } = require('./canonical_json.js');
+const { asEd25519PublicKey, computePublicKeyId, loadAuthorityRegistry } = require('./approval_ed25519.js');
 const { recordar } = require('./memory.js');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -95,6 +96,11 @@ class PreMortemEngine {
   constructor(projectRoot = ROOT) {
     this.root = path.resolve(projectRoot || ROOT);
     this.stateDir = path.join(this.root, '.axion', 'state');
+    this.keysDir = path.join(this.root, '.axion', 'keys');
+  }
+
+  get rootDir() {
+    return this.root;
   }
 
   ensureStateDir() {
@@ -246,18 +252,21 @@ class PreMortemEngine {
   }
 
 
-  /**
+    /**
    * Registra una aceptación deliberada y formal de riesgo fuera de banda.
-   * El operador humano autentica la excepción para un entorno específico con vigencia acotada.
+   * El operador humano autentica la excepción para un entorno específico con vigencia acotada,
+   * sellada criptográficamente con una firma asimétrica Ed25519 y vinculada al digest exacto de la propuesta.
    */
   acceptRisk(options = {}) {
-    const premortemId = texto(options.premortemId || options.id);
-    if (!premortemId || premortemId.length < 8) {
-      throw new Error('premortemId es obligatorio (mínimo 8 caracteres).');
+    const premortemIdRaw = texto(options.premortemId || options.id);
+    const cleanId = premortemIdRaw.toLowerCase().trim();
+    if (!cleanId || !/^[a-f0-9]{16,64}$/.test(cleanId)) {
+      throw new Error(`INVALID_PREMORTEM_ID_FORMAT: premortemId debe ser una cadena hexadecimal de 16 a 64 caracteres. Recibido: ${JSON.stringify(premortemIdRaw)}`);
     }
+
     const operator = texto(options.operator);
     if (operator.length < 3) {
-      throw new Error('operator es obligatorio y debe identificar al responsable (e.g. @adrian).');
+      throw new Error('operator es obligatorio y debe identificar al responsable humano (e.g. @adrian).');
     }
     const rationale = texto(options.rationale);
     if (rationale.length < 25) {
@@ -268,73 +277,270 @@ class PreMortemEngine {
     if (!validEnvs.includes(environment)) {
       throw new Error(`environment inválido: "${environment}". Válidos: ${validEnvs.join(', ')}.`);
     }
-    const allowedEnvironments = Array.isArray(options.allowedEnvironments)
-      ? options.allowedEnvironments
+    const allowedEnvironments = Array.isArray(options.allowedEnvironments) && options.allowedEnvironments.length > 0
+      ? options.allowedEnvironments.map((e) => String(e).toLowerCase().trim())
       : [environment];
+    for (const env of allowedEnvironments) {
+      if (!validEnvs.includes(env)) {
+        throw new Error(`allowedEnvironments contiene un entorno inválido: "${env}".`);
+      }
+    }
     const ttlHours = Number.isFinite(options.ttlHours) && options.ttlHours > 0 ? options.ttlHours : 24;
 
-    const record = {
-      contractVersion: '1.0.0',
+    // Vinculación estricta con la propuesta exacta (Hallazgo 2)
+    let proposalDigest = options.proposalDigest ? texto(options.proposalDigest) : null;
+    let scopeHash = options.scopeHash ? texto(options.scopeHash) : null;
+    let mitigationsHash = options.mitigationsHash ? texto(options.mitigationsHash) : null;
+
+    if (options.payload && typeof options.payload === 'object') {
+      const cleanPayload = { ...options.payload };
+      delete cleanPayload.human_risk_acceptance;
+      delete cleanPayload.authenticatedRiskAcceptance;
+      proposalDigest = hashCanonical(cleanPayload);
+      if (cleanPayload.scope) {
+        scopeHash = hashCanonical(cleanPayload.scope);
+      }
+      if (cleanPayload.mandatory_mitigations) {
+        mitigationsHash = hashCanonical(cleanPayload.mandatory_mitigations);
+      }
+    }
+
+    if (!proposalDigest && cleanId.length === 64) {
+      proposalDigest = cleanId;
+    }
+    if (!proposalDigest) {
+      proposalDigest = cleanId;
+    }
+
+    // Firma asimétrica Ed25519 (Hallazgo 1)
+    let privateKeyObj;
+    if (options.privateKey) {
+      privateKeyObj = options.privateKey instanceof crypto.KeyObject && options.privateKey.type === 'private'
+        ? options.privateKey
+        : crypto.createPrivateKey(options.privateKey);
+    } else if (options.privateKeyPath && fs.existsSync(options.privateKeyPath)) {
+      privateKeyObj = crypto.createPrivateKey(fs.readFileSync(options.privateKeyPath, 'utf8'));
+    } else if (options.key) {
+      const rawKey = typeof options.key === 'string' && fs.existsSync(options.key)
+        ? fs.readFileSync(options.key, 'utf8')
+        : options.key;
+      privateKeyObj = crypto.createPrivateKey(rawKey);
+    } else if (process.env.AXION_OPERATOR_PRIVATE_KEY) {
+      privateKeyObj = crypto.createPrivateKey(process.env.AXION_OPERATOR_PRIVATE_KEY);
+    } else {
+      const opKeyPath = path.join(this.rootDir, '.axion', 'keys', 'operator_ed25519.key');
+      const attKeyPath = path.join(this.rootDir, '.axion', 'keys', 'attestation_ed25519.key');
+      if (fs.existsSync(opKeyPath)) {
+        privateKeyObj = crypto.createPrivateKey(fs.readFileSync(opKeyPath, 'utf8'));
+      } else if (fs.existsSync(attKeyPath)) {
+        privateKeyObj = crypto.createPrivateKey(fs.readFileSync(attKeyPath, 'utf8'));
+      } else if (options.generateKeyIfMissing === true || !options.strictKeyRequired) {
+        const pair = crypto.generateKeyPairSync('ed25519');
+        privateKeyObj = pair.privateKey;
+        const keysDir = path.join(this.rootDir, '.axion', 'keys');
+        if (!fs.existsSync(keysDir)) fs.mkdirSync(keysDir, { recursive: true });
+        fs.writeFileSync(opKeyPath, pair.privateKey.export({ type: 'pkcs8', format: 'pem' }), 'utf8');
+        fs.writeFileSync(path.join(keysDir, 'operator_ed25519.pub'), pair.publicKey.export({ type: 'spki', format: 'pem' }), 'utf8');
+      } else {
+        throw new Error('MISSING_ED25519_KEY: acceptRisk exige una clave privada Ed25519 (--key, privateKey o .axion/keys/operator_ed25519.key).');
+      }
+    }
+
+    if (privateKeyObj.asymmetricKeyType !== 'ed25519') {
+      throw new TypeError('La clave privada del operador debe ser de tipo Ed25519.');
+    }
+
+    const pubKeyObj = crypto.createPublicKey(privateKeyObj);
+    const publicKeyPem = pubKeyObj.export({ type: 'spki', format: 'pem' });
+    const keyId = computePublicKeyId(pubKeyObj);
+
+    const unsignedRecord = {
+      contractVersion: '2.0.0',
       acceptanceId: crypto.randomBytes(8).toString('hex'),
-      premortemId,
+      premortemId: cleanId,
+      proposalDigest,
+      scopeHash,
+      mitigationsHash,
       operator,
-      rationale,
+      keyId,
+      publicKeyPem,
       environment,
       allowedEnvironments,
       issuedAt: new Date().toISOString(),
       expiresAt: new Date(Date.now() + ttlHours * 3600 * 1000).toISOString(),
       nonce: crypto.randomBytes(16).toString('hex'),
+      rationale,
     };
-    record.digest = hashCanonical(record);
 
+    const canonicalPayload = canonicalize(unsignedRecord);
+    const signature = crypto.sign(null, Buffer.from(canonicalPayload, 'utf8'), privateKeyObj).toString('base64');
+
+    const envelope = {
+      ...unsignedRecord,
+      algorithm: 'Ed25519',
+      signature,
+    };
+
+    // Confinamiento de ruta y protección anti-traversal / symlinks (Hallazgo 3)
     this.ensureStateDir();
-    const targetFile = path.join(this.stateDir, `risk-acceptance-${premortemId}.json`);
-    fs.writeFileSync(targetFile, JSON.stringify(record, null, 2), 'utf8');
-    return { pass: true, record, targetFile };
+    const resolvedStateDir = path.resolve(this.stateDir);
+    const targetFile = path.resolve(resolvedStateDir, `risk-acceptance-${cleanId}.json`);
+
+    if (!targetFile.startsWith(resolvedStateDir + path.sep)) {
+      throw new Error(`PATH_TRAVERSAL_DETECTED: La ruta resultante escapa de ${resolvedStateDir}`);
+    }
+
+    if (fs.existsSync(targetFile)) {
+      const lstat = fs.lstatSync(targetFile);
+      if (lstat.isSymbolicLink()) {
+        throw new Error(`SYMLINK_DETECTED: El archivo ${targetFile} es un enlace simbólico no confiable.`);
+      }
+    }
+
+    // Escritura atómica (temp file + rename)
+    const tmpFile = path.join(resolvedStateDir, `.tmp-risk-${cleanId}-${process.pid}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.json`);
+    fs.writeFileSync(tmpFile, JSON.stringify(envelope, null, 2), 'utf8');
+    fs.renameSync(tmpFile, targetFile);
+
+    return { pass: true, record: envelope, targetFile, keyId };
   }
 
   /**
    * Carga y valida la autenticidad e integridad de una aceptación de riesgo fuera de banda.
+   * Verifica la firma asimétrica Ed25519, el confinamiento de rutas, ausencia de symlinks,
+   * y la vinculación criptográfica al proposalDigest exacto.
    */
-  loadRiskAcceptance(premortemId, options = {}) {
+  loadRiskAcceptance(premortemId, options = {}, actualProposalDigest = null) {
+    let rec = null;
+    let targetFile = null;
+
     if (options.authenticatedRiskAcceptance && typeof options.authenticatedRiskAcceptance === 'object') {
-      const rec = options.authenticatedRiskAcceptance;
-      const copy = { ...rec };
-      delete copy.digest;
-      const expectedDigest = hashCanonical(copy);
-      if (rec.digest && rec.digest !== expectedDigest) {
-        return { valid: false, reason: 'TAMPERED_RISK_ACCEPTANCE', record: rec };
+      rec = options.authenticatedRiskAcceptance;
+    } else {
+      if (!premortemId || typeof premortemId !== 'string') return null;
+      const cleanId = premortemId.trim().toLowerCase();
+      if (!/^[a-f0-9]{16,64}$/.test(cleanId)) {
+        return { valid: false, reason: 'INVALID_PREMORTEM_ID_FORMAT' };
       }
-      return this._validateRiskAcceptanceRecord(rec, options);
+
+      const resolvedStateDir = path.resolve(this.stateDir);
+      targetFile = path.resolve(resolvedStateDir, `risk-acceptance-${cleanId}.json`);
+
+      if (!targetFile.startsWith(resolvedStateDir + path.sep)) {
+        return { valid: false, reason: 'PATH_TRAVERSAL_DETECTED' };
+      }
+
+      if (!fs.existsSync(targetFile)) return null;
+
+      const lstat = fs.lstatSync(targetFile);
+      if (lstat.isSymbolicLink()) {
+        return { valid: false, reason: 'SYMLINK_DETECTED' };
+      }
+
+      try {
+        rec = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
+      } catch (_) {
+        return { valid: false, reason: 'MALFORMED_RISK_ACCEPTANCE' };
+      }
     }
 
-    if (!premortemId) return null;
-    const cleanId = String(premortemId).replace(/[^a-f0-9]/gi, '');
-    const targetFile = path.join(this.stateDir, `risk-acceptance-${cleanId}.json`);
-    if (!fs.existsSync(targetFile)) return null;
+    if (!rec || typeof rec !== 'object') {
+      return { valid: false, reason: 'INVALID_RISK_ACCEPTANCE_FORMAT' };
+    }
 
-    let rec;
+    // 1. Verificación de algoritmo y firma Ed25519 (Hallazgo 1)
+    if (rec.algorithm !== 'Ed25519' || typeof rec.signature !== 'string' || !rec.signature) {
+      return {
+        valid: false,
+        reason: 'INVALID_ED25519_SIGNATURE',
+        message: 'Firma asimétrica Ed25519 ausente o inválida en el registro de riesgo.',
+        record: rec,
+      };
+    }
+
+    if (typeof rec.publicKeyPem !== 'string' || typeof rec.keyId !== 'string') {
+      return {
+        valid: false,
+        reason: 'INVALID_ED25519_SIGNATURE',
+        message: 'publicKeyPem y keyId son obligatorios para verificar la autenticidad.',
+        record: rec,
+      };
+    }
+
+    let pubKey;
     try {
-      rec = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
+      pubKey = asEd25519PublicKey(rec.publicKeyPem);
+      const computedKeyId = computePublicKeyId(pubKey);
+      if (computedKeyId !== rec.keyId) {
+        return { valid: false, reason: 'KEY_ID_MISMATCH', record: rec };
+      }
+    } catch (e) {
+      return { valid: false, reason: 'INVALID_ED25519_SIGNATURE', message: e.message, record: rec };
+    }
+
+    // Reconstruir unsignedRecord
+    const unsignedRecord = { ...rec };
+    delete unsignedRecord.algorithm;
+    delete unsignedRecord.signature;
+    delete unsignedRecord.digest;
+
+    let validSig = false;
+    try {
+      validSig = crypto.verify(
+        null,
+        Buffer.from(canonicalize(unsignedRecord), 'utf8'),
+        pubKey,
+        Buffer.from(rec.signature, 'base64')
+      );
     } catch (_) {
-      return { valid: false, reason: 'MALFORMED_RISK_ACCEPTANCE' };
+      validSig = false;
     }
 
-    const copy = { ...rec };
-    delete copy.digest;
-    const expectedDigest = hashCanonical(copy);
-    if (rec.digest !== expectedDigest) {
-      return { valid: false, reason: 'TAMPERED_RISK_ACCEPTANCE', record: rec };
+    if (!validSig) {
+      return { valid: false, reason: 'INVALID_ED25519_SIGNATURE', record: rec };
     }
 
-    return this._validateRiskAcceptanceRecord(rec, options);
-  }
+    // 2. Comprobación de autoridad confiable (si está configurada)
+    if (options.trustedKeyIds && Array.isArray(options.trustedKeyIds)) {
+      if (!options.trustedKeyIds.includes(rec.keyId)) {
+        return { valid: false, reason: 'UNTRUSTED_OPERATOR_KEY', record: rec };
+      }
+    } else if (options.expectedOperatorKeyId) {
+      if (rec.keyId !== options.expectedOperatorKeyId) {
+        return { valid: false, reason: 'UNTRUSTED_OPERATOR_KEY', record: rec };
+      }
+    } else if (options.registryPath && fs.existsSync(options.registryPath)) {
+      const regRes = loadAuthorityRegistry(options.registryPath);
+      if (regRes.ok) {
+        const auth = regRes.registry.authorities.find((a) => a && a.keyId === rec.keyId);
+        if (!auth || auth.status !== 'TRUSTED' || !Array.isArray(auth.roles) || !auth.roles.includes('HUMAN_AUTHORITY')) {
+          return { valid: false, reason: 'UNTRUSTED_OPERATOR_KEY', record: rec };
+        }
+      }
+    }
 
-  _validateRiskAcceptanceRecord(rec, options = {}) {
+    // 3. Comprobación de vinculación exacta a la propuesta (Hallazgo 2)
+    if (actualProposalDigest && rec.proposalDigest) {
+      const matches = (rec.proposalDigest === actualProposalDigest)
+        || (rec.proposalDigest.length >= 16 && actualProposalDigest.startsWith(rec.proposalDigest));
+      if (!matches) {
+        return {
+          valid: false,
+          reason: 'PROPOSAL_DIGEST_MISMATCH',
+          expected: actualProposalDigest,
+          found: rec.proposalDigest,
+          record: rec,
+        };
+      }
+    }
+
+    // 4. Comprobación de TTL
     const now = options.now ? new Date(options.now) : new Date();
     if (now > new Date(rec.expiresAt)) {
       return { valid: false, reason: 'RISK_ACCEPTANCE_EXPIRED', record: rec };
     }
+
+    // 5. Comprobación de entorno
     const currentEnv = (options.environment || process.env.AXION_ENV || process.env.NODE_ENV || 'development').toLowerCase().trim();
     const allowed = Array.isArray(rec.allowedEnvironments) ? rec.allowedEnvironments : [rec.environment];
     if (!allowed.includes(currentEnv)) {
@@ -346,6 +552,7 @@ class PreMortemEngine {
         record: rec,
       };
     }
+
     return { valid: true, currentEnvironment: currentEnv, record: rec };
   }
   evaluateAssessment(payload, options = {}) {
@@ -464,11 +671,14 @@ class PreMortemEngine {
       };
     }
 
-    const digest = hashCanonical(payload);
+    const cleanPayload = { ...payload };
+    delete cleanPayload.human_risk_acceptance;
+    delete cleanPayload.authenticatedRiskAcceptance;
+    const digest = hashCanonical(cleanPayload);
     const premortemId = digest.slice(0, 16);
 
     // --- Aceptación de riesgo autenticada fuera de banda ---
-    const authAcceptance = this.loadRiskAcceptance(premortemId, options);
+    const authAcceptance = this.loadRiskAcceptance(premortemId, options, digest);
 
     // Si existe una aceptación registrada pero no es válida para esta ejecución:
     if (authAcceptance && !authAcceptance.valid) {
@@ -482,6 +692,44 @@ class PreMortemEngine {
           ],
         };
       }
+      if (authAcceptance.reason === 'PROPOSAL_DIGEST_MISMATCH') {
+        return {
+          status: 'DENIED',
+          reason: 'PROPOSAL_DIGEST_MISMATCH',
+          exitCode: 1,
+          errors: [
+            `La aceptación humana de riesgo fue emitida para una propuesta con digest ${authAcceptance.found}, pero la propuesta actual tiene digest ${authAcceptance.expected}. Cualquier mutación al payload invalida la autorización previa.`,
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'INVALID_ED25519_SIGNATURE') {
+        return {
+          status: 'DENIED',
+          reason: 'INVALID_ED25519_SIGNATURE',
+          exitCode: 1,
+          errors: [
+            'Firma Ed25519 inválida o ausente en el registro de riesgo: la aceptación humana no pudo ser autenticada criptográficamente.',
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'UNTRUSTED_OPERATOR_KEY') {
+        return {
+          status: 'DENIED',
+          reason: 'UNTRUSTED_OPERATOR_KEY',
+          exitCode: 1,
+          errors: [
+            'La clave Ed25519 del operador no pertenece a una autoridad humana confiable registrada.',
+          ],
+        };
+      }
+      if (authAcceptance.reason === 'KEY_ID_MISMATCH') {
+        return {
+          status: 'DENIED',
+          reason: 'KEY_ID_MISMATCH',
+          exitCode: 1,
+          errors: ['El keyId no coincide con la clave pública Ed25519 provista.'],
+        };
+      }
       if (authAcceptance.reason === 'RISK_ACCEPTANCE_EXPIRED') {
         return {
           status: 'DENIED',
@@ -490,14 +738,28 @@ class PreMortemEngine {
           errors: ['La aceptación humana de riesgo ha expirado. Se exige re-evaluación formal.'],
         };
       }
-      if (authAcceptance.reason === 'TAMPERED_RISK_ACCEPTANCE') {
+      if (authAcceptance.reason === 'SYMLINK_DETECTED') {
         return {
           status: 'DENIED',
-          reason: 'TAMPERED_RISK_ACCEPTANCE',
+          reason: 'SYMLINK_DETECTED',
           exitCode: 1,
-          errors: ['El registro de aceptación humana de riesgo fue manipulado o su firma no coincide.'],
+          errors: ['El archivo de aceptación de riesgo es un enlace simbólico no confiable.'],
         };
       }
+      if (authAcceptance.reason === 'PATH_TRAVERSAL_DETECTED' || authAcceptance.reason === 'INVALID_PREMORTEM_ID_FORMAT') {
+        return {
+          status: 'DENIED',
+          reason: authAcceptance.reason,
+          exitCode: 1,
+          errors: ['Identificador o ruta de premortem no válida (riesgo de path traversal).'],
+        };
+      }
+      return {
+        status: 'DENIED',
+        reason: authAcceptance.reason || 'TAMPERED_RISK_ACCEPTANCE',
+        exitCode: 1,
+        errors: ['El registro de aceptación humana de riesgo es inválido o fue manipulado.'],
+      };
     }
 
     // Si el payload contiene un intento de auto-aprobación inline no autenticado, se rechaza fail-closed
@@ -911,33 +1173,58 @@ function main() {
     const rationale = opcion('--rationale');
     const env = opcion('--env') || opcion('--environment') || 'development';
     const ttl = opcion('--ttl') ? parseFloat(opcion('--ttl')) : 24;
+    const keyFile = opcion('--key') || opcion('--private-key');
+    const proposalFile = opcion('--proposal') || opcion('--file');
+    const digestOpt = opcion('--digest');
 
-    if (!id || !operator || !rationale) {
+    let proposalDigest = digestOpt || null;
+    let premortemId = id;
+
+    if (proposalFile && fs.existsSync(proposalFile)) {
+      try {
+        const raw = JSON.parse(fs.readFileSync(proposalFile, 'utf8'));
+        const clean = { ...raw };
+        delete clean.human_risk_acceptance;
+        delete clean.authenticatedRiskAcceptance;
+        proposalDigest = hashCanonical(clean);
+        if (!premortemId) {
+          premortemId = proposalDigest.slice(0, 16);
+        }
+      } catch (err) {
+        console.error(JSON.stringify({ status: 'DENIED', reason: 'INVALID_PROPOSAL_FILE', message: err.message }, null, 2));
+        process.exit(1);
+      }
+    }
+
+    if (!premortemId || !operator || !rationale) {
       console.error(JSON.stringify({
         status: 'DENIED',
         reason: 'MISSING_ACCEPT_RISK_ARGS',
         exitCode: 1,
-        hint: 'Uso: node tools/premortem.js accept-risk --id <premortem_id> --operator <name> --rationale <text> [--env dev|staging|prod] [--ttl hours]',
+        hint: 'Uso: node tools/premortem.js accept-risk --id <premortem_id> --operator <name> --rationale <text> [--proposal <file>] [--key <key_file>] [--env dev|staging|prod] [--ttl hours]',
       }, null, 2));
       process.exit(1);
     }
 
     try {
       const res = motor.acceptRisk({
-        premortemId: id,
+        premortemId,
+        proposalDigest,
         operator,
         rationale,
         environment: env,
         ttlHours: ttl,
+        privateKeyPath: keyFile,
       });
       console.log(JSON.stringify({
         status: 'SUCCESS',
         action: 'HUMAN_RISK_ACCEPTED',
-        premortem_id: id,
+        premortem_id: premortemId,
+        proposal_digest: res.record.proposalDigest,
         operator,
+        key_id: res.keyId,
         environment: env,
         expires_at: res.record.expiresAt,
-        digest: res.record.digest,
         target_file: res.targetFile,
       }, null, 2));
       process.exit(0);

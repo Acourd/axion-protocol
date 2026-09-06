@@ -6,6 +6,7 @@ const path = require('path');
 const os = require('os');
 const PreMortemEngine = require('../../tools/premortem.js');
 const { VEREDICTOS } = PreMortemEngine;
+const { asEd25519PublicKey, computePublicKeyId } = require('../../tools/approval_ed25519.js');
 
 console.log('=== AX-F-059 Invariantes Adversariales y Derivación de Veredictos en PreMortem ===\n');
 
@@ -293,6 +294,155 @@ try {
   assert.strictEqual(rDiscovery.exitCode, 2);
   assert.strictEqual(rDiscovery.verdict, 'REQUIERE_DESCUBRIMIENTO');
   console.log('✓ Invariante de REQUIERE_DESCUBRIMIENTO ante carencia de contexto demostrada');
+
+  // 11. Invariante Anti-Falsificación: Ataque de Operador Falso con Digest Recalculado (Hallazgo 1)
+  const attackPayload = {
+    feature_name: 'Propuesta con Aprobación Falsificada por Proceso Hostil',
+    anchors: {
+      security: ['Vulnerabilidad de inyección en el parser de tokens que permite ejecutar código hostil remoto'],
+      performance: ['Consumo cuadrático de memoria al parsear payloads JSON anidados sin límite de profundidad'],
+      architecture: ['Acoplamiento excesivo con el módulo de persistencia que impide migrar a SQLite independiente'],
+      ux: ['Mensajes de error crípticos que exponen stack traces internos al operador sin sanitización previa'],
+    },
+    competence_check: {
+      justified: true,
+      need_origin: 'Auditoría interna de seguridad',
+      bloat_risk: false,
+    },
+    worst_case_scenarios: [
+      'Ejecución remota de código en el nodo de producción por deserialización insegura de estados',
+      'Denegación de servicio por agotamiento de memoria en el hilo principal de procesamiento',
+    ],
+    mandatory_mitigations: [
+      'Sanitización estricta de esquemas JSON con validación formal de límites de tamaño y tipos',
+    ],
+    depth_level: 2,
+  };
+  const attackProposalDigest = hashCanonical(attackPayload);
+  const attackPremortemId = attackProposalDigest.slice(0, 16);
+  const fakeRecord = {
+    contractVersion: '2.0.0',
+    acceptanceId: 'fake-acceptance-01',
+    premortemId: attackPremortemId,
+    proposalDigest: attackProposalDigest,
+    operator: 'Lead Architect (@adrian)',
+    keyId: 'ed25519:fakefakefakefakefakefakefakefakefakefakefakefakefakefakefakefake',
+    publicKeyPem: '-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEArC3uRWATcw6CUrrb6DvQjUfJ3IHkWfFWxbwysx6t/sc=\n-----END PUBLIC KEY-----\n',
+    environment: 'development',
+    allowedEnvironments: ['development'],
+    issuedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 3600000).toISOString(),
+    nonce: 'fakenonce12345678901234567890',
+    rationale: 'Falso intento de aprobación recalculando hash sin poseer clave privada',
+    algorithm: 'Ed25519',
+    signature: Buffer.from('firma_falsa_inventada_por_atacante').toString('base64'),
+  };
+  const pubKeyObject = asEd25519PublicKey(fakeRecord.publicKeyPem);
+  fakeRecord.keyId = computePublicKeyId(pubKeyObject); // keyId correcto pero firma falsa
+  fs.writeFileSync(
+    path.join(tempDir, '.axion', 'state', `risk-acceptance-${attackPremortemId}.json`),
+    JSON.stringify(fakeRecord, null, 2),
+    'utf8'
+  );
+  const rFakeSig = engine.evaluateAssessment(attackPayload, { environment: 'development' });
+  assert.strictEqual(rFakeSig.status, 'DENIED');
+  assert.strictEqual(rFakeSig.reason, 'INVALID_ED25519_SIGNATURE');
+  assert.strictEqual(rFakeSig.exitCode, 1);
+  console.log('✓ Invariante de firma Ed25519 verificada: operador falso con digest recalculado rechazado fail-closed');
+
+  // 12. Invariante de Vinculación Criptográfica a la Propuesta: Proposal Tampering (Hallazgo 2)
+  const proposalA = {
+    feature_name: 'Propuesta Legítima Aceptada A',
+    anchors: {
+      security: ['Riesgo de exposición de credenciales temporales en logs de depuración del subsistema'],
+      performance: ['Sobrecarga de serialización binaria al procesar estructuras de grafos cíclicos'],
+      architecture: ['Dependencia circular oculta entre el despachador de eventos y la cola de reintentos'],
+      ux: ['Ausencia de feedback visual cuando una operación asíncrona excede los 300 milisegundos'],
+    },
+    competence_check: {
+      justified: true,
+      need_origin: 'Requerimiento de trazabilidad operativa',
+      bloat_risk: false,
+    },
+    worst_case_scenarios: [
+      'Corrupción silenciosa del índice espacial tras un apagado repentino del proceso supervisor',
+      'Inanición de tareas prioritarias por monopolización del pool de conexiones persistentes',
+    ],
+    mandatory_mitigations: [
+      'Implementar pool de conexiones con cuotas estrictas y timeouts deterministas configurables',
+    ],
+    depth_level: 2,
+  };
+  const digestA = hashCanonical(proposalA);
+  const idA = digestA.slice(0, 16);
+  engine.acceptRisk({
+    premortemId: idA,
+    payload: proposalA,
+    operator: 'Lead Architect (@adrian)',
+    rationale: 'Riesgo aceptado formalmente para la propuesta legítima A en desarrollo',
+    environment: 'development',
+    allowedEnvironments: ['development'],
+    ttlHours: 24,
+  });
+
+  const proposalMutada = {
+    ...proposalA,
+    mandatory_mitigations: ['Mitigación cambiada a espaldas del operador humano sin autorización'],
+  };
+  const rTamperedProposal = engine.evaluateAssessment(proposalMutada, {
+    authenticatedRiskAcceptance: engine.loadRiskAcceptance(idA).record,
+    environment: 'development'
+  });
+  assert.strictEqual(rTamperedProposal.status, 'DENIED');
+  assert.strictEqual(rTamperedProposal.reason, 'PROPOSAL_DIGEST_MISMATCH');
+  assert.strictEqual(rTamperedProposal.exitCode, 1);
+  console.log('✓ Invariante de Proposal Digest Binding demostrada: mutación posterior de propuesta rechazada');
+
+  // 13. Invariante de Confinamiento de Rutas y Anti-Traversal (Hallazgo 3)
+  const traversalIds = [
+    '../../etc/passwd',
+    '..\\..\\windows\\system32',
+    'id/con/barras',
+    'id\\con\\backslash',
+    'invalid_chars!@#$',
+    'unicode_hómóglýph_id',
+    'short',
+  ];
+  for (const tid of traversalIds) {
+    assert.throws(
+      () => engine.acceptRisk({
+        premortemId: tid,
+        operator: 'Lead Architect (@adrian)',
+        rationale: 'Intento de traversal malicioso en premortemId para escapar de stateDir',
+      }),
+      /INVALID_PREMORTEM_ID_FORMAT|PATH_TRAVERSAL_DETECTED/
+    );
+    const loadRes = engine.loadRiskAcceptance(tid);
+    assert.strictEqual(loadRes.valid, false);
+    assert.ok(['INVALID_PREMORTEM_ID_FORMAT', 'PATH_TRAVERSAL_DETECTED'].includes(loadRes.reason));
+  }
+  console.log('✓ Invariante de confinamiento de ruta y formato estricto contra path traversal demostrada');
+
+  // 14. Invariante de Protección contra Enlaces Simbólicos (Symlink Attack) (Hallazgo 3)
+  const symlinkPremortemId = 'a1b2c3d4e5f60718';
+  const symlinkTargetFile = path.join(tempDir, '.axion', 'state', `risk-acceptance-${symlinkPremortemId}.json`);
+  fs.writeFileSync(symlinkTargetFile, JSON.stringify({ contractVersion: '2.0.0' }), 'utf8');
+
+  const originalLstat = fs.lstatSync;
+  try {
+    fs.lstatSync = (p) => {
+      if (p === symlinkTargetFile) {
+        return { isSymbolicLink: () => true, isFile: () => false, isDirectory: () => false };
+      }
+      return originalLstat(p);
+    };
+    const symlinkRes = engine.loadRiskAcceptance(symlinkPremortemId);
+    assert.strictEqual(symlinkRes.valid, false);
+    assert.strictEqual(symlinkRes.reason, 'SYMLINK_DETECTED');
+    console.log('✓ Invariante anti-symlink verificada: enlaces simbólicos rechazados fail-closed');
+  } finally {
+    fs.lstatSync = originalLstat;
+  }
 
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });
