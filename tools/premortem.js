@@ -49,11 +49,14 @@ const CLAVES_ANCLA = Object.keys(ANCHORS);
  * aceptarse "TODO_PERFECTO_ADELANTE" como resultado de una puerta de gobernanza.
  */
 const VEREDICTOS = {
-  APPROVED_WITH_SAFEGUARDS: { rango: 0, exit: 0, status: 'APPROVED', glosa: 'Adelante, con las salvaguardas comprometidas.' },
+  PLAN_APPROVED_WITH_SAFEGUARDS: { rango: 0, exit: 0, status: 'APPROVED', glosa: 'Plan aprobado con salvaguardas comprometidas (no certifica no-regresión antes de implementar).' },
+  APPROVED_WITH_SAFEGUARDS: { rango: 0, exit: 0, status: 'APPROVED', glosa: 'Adelante, con las salvaguardas comprometidas (alias de PLAN_APPROVED_WITH_SAFEGUARDS).' },
+  HUMAN_RISK_ACCEPTED: { rango: 0, exit: 0, status: 'APPROVED', glosa: 'Riesgo evaluado y aceptado formalmente por el operador humano responsable.' },
   CONDITIONAL_TDD: { rango: 1, exit: 2, status: 'CONDITIONAL', glosa: 'Solo con prueba que falle primero: hay una debilidad crítica en las mitigaciones.' },
   PIVOT_REQUIRED: { rango: 2, exit: 2, status: 'CONDITIONAL', glosa: 'El enfoque no sobrevive a su propia autopsia; hay que replantearlo.' },
-  REJECTED_AS_BLOAT: { rango: 3, exit: 1, status: 'DENIED', glosa: 'La complejidad que añade supera al problema que resuelve.' },
-  REJECTED_AS_UNJUSTIFIED: { rango: 4, exit: 1, status: 'DENIED', glosa: 'No se sostiene la necesidad real de construirlo.' },
+  REQUIERE_DESCUBRIMIENTO: { rango: 3, exit: 2, status: 'DISCOVERY_REQUIRED', glosa: 'Falta contexto, dependencias o especificación suficiente para evaluar el impacto de la propuesta.' },
+  REJECTED_AS_BLOAT: { rango: 4, exit: 1, status: 'DENIED', glosa: 'La complejidad que añade supera al problema que resuelve.' },
+  REJECTED_AS_UNJUSTIFIED: { rango: 5, exit: 1, status: 'DENIED', glosa: 'No se sostiene la necesidad real de construirlo.' },
 };
 
 // Un riesgo de una palabra no es un riesgo, es una casilla marcada. El suelo existe
@@ -101,6 +104,11 @@ class PreMortemEngine {
    * Valida la sustancia de una lista de afirmaciones. Devuelve los reproches concretos,
    * no un booleano: quien recibe un rechazo necesita saber qué frase arreglar.
    */
+  /**
+   * Valida la sustancia de una lista de afirmaciones. Devuelve los reproches concretos,
+   * no un booleano: quien recibe un rechazo necesita saber qué frase arreglar.
+   * Admite NO_APLICA / N/A si incluye al menos 15 caracteres de justificación técnica.
+   */
   static validarLista(lista, etiqueta, minimo) {
     const errores = [];
     if (!Array.isArray(lista) || lista.length < minimo) {
@@ -110,6 +118,16 @@ class PreMortemEngine {
     const limpias = [];
     lista.forEach((bruto, i) => {
       const t = texto(bruto);
+      const matchNoAplica = t.match(/^(?:NO[-_ ]APLICA|N\/A)\b[:\s-]*(.*)/i);
+      if (matchNoAplica) {
+        const justificacion = matchNoAplica[1] ? matchNoAplica[1].trim() : '';
+        if (justificacion.length < 15) {
+          errores.push(`${etiqueta}[${i}] declara NO_APLICA pero carece de justificación técnica suficiente (mínimo 15 caracteres de razonamiento).`);
+          return;
+        }
+        limpias.push(t);
+        return;
+      }
       if (t.length < MINIMO_SUSTANCIA) {
         errores.push(`${etiqueta}[${i}] tiene ${t.length} caracteres; se exigen ${MINIMO_SUSTANCIA} para que describa un riesgo y no una casilla marcada.`);
         return;
@@ -125,6 +143,89 @@ class PreMortemEngine {
       limpias.push(t);
     });
     return { errores, limpias };
+  }
+
+  /**
+   * Calcula el Blast Radius Score de una propuesta de forma determinista y acotada en [0, 100].
+   * Fórmula: min(100, Base por archivos + Ponderación por criticidad + Complejidad de interfaz + Factor de reversibilidad)
+   */
+  static calculateBlastRadius(options = {}) {
+    const files = Array.isArray(options.files) ? options.files : [];
+    const count = files.length;
+
+    // 1. Base por archivos
+    let baseFiles = 0;
+    if (count === 1) baseFiles = 10;
+    else if (count >= 2 && count <= 3) baseFiles = 25;
+    else if (count >= 4 && count <= 7) baseFiles = 40;
+    else if (count >= 8) baseFiles = 50;
+    else if (typeof options.baseScore === 'number') baseFiles = options.baseScore;
+
+    // 2. Ponderación por criticidad (rutas críticas de gobernanza/infraestructura, no glob ciego)
+    const defaultCriticalPatterns = [
+      /^\.github\//i,
+      /^policies\//i,
+      /^bin\//i,
+      /^tools\/(?:killswitch|attestation|preflight|repo_attestation_generator)\.js/i,
+      /^schemas\//i,
+    ];
+    const criticalPatterns = Array.isArray(options.criticalPatterns)
+      ? options.criticalPatterns
+      : defaultCriticalPatterns;
+
+    let hasCriticalInfra = false;
+    let hasContractSchema = false;
+
+    for (const f of files) {
+      const normalized = String(f || '').replace(/\\/g, '/');
+      if (criticalPatterns.some((pat) => (typeof pat.test === 'function' ? pat.test(normalized) : normalized.includes(String(pat))))) {
+        hasCriticalInfra = true;
+      }
+      if (/schemas\/|\.axion\/state\//i.test(normalized)) {
+        hasContractSchema = true;
+      }
+    }
+
+    let criticalityScore = 0;
+    if (hasCriticalInfra) criticalityScore = 30;
+    else if (hasContractSchema) criticalityScore = 20;
+    else if (typeof options.criticalityScore === 'number') criticalityScore = options.criticalityScore;
+
+    // 3. Complejidad de interfaz
+    let interfaceScore = 0;
+    if (options.altersPublicInterface === true || options.altersCli === true) {
+      interfaceScore = 15;
+    } else if (typeof options.interfaceScore === 'number') {
+      interfaceScore = options.interfaceScore;
+    }
+
+    // 4. Factor de reversibilidad
+    let reversibilityScore = 0;
+    if (options.isIrreversible === true || options.hasDataMigration === true) {
+      reversibilityScore = 20;
+    } else if (typeof options.reversibilityScore === 'number') {
+      reversibilityScore = options.reversibilityScore;
+    }
+
+    const rawScore = baseFiles + criticalityScore + interfaceScore + reversibilityScore;
+    const score = Math.min(100, Math.max(0, rawScore));
+
+    let riskLevel = 'LOW';
+    if (score >= 70) riskLevel = 'CRITICAL';
+    else if (score >= 40) riskLevel = 'MODERATE';
+
+    return {
+      score,
+      riskLevel,
+      factors: {
+        baseFiles,
+        criticalityScore,
+        interfaceScore,
+        reversibilityScore,
+      },
+      filesCount: count,
+      capped: rawScore > 100,
+    };
   }
 
   evaluateAssessment(payload) {
@@ -157,6 +258,7 @@ class PreMortemEngine {
     const vistos = new Map();
     for (const clave of CLAVES_ANCLA) {
       for (const r of riesgosPorAncla[clave] || []) {
+        if (/^(?:NO[-_ ]APLICA|N\/A)\b/i.test(r)) continue;
         const n = normalizar(r);
         if (vistos.has(n)) {
           errors.push(`El mismo riesgo aparece en anchors.${vistos.get(n)} y anchors.${clave}: las anclas son ortogonales o no son anclas.`);
@@ -234,11 +336,33 @@ class PreMortemEngine {
 
     // --- Veredicto derivado ---
     let veredicto = 'APPROVED_WITH_SAFEGUARDS';
-    if (competencia.justified === false) veredicto = 'REJECTED_AS_UNJUSTIFIED';
-    else if (competencia.bloat_risk === true) veredicto = 'REJECTED_AS_BLOAT';
-    else if (estres && estres.has_critical_weakness === true) veredicto = 'CONDITIONAL_TDD';
+    if (payload.discovery_required === true || payload.missing_context === true) {
+      veredicto = 'REQUIERE_DESCUBRIMIENTO';
+    } else if (competencia.justified === false) {
+      veredicto = 'REJECTED_AS_UNJUSTIFIED';
+    } else if (competencia.bloat_risk === true) {
+      veredicto = 'REJECTED_AS_BLOAT';
+    } else if (estres && estres.has_critical_weakness === true) {
+      veredicto = 'CONDITIONAL_TDD';
+    }
 
-    // El humano puede endurecer, nunca ablandar.
+    // Aceptación explícita y formal de riesgo por el operador humano responsable
+    let humanRiskAccepted = false;
+    let humanRiskRationale = null;
+    let humanOperator = null;
+
+    if (payload.human_risk_acceptance && typeof payload.human_risk_acceptance === 'object') {
+      const hra = payload.human_risk_acceptance;
+      if (hra.accepted === true && texto(hra.rationale).length >= 15) {
+        humanRiskAccepted = true;
+        humanRiskRationale = texto(hra.rationale);
+        humanOperator = texto(hra.operator) || 'HUMAN_OPERATOR';
+        veredicto = 'HUMAN_RISK_ACCEPTED';
+      }
+    }
+
+    // El humano puede endurecer, o registrar aceptación explícita de riesgo.
+    // Un intento de suavizado silencioso (sin human_risk_acceptance formal) se rechaza.
     let endurecidoPor = null;
     const propuesto = texto(payload.verdict);
     if (propuesto) {
@@ -250,20 +374,32 @@ class PreMortemEngine {
           errors: [`"${propuesto}" no es un veredicto del contrato. Válidos: ${Object.keys(VEREDICTOS).join(', ')}.`],
         };
       }
-      if (VEREDICTOS[propuesto].rango < VEREDICTOS[veredicto].rango) {
-        return {
-          status: 'DENIED',
-          reason: 'VERDICT_DOWNGRADE_REFUSED',
-          exitCode: 1,
-          errors: [
-            `Se propone "${propuesto}" cuando el análisis deriva "${veredicto}". Un veredicto puede endurecerse, nunca suavizarse: `
-            + 'quien es evaluado no dicta su propio resultado.',
-          ],
-        };
-      }
-      if (VEREDICTOS[propuesto].rango > VEREDICTOS[veredicto].rango) {
-        endurecidoPor = veredicto;
-        veredicto = propuesto;
+
+      if (propuesto === 'HUMAN_RISK_ACCEPTED') {
+        if (!humanRiskAccepted) {
+          return {
+            status: 'DENIED',
+            reason: 'HUMAN_RISK_ACCEPTANCE_MISSING_RATIONALE',
+            exitCode: 1,
+            errors: ['HUMAN_RISK_ACCEPTED exige human_risk_acceptance con { accepted: true, rationale } de al menos 15 caracteres.'],
+          };
+        }
+      } else if (!humanRiskAccepted) {
+        if (VEREDICTOS[propuesto].rango < VEREDICTOS[veredicto].rango) {
+          return {
+            status: 'DENIED',
+            reason: 'VERDICT_DOWNGRADE_REFUSED',
+            exitCode: 1,
+            errors: [
+              `Se propone "${propuesto}" cuando el análisis deriva "${veredicto}". Un veredicto no puede suavizarse silenciosamente: `
+              + 'para aceptar un riesgo formalmente, declare human_risk_acceptance con justificación técnica vinculante.',
+            ],
+          };
+        }
+        if (VEREDICTOS[propuesto].rango > VEREDICTOS[veredicto].rango) {
+          endurecidoPor = veredicto;
+          veredicto = propuesto;
+        }
       }
     }
 
@@ -283,6 +419,9 @@ class PreMortemEngine {
       verdict: veredicto,
       verdict_rationale: meta.glosa,
       hardened_from: endurecidoPor,
+      human_risk_accepted: humanRiskAccepted,
+      human_risk_rationale: humanRiskRationale,
+      human_operator: humanOperator,
       payload,
     };
 
@@ -302,6 +441,9 @@ class PreMortemEngine {
       verdict: veredicto,
       verdict_rationale: meta.glosa,
       hardened_from: endurecidoPor,
+      human_risk_accepted: humanRiskAccepted,
+      human_risk_rationale: humanRiskRationale,
+      human_operator: humanOperator,
       memory_entries: memoria,
       purged: purgados,
       record_path: recordPath,
@@ -693,4 +835,5 @@ module.exports = PreMortemEngine;
 module.exports.VEREDICTOS = VEREDICTOS;
 module.exports.ANCHORS = ANCHORS;
 module.exports.MINIMO_SUSTANCIA = MINIMO_SUSTANCIA;
+module.exports.calculateBlastRadius = PreMortemEngine.calculateBlastRadius;
 module.exports.USO = USO;

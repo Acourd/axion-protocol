@@ -1,7 +1,7 @@
 # Axion Protocol — Reglas P0 Dinámicas Contextualizadas
 
 **Stack Detectado:** JavaScript / Node.js
-**Fecha de Tejido:** 2026-09-05T21:16:34.117Z
+**Fecha de Tejido:** 2026-09-06T08:51:33.651Z
 **Arquitectura:** Soberana Fail-Closed Zero-Dependency
 
 ## 🛡️ Invariantes Universales P0 (Aplicables a todo el proyecto)

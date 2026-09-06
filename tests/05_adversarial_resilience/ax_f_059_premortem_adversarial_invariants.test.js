@@ -125,8 +125,118 @@ try {
   assert.strictEqual(rCalco.reason, 'PREMORTEM_BOILERPLATE');
   console.log('✓ Intercepción de autopsias recicladas (PREMORTEM_BOILERPLATE) verificada');
 
+  // 7. Invariante de Blast Radius Acotado en [0, 100] y selectividad de rutas críticas
+  const brPeriferico = PreMortemEngine.calculateBlastRadius({ files: ['docs/README.md'] });
+  assert.strictEqual(brPeriferico.score, 10);
+  assert.strictEqual(brPeriferico.riskLevel, 'LOW');
+
+  const brToolsSecundario = PreMortemEngine.calculateBlastRadius({ files: ['tools/scratch_helper.js'] });
+  assert.strictEqual(brToolsSecundario.score, 10, 'tools/* secundarios no deben activar sobrecoste ciego de infraestructura');
+
+  const brInfraCritica = PreMortemEngine.calculateBlastRadius({ files: ['tools/killswitch.js'] });
+  assert.strictEqual(brInfraCritica.score, 40, '10 base + 30 infraestructura crítica');
+  assert.strictEqual(brInfraCritica.riskLevel, 'MODERATE');
+
+  const brMaximo = PreMortemEngine.calculateBlastRadius({
+    files: ['bin/axion.js', '.github/workflows/ci.yml', 'policies/risk.yaml', 'tools/preflight.js', 'tools/attestation.js', 'tools/repo_attestation_generator.js', 'a.js', 'b.js', 'c.js'],
+    altersPublicInterface: true,
+    isIrreversible: true,
+  });
+  assert.strictEqual(brMaximo.score, 100, 'Blast radius no puede exceder 100');
+  assert.strictEqual(brMaximo.capped, true);
+  assert.strictEqual(brMaximo.riskLevel, 'CRITICAL');
+  console.log('✓ Invariante de Blast Radius acotado en [0, 100] con selectividad crítica demostrada');
+
+  // 8. Invariante de Proporcionalidad: NO_APLICA con justificación técnica
+  const payloadNoAplica = {
+    feature_name: 'Optimizador Matemático Interno',
+    anchors: {
+      security: ['Riesgo de buffer overflow en operaciones de matrices densas no comprobadas'],
+      performance: ['Consumo cuadrático de tiempo en cálculo de autovalores para matrices grandes'],
+      architecture: ['Acoplamiento innecesario entre el optimizador y la capa de almacenamiento'],
+      ux: ['NO_APLICA: Algoritmo puramente numérico sin interacción con usuarios ni CLI']
+    },
+    competence_check: { justified: true, bloat_risk: false },
+    worst_case_scenarios: [
+      'Corrupción de cálculo en matrices singulares provocando NaN no propagados',
+      'Desbordamiento de pila en recursión de divide y vencerás sin caso base'
+    ],
+    mandatory_mitigations: ['Implementar verificación previa de dimensiones y condición de matriz'],
+    depth_level: 2
+  };
+  const rNoAplica = engine.evaluateAssessment(payloadNoAplica);
+  assert.strictEqual(rNoAplica.status, 'APPROVED');
+  assert.strictEqual(rNoAplica.exitCode, 0);
+
+  const payloadBadNoAplica = {
+    ...payloadNoAplica,
+    feature_name: 'Optimizador con Justificación Pobre',
+    anchors: {
+      ...payloadNoAplica.anchors,
+      ux: ['NO_APLICA'] // Sin justificación (menos de 15 chars)
+    }
+  };
+  const rBadNoAplica = engine.evaluateAssessment(payloadBadNoAplica);
+  assert.strictEqual(rBadNoAplica.status, 'DENIED');
+  assert.strictEqual(rBadNoAplica.reason, 'PREMORTEM_INCOMPLETE');
+  console.log('✓ Invariante de proporcionalidad con NO_APLICA y justificación técnica demostrada');
+
+  // 9. Invariante de Aceptación Humana Trazable (HUMAN_RISK_ACCEPTED)
+  const payloadHRA = {
+    feature_name: 'Spike Experimental Aprobado por Humano',
+    anchors: {
+      security: ['Superficie de ataque experimental en driver preliminar sin sandbox formal'],
+      performance: ['Consumo errático de recursos en hilos secundarios durante fase alfa'],
+      architecture: ['Deuda técnica consciente introducida para validar viabilidad de mercado'],
+      ux: ['NO_APLICA: Módulo de laboratorio interno sin superficie de usuario final']
+    },
+    competence_check: { justified: false }, // Derivaría REJECTED_AS_UNJUSTIFIED
+    worst_case_scenarios: [
+      'Falla del driver requiriendo reinicio del proceso principal en desarrollo',
+      'Incompatibilidad con kernels antiguos requiriendo rollback manual'
+    ],
+    mandatory_mitigations: ['Restringir la ejecución exclusivamente a flags experimentales en entornos de desarrollo aislados'],
+    human_risk_acceptance: {
+      accepted: true,
+      rationale: 'Riesgo aceptado formalmente por el arquitecto líder para validación de hipótesis de negocio',
+      operator: 'Lead Architect (@adrian)'
+    },
+    depth_level: 2
+  };
+  const rHRA = engine.evaluateAssessment(payloadHRA);
+  assert.strictEqual(rHRA.status, 'APPROVED');
+  assert.strictEqual(rHRA.exitCode, 0);
+  assert.strictEqual(rHRA.verdict, 'HUMAN_RISK_ACCEPTED');
+  assert.strictEqual(rHRA.human_risk_accepted, true);
+  assert.strictEqual(rHRA.human_operator, 'Lead Architect (@adrian)');
+  console.log('✓ Invariante de aceptación formal de riesgo por operador humano demostrada');
+
+  // 10. Invariante de Estado Intermedio (REQUIERE_DESCUBRIMIENTO)
+  const payloadDiscovery = {
+    feature_name: 'Propuesta con Incertidumbre Crítica',
+    discovery_required: true,
+    anchors: {
+      security: ['Se desconoce la especificación de cifrado del proveedor externo'],
+      performance: ['Sin perfiles de latencia estimados para la API remota de terceros'],
+      architecture: ['Contratos de integración formales no provistos explícitamente en la documentación oficial'],
+      ux: ['NO_APLICA: Canal de sincronización M2M en background sin UX directa']
+    },
+    competence_check: { justified: true, bloat_risk: false },
+    worst_case_scenarios: [
+      'Bloqueo operativo total por discrepancias de protocolo no documentadas',
+      'Falla de autenticación por rotación no controlada de tokens OAuth'
+    ],
+    mandatory_mitigations: ['Completar spike exhaustivo de descubrimiento técnico e investigación previa con /clarify'],
+    depth_level: 2
+  };
+  const rDiscovery = engine.evaluateAssessment(payloadDiscovery);
+  assert.strictEqual(rDiscovery.status, 'DISCOVERY_REQUIRED');
+  assert.strictEqual(rDiscovery.exitCode, 2);
+  assert.strictEqual(rDiscovery.verdict, 'REQUIERE_DESCUBRIMIENTO');
+  console.log('✓ Invariante de REQUIERE_DESCUBRIMIENTO ante carencia de contexto demostrada');
+
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });
 }
 
-console.log('\nPASS AX-F-059 — Invariantes adversariales de PreMortem demostradas al 100%.\n');
+console.log('\nPASS AX-F-059 — Invariantes adversariales de PreMortem v3.2.0 demostradas al 100%.\n');
