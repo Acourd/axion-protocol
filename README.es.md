@@ -5,8 +5,8 @@
 >
 > **Estado**: Runtime EXPERIMENTAL. El enforcement no intercepta comandos de shell del sistema operativo automáticamente sin el hook de agente integrado. Requiere **Node.js 20** o superior. Cero dependencias externas de npm.
 
-[![Estado de CI](https://img.shields.io/badge/CI-182%20En%20Verde-2ea44f.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
-[![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.3.1--rc.1-0969da.svg?style=flat-square)](package.json)
+[![Estado de CI](https://img.shields.io/badge/CI-233%20Suites-informational.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
+[![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.3.1--rc.3-0969da.svg?style=flat-square)](package.json)
 [![Licencia](https://img.shields.io/badge/Licencia-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
 [![Cero Dependencias](https://img.shields.io/badge/Dependencias-0-success.svg?style=flat-square)](package.json)
 [![Velocidad](https://img.shields.io/badge/Velocidad-12s%20(8%20workers)-informational.svg?style=flat-square)](tests/run_all.js)
@@ -31,11 +31,11 @@ Los asistentes de código autónomos (**Claude Code, Google Antigravity, Cursor,
 
 - **Freno Socrático de Intención (`/clarify`)**: Obliga al agente a formular exactamente 2 preguntas humanas estructuradas (A/B/C) antes de tocar código, erradicando el parcheo a ciegas.
 - **Escudo Fail-Closed de Terminal (`/preflight`)**: Intercepta y clasifica cada comando (`ALLOW` / `NEEDS_HUMAN_REVIEW` / `DENY`) con ejecución segura (`shell: false`).
-- **Rollback Determinista Instantáneo (`/snapshot`)**: Restaura instantáneas del árbol verificadas con SHA-256 en `< 5ms` ante peticiones en lenguaje natural (*"deshaz lo que hiciste"*), independiente de Git.
-- **Verificador Incremental de Alta Velocidad (`tools/smart_incremental_runner.js`)**: Analiza grafos de dependencias inversas para ejecutar únicamente las pruebas impactadas en `< 300ms`.
-- **Sintetizador Pre-Flight TDD (`tools/preflight_tdd_synthesizer.js`)**: Deriva aserciones formales antes de modificar el disco, garantizando *First-Shot Success*.
-- **Atestaciones Criptográficas Enterprise (`/attest`)**: Genera sobres DSSE in-toto Statement v1 firmados con Ed25519 (compatibles con SLSA Nivel 3 y Cosign).
-- **Paridad Multi-Plataforma al 100%**: Gobernanza unificada disponible de forma idéntica en **Google Antigravity**, **Anthropic Claude Code** y terminal CLI.
+- **Rollback Determinista (`/snapshot`)**: Restaura instantáneas del árbol verificadas con SHA-256 ante peticiones en lenguaje natural (*"deshaz lo que hiciste"*), independiente de Git.
+- **Verificador Incremental (`tools/smart_incremental_runner.js`)**: Analiza grafos de dependencias inversas para ejecutar las pruebas impactadas.
+- **Sintetizador Pre-Flight TDD (`tools/preflight_tdd_synthesizer.js`)**: Deriva aserciones formales antes de modificar el disco para reducir iteraciones de ensayo y error.
+- **Atestaciones Locales de Procedencia (`/attest`)**: Genera sobres locales DSSE/in-toto Statement v1 firmados con Ed25519.
+- **Consistencia Multi-Plataforma**: Gobernanza diseñada para operar de forma coherente en **Google Antigravity**, **Anthropic Claude Code** y terminal CLI.
 
 ---
 
@@ -92,7 +92,7 @@ Salida:
   ✓ PASS   Slash Commands: 12/12 en .agents/skills · 12/12 en .claude/commands
   ✓ PASS   Killswitch: RUNNING — sin parada activa
 
-[Axion Protocol v1.3.1-rc.1] 12/12 comprobaciones en verde. Gobernanza operativa.
+[Axion Protocol v1.3.1-rc.3] 12/12 comprobaciones en verde. Gobernanza operativa.
 ```
 
 ---

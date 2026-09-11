@@ -5,8 +5,8 @@
 >
 > **Status**: EXPERIMENTAL runtime. Enforcement does not intercept arbitrary OS-level shell commands automatically without the integrated agent hook. Requires **Node.js 20** or later. Zero external npm dependencies.
 
-[![CI Status](https://img.shields.io/badge/CI-182%20Passing-2ea44f.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
-[![Version](https://img.shields.io/badge/Version-v1.3.1--rc.1-0969da.svg?style=flat-square)](package.json)
+[![CI Status](https://img.shields.io/badge/CI-233%20Suites-informational.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
+[![Version](https://img.shields.io/badge/Version-v1.3.1--rc.3-0969da.svg?style=flat-square)](package.json)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0-success.svg?style=flat-square)](package.json)
 [![Execution Speed](https://img.shields.io/badge/Suite%20Speed-12s%20(8%20workers)-informational.svg?style=flat-square)](tests/run_all.js)
@@ -31,11 +31,11 @@ Autonomous coding assistants (**Claude Code, Google Antigravity, Cursor, Codex**
 
 - **Socratic Intent Gate (`/clarify`)**: Forces the agent to ask exactly 2 plain A/B/C human questions before touching code on ambiguous requests, completely eliminating blind guessing.
 - **Fail-Closed Terminal Shield (`/preflight`)**: Intercepts and classifies every terminal command (`ALLOW` / `NEEDS_HUMAN_REVIEW` / `DENY`) with `shell: false` safety.
-- **Instant Deterministic Rollback (`/snapshot`)**: Restores SHA-256 tree snapshots in `< 5ms` from natural language prompts (*"undo what you did"*), independent of Git.
-- **Lightning Diff Verifier (`tools/smart_incremental_runner.js`)**: Analyzes static inverse dependency ASTs to execute only impacted test suites in `< 300ms`.
-- **Pre-Flight TDD Synthesizer (`tools/preflight_tdd_synthesizer.js`)**: Derives formal assertion contracts before modifying disk, guaranteeing *First-Shot Success*.
-- **Enterprise Provenance & Attestations (`/attest`)**: Issues in-toto Statement v1 DSSE envelopes signed with Ed25519 (SLSA Level 3 and Cosign compatible).
-- **100% Multi-Platform Parity**: Unified governance operational identically across **Google Antigravity**, **Anthropic Claude Code**, and the standalone CLI.
+- **Deterministic Rollback (`/snapshot`)**: Restores SHA-256 tree snapshots from natural language prompts (*"undo what you did"*), independent of Git.
+- **Incremental Runner (`tools/smart_incremental_runner.js`)**: Analyzes static inverse dependency ASTs to execute only impacted test suites.
+- **Pre-Flight TDD Synthesizer (`tools/preflight_tdd_synthesizer.js`)**: Derives formal assertion contracts before disk mutations to reduce trial-and-error iterations.
+- **Provenance & Local Attestations (`/attest`)**: Generates local DSSE/in-toto Statement v1 envelopes signed with Ed25519.
+- **Multi-Platform Consistency**: Unified governance designed to operate consistently across **Google Antigravity**, **Anthropic Claude Code**, and the standalone CLI.
 
 ---
 
@@ -59,7 +59,7 @@ Autonomous coding assistants (**Claude Code, Google Antigravity, Cursor, Codex**
 
 ### 1. Interactive Sandbox Demo (No Installation Required)
 
-Experience fail-closed terminal interception and < 5ms deterministic rollback in an isolated in-memory sandbox:
+Experience fail-closed terminal interception and deterministic rollback in an isolated in-memory sandbox:
 
 ```bash
 # Run the live interactive terminal demo
@@ -92,7 +92,7 @@ Output:
   ✓ PASS   Slash Commands: 12/12 en .agents/skills · 12/12 en .claude/commands
   ✓ PASS   Killswitch: RUNNING — sin parada activa
 
-[Axion Protocol v1.3.1-rc.1] 12/12 comprobaciones en verde. Gobernanza operativa.
+[Axion Protocol v1.3.1-rc.3] 12/12 comprobaciones en verde. Gobernanza operativa.
 ```
 
 ---

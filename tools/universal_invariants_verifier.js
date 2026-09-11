@@ -75,14 +75,45 @@ class UniversalInvariantsVerifier {
       detail: 'AST Arbiter + Ed25519 P2P Bus + BFT Consensus presentes'
     });
 
-    // 5. Verificación de Memoria Persistente y Documentación
-    const memPath = path.join(this.root, '.axion', 'memory', 'MEMORY.md');
+    // 5. Verificación de Memoria Persistente y Documentación (Comportamiento observable hermético)
     const archDoc = path.join(this.root, 'docs', 'SWARM_ARCHITECTURE.md');
-    const docsPass = fs.existsSync(memPath) && fs.existsSync(archDoc);
+    const hasArch = fs.existsSync(archDoc);
+    const memPath = path.join(this.root, '.axion', 'memory', 'MEMORY.md');
+    let memoryFunctional = false;
+    let memDetail = '';
+
+    if (fs.existsSync(memPath)) {
+      memoryFunctional = true;
+      memDetail = 'MEMORY.md y SWARM_ARCHITECTURE.md sincronizados en repositorio';
+    } else {
+      // En checkout limpio (.axion/ ignorado), valida ciclo funcional completo en sandbox efímero
+      const os = require('os');
+      const memoryModule = require('./memory.js');
+      const memSandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'axion_mem_verify_'));
+      try {
+        const rec = memoryModule.recordar(memSandbox, 'convencion', 'Regla de verificación observable', 'Invariante universal de memoria');
+        const entradas = memoryModule.leerEntradas(memSandbox);
+        const idxPath = path.join(memSandbox, '.axion', 'memory', 'MEMORY.md');
+        const hasIndex = fs.existsSync(idxPath);
+        const olv = memoryModule.olvidar(memSandbox, rec.entrada.id);
+        const emptyEntradas = memoryModule.leerEntradas(memSandbox);
+        memoryFunctional = rec.pass && entradas.length === 1 && hasIndex && olv.pass && emptyEntradas.length === 0;
+        memDetail = memoryFunctional
+          ? 'Ciclo funcional de memoria (recordar/indexar/olvidar) verificado en sandbox efímero'
+          : 'Fallo en la prueba funcional del motor de memoria persistente';
+      } catch (e) {
+        memoryFunctional = false;
+        memDetail = `Error en ciclo funcional de memoria: ${e.message}`;
+      } finally {
+        fs.rmSync(memSandbox, { recursive: true, force: true });
+      }
+    }
+
+    const docsPass = hasArch && memoryFunctional;
     checks.push({
       name: 'Persistent Memory & Swarm Architecture Docs',
       pass: docsPass,
-      detail: 'MEMORY.md y SWARM_ARCHITECTURE.md sincronizados'
+      detail: docsPass ? memDetail : `Documentación o memoria no operativa (${memDetail})`
     });
 
     const allPassed = checks.every(c => c.pass);
