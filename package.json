@@ -1,7 +1,7 @@
 {
   "name": "axion-protocol",
-  "version": "1.3.1-rc.3",
-  "description": "Experimental local governance runtime for agentic AI operations: seven fail-closed phases, Ed25519 approvals, independent CHECK, SHA-256 evidence and in-toto attestations. No dependencies.",
+  "version": "1.4.0-beta.1",
+  "description": "Experimental local governance tools and verification harness for AI agent workflows.",
   "keywords": [
     "ai-governance",
     "agentic",

@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { spawnSync } = require('child_process');
-const { runHealthCheck, herramientasCitadas, WORKFLOWS } = require('../../tools/health_check.js');
+const { runHealthCheck, herramientasCitadas, WORKFLOWS, evaluarMotorNode } = require('../../tools/health_check.js');
 
 console.log('=== AX-F-050 Auditoría de Integridad del Workspace y Chequeo de Salud ===\n');
 
@@ -39,6 +39,17 @@ for (const [toolPath] of citadas.entries()) {
   assert.strictEqual(fs.existsSync(abs), true, `la herramienta citada "${toolPath}" debe existir físicamente`);
 }
 console.log(`✓ Presencia física de las ${citadas.size} herramientas citadas verificada`);
+
+// 2b. Verificación determinista del umbral de runtime Node (>= 22.13.0)
+assert.strictEqual(typeof evaluarMotorNode, 'function', 'evaluarMotorNode debe ser una función exportada');
+assert.strictEqual(evaluarMotorNode('20.18.0').pass, false, 'Node 20 debe fallar');
+assert.strictEqual(evaluarMotorNode('22.12.0').pass, false, 'Node 22.12 debe fallar');
+assert.strictEqual(evaluarMotorNode('22.12.9').pass, false, 'Node 22.12.9 debe fallar');
+assert.strictEqual(evaluarMotorNode('22.13.0').pass, true, 'Node 22.13.0 debe pasar');
+assert.strictEqual(evaluarMotorNode('22.14.0').pass, true, 'Node 22.14.0 debe pasar');
+assert.strictEqual(evaluarMotorNode('24.0.0').pass, true, 'Node 24 debe pasar');
+assert.match(evaluarMotorNode('22.13.0').detail, /requiere >= 22\.13\.0/, 'el detalle debe documentar el requisito');
+console.log('✓ Umbral de runtime Node.js (>= 22.13.0) verificado con casos de prueba deterministas');
 
 // 3. Auditoría de salud sobre el proyecto raíz
 const resRoot = runHealthCheck(ROOT);

@@ -1,5 +1,7 @@
 # Traspaso de sesión — Axion Protocol
 
+> ⚠️ **DOCUMENTO HISTÓRICO CONGELADO**: Este documento refleja el estado de la auditoría del 25 de agosto de 2026 (v1.2.0-beta.1, 78 suites iniciales) y se conserva exclusivamente con fines de archivo y trazabilidad forense. No describe la arquitectura vigente (v1.4.0-beta.1, 233 suites deterministas, 12 comandos, Node >= 22.13.0). Para la documentación activa, consulta `README.md` y `docs/COMMANDS.md`.
+
 **Estado medido el 2026-08-25.** Todo número aquí sale de una ejecución real, no de la
 documentación. Si al leer esto los números no cuadran, cree a la ejecución.
 

@@ -3,8 +3,8 @@
 
 /**
  * Axion Protocol — Standalone Single-File Bundle
- * Versión: 1.3.1-rc.3 (Zero-Dependency)
- * Compilado: 2026-09-03T03:49:36.247Z
+ * Versión: 1.4.0-beta.1 (Zero-Dependency)
+ * Compilado: 2026-09-12T06:11:16.812Z
  */
 
 const __modules = {};
@@ -5098,7 +5098,7 @@ if (require.main === module) {
     revocation: () => { const M = __require('tools/revocation_manager.js'); console.log(JSON.stringify(new M().loadCRL(), null, 2)); },
     swarm: () => { const M = __require('tools/swarm_ast_arbiter.js'); console.log(new M().loadLocks()); },
     help: () => {
-      console.log('Axion Protocol — Standalone Single-File Bundle v1.3.1-rc.3');
+      console.log('Axion Protocol — Standalone Single-File Bundle v1.4.0-beta.1');
       console.log('Uso: node axion.bundle.js <subcommand>\n');
       console.log('Subcomandos disponibles: preflight, checkpoint, restore, shield, doctor, repair, instinct, budget, capabilities, dashboard, tree, weave, search, check, revocation, swarm, help');
     }
