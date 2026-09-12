@@ -33,14 +33,15 @@ node bin/axion.js telemetry
 ### 2. Standalone Single-File Bundle (`dist/axion.bundle.js`)
 For air-gapped, containerized, or micro-sandboxed OpenCode workspaces:
 ```bash
-# Execute full governance pipeline in a single 95.7 KB standalone file
+# Execute the governance pipeline from a single standalone file
+# (the bundle is regenerated per release; no static size is claimed here)
 node dist/axion.bundle.js verify
 ```
 
 ### 3. Native Rules & Directives (`.opencode/rules/`)
 Axion Protocol exports its P0 governance rules into OpenCode configuration directories:
 * `.opencode/rules/axion-protocol.md`
-* `.opencode/opencode.json`
+* `opencode.json` at the repository root (registers the slash commands for OpenCode)
 
 ---
 
@@ -50,7 +51,7 @@ Codex agents operate under standard repository instructions and tool calling int
 
 1. **`.codex/AGENTS.md`**: Core governance directives (Custody of Intent, Local Killswitch, Zero Blind Patches).
 2. **`.codex/config.toml`**: Deterministic governance profiles and in-toto Statement v1 attestation settings.
-3. **AST Token Optimization (`sliceASTFocus`)**: Reduces token consumption by up to 80% when Codex inspects large source files.
+3. **AST Token Optimization (`sliceASTFocus`)**: Can reduce context usage depending on the workflow; this is not a reproducible benchmark.
 
 ---
 

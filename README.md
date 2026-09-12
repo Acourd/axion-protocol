@@ -9,8 +9,6 @@
 [![Version](https://img.shields.io/badge/Version-v1.4.0--beta.1-0969da.svg?style=flat-square)](package.json)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0-success.svg?style=flat-square)](package.json)
-[![Execution Speed](https://img.shields.io/badge/Suite%20Speed-12s%20(8%20workers)-informational.svg?style=flat-square)](tests/run_all.js)
-[![Distribution Size](https://img.shields.io/badge/Package%20Size-535_kB-informational.svg?style=flat-square)](package.json)
 
 ---
 
@@ -23,7 +21,7 @@ Autonomous coding assistants (**Claude Code, Google Antigravity, Cursor, Codex**
 3. **Context Rot & Token Waste**: Thousands of dollars wasted in runaway reasoning loops, repetitive conversational turns, and massive context degradation.
 4. **Zero Cryptographic Auditability**: Inability to mathematically prove what tests actually ran, who approved mutations, and whether the code supply chain was compromised.
 
-**Axion Protocol helps structure these workflows locally.** It provides lightweight governance tools (535 kB, **zero external npm dependencies**) to introduce deliberate checkpoints and boundaries in supported agent environments.
+**Axion Protocol helps structure these workflows locally.** It provides lightweight governance tools (**zero external npm dependencies**) to introduce deliberate checkpoints and boundaries in supported agent environments.
 
 ---
 
@@ -109,7 +107,7 @@ Output:
 
 ## Governance Commands & Recipes
 
-Axion Protocol provides 12 core slash commands designed to work in synergy. For full documentation, operational triggers, and recommended workflows (e.g., `/drive /premortem /critic`), consult the dedicated manual:
+Axion Protocol provides 12 core slash commands designed to work in synergy. For full documentation, operational triggers, and recommended workflows (e.g., `/drive /premortem /debug`), consult the dedicated manual:
 
 **[Explore the Complete Command Reference & Recipes Manual ->](docs/COMMANDS.md)**
 
@@ -149,7 +147,7 @@ npm test
 | 💾 **State, Checkpoints & Recovery** | Atomic snapshots, rollback plan validation, memory guard limits, context shield anchoring, evidence hasher, governance drift detection | 23 |
 | ⚡ **Adversarial Resilience** | 100+ mutation vectors, pre-mortem verdict derivation, VibeGuard lexical gate, boilerplate detection, fuzzer burst resilience | 18 |
 
-**Total: 233 suites** passed in ~12s (8 concurrent workers).
+**Total: 233 suites** across the 5 governance domains.
 
 ---
 

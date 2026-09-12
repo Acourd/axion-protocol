@@ -168,5 +168,76 @@ for (const [nombre, texto] of [['README.md', readme], ['README.es.md', readmeEs]
   }
 }
 
+// --- 5. Contrato canónico de superficie de la beta ---
+// Comprobaciones textuales y estables: no miden comportamiento, solo impiden que las
+// superficies informativas vuelvan a declarar el contrato anterior.
+const DOMINIOS_PRUEBA = [
+  '01_governance_preflight',
+  '02_cryptography_attestation',
+  '03_intent_socratic',
+  '04_state_recovery',
+  '05_adversarial_resilience',
+];
+
+// 5a. tests/README.md documenta los 5 dominios y un total que cuadra con el árbol.
+for (const dominio of DOMINIOS_PRUEBA) {
+  if (!testsReadme.includes(dominio)) {
+    conflictos.push(`tests/README.md no documenta el dominio ${dominio}`);
+  }
+}
+const suitesEnDisco = DOMINIOS_PRUEBA.reduce(
+  (total, dominio) => total + contar(path.join(ROOT, 'tests', dominio), '.test.js'), 0);
+const declaradasTests = testsReadme.match(/(\d+)\s+suites\b/);
+if (!declaradasTests) {
+  conflictos.push('tests/README.md debe declarar el total de suites');
+} else if (parseInt(declaradasTests[1], 10) !== suitesEnDisco) {
+  conflictos.push(`tests/README.md declara ${declaradasTests[1]} suites pero en disco hay ${suitesEnDisco}`);
+}
+
+// 5b. Los dos manuales de comandos declaran el contrato real de superficies.
+for (const manual of ['docs/COMMANDS.md', 'docs/COMMANDS.es.md']) {
+  const texto = leer(path.join(ROOT, manual));
+  if (!/10[^\n]{0,100}\bCLI\b/i.test(texto)) {
+    conflictos.push(`${manual} debe declarar cuántos comandos tienen subcomando CLI`);
+  }
+  if (!/prompt-only/i.test(texto)) {
+    conflictos.push(`${manual} debe declarar que /debug y /review son prompt-only`);
+  }
+  if (/All 12 commands are accessible|Los 12 comandos operan de manera idéntica/i.test(texto)) {
+    conflictos.push(`${manual} conserva la afirmación de paridad CLI de los 12 comandos`);
+  }
+}
+
+// 5c. La guía OpenCode no fija tamaños estáticos ni apunta a una ruta inexistente.
+const docOpenCode = leer(path.join(ROOT, 'docs', 'OPENCODE_CODEX_COMPATIBILITY.md'));
+if (/\d+(?:\.\d+)?\s*(?:KB|kB)\b/.test(docOpenCode)) {
+  conflictos.push('docs/OPENCODE_CODEX_COMPATIBILITY.md declara un tamaño estático de bundle');
+}
+if (!/opencode\.json/.test(docOpenCode) || /\.opencode\/opencode\.json/.test(docOpenCode)) {
+  conflictos.push('docs/OPENCODE_CODEX_COMPATIBILITY.md debe citar el opencode.json de la raíz');
+}
+if (/\b80\s*%/.test(docOpenCode)) {
+  conflictos.push('docs/OPENCODE_CODEX_COMPATIBILITY.md declara una cifra de ahorro sin benchmark versionado');
+}
+
+// 5d. tools/README.md se declara índice parcial, no catálogo exhaustivo.
+if (!/índice parcial/i.test(toolsReadme) || !/no\s+un\s+cat[aá]logo\s+exhaustivo/i.test(toolsReadme)) {
+  conflictos.push('tools/README.md debe declararse índice parcial y no catálogo exhaustivo');
+}
+
+// 5e. Las portadas no declaran métricas estáticas de tamaño o duración.
+for (const [nombre, texto] of [['README.md', readme], ['README.es.md', readmeEs]]) {
+  if (/\/critic\b/.test(texto)) {
+    conflictos.push(`${nombre} cita /critic como prompt canónico y no lo es`);
+  }
+  if (/\d+(?:\.\d+)?\s*kB\b/i.test(texto)) {
+    conflictos.push(`${nombre} declara un tamaño estático de paquete`);
+  }
+  if (/\d+(?:\.\d+)?\s*s\b[^\n]{0,40}workers?/i.test(texto)) {
+    conflictos.push(`${nombre} declara una duración estática de la suite`);
+  }
+}
+
 assert.deepStrictEqual(conflictos, [], 'conflictos de autoridad detectados:\n  - ' + conflictos.join('\n  - '));
 console.log('PASS AX-F-008 — sin contradicción entre documentación normativa, contenido real e interfaces');
+console.log(`PASS AX-F-008 (superficies beta) — 5 dominios y ${suitesEnDisco} suites documentados, paridad CLI acotada, sin métricas estáticas`);

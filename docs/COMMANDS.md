@@ -72,10 +72,18 @@ To maximize cognitive density, reduce token burn, and mitigate agent cognitive d
 
 ## CLI & Platform Parity
 
-All 12 commands are accessible across three environments:
+The **12 canonical governance commands** are prompts/skills, not CLI subcommands. Their
+availability per surface is:
+
 1. **Google Antigravity**: Mounted as native skills in `.agents/skills/<command>/SKILL.md`.
 2. **Anthropic Claude Code**: Mounted as slash commands in `.claude/commands/<command>.md`.
-3. **Unified CLI**: Accessible via `node bin/axion.js <command>` (with optional `--target <path>`).
+3. **OpenCode / Codex / Copilot**: `.opencode/commands/<command>.md` plus the `command`
+   registration in the root `opencode.json`, and the `AGENTS.md` directives respectively.
+
+**10 of the 12 have a CLI subcommand** in `node bin/axion.js <command>`: `drive`,
+`clarify`, `premortem`, `preflight`, `snapshot`, `verify`, `memory`, `profile`, `halt` and
+`attest`. **`/debug` and `/review` are prompt-only**: they describe an agent procedure and
+have no standalone CLI entry.
 
 ---
 
