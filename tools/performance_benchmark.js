@@ -110,7 +110,8 @@ class PerformanceBenchmark {
 
     results.avgLatencyMs = Number((totalLatency / sampleCount).toFixed(3));
     results.memoryAfter = this.getMemoryFootprint();
-    results.memorySlaMet = results.memoryAfter.rssMb < 60; // 60MB max RSS tolerance
+    // Unificado con ax_f_090: Heap Used de V8 es la métrica determinista del código ejecutado
+    results.memorySlaMet = results.memoryAfter.heapUsedMb < 25;
 
     return results;
   }

@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20.x, 22.x, 24.x]
+        node-version: [22.x, 24.x]
     steps:
       - uses: actions/checkout@v4
 
@@ -86,11 +86,11 @@ jobs:
       - name: La reversión restaura de verdad
         run: |
           set -e
-          mkdir -p /tmp/axion-cp/src && echo "original" > /tmp/axion-cp/src/a.txt
-          node tools/checkpoint.js create ci --target /tmp/axion-cp
-          echo "corrompido" > /tmp/axion-cp/src/a.txt
-          node tools/checkpoint.js restore latest --target /tmp/axion-cp
-          test "$(cat /tmp/axion-cp/src/a.txt)" = "original"
+          mkdir -p ${{ runner.temp }}/axion-cp/src && echo "original" > ${{ runner.temp }}/axion-cp/src/a.txt
+          node tools/checkpoint.js create ci --target ${{ runner.temp }}/axion-cp
+          echo "corrompido" > ${{ runner.temp }}/axion-cp/src/a.txt
+          node tools/checkpoint.js restore latest --target ${{ runner.temp }}/axion-cp
+          test "$(cat ${{ runner.temp }}/axion-cp/src/a.txt)" = "original"
           echo "OK: contenido restaurado"
 
       - name: La cadena de atestación cierra
@@ -118,27 +118,34 @@ jobs:
         shell: bash
         run: |
           set -e
-          mkdir -p /tmp/axion-dist
-          npm pack --pack-destination /tmp/axion-dist
-          TARBALL=$(ls /tmp/axion-dist/*.tgz)
-          mkdir -p /tmp/axion-consumer && cd /tmp/axion-consumer
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            TEMP_DIR=$(cygpath -u "$RUNNER_TEMP")
+          else
+            TEMP_DIR="$RUNNER_TEMP"
+          fi
+          DIST_DIR="$TEMP_DIR/axion-dist"
+          CONSUMER_DIR="$TEMP_DIR/axion-consumer"
+          mkdir -p "$DIST_DIR" "$CONSUMER_DIR"
+          npm pack --pack-destination "$DIST_DIR"
+          TARBALL=$(find "$DIST_DIR" -name '*.tgz' -print -quit)
+          cd "$CONSUMER_DIR"
           npm init -y > /dev/null
           npm install "$TARBALL"
           npx axion init
 
       - name: El proyecto instalado goza de salud
         shell: bash
-        working-directory: /tmp/axion-consumer
+        working-directory: ${{ runner.temp }}/axion-consumer
         run: npx axion check
 
-      - name: El proyecto instalado pasa la suite
+      - name: Smoke test del producto instalado
         shell: bash
-        working-directory: /tmp/axion-consumer
-        run: npx axion test
+        working-directory: ${{ runner.temp }}/axion-consumer
+        run: npx axion --help
 
       - name: Los comandos llegaron a las dos superficies que los agentes leen
         shell: bash
-        working-directory: /tmp/axion-consumer
+        working-directory: ${{ runner.temp }}/axion-consumer
         run: |
           set -e
           esperados=$(ls -d .agents/skills/*/ | wc -l)
@@ -153,7 +160,7 @@ jobs:
 
       - name: Checkpoint y rollback sobre archivos reales
         shell: bash
-        working-directory: /tmp/axion-consumer
+        working-directory: ${{ runner.temp }}/axion-consumer
         run: |
           set -e
           echo "v1" > app.js

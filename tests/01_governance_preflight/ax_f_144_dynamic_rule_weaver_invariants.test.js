@@ -46,18 +46,28 @@ try {
   assert.strictEqual(weaveRes.digest.length, 64);
   console.log(`✓ Tejido dinámico de reglas P0 validado con SHA-256 (${weaveRes.digest.slice(0, 16)}...)`);
 
-  // 4. Validar detección en repositorio raíz de Axion Protocol
-  const rootWeaver = new DynamicRuleWeaver(ROOT);
-  const rootRes = rootWeaver.weaveRules();
-  assert.strictEqual(rootRes.success, true);
-  assert.ok(rootRes.activeStacks.includes('javascript'));
-  console.log(`✓ Detección de stack en Axion Protocol validada (${rootRes.stackNames})`);
+  // 4. Validar detección de stack JavaScript en entorno aislado sin contaminar el repositorio
+  const jsSandbox = path.join(sandbox, 'js_project');
+  fs.mkdirSync(path.join(jsSandbox, '.agents', 'rules'), { recursive: true });
+  fs.writeFileSync(path.join(jsSandbox, 'package.json'), '{"name": "test-js-stack", "version": "1.0.0"}\n', 'utf8');
 
-  // 5. Validar integración con DriveEngine
-  const driveEngine = new DriveEngine(ROOT);
+  const jsWeaver = new DynamicRuleWeaver(jsSandbox);
+  const jsRes = jsWeaver.weaveRules();
+  assert.strictEqual(jsRes.success, true);
+  assert.ok(jsRes.activeStacks.includes('javascript'));
+  assert.ok(fs.existsSync(jsRes.targetFile));
+  const relTarget = path.relative(jsSandbox, jsRes.targetFile);
+  assert.ok(
+    relTarget && !relTarget.startsWith('..') && !path.isAbsolute(relTarget),
+    'targetFile debe residir estrictamente confinado dentro de jsSandbox'
+  );
+  console.log(`✓ Detección de stack JavaScript hermética validada (${jsRes.stackNames})`);
+
+  // 5. Validar integración con DriveEngine sobre entorno aislado
+  const driveEngine = new DriveEngine(jsSandbox);
   const driveWeave = driveEngine.weaveDynamicRules();
   assert.strictEqual(driveWeave.success, true);
-  console.log('✓ Integración DriveEngine.weaveDynamicRules() verificada');
+  console.log('✓ Integración DriveEngine.weaveDynamicRules() verificada en sandbox');
 
 } finally {
   if (fs.existsSync(sandbox)) {

@@ -15,7 +15,7 @@
   ],
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13.0"
   },
   "type": "commonjs",
   "main": "tools/workflow_runner.js",
