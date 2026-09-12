@@ -174,7 +174,27 @@ function compactSessionContext(targetDir) {
     state_digest: digest,
   };
 
-  const ficheroSnapshot = path.join(dirEstado, `context-snapshot-${marca.replace(/[:.]/g, '-')}.json`);
+  const baseSnapshot = `context-snapshot-${marca.replace(/[:.]/g, '-')}`;
+  let ficheroSnapshot = path.join(dirEstado, `${baseSnapshot}.json`);
+  const existentes = fs.readdirSync(dirEstado)
+    .filter((f) => f === `${baseSnapshot}.json` || (f.startsWith(`${baseSnapshot}_`) && f.endsWith('.json')));
+
+  if (existentes.length > 0 || fs.existsSync(ficheroSnapshot)) {
+    let maxSufijo = 0;
+    for (const f of existentes) {
+      if (f.startsWith(`${baseSnapshot}_`)) {
+        const parteSufijo = f.slice(baseSnapshot.length + 1, -5);
+        if (/^\d+$/.test(parteSufijo)) {
+          const num = parseInt(parteSufijo, 10);
+          if (num > maxSufijo) maxSufijo = num;
+        }
+      }
+    }
+    let sufijo = Math.max(1, maxSufijo + 1);
+    do {
+      ficheroSnapshot = path.join(dirEstado, `${baseSnapshot}_${String(sufijo++).padStart(3, '0')}.json`);
+    } while (fs.existsSync(ficheroSnapshot));
+  }
   escribirAtomico(ficheroSnapshot, JSON.stringify(snapshot, null, 2));
 
   // El ancla es lo que el agente relee. Corta a proposito: si ocupa una pantalla, vuelve
