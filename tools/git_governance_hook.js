@@ -92,11 +92,14 @@ exit 0
       const attester = new DriveDsseAttester(this.root);
       const attestRes = attester.emitAttestation({
         missionId: `pre-commit-${Date.now()}`,
-        title: 'Git Pre-Commit Governance Verification',
-        converged: true,
+        title: 'Git Pre-Commit Governance Verification (VibeGuard Gate)',
+        vibeGuardGatePassed: true,
         iterations: 1,
-        suitesPassed: 164,
-        chaosVectorsBlocked: 100
+        tests: {
+          executed: false,
+          result: 'NOT_RUN',
+          reason: 'Pre-commit fast gate executes VibeGuard lexical scan only'
+        }
       });
       attestationDigest = attestRes.envelopeDigest;
     } catch (attestErr) {
@@ -115,7 +118,13 @@ exit 0
       pass: true,
       stage: 'SUCCESS',
       attestationDigest,
-      message: '✓ Compuerta de gobernanza superada. Atestación criptográfica sellada con éxito.',
+      vibeGuardGatePassed: true,
+      tests: {
+        executed: false,
+        result: 'NOT_RUN',
+        reason: 'Pre-commit fast gate executes VibeGuard lexical scan only'
+      },
+      message: '✓ Compuerta VibeGuard superada. Atestación local sellada (no constituye certificación externa).',
       exitCode: 0
     };
   }

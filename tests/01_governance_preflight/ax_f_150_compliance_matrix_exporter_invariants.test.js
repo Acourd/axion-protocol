@@ -26,15 +26,20 @@ fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 try {
   const exporter = new ComplianceMatrixExporter(sandbox);
 
-  // 1. Validar evaluación de conformidad
+  // 1. Validar evaluación de autoevaluación heurística
   const evalRes = exporter.evaluateCompliance();
-  assert.strictEqual(evalRes.complianceRate, '100.0%');
-  assert.strictEqual(evalRes.totalClauses, evalRes.compliantClauses);
+  assert.strictEqual(evalRes.selfAssessmentRate, '100.0%');
+  assert.strictEqual(evalRes.evaluationType, 'SELF_ASSESSED_HEURISTIC');
+  assert.strictEqual(evalRes.complianceRate, undefined, 'complianceRate debe estar eliminado');
+  assert.strictEqual(evalRes.compliantClauses, undefined, 'compliantClauses debe estar eliminado');
+  assert.strictEqual(evalRes.frameworks.SLSA_L3.compliant, undefined, 'frameworks.SLSA_L3.compliant debe estar eliminado');
+  assert.ok(evalRes.disclaimer.includes('no constituye certificación formal'));
+  assert.strictEqual(evalRes.totalClauses, evalRes.selfAssessedClauses);
   assert.ok(evalRes.frameworks.SLSA_L3);
   assert.ok(evalRes.frameworks.IN_TOTO_V1);
   assert.ok(evalRes.frameworks.NIST_SSDF);
   assert.ok(evalRes.frameworks.OWASP_2025);
-  console.log(`✓ Conformidad evaluada: ${evalRes.complianceRate} (${evalRes.compliantClauses}/${evalRes.totalClauses} cláusulas)`);
+  console.log(`✓ Autoevaluación evaluada: ${evalRes.selfAssessmentRate} (${evalRes.selfAssessedClauses}/${evalRes.totalClauses} cláusulas autoevaluadas)`);
 
   // 2. Validar exportación de artefactos
   const exportRes = exporter.exportMatrix();
@@ -42,6 +47,9 @@ try {
   assert.ok(fs.existsSync(exportRes.mdPath));
   assert.ok(fs.existsSync(exportRes.jsonPath));
   assert.strictEqual(exportRes.digest.length, 64);
+  const mdContent = fs.readFileSync(exportRes.mdPath, 'utf8');
+  assert.ok(mdContent.includes('Cláusulas incluidas en la autoevaluación'));
+  assert.strictEqual(mdContent.includes('Mitigadas Heurísticamente'), false);
   console.log(`✓ Reportes exportados con éxito: ${path.relative(ROOT, exportRes.mdPath)} (SHA-256: ${exportRes.digest.slice(0, 16)}...)`);
 
   // 3. Validar integración con DriveEngine

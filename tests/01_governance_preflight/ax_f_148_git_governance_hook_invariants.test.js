@@ -39,7 +39,13 @@ try {
   assert.strictEqual(gateRes.pass, true);
   assert.strictEqual(gateRes.exitCode, 0);
   assert.ok(gateRes.attestationDigest);
-  console.log(`✓ Compuerta de pre-commit superada con éxito (DSSE Digest: ${gateRes.attestationDigest.slice(0, 16)}...)`);
+  assert.strictEqual(gateRes.vibeGuardGatePassed, true);
+  assert.strictEqual(gateRes.converged, undefined, 'converged no debe existir en gateRes');
+  assert.strictEqual(gateRes.tests.executed, false);
+  assert.strictEqual(gateRes.tests.result, 'NOT_RUN');
+  assert.ok(gateRes.message.includes('VibeGuard'));
+  assert.ok(gateRes.message.includes('no constituye certificación externa'));
+  console.log(`✓ Compuerta VibeGuard de pre-commit superada con éxito (DSSE Digest: ${gateRes.attestationDigest.slice(0, 16)}...)`);
 
   // 3. Validar desinstalación limpia
   const uninstallRes = hook.uninstall();

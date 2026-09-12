@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:4b6ef04e-00b9-4a62-b47c-120e1ad2ce0d",
+  "serialNumber": "urn:uuid:fbc5f53a-c6f6-4383-b132-0674446471fe",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-09-02T22:53:35.223Z",
+    "timestamp": "2026-09-12T07:18:26.318Z",
     "tools": [
       {
         "vendor": "Axion Protocol",
@@ -15,7 +15,7 @@
     "component": {
       "type": "application",
       "name": "axion-protocol",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "description": "Local governance runtime for agentic AI operations with zero dependencies",
       "licenses": [
         {
@@ -41,7 +41,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/attest/SKILL.md",
       "name": ".agents/skills/attest/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -66,7 +66,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/clarify/SKILL.md",
       "name": ".agents/skills/clarify/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -91,7 +91,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/debug/SKILL.md",
       "name": ".agents/skills/debug/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -116,7 +116,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/drive/SKILL.md",
       "name": ".agents/skills/drive/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -141,7 +141,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/halt/SKILL.md",
       "name": ".agents/skills/halt/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -166,7 +166,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/memory/SKILL.md",
       "name": ".agents/skills/memory/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -191,7 +191,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/preflight/SKILL.md",
       "name": ".agents/skills/preflight/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -216,7 +216,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/premortem/SKILL.md",
       "name": ".agents/skills/premortem/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -241,7 +241,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/profile/SKILL.md",
       "name": ".agents/skills/profile/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -266,7 +266,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/review/SKILL.md",
       "name": ".agents/skills/review/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -291,7 +291,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/snapshot/SKILL.md",
       "name": ".agents/skills/snapshot/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -316,7 +316,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/.agents/skills/verify/SKILL.md",
       "name": ".agents/skills/verify/SKILL.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -341,7 +341,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/bin/axion.js",
       "name": "bin/axion.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -364,9 +364,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/abductive_anomaly_detector.js",
+      "name": "tools/abductive_anomaly_detector.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1c647e74152fb8514b57b552e90ec63b96b56ce7b5d4c6f73b6c1ed25494f42b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5534"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/adaptive_phase_planner.js",
       "name": "tools/adaptive_phase_planner.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -389,9 +414,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/adaptive_token_budgeter.js",
+      "name": "tools/adaptive_token_budgeter.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "72b27602aa8ceb3407be3dc3ac65d5ff7ad4599f182242fbbd3339d948b29b91"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5660"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/adaptive_worker_pool.js",
       "name": "tools/adaptive_worker_pool.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -416,7 +466,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/agent_chaos_monkey.js",
       "name": "tools/agent_chaos_monkey.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -441,7 +491,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/agent_heartbeat_daemon.js",
       "name": "tools/agent_heartbeat_daemon.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -466,7 +516,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/agent_shield.js",
       "name": "tools/agent_shield.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -491,7 +541,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/antigravity_drive_harness.js",
       "name": "tools/antigravity_drive_harness.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -516,7 +566,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/approval_ed25519.js",
       "name": "tools/approval_ed25519.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -541,7 +591,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/assurance.js",
       "name": "tools/assurance.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -566,7 +616,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/ast_complexity_analyzer.js",
       "name": "tools/ast_complexity_analyzer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -591,7 +641,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/ast_dead_code_analyzer.js",
       "name": "tools/ast_dead_code_analyzer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -616,7 +666,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/ast_patch_synthesizer.js",
       "name": "tools/ast_patch_synthesizer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -641,7 +691,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/ast_taint_dataflow_analyzer.js",
       "name": "tools/ast_taint_dataflow_analyzer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -666,7 +716,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/asymptotic_critic.js",
       "name": "tools/asymptotic_critic.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -691,7 +741,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/attestation_visualizer.js",
       "name": "tools/attestation_visualizer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -716,7 +766,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/attestation.js",
       "name": "tools/attestation.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -741,7 +791,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/auto_compacting_checkpoint.js",
       "name": "tools/auto_compacting_checkpoint.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -766,7 +816,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/autonomous_module_packager.js",
       "name": "tools/autonomous_module_packager.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -789,9 +839,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/bayesian_hypothesis_updater.js",
+      "name": "tools/bayesian_hypothesis_updater.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "05efb36ec4e5b32ad0963d7fb8a5a580042ab68d9b04b5da84292c2f2b10fc33"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5838"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/blast_radius_estimator.js",
       "name": "tools/blast_radius_estimator.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -816,7 +891,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/bundle_compiler.js",
       "name": "tools/bundle_compiler.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -841,7 +916,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/canonical_json.js",
       "name": "tools/canonical_json.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -866,7 +941,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/capability_manager.js",
       "name": "tools/capability_manager.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -889,9 +964,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/causal_dag_backtracker.js",
+      "name": "tools/causal_dag_backtracker.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "84b0ea185b3536e2f1059030dd3b2cd0e9be45762f0ebebf97729ec77fdb5999"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4658"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/chaos_fuzzer_1000.js",
       "name": "tools/chaos_fuzzer_1000.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -916,7 +1016,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/chaos_fuzzer_10000.js",
       "name": "tools/chaos_fuzzer_10000.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -941,7 +1041,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/chaos_fuzzer_2500.js",
       "name": "tools/chaos_fuzzer_2500.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -966,7 +1066,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/chaos_fuzzer_5000.js",
       "name": "tools/chaos_fuzzer_5000.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -991,7 +1091,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/check_ed25519.js",
       "name": "tools/check_ed25519.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1016,7 +1116,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/checkpoint.js",
       "name": "tools/checkpoint.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1039,9 +1139,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/cognitive_reasoning_engine.js",
+      "name": "tools/cognitive_reasoning_engine.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c9ab816e4f628b9987ff8befc104c45c2b3e2fef3436bfba8098e7ee590ab520"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4972"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/competitive_benchmark.js",
       "name": "tools/competitive_benchmark.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1066,11 +1191,11 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/compliance_matrix_exporter.js",
       "name": "tools/compliance_matrix_exporter.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "ce913b077b748b047bae9e0687e0b84bb4666ff856ec6ada7cb7a91806ca0411"
+          "content": "fdf48a443bb1dcfbd7bb5b6c2b5a225c63b8aad3b0187f0939ef03ca7f008d5c"
         }
       ],
       "licenses": [
@@ -1083,7 +1208,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "6960"
+          "value": "8278"
         }
       ]
     },
@@ -1091,7 +1216,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/concurrent_race_verifier.js",
       "name": "tools/concurrent_race_verifier.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1116,7 +1241,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/context_budget_guard.js",
       "name": "tools/context_budget_guard.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1139,9 +1264,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/context_cache_accelerator.js",
+      "name": "tools/context_cache_accelerator.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6a5429bd9b902ae148aa708d272cea69f80893f1855d3a997e1a8b4a035501da"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5750"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/context_entropy_guard.js",
       "name": "tools/context_entropy_guard.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1164,13 +1314,13 @@
     },
     {
       "type": "file",
-      "bom-ref": "pkg:generic/axion-protocol/tools/context_shield.js",
-      "name": "tools/context_shield.js",
-      "version": "1.3.1-rc.2",
+      "bom-ref": "pkg:generic/axion-protocol/tools/context_relevance_pruner.js",
+      "name": "tools/context_relevance_pruner.js",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "1256f2de84d81ce43086a5caf20a7967e24d3779ceea629bfd60d6b7ccc680d8"
+          "content": "0d6493c5d6575d74a38a2688a36ee116eb75d52fc6a192aca275d31bb993fa8e"
         }
       ],
       "licenses": [
@@ -1183,7 +1333,82 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "9855"
+          "value": "5498"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/context_shield.js",
+      "name": "tools/context_shield.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b255a052b8f48c2795bb658e5ad54e5fb885ac4d61e02ef74cc22cf2beb7fcd6"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "10661"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/context_snapshot_compressor.js",
+      "name": "tools/context_snapshot_compressor.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4839bc64d643d518258aee14004b3bd5e48c669484d37739de8a118345654f6d"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5236"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/convergence_drift_analyzer.js",
+      "name": "tools/convergence_drift_analyzer.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "eba0328145f83c4cc6de6c41e53d25910282d927ba756684a8e74a9b91e08c4d"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4723"
         }
       ]
     },
@@ -1191,7 +1416,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/convergence_loop.js",
       "name": "tools/convergence_loop.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1216,7 +1441,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/convergence_regression_guard.js",
       "name": "tools/convergence_regression_guard.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1239,9 +1464,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/counterfactual_reasoning_oracle.js",
+      "name": "tools/counterfactual_reasoning_oracle.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fb67eb04d6d72c2b37bc83de4a2feb2cfcc2b2ec91cd7fbd7190048b80e0af04"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4941"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/deep_reasoning.js",
       "name": "tools/deep_reasoning.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1264,9 +1514,84 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/dialectic_consensus_arbiter.js",
+      "name": "tools/dialectic_consensus_arbiter.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ac7d8d1e423e2a88d2e097fe55fe85d2b0295146f7f3d12c7eebcaa683802cfe"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5392"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/dialectic_debater.js",
+      "name": "tools/dialectic_debater.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e5842c36fa9b67089ce164329ce198ec818ee473b476ef8309a7015a1a9433cd"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4059"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/diff_token_compactor.js",
+      "name": "tools/diff_token_compactor.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d26d3a47fe73fc5ae1f3f916b4160166526ebd98567ac1a9d2b6c30688c69e3b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5818"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/disk_pressure_guard.js",
       "name": "tools/disk_pressure_guard.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1291,7 +1616,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/doctor_repair_engine.js",
       "name": "tools/doctor_repair_engine.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1316,7 +1641,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/drive_dsse_attester.js",
       "name": "tools/drive_dsse_attester.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1341,11 +1666,11 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/drive_engine.js",
       "name": "tools/drive_engine.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "1db9eca8d292dbafafde67406aafea1a30763dd5df1aa33017d97046f5bac4b9"
+          "content": "01224917a3e4eccb5e5903b2012ab9d9350be7fbdbb08ad285cdad25af0a878d"
         }
       ],
       "licenses": [
@@ -1358,7 +1683,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "41169"
+          "value": "55493"
         }
       ]
     },
@@ -1366,7 +1691,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/drive_memory_copilot.js",
       "name": "tools/drive_memory_copilot.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1391,7 +1716,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/drive_mission_matrix.js",
       "name": "tools/drive_mission_matrix.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1416,7 +1741,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/drive_mission_tracker.js",
       "name": "tools/drive_mission_tracker.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1441,7 +1766,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/drive_state_resumer.js",
       "name": "tools/drive_state_resumer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1466,7 +1791,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/drive_telemetry.js",
       "name": "tools/drive_telemetry.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1491,7 +1816,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/drive_worker_sandbox.js",
       "name": "tools/drive_worker_sandbox.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1516,7 +1841,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/dsse.js",
       "name": "tools/dsse.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1539,9 +1864,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/dynamic_invariant_assertor.js",
+      "name": "tools/dynamic_invariant_assertor.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4524181a9ae0e5ac456c1443cd33003df563156587f2581b83e3d1be017e8282"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4663"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/dynamic_rule_weaver.js",
       "name": "tools/dynamic_rule_weaver.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1566,7 +1916,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/emit_attestation.js",
       "name": "tools/emit_attestation.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1589,9 +1939,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/epistemic_uncertainty_quantifier.js",
+      "name": "tools/epistemic_uncertainty_quantifier.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "744767747bae513dfb3bd1bb72cae7fe1e530fec138e131b81352fc3682f9457"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4900"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/evidence_hasher.js",
       "name": "tools/evidence_hasher.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1616,7 +1991,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/fast_parity_benchmarker.js",
       "name": "tools/fast_parity_benchmarker.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1641,7 +2016,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/flight_recorder.js",
       "name": "tools/flight_recorder.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1666,11 +2041,11 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/forensic_telemetry_engine.js",
       "name": "tools/forensic_telemetry_engine.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "f4857989ec7e6cd326fc08e39b00b956254567561f68a91a1a2eba796906d99c"
+          "content": "f7480aac4736670c97b3b04c62f46e98065ce8b9af87d9e8c282c472491bad2e"
         }
       ],
       "licenses": [
@@ -1683,7 +2058,32 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "12260"
+          "value": "12923"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/formal_equivalence_checker.js",
+      "name": "tools/formal_equivalence_checker.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3857a7f7acd221a55303ba9974fd7739fb0f9846b619e48986133cbf01868189"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4977"
         }
       ]
     },
@@ -1691,7 +2091,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/formal_smt_policy_verifier.js",
       "name": "tools/formal_smt_policy_verifier.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1716,7 +2116,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/fuzzer.js",
       "name": "tools/fuzzer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1741,7 +2141,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/git_assistant.js",
       "name": "tools/git_assistant.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1766,11 +2166,11 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/git_governance_hook.js",
       "name": "tools/git_governance_hook.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "2ddb823542115c09dbd48e68e917e93f87b9bc925bf09c6c84514a4ec1b83d61"
+          "content": "b9d3d6eb96670661ca111abd917e688c9fdc4c35b9d798a0296724b827f29a35"
         }
       ],
       "licenses": [
@@ -1783,7 +2183,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "4570"
+          "value": "4583"
         }
       ]
     },
@@ -1791,7 +2191,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/governance_dashboard.js",
       "name": "tools/governance_dashboard.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1816,7 +2216,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/hardware_adaptive_profiler.js",
       "name": "tools/hardware_adaptive_profiler.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1841,11 +2241,11 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/health_check.js",
       "name": "tools/health_check.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "94e29ce81d711a8fd064acd74fc7e4b50d2b3797a3e54975cdc6fab002a9fa0d"
+          "content": "eff40aafaf8ef76b1749a50eec9b7bfcba3776f96bd4df10a35a739aa5fa5fcd"
         }
       ],
       "licenses": [
@@ -1858,7 +2258,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "12999"
+          "value": "14530"
         }
       ]
     },
@@ -1866,7 +2266,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/humanizer_engine.js",
       "name": "tools/humanizer_engine.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1891,7 +2291,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/identity_canonical.js",
       "name": "tools/identity_canonical.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1914,9 +2314,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/inductive_hypothesis_prover.js",
+      "name": "tools/inductive_hypothesis_prover.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "35536271fffe4eb40d3afb16d3f4d9e7a9bf221328565552224ab8013dfd10f7"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5853"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/instinct_synthesizer.js",
       "name": "tools/instinct_synthesizer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1941,7 +2366,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/intent_clarifier.js",
       "name": "tools/intent_clarifier.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1966,7 +2391,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/killswitch.js",
       "name": "tools/killswitch.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -1991,7 +2416,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/learning_engine.js",
       "name": "tools/learning_engine.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2016,7 +2441,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/license_auditor.js",
       "name": "tools/license_auditor.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2041,7 +2466,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/live_hud_connector.js",
       "name": "tools/live_hud_connector.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2066,7 +2491,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/massive_fuzzer.js",
       "name": "tools/massive_fuzzer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2091,7 +2516,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/memory.js",
       "name": "tools/memory.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2116,7 +2541,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/merkle_cache_fast_forward.js",
       "name": "tools/merkle_cache_fast_forward.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2141,7 +2566,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/merkle_integrity_ledger.js",
       "name": "tools/merkle_integrity_ledger.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2164,13 +2589,13 @@
     },
     {
       "type": "file",
-      "bom-ref": "pkg:generic/axion-protocol/tools/mission_backlog_vault.js",
-      "name": "tools/mission_backlog_vault.js",
-      "version": "1.3.1-rc.2",
+      "bom-ref": "pkg:generic/axion-protocol/tools/metacognitive_ast_analyzer.js",
+      "name": "tools/metacognitive_ast_analyzer.js",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "89bfc330830fe1515c426a5b29ed9a0a099390e822d1993b230eaa1119060293"
+          "content": "9319155e3630bc0e7d9a0f190c10be33b8463a47501b79c102e2fed2cdd5246d"
         }
       ],
       "licenses": [
@@ -2183,7 +2608,82 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "7171"
+          "value": "5361"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/metacognitive_heuristic_solver.js",
+      "name": "tools/metacognitive_heuristic_solver.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f5d3784ca26f5cbc683d50ce6a0cc92f3c2b491df6f52e75dd65bd7a805961a2"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5347"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/metaprompt_dialectic_synthesizer.js",
+      "name": "tools/metaprompt_dialectic_synthesizer.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f99956f3d27aeaaea8f2608227d7911ba66b34b22e86dc1179242ee2e4ee02dc"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5449"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/mission_backlog_vault.js",
+      "name": "tools/mission_backlog_vault.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a7e1f7527e79f295c66541f75d5e715cc2fe697886636d08cfe4ad0c87a3eba1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "9342"
         }
       ]
     },
@@ -2191,7 +2691,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/module_dependency_graph.js",
       "name": "tools/module_dependency_graph.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2216,7 +2716,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/multi_file_cross_healer.js",
       "name": "tools/multi_file_cross_healer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2241,7 +2741,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/multi_harness_adapter.js",
       "name": "tools/multi_harness_adapter.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2266,7 +2766,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/multidimensional_socratic_planner.js",
       "name": "tools/multidimensional_socratic_planner.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2289,9 +2789,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/mutation_coverage_oracle.js",
+      "name": "tools/mutation_coverage_oracle.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d90f4baf88bc7b6c379535ff70684b8c9a61c2d511ec180a192978c998a4b06f"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5687"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/onboarding_wizard.js",
       "name": "tools/onboarding_wizard.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2316,11 +2841,11 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/performance_benchmark.js",
       "name": "tools/performance_benchmark.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "d115ae8a2b2bb0c8c75ecc546b7cc79bb2258861e5c9a65753284597719df782"
+          "content": "b833eb126e615b93ae5b941bc5b2e6f91bf3ba536924848328a1de437b826df8"
         }
       ],
       "licenses": [
@@ -2333,7 +2858,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "4437"
+          "value": "4513"
         }
       ]
     },
@@ -2341,7 +2866,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/pipeline_fast_gate.js",
       "name": "tools/pipeline_fast_gate.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2364,9 +2889,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/prefix_cache_affinity_router.js",
+      "name": "tools/prefix_cache_affinity_router.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e5281aee01cd34c0191240990584da7b4e359742d575c0e87d147388c4d728f7"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "6594"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/preflight_tdd_synthesizer.js",
       "name": "tools/preflight_tdd_synthesizer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2391,7 +2941,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/preflight.js",
       "name": "tools/preflight.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2416,7 +2966,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/premortem.js",
       "name": "tools/premortem.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2441,7 +2991,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/profile_adapter.js",
       "name": "tools/profile_adapter.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2464,9 +3014,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/prompt_grammar_compactor.js",
+      "name": "tools/prompt_grammar_compactor.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ad9ebc6114c58f0a2fc263fb1c6e40d5a2ed2482f87f68b084e3268c52df36be"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "6333"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/provenance_sbom_generator.js",
       "name": "tools/provenance_sbom_generator.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2491,7 +3066,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/quickstart_interactive.js",
       "name": "tools/quickstart_interactive.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2516,7 +3091,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/README.md",
       "name": "tools/README.md",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2541,7 +3116,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/repo_attestation_generator.js",
       "name": "tools/repo_attestation_generator.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2566,7 +3141,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/revocation_manager.js",
       "name": "tools/revocation_manager.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2591,7 +3166,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/risk_policy_compiler.js",
       "name": "tools/risk_policy_compiler.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2616,7 +3191,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/rollback_plan.js",
       "name": "tools/rollback_plan.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2641,11 +3216,11 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/sbom_sovereign_generator.js",
       "name": "tools/sbom_sovereign_generator.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "08c6f55fd0345b1c738b633c793ddb254056df018c8c1e89321e8558cf04f33b"
+          "content": "62450a3e0ed082f705ec8c0d6a2e53f2fb81ecb705cb27c4906e66108f113db4"
         }
       ],
       "licenses": [
@@ -2658,7 +3233,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "6118"
+          "value": "6569"
         }
       ]
     },
@@ -2666,7 +3241,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/schema_contract_verifier.js",
       "name": "tools/schema_contract_verifier.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2691,7 +3266,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/scout_engine.js",
       "name": "tools/scout_engine.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2716,7 +3291,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/self_healing_engine.js",
       "name": "tools/self_healing_engine.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2741,7 +3316,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/semantic_auto_healer.js",
       "name": "tools/semantic_auto_healer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2764,9 +3339,59 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/semantic_contract_verifier.js",
+      "name": "tools/semantic_contract_verifier.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "33a30d60c4564781ac850483fd6bf5a133b930838300f0d1b84242822ceee980"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5833"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/semantic_cross_indexer.js",
+      "name": "tools/semantic_cross_indexer.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4819aa5e19aa8a79f6e6b30cffa1439a7471c1992db5bb7caf568dc7b9e75024"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "8306"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/semantic_memory_graph.js",
       "name": "tools/semantic_memory_graph.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2791,7 +3416,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/semantic_snapshot_indexer.js",
       "name": "tools/semantic_snapshot_indexer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2814,9 +3439,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/semantic_token_deduplicator.js",
+      "name": "tools/semantic_token_deduplicator.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0069e2f9069fa3311db77007b064d88e5d8b65cccfa25de131eb480ede27752b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5001"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/semantic_type_reconciler.js",
       "name": "tools/semantic_type_reconciler.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2841,7 +3491,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/smart_incremental_runner.js",
       "name": "tools/smart_incremental_runner.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2866,7 +3516,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/socratic_tree_visualizer.js",
       "name": "tools/socratic_tree_visualizer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2889,9 +3539,34 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/speculative_token_expander.js",
+      "name": "tools/speculative_token_expander.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fd9e2932b0be14469ce33f23de4bcef7309df9354b28df549b87b9f86070a098"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4272"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/sqlite_snapshot_isolation.js",
       "name": "tools/sqlite_snapshot_isolation.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2916,7 +3591,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/structured_command.js",
       "name": "tools/structured_command.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2941,7 +3616,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/swarm_arbiter.js",
       "name": "tools/swarm_arbiter.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2966,7 +3641,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/swarm_ast_arbiter.js",
       "name": "tools/swarm_ast_arbiter.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -2991,7 +3666,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/swarm_benchmark.js",
       "name": "tools/swarm_benchmark.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3016,7 +3691,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/swarm_consensus_arbiter.js",
       "name": "tools/swarm_consensus_arbiter.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3041,7 +3716,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/swarm_p2p_channel.js",
       "name": "tools/swarm_p2p_channel.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3066,7 +3741,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/swarm_simulator.js",
       "name": "tools/swarm_simulator.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3091,7 +3766,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/sync_doc_stats.js",
       "name": "tools/sync_doc_stats.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3116,7 +3791,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/sync_mirror_gate.js",
       "name": "tools/sync_mirror_gate.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3141,7 +3816,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/telemetry_gateway.js",
       "name": "tools/telemetry_gateway.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3166,7 +3841,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/temporal_state_verifier.js",
       "name": "tools/temporal_state_verifier.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3189,9 +3864,59 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/token_economy_pruner.js",
+      "name": "tools/token_economy_pruner.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ea410d0be491ba27d207651132278024a9a180ac5d4f0e5570d394225c696490"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5914"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/token_streaming_compactor.js",
+      "name": "tools/token_streaming_compactor.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4286446c9768c1189479d6743c88afd401a8a68d3d30a8e29e102767d97f7f49"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4533"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/transversal_project_optimizer.js",
       "name": "tools/transversal_project_optimizer.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3216,11 +3941,11 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/universal_invariants_verifier.js",
       "name": "tools/universal_invariants_verifier.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "9aedddfada9d412529450469a142e85326f96ba9fb1a721c59d806f62e47d7ca"
+          "content": "60fd0ee0a565c334c3ce9966c6190a303221c06f3d7982e9178b5bbf40458bc2"
         }
       ],
       "licenses": [
@@ -3233,7 +3958,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "4292"
+          "value": "5911"
         }
       ]
     },
@@ -3241,7 +3966,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/updater.js",
       "name": "tools/updater.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3266,7 +3991,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/user_decision_trajectory.js",
       "name": "tools/user_decision_trajectory.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3291,7 +4016,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/verify_changes.js",
       "name": "tools/verify_changes.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3316,7 +4041,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/vibeguard_gate.js",
       "name": "tools/vibeguard_gate.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3341,7 +4066,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/vibeguard_storage_hook.js",
       "name": "tools/vibeguard_storage_hook.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3366,7 +4091,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/vibeguard.js",
       "name": "tools/vibeguard.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3391,7 +4116,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/web_ui_auditor.js",
       "name": "tools/web_ui_auditor.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3416,7 +4141,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/wizard.js",
       "name": "tools/wizard.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3441,7 +4166,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/workflow_runner.js",
       "name": "tools/workflow_runner.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3466,7 +4191,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/workflow_state_machine.js",
       "name": "tools/workflow_state_machine.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3491,7 +4216,7 @@
       "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tools/workspace_debloater.js",
       "name": "tools/workspace_debloater.js",
-      "version": "1.3.1-rc.2",
+      "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -3509,6 +4234,31 @@
         {
           "name": "axion:fileSize",
           "value": "5160"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/zero_overhead_trace_logger.js",
+      "name": "tools/zero_overhead_trace_logger.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "605bbe8a8cdc853d1a0377fa1422371511eb4e48bfaa3f3252cdb686ecc9ee78"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4478"
         }
       ]
     }
