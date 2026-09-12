@@ -2,6 +2,10 @@
 
 Modulos ejecutables Node.js sin dependencias externas.
 
+**Alcance:** este documento es un **índice parcial** de las herramientas principales, no un
+catálogo exhaustivo. El inventario completo es el propio directorio `tools/`; las suites de
+`tests/` y `tools/health_check.js` vigilan que toda herramienta citada por un prompt exista.
+
 | Archivo | Funcion |
 | :--- | :--- |
 | `intent_clarifier.js` | Clarificacion de intencion. |

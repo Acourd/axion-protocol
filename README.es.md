@@ -9,8 +9,6 @@
 [![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.4.0--beta.1-0969da.svg?style=flat-square)](package.json)
 [![Licencia](https://img.shields.io/badge/Licencia-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
 [![Cero Dependencias](https://img.shields.io/badge/Dependencias-0-success.svg?style=flat-square)](package.json)
-[![Velocidad](https://img.shields.io/badge/Velocidad-12s%20(8%20workers)-informational.svg?style=flat-square)](tests/run_all.js)
-[![Tamaño](https://img.shields.io/badge/Tama%C3%B1o-535_kB-informational.svg?style=flat-square)](package.json)
 
 ---
 
@@ -23,7 +21,7 @@ Los asistentes de código autónomos (**Claude Code, Google Antigravity, Cursor,
 3. **Degradación de Contexto y Quema de Tokens**: Cientos de dólares desperdiciados en bucles de razonamiento infinitos, micro-interrupciones repetitivas y pérdida de memoria en sesiones largas.
 4. **Cero Auditabilidad Criptográfica**: Imposibilidad de demostrar matemáticamente qué pruebas se ejecutaron realmente, quién autorizó un cambio y si la cadena de suministro fue alterada.
 
-**Axion Protocol ayuda a estructurar estos flujos a nivel local.** Proporciona herramientas ligeras de gobernanza (535 kB, **cero dependencias externas**) para introducir puntos de control deliberados y límites en entornos de agentes soportados.
+**Axion Protocol ayuda a estructurar estos flujos a nivel local.** Proporciona herramientas ligeras de gobernanza (**cero dependencias externas**) para introducir puntos de control deliberados y límites en entornos de agentes soportados.
 
 ---
 
@@ -109,7 +107,7 @@ Salida:
 
 ## Comandos de Gobernanza y Recetas
 
-Axion Protocol incorpora 12 slash commands diseñados para operar en sinergia. Para consultar la especificación completa, disparadores y combinaciones recomendadas (p. ej. `/drive /premortem /critic`), visita el manual dedicado:
+Axion Protocol incorpora 12 slash commands diseñados para operar en sinergia. Para consultar la especificación completa, disparadores y combinaciones recomendadas (p. ej. `/drive /premortem /debug`), visita el manual dedicado:
 
 **[Explorar el Manual Completo de Comandos y Recetas ->](docs/COMMANDS.es.md)**
 

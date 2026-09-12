@@ -72,10 +72,19 @@ Para maximizar la densidad cognitiva, reducir el gasto innecesario de tokens y m
 
 ## Paridad de Plataformas
 
-Los 12 comandos operan de manera idéntica en:
+Los **12 comandos canónicos de gobernanza** son prompts/skills, no subcomandos del CLI. Su
+disponibilidad por superficie es:
+
 1. **Google Antigravity**: Skills nativas en `.agents/skills/<comando>/SKILL.md`.
 2. **Anthropic Claude Code**: Comandos slash en `.claude/commands/<comando>.md`.
-3. **CLI Unificada**: Invocables mediante `node bin/axion.js <comando>` (con flag opcional `--target <directorio>`).
+3. **OpenCode / Codex / Copilot**: `.opencode/commands/<comando>.md` más el registro en la
+   clave `command` del `opencode.json` de la raíz, y las directivas de `AGENTS.md`,
+   respectivamente.
+
+**10 de los 12 tienen subcomando CLI** en `node bin/axion.js <comando>`: `drive`,
+`clarify`, `premortem`, `preflight`, `snapshot`, `verify`, `memory`, `profile`, `halt` y
+`attest`. **`/debug` y `/review` son prompt-only**: describen un procedimiento para el
+agente y no tienen entrada CLI propia.
 
 ---
 
