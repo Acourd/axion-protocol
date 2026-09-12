@@ -1,22 +1,22 @@
 # Axion Protocol — Command Reference & Task Recipes
 
-> **The Sovereign Governance Manual**: Exhaustive specification of the 12 Core Governance Commands, operational triggers, and high-efficiency command combinations.
+> **The Local Governance Manual**: Exhaustive specification of the 12 Core Governance Commands, operational triggers, and calibrated recipes for agent workflows.
 
 ---
 
 ## Task Recipes (Recommended Combinations)
 
-To maximize cognitive density, reduce token burn, and eliminate AI hallucinations, use these calibrated command workflows:
+To maximize cognitive density, reduce token burn, and mitigate agent cognitive drift, use these calibrated command workflows:
 
 | Objective | Recommended Recipe | Operational Behavior |
 | :--- | :--- | :--- |
-| **Architectural Decisions & Strategy** | `/drive /premortem /critic` | Expands vision 10x (`/critic`), performs a 6-month pre-mortem failure simulation (`/premortem`), and executes verified code (`/drive`). |
-| **Fast Atomic Fixes (1–2 files)** | `/drive` | Operates in *Fast-Loop* mode: resolves changes in a single turn with zero micro-interruptions and runs tests in `< 300ms`. |
+| **Architectural Decisions & Strategy** | `/drive /premortem` | Performs a 6-month pre-mortem failure simulation (`/premortem`) and executes verified changes (`/drive`). |
+| **Fast Atomic Fixes (1–2 files)** | `/drive` | Operates in *Fast-Loop* mode: resolves changes in a single turn with zero micro-interruptions and runs targeted tests rapidly. |
 | **Systematic Bug Debugging** | `/debug /verify` | 4-phase root cause analysis without guessing, verified deterministically against real exit codes. |
 | **Ambiguous Requirements Clarification** | `/clarify` | Socratic gate: prompts exactly 2 plain A/B/C questions without technical jargon before writing any code. |
-| **Disaster Recovery & Instant Rollback** | `/snapshot` | Restores verified SHA-256 tree checkpoints in `< 5ms` from natural language prompts (*"undo what you did"*). |
+| **Disaster Recovery & Instant Rollback** | `/snapshot` | Restores verified SHA-256 tree checkpoints immediately and atomically from natural language prompts (*"undo what you did"*). |
 | **Multi-Lens Quality Audit** | `/review` | Contextual 4-lens audit (Technical, Functional, UX/Product, Architecture) eliminating cosmetic noise. |
-| **Cryptographic Release Attestation** | `/attest` | Generates in-toto Statement v1 DSSE envelopes signed with Ed25519 (SLSA Level 3 compatible). |
+| **Cryptographic Release Attestation** | `/attest` | Generates in-toto Statement v1 DSSE envelopes signed with Ed25519 for local audit trails. |
 
 ---
 
@@ -31,9 +31,9 @@ To maximize cognitive density, reduce token burn, and eliminate AI hallucination
 - **Purpose**: Prevents premature implementation on underspecified requirements.
 - **Rules**: Exactly 2 human questions with A/B/C options. No technical jargon. Compatible with voice dictation.
 
-### 3. `/critic` — Asymptotic Excellence Lens
-- **Purpose**: Universal polymorphic evaluator across the 7 Sovereign Maturity Frontiers.
-- **Evaluation**: Computes Asymptotic Maturity Rate (AMR) and Day 1 Unrealized Horizon using the 3-Step Ladder.
+### 3. `/debug` — Systematic 4-Phase Debugger
+- **Purpose**: Root-cause debugging without blind patching.
+- **Phases**: 1) Hypothesis formulation, 2) Minimal reproducible test case, 3) Targeted fix, 4) Real execution verification.
 
 ### 4. `/premortem` — Adversarial Failure Simulation
 - **Purpose**: Conducts a 6-month adversarial failure autopsy and blast-radius calculation before modifying critical modules.
@@ -49,7 +49,7 @@ To maximize cognitive density, reduce token burn, and eliminate AI hallucination
 
 ### 7. `/verify` — Deterministic Execution Verifier
 - **Purpose**: Prohibits visual-inspection claims. Demands real test execution with exit code 0.
-- **Fast Mode**: `node tools/verify_changes.js --fast` executes only impacted suites in `< 300ms`.
+- **Fast Mode**: `node tools/verify_changes.js --fast` executes only impacted suites rapidly and targetedly.
 
 ### 8. `/review` — Selective 4-Lens Auditor
 - **Purpose**: Inspects code diffs through 4 lenses: Technical, Functional, UX/Product, and Architecture.
@@ -66,7 +66,7 @@ To maximize cognitive density, reduce token burn, and eliminate AI hallucination
 - **Purpose**: Immediate fail-closed execution freeze (`.axion/HALT`). Intercepts all tool use until explicitly resumed.
 
 ### 12. `/attest` — Cryptographic DSSE Attestor
-- **Purpose**: Issues and verifies cryptographic in-toto provenance statements with Ed25519 signatures and Merkle inclusion proofs.
+- **Purpose**: Issues and verifies cryptographic in-toto provenance statements in DSSE envelopes with Ed25519 signatures.
 
 ---
 
@@ -75,4 +75,10 @@ To maximize cognitive density, reduce token burn, and eliminate AI hallucination
 All 12 commands are accessible across three environments:
 1. **Google Antigravity**: Mounted as native skills in `.agents/skills/<command>/SKILL.md`.
 2. **Anthropic Claude Code**: Mounted as slash commands in `.claude/commands/<command>.md`.
-3. **Unified CLI**: Accessible via `npx axion <command>` or `node bin/axion.js <command>`.
+3. **Unified CLI**: Accessible via `node bin/axion.js <command>` (with optional `--target <path>`).
+
+---
+
+## Core Commands vs. Internal Tools
+
+The **12 Core Governance Commands** above represent the canonical user-facing contract of Axion Protocol across agent harnesses. Additional utilities in `tools/` (preflight classifiers, SQLite snapshot indexers, bundle compiler, health checks, etc.) operate as internal infrastructure engines invoked by `/drive`, `/verify`, or automated test suites.

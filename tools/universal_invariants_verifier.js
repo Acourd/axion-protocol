@@ -2,14 +2,14 @@
 'use strict';
 
 /**
- * Axion Protocol v2.0 — Bicentennial Universal Invariants Verifier Engine
+ * Axion Protocol — Local Invariants Structural Verifier Engine
  *
- * El auditor supremo holístico para el hito bicentenario (200 Suites):
- * 1. Audita la ejecución de las 200 suites deterministas en los 5 dominios.
+ * Auditor estructural de invariantes locales:
+ * 1. Audita la estructura y presencia de los componentes de gobernanza local.
  * 2. Valida la invariabilidad estricta de Cero Dependencias (dependencies: {}).
- * 3. Ejecuta VibeGuard sobre el 100% de archivos del repositorio (0 antipatrones).
- * 4. Verifica la existencia e integridad de los manifiestos SBOM CycloneDX y SPDX.
- * 5. Emite el Certificado Supremo de Gobernanza Soberana con huella SHA-256.
+ * 3. Ejecuta VibeGuard sobre los archivos del repositorio (0 antipatrones).
+ * 4. Verifica la presencia estructural de los manifiestos SBOM CycloneDX y SPDX.
+ * 5. Emite reporte local de verificación estructural con huella SHA-256.
  *
  * Cero dependencias externas.
  */
@@ -59,9 +59,9 @@ class UniversalInvariantsVerifier {
     const spdxPath = path.join(this.root, 'docs', 'sbom', 'sbom.spdx.json');
     const sbomPass = fs.existsSync(cdxPath) && fs.existsSync(spdxPath);
     checks.push({
-      name: 'Sovereign SBOM Manifests',
+      name: 'Local SBOM Manifests',
       pass: sbomPass,
-      detail: 'CycloneDX v1.5 y SPDX 2.3 generados en docs/sbom/'
+      detail: 'Presencia estructural de CycloneDX v1.5 y SPDX 2.3 en docs/sbom/'
     });
 
     // 4. Verificación de los 3 Pilares de Swarm v2.0
@@ -118,17 +118,24 @@ class UniversalInvariantsVerifier {
 
     const allPassed = checks.every(c => c.pass);
     const summary = {
-      verdict: allPassed ? 'SOVEREIGN_SYSTEM_VERIFIED' : 'VERIFICATION_FAILED',
+      verdict: allPassed ? 'LOCAL_GOVERNANCE_VERIFIED' : 'VERIFICATION_FAILED',
       totalChecks: checks.length,
       passedChecks: checks.filter(c => c.pass).length,
+      scopeLimits: {
+        validatesLocalWorkspaceStructure: true,
+        certifiesExecutionIntegrity: false,
+        externalCertification: 'NONE'
+      },
       timestamp,
       checks
     };
 
-    summary.certificateDigest = crypto
+    const digest = crypto
       .createHash('sha256')
       .update(JSON.stringify(summary, Object.keys(summary).sort()))
       .digest('hex');
+
+    summary.reportDigest = digest;
 
     return summary;
   }
@@ -140,7 +147,7 @@ if (require.main === module) {
   const res = verifier.verifyAllInvariants();
   console.log(`[Axion Universal Verifier] Veredicto: ${res.verdict}`);
   console.log(`  ✓ Comprobaciones superadas: ${res.passedChecks}/${res.totalChecks}`);
-  console.log(`  ✓ Huella Criptográfica SHA-256: ${res.certificateDigest}`);
+  console.log(`  ✓ Huella SHA-256 del reporte: ${res.reportDigest}`);
 }
 
 module.exports = UniversalInvariantsVerifier;

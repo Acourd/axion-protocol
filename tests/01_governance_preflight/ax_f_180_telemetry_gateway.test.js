@@ -58,7 +58,34 @@ async function runTests() {
     await gateway.stop();
     console.log('  ✓ Invariante 4: Apagado limpio y liberación de socket validada.');
 
-    console.log('\nPASS: AX-F-180 — Gateway de Telemetría WebSocket verificado con 4/4 invariantes en verde.');
+    // Invariante 5: Demostración estática de que telemetry_gateway es estrictamente opt-in
+    // y no es importado ni iniciado por el runtime estándar de gobernanza
+    const fs = require('fs');
+    const path = require('path');
+    const ROOT = path.resolve(__dirname, '..', '..');
+    const coreRuntimeFiles = [
+      'install.js',
+      'tools/health_check.js',
+      'tools/preflight.js',
+      'tools/workflow_runner.js',
+      'tools/drive_engine.js',
+      'tools/git_governance_hook.js',
+      'tools/vibeguard_gate.js'
+    ];
+    for (const rel of coreRuntimeFiles) {
+      const full = path.join(ROOT, rel);
+      if (fs.existsSync(full)) {
+        const content = fs.readFileSync(full, 'utf8');
+        assert.strictEqual(
+          content.includes('telemetry_gateway'),
+          false,
+          `El archivo de runtime ${rel} no debe importar ni iniciar telemetry_gateway`
+        );
+      }
+    }
+    console.log('  ✓ Invariante 5: Comprobado que telemetry_gateway no es importado ni iniciado por los flujos de gobernanza.');
+
+    console.log('\nPASS: AX-F-180 — Gateway de Telemetría WebSocket verificado con 5/5 invariantes en verde.');
   } catch (err) {
     await gateway.stop();
     throw err;

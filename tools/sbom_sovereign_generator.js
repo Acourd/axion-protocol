@@ -4,11 +4,13 @@
 /**
  * Axion Protocol — Sovereign SBOM (Software Bill of Materials) Generator
  *
- * Genera manifiestos SBOM deterministas para auditorías corporativas y gubernamentales:
- * 1. Cumplimiento con los estándares CycloneDX v1.5 y SPDX 2.3 JSON.
- * 2. Cero dependencias externas: indexación nativa de hashes SHA-256 de todos los módulos.
- * 3. Ratificación formal de 'Zero Third-Party Dependencies' (dependencies: {}).
- * 4. Certificación criptográfica y firma de integridad para la cadena de suministro.
+ * Genera manifiestos SBOM deterministas para inventario local de componentes:
+ * 1. Mapeo estructurado conforme a los esquemas CycloneDX v1.5 y SPDX 2.3 JSON.
+ * 2. Cero dependencias externas: indexación nativa de hashes SHA-256 de módulos locales.
+ * 3. Declaración de 'Zero Third-Party Dependencies' basada en package.json y el inventario local generado (dependencies: {}).
+ * 4. Genera inventarios locales con hashes SHA-256, sin certificar procedencia, autoridad externa ni integridad de ejecución.
+ *
+ * Ubicación canónica de salida: docs/sbom/ (con réplica espejo en sbom/ para compatibilidad).
  */
 
 const fs = require('fs');
@@ -59,18 +61,40 @@ class SovereignSBOMGenerator {
   }
 
   /**
+   * Obtiene la versión del proyecto dinámicamente desde package.json de forma fail-closed.
+   * Lanza un Error si el archivo no existe o carece de la propiedad version.
+   */
+  getPackageVersion() {
+    const pkgPath = path.join(this.root, 'package.json');
+    if (!fs.existsSync(pkgPath)) {
+      throw new Error(`[SovereignSBOMGenerator] package.json no existe en: ${pkgPath}`);
+    }
+    let pkg;
+    try {
+      pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    } catch (parseErr) {
+      throw new Error(`[SovereignSBOMGenerator] package.json contiene JSON inválido: ${parseErr.message}`);
+    }
+    if (!pkg || typeof pkg.version !== 'string' || pkg.version.trim() === '') {
+      throw new Error('[SovereignSBOMGenerator] package.json no contiene propiedad version válida');
+    }
+    return pkg.version;
+  }
+
+  /**
    * Genera el SBOM en formato CycloneDX v1.5 JSON.
    */
   generateCycloneDX() {
     const files = this.collectProjectFiles();
     const timestamp = new Date().toISOString();
     const serialNumber = `urn:uuid:${crypto.randomUUID()}`;
+    const version = this.getPackageVersion();
 
     const components = files.map((f, idx) => ({
       type: 'file',
       'bom-ref': `pkg:generic/axion-protocol/${f.path}`,
       name: f.path,
-      version: '1.3.1-rc.2',
+      version,
       hashes: [
         { alg: 'SHA-256', content: f.sha256 }
       ],
@@ -95,7 +119,7 @@ class SovereignSBOMGenerator {
         component: {
           type: 'application',
           name: 'axion-protocol',
-          version: '1.3.1-rc.2',
+          version,
           description: 'Local governance runtime for agentic AI operations with zero dependencies',
           licenses: [{ license: { id: 'Apache-2.0' } }]
         },
@@ -114,6 +138,7 @@ class SovereignSBOMGenerator {
   generateSPDX() {
     const files = this.collectProjectFiles();
     const timestamp = new Date().toISOString();
+    const version = this.getPackageVersion();
 
     const spdxFiles = files.map((f, idx) => ({
       fileName: `./${f.path}`,
@@ -139,7 +164,7 @@ class SovereignSBOMGenerator {
         {
           name: 'axion-protocol',
           SPDXID: 'SPDXRef-Package-Axion',
-          versionInfo: '1.3.1-rc.2',
+          versionInfo: version,
           downloadLocation: 'git+https://github.com/Acourd/axion-protocol.git',
           filesAnalyzed: true,
           licenseConcluded: 'Apache-2.0',

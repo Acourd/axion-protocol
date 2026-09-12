@@ -1,22 +1,22 @@
 # Axion Protocol — Manual de Comandos y Recetas Operativas
 
-> **El Manual de Gobernanza Soberana**: Especificación exhaustiva de los 12 Comandos de Gobernanza, disparadores y combinaciones de alta eficiencia.
+> **El Manual de Gobernanza Local**: Especificación exhaustiva de los 12 Comandos de Gobernanza, disparadores y combinaciones calibradas para flujos de agentes.
 
 ---
 
 ## Recetas Operativas (Combinaciones Recomendadas)
 
-Para maximizar la densidad cognitiva, reducir el gasto innecesario de tokens y erradicar las alucinaciones del agente, utiliza estas recetas calibradas:
+Para maximizar la densidad cognitiva, reducir el gasto innecesario de tokens y mitigar derivas cognitivas del agente, utiliza estas recetas calibradas:
 
 | Objetivo | Receta Recomendada | Comportamiento Operativo |
 | :--- | :--- | :--- |
-| **Decisiones Arquitectónicas & Estrategia** | `/drive /premortem /critic` | Proyecta la visión 10x (`/critic`), ejecuta una simulación adversarial a 6 meses (`/premortem`), y construye con verificación (`/drive`). |
-| **Corrección Atómica Ágil (1–2 archivos)** | `/drive` | Modo *Fast-Loop*: resuelve en un solo turno con cero micro-interrupciones y ejecuta pruebas en `< 300ms`. |
+| **Decisiones Arquitectónicas & Estrategia** | `/drive /premortem` | Ejecuta una simulación adversarial a 6 meses (`/premortem`) y construye cambios con verificación (`/drive`). |
+| **Corrección Atómica Ágil (1–2 archivos)** | `/drive` | Modo *Fast-Loop*: resuelve en un solo turno con cero micro-interrupciones y ejecuta pruebas de forma ágil y focalizada. |
 | **Depuración Sistemática de Errores** | `/debug /verify` | Diagnóstico de causa raíz en 4 fases sin parches ciegos, validado con salida real de terminal (código 0). |
 | **Aclaración de Peticiones Ambiguas** | `/clarify` | Freno socrático: formula exactamente 2 preguntas humanas A/B/C sin jerga técnica antes de tocar código. |
-| **Recuperación ante Desastres & Rollback** | `/snapshot` | Restaura árboles verificados con SHA-256 en `< 5ms` ante peticiones en lenguaje natural (*"deshaz lo que hiciste"*). |
+| **Recuperación ante Desastres & Rollback** | `/snapshot` | Restaura árboles verificados con SHA-256 de forma inmediata y atómica ante peticiones en lenguaje natural (*"deshaz lo que hiciste"*). |
 | **Auditoría de Calidad Multi-Lente** | `/review` | Revisión contextual por 4 lentes (Técnica, Funcional, UX/Producto, Arquitectura) eliminando ruido superfluo. |
-| **Atestación Criptográfica de Release** | `/attest` | Emite atestaciones in-toto Statement v1 en sobre DSSE con firma Ed25519 (compatible con SLSA Nivel 3). |
+| **Atestación Criptográfica de Release** | `/attest` | Emite atestaciones in-toto Statement v1 en sobre DSSE con firma Ed25519 para auditoría local. |
 
 ---
 
@@ -31,9 +31,9 @@ Para maximizar la densidad cognitiva, reducir el gasto innecesario de tokens y e
 - **Propósito**: Previene la implementación prematura ante requisitos ambiguos o incompletos.
 - **Reglas**: Máximo 2 preguntas humanas con opciones A/B/C. Cero tecnicismos. Tolerancia total a respuestas habladas o dictado por voz.
 
-### 3. `/critic` — Lente Asintótico Universal
-- **Propósito**: Auditor polimórfico universal sobre las 7 Fronteras de Madurez Soberana.
-- **Evaluación**: Calcula el AMR (Tasa de Madurez Asintótica) y proyecta el horizonte Día 1 mediante la Escalera de 3 Peldaños.
+### 3. `/debug` — Depurador Sistemático en 4 Fases
+- **Propósito**: Depuración metódica de causa raíz sin conjeturas a ciegas.
+- **Fases**: 1) Formulación de hipótesis, 2) Reproducción observable mínima, 3) Corrección focalizada, 4) Verificación por ejecución real.
 
 ### 4. `/premortem` — Simulación Adversarial de Fallos
 - **Propósito**: Autopsia adversarial a 6 meses y cálculo de *blast radius* antes de modificar módulos críticos.
@@ -49,7 +49,7 @@ Para maximizar la densidad cognitiva, reducir el gasto innecesario de tokens y e
 
 ### 7. `/verify` — Verificador Determinista por Ejecución
 - **Propósito**: Prohíbe declarar código funcional por inspección visual. Exige ejecución real con exit code 0.
-- **Modo Rápido**: `node tools/verify_changes.js --fast` ejecuta únicamente las suites impactadas en `< 300ms`.
+- **Modo Rápido**: `node tools/verify_changes.js --fast` ejecuta únicamente las suites impactadas de forma ágil y focalizada.
 
 ### 8. `/review` — Auditoría Selectiva por 4 Lentes
 - **Propósito**: Audita diffs mediante 4 lentes: Técnica, Funcional, UX/Producto y Arquitectura.
@@ -66,7 +66,7 @@ Para maximizar la densidad cognitiva, reducir el gasto innecesario de tokens y e
 - **Propósito**: Congelación inmediata en modo *fail-closed* (`.axion/HALT`). Intercepta el uso de herramientas hasta su reanudación deliberada.
 
 ### 12. `/attest` — Emisor de Atestaciones DSSE
-- **Propósito**: Genera y verifica atestaciones in-toto v1 con firma Ed25519 y pruebas de inclusión en árbol Merkle.
+- **Propósito**: Genera y verifica atestaciones in-toto v1 en sobres DSSE con firma Ed25519.
 
 ---
 
@@ -75,4 +75,10 @@ Para maximizar la densidad cognitiva, reducir el gasto innecesario de tokens y e
 Los 12 comandos operan de manera idéntica en:
 1. **Google Antigravity**: Skills nativas en `.agents/skills/<comando>/SKILL.md`.
 2. **Anthropic Claude Code**: Comandos slash en `.claude/commands/<comando>.md`.
-3. **CLI Unificada**: Invocables mediante `npx axion <comando>` o `node bin/axion.js <comando>`.
+3. **CLI Unificada**: Invocables mediante `node bin/axion.js <comando>` (con flag opcional `--target <directorio>`).
+
+---
+
+## Comandos Canónicos vs. Herramientas Internas
+
+Los **12 Comandos Canónicos** anteriores representan el contrato público de cara al usuario en los diversos entornos de agentes. Las utilidades adicionales alojadas en `tools/` (clasificadores preflight, indexador SQLite de snapshots, compilador de bundle, chequeos de salud, etc.) operan como motores internos de soporte orquestados por `/drive`, `/verify` o las suites de pruebas automatizadas.

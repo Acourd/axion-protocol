@@ -2,13 +2,18 @@
 'use strict';
 
 /**
- * Axion Protocol v2.0 — Real-Time Governance WebSocket Telemetry Gateway
+ * Axion Protocol — Real-Time Governance WebSocket Telemetry Gateway (Experimental)
  *
- * Gateway de telemetría en tiempo real para HUDs, navegadores y extensiones IDE:
+ * Módulo experimental de telemetría local para HUDs e inspección de desarrollo:
  * 1. Servidor WebSocket nativo (RFC 6455) sin dependencias externas (usando http + crypto nativos).
- * 2. Emisión atómica de eventos del flujo híbrido (PHASE_TRANSITION, AST_LOCK, BFT_VOTE, etc.).
- * 3. Filtrado y descarte de datos confidenciales antes del broadcast a clientes conectados.
- * 4. Soporte para consultas HTTP REST de estado rápido (GET /status, GET /events).
+ * 2. Emisión de eventos de gobernanza en tiempo real a clientes locales.
+ * 3. Enlace exclusivo a interfaz de bucle invertido ('127.0.0.1').
+ *
+ * AVISO DE SEGURIDAD Y DEMARCACIÓN:
+ * - Este módulo es una herramienta experimental de inspección local para desarrollo.
+ * - Carece de mecanismo de autenticación y NO constituye una frontera de seguridad.
+ * - No debe exponerse a interfaces de red públicas ni considerarse un endpoint protegido.
+ * - Módulo estrictamente opt-in: debe invocarse deliberadamente; desactivado por defecto y nunca iniciado automáticamente por los flujos de gobernanza de Axion (init, check, health_check, preflight ni drive).
  *
  * Cero dependencias externas.
  */
