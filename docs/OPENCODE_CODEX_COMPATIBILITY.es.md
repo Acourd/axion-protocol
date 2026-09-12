@@ -1,12 +1,12 @@
-# Axion Protocol — Guía de Integración Universal con OpenCode y Codex
+# Axion Protocol — Guía de Integración con OpenCode y Codex
 
-> **Arquitectura Oficial de Integración y Ejecución con Cero Dependencias para Agentes OpenCode y Codex.**
+> **Arquitectura de Integración y Ejecución con Cero Dependencias para Agentes OpenCode y Codex.**
 
 ---
 
 ## 🏛️ Resumen Ejecutivo
 
-Axion Protocol está diseñado para ser **100% independiente del entorno de ejecución (harness-agnostic)**. Opera con **cero dependencias externas** (`dependencies: {}`) y corre directamente sobre el runtime estándar de Node.js ($\ge 18$). Esto garantiza que cualquier entorno agentivo—específicamente **OpenCode** y **OpenAI Codex**—pueda ejecutar, orquestar y aplicar gobernanza determinista sin configuración previa ni sobrecarga de `npm install`.
+Axion Protocol opera con **cero dependencias externas** (`dependencies: {}`) y corre directamente sobre el runtime estándar de Node.js ($\ge 22.13.0$). Los agentes en entornos como **OpenCode** y **OpenAI Codex** pueden ejecutar scripts CLI y bundles standalone sin sobrecarga de `npm install`. El enforcement no es una garantía universal en cualquier entorno arbitrario; está acotado estrictamente a espacios de trabajo donde las reglas, directivas o hooks del agente hayan sido configurados y cargados.
 
 ---
 
@@ -38,7 +38,7 @@ node dist/axion.bundle.js verify
 ```
 
 ### 3. Reglas y Directivas Nativas (`.opencode/rules/`)
-Axion Protocol exporta automáticamente sus directivas P0 fail-closed en directorios de configuración de OpenCode:
+Axion Protocol exporta sus directivas P0 de gobernanza en directorios de configuración de OpenCode:
 * `.opencode/rules/axion-protocol.md`
 * `.opencode/opencode.json`
 
@@ -48,7 +48,7 @@ Axion Protocol exporta automáticamente sus directivas P0 fail-closed en directo
 
 Los agentes Codex operan bajo instrucciones de repositorio e interfaces de llamadas a herramientas. Axion Protocol provee:
 
-1. **`.codex/AGENTS.md`**: Directivas soberanas esenciales (Custodia de la Intención, Killswitch Fail-Closed, Cero Parches Ciegos).
+1. **`.codex/AGENTS.md`**: Directivas esenciales de gobernanza (Custodia de la Intención, Killswitch Local, Cero Parches Ciegos).
 2. **`.codex/config.toml`**: Perfiles de gobernanza determinista y atestaciones in-toto Statement v1.
 3. **Optimización de Tokens AST (`sliceASTFocus`)**: Reduce el consumo de tokens hasta en un 80% cuando Codex inspecciona archivos grandes.
 
@@ -58,12 +58,15 @@ Los agentes Codex operan bajo instrucciones de repositorio e interfaces de llama
 
 | Característica / Capa del Protocolo | Antigravity | Claude Code | OpenCode | OpenAI Codex | Cursor IDE |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Ejecución Fail-Closed** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Bloqueos de Símbolos AST (`swarm`)** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Atestación Ed25519 DSSE** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Intercepción por Hook PreToolUse** | ✅ (hook integrado) | ✅ (hook integrado) | ⚠️ (vía reglas, sin hook) | ⚠️ (vía directivas, sin hook) | ⚠️ (vía reglas, sin hook) |
+| **Verificación por CLI y Standalone** | ✅ | ✅ | ✅ (ejecución CLI local) | ✅ (ejecución CLI local) | ✅ (ejecución CLI local) |
+| **Bloqueos de Símbolos AST (`swarm`)** | ⚠️ (experimental local) | ⚠️ (experimental local) | ⚠️ (no verificado end-to-end) | ⚠️ (no verificado end-to-end) | ⚠️ (no verificado end-to-end) |
+| **Atestación Ed25519 DSSE** | ✅ (herramienta CLI local) | ✅ (herramienta CLI local) | ⚠️ (no verificado end-to-end) | ⚠️ (no verificado end-to-end) | ⚠️ (no verificado end-to-end) |
 | **Cero Dependencias (`package.json`)** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Telemetría WebSocket en Vivo** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Ejecución Standalone Bundle** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Telemetría WebSocket en Vivo** | ⚠️ (experimental local) | ⚠️ (experimental local) | ⚠️ (no verificado end-to-end) | ⚠️ (no verificado end-to-end) | ⚠️ (no verificado end-to-end) |
+| **Ejecución Standalone Bundle** | ✅ | ✅ | ✅ (runtime Node.js) | ✅ (runtime Node.js) | ✅ (runtime Node.js) |
+
+*Nota: El bloqueo activo de comandos mediante hooks PreToolUse requiere plataformas con soporte de hooks integrado (Claude Code, Google Antigravity). En OpenCode, Codex y Cursor, la gobernanza depende de la carga explícita de reglas (`.opencode/rules/`, `.codex/AGENTS.md`) y la invocación manual vía CLI. Las funciones marcadas con ⚠️ corresponden a herramientas locales experimentales o no han sido verificadas end-to-end en arneses de terceros.*
 
 ---
 

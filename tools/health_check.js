@@ -78,6 +78,16 @@ function herramientasCitadas(dirWorkflows) {
   return citadas;
 }
 
+function evaluarMotorNode(versionStr = process.versions.node) {
+  const limpio = String(versionStr).replace(/^v/, '');
+  const [mayor = 0, menor = 0] = limpio.split('.').map((n) => parseInt(n, 10) || 0);
+  const pass = mayor > 22 || (mayor === 22 && menor >= 13);
+  return {
+    pass,
+    detail: `Node v${limpio} (requiere >= 22.13.0)`
+  };
+}
+
 function runHealthCheck(targetDir) {
   const target = path.resolve(targetDir || process.cwd());
   console.log(`[Axion Health Check] Auditando proyecto en: ${target}\n`);
@@ -89,8 +99,8 @@ function runHealthCheck(targetDir) {
   };
 
   // 1. Motor
-  const nodeVer = parseInt(process.versions.node.split('.')[0], 10);
-  addCheck('Motor Node.js', nodeVer >= 20, `Node v${process.versions.node} (requiere >= 20)`);
+  const motor = evaluarMotorNode(process.versions.node);
+  addCheck('Motor Node.js', motor.pass, motor.detail);
 
   // 2. Reglas P0
   const regla = path.join(target, '.agents', 'rules', 'axion-governance.md');
@@ -270,4 +280,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { runHealthCheck, herramientasCitadas, WORKFLOWS };
+module.exports = { runHealthCheck, herramientasCitadas, WORKFLOWS, evaluarMotorNode };

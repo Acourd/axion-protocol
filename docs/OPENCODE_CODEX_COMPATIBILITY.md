@@ -1,12 +1,12 @@
-# Axion Protocol — OpenCode & Codex Universal Integration Guide
+# Axion Protocol — OpenCode & Codex Integration Guide
 
-> **Official Integration and Zero-Dependency Execution Architecture for OpenCode and Codex Agents.**
+> **Integration and Zero-Dependency Execution Architecture for OpenCode and Codex Agents.**
 
 ---
 
 ## 🏛️ Executive Summary
 
-Axion Protocol is built from the ground up to be **100% harness-agnostic**. It operates with **zero third-party dependencies** (`dependencies: {}`) and runs directly on the Node.js standard runtime ($\ge 18$). This guarantees that any agentic coding environment—specifically **OpenCode** and **OpenAI Codex**—can execute, orchestrate, and enforce deterministic governance without environment configuration or `npm install` overhead.
+Axion Protocol operates with **zero external dependencies** (`dependencies: {}`) and runs directly on the Node.js standard runtime ($\ge 22.13.0$). Agents in environments like **OpenCode** and **OpenAI Codex** can execute CLI scripts and standalone bundles without `npm install` overhead. Enforcement is not an inherent guarantee in arbitrary environments; it is strictly scoped to workspaces where integrated agent rules, hooks, or directives have been configured and loaded.
 
 ---
 
@@ -38,7 +38,7 @@ node dist/axion.bundle.js verify
 ```
 
 ### 3. Native Rules & Directives (`.opencode/rules/`)
-Axion Protocol automatically exports its P0 fail-closed rules into OpenCode configuration directories:
+Axion Protocol exports its P0 governance rules into OpenCode configuration directories:
 * `.opencode/rules/axion-protocol.md`
 * `.opencode/opencode.json`
 
@@ -48,7 +48,7 @@ Axion Protocol automatically exports its P0 fail-closed rules into OpenCode conf
 
 Codex agents operate under standard repository instructions and tool calling interfaces. Axion Protocol provides:
 
-1. **`.codex/AGENTS.md`**: Core sovereign directives (Custody of Intent, Fail-Closed Killswitch, Zero Blind Patches).
+1. **`.codex/AGENTS.md`**: Core governance directives (Custody of Intent, Local Killswitch, Zero Blind Patches).
 2. **`.codex/config.toml`**: Deterministic governance profiles and in-toto Statement v1 attestation settings.
 3. **AST Token Optimization (`sliceASTFocus`)**: Reduces token consumption by up to 80% when Codex inspects large source files.
 
@@ -58,12 +58,15 @@ Codex agents operate under standard repository instructions and tool calling int
 
 | Feature / Protocol Layer | Antigravity | Claude Code | OpenCode | OpenAI Codex | Cursor IDE |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Fail-Closed Execution** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **AST Symbol Locks (`swarm`)** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Ed25519 DSSE Attestation** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **PreToolUse Hook Interception** | ✅ (integrated hook) | ✅ (integrated hook) | ⚠️ (via rules, no hook) | ⚠️ (via directives, no hook) | ⚠️ (via rules, no hook) |
+| **CLI & Standalone Verification** | ✅ | ✅ | ✅ (local CLI execution) | ✅ (local CLI execution) | ✅ (local CLI execution) |
+| **AST Symbol Locks (`swarm`)** | ⚠️ (experimental local) | ⚠️ (experimental local) | ⚠️ (unverified end-to-end) | ⚠️ (unverified end-to-end) | ⚠️ (unverified end-to-end) |
+| **Ed25519 DSSE Attestation** | ✅ (local CLI tool) | ✅ (local CLI tool) | ⚠️ (unverified end-to-end) | ⚠️ (unverified end-to-end) | ⚠️ (unverified end-to-end) |
 | **Zero Dependencies (`package.json`)** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Real-Time WebSocket Telemetry** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Standalone Bundle Execution** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Real-Time WebSocket Telemetry** | ⚠️ (experimental local) | ⚠️ (experimental local) | ⚠️ (unverified end-to-end) | ⚠️ (unverified end-to-end) | ⚠️ (unverified end-to-end) |
+| **Standalone Bundle Execution** | ✅ | ✅ | ✅ (Node.js runtime) | ✅ (Node.js runtime) | ✅ (Node.js runtime) |
+
+*Note: Active PreToolUse command interception requires platforms with integrated hook mechanisms (Claude Code, Google Antigravity). In OpenCode, Codex, and Cursor environments, governance depends on explicit prompt/rule loading (`.opencode/rules/`, `.codex/AGENTS.md`) and direct CLI execution. Features marked with ⚠️ represent experimental local tools or capabilities not verified end-to-end in third-party harnesses.*
 
 ---
 

@@ -1,12 +1,12 @@
 # Axion Protocol
 
-> **The Sovereign Governance Harness & Deterministic Safety Engine for Autonomous AI Agents.**  
-> *Transform unpredictable AI agent workflows into verifiable, fail-closed, production-grade software engineering.*
+> **Experimental Local Governance Tools for Agent Workflows.**
+> *Local governance tools to structure and constrain autonomous AI agent workflows.*
 >
 > **Status**: EXPERIMENTAL runtime. Enforcement does not intercept arbitrary OS-level shell commands automatically without the integrated agent hook. Requires **Node.js 22.13** or later. Zero external npm dependencies.
 
 [![CI Status](https://img.shields.io/badge/CI-233%20Suites-informational.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
-[![Version](https://img.shields.io/badge/Version-v1.3.1--rc.3-0969da.svg?style=flat-square)](package.json)
+[![Version](https://img.shields.io/badge/Version-v1.4.0--beta.1-0969da.svg?style=flat-square)](package.json)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0-success.svg?style=flat-square)](package.json)
 [![Execution Speed](https://img.shields.io/badge/Suite%20Speed-12s%20(8%20workers)-informational.svg?style=flat-square)](tests/run_all.js)
@@ -23,19 +23,19 @@ Autonomous coding assistants (**Claude Code, Google Antigravity, Cursor, Codex**
 3. **Context Rot & Token Waste**: Thousands of dollars wasted in runaway reasoning loops, repetitive conversational turns, and massive context degradation.
 4. **Zero Cryptographic Auditability**: Inability to mathematically prove what tests actually ran, who approved mutations, and whether the code supply chain was compromised.
 
-**Axion Protocol mitigates these risks deterministically.** It delivers an ultra-lightweight, local-first runtime (535 kB, **zero external npm dependencies**) that wraps your AI agent in a **deterministic fail-closed state machine**.
+**Axion Protocol helps structure these workflows locally.** It provides lightweight governance tools (535 kB, **zero external npm dependencies**) to introduce deliberate checkpoints and boundaries in supported agent environments.
 
 ---
 
 ## Value Propositions
 
-- **Socratic Intent Gate (`/clarify`)**: Forces the agent to ask exactly 2 plain A/B/C human questions before touching code on ambiguous requests, completely eliminating blind guessing.
-- **Fail-Closed Terminal Shield (`/preflight`)**: Intercepts and classifies every terminal command (`ALLOW` / `NEEDS_HUMAN_REVIEW` / `DENY`) with `shell: false` safety.
+- **Socratic Intent Gate (`/clarify`)**: Forces the agent to ask exactly 2 plain A/B/C human questions before touching code on ambiguous requests, designed to mitigate blind guessing.
+- **Terminal Preflight Check (`/preflight`)**: Inspects and classifies terminal commands (`ALLOW` / `NEEDS_HUMAN_REVIEW` / `DENY`) using lexical analysis and structured execution (`shell: false`).
 - **Deterministic Rollback (`/snapshot`)**: Restores SHA-256 tree snapshots from natural language prompts (*"undo what you did"*), independent of Git.
 - **Incremental Runner (`tools/smart_incremental_runner.js`)**: Analyzes static inverse dependency ASTs to execute only impacted test suites.
 - **Pre-Flight TDD Synthesizer (`tools/preflight_tdd_synthesizer.js`)**: Derives formal assertion contracts before disk mutations to reduce trial-and-error iterations.
 - **Provenance & Local Attestations (`/attest`)**: Generates local DSSE/in-toto Statement v1 envelopes signed with Ed25519.
-- **Multi-Platform Consistency**: Unified governance designed to operate consistently across **Google Antigravity**, **Anthropic Claude Code**, and the standalone CLI.
+- **Multi-Platform Consistency**: Unified governance designed to operate consistently across included integrations (**Google Antigravity**, **Anthropic Claude Code**) and the standalone CLI.
 
 ---
 
@@ -59,7 +59,7 @@ Autonomous coding assistants (**Claude Code, Google Antigravity, Cursor, Codex**
 
 ### 1. Interactive Sandbox Demo (No Installation Required)
 
-Experience fail-closed terminal interception and deterministic rollback in an isolated in-memory sandbox:
+Experience terminal command classification and deterministic rollback in an isolated in-memory sandbox:
 
 ```bash
 # Run the live interactive terminal demo
@@ -69,30 +69,40 @@ node bin/axion.js demo
 node bin/axion.js benchmark
 ```
 
-### 2. Initialize in Any Existing Project
+### 2. Source Installation for Public Beta (GitHub)
+
+During this preparation phase, Axion Protocol is consumed directly from source (NPM registry distribution is intentionally locked):
 
 ```bash
-# Inject fail-closed governance into your active workspace
-npx axion-protocol init
+# Clone the repository
+git clone https://github.com/Acourd/axion-protocol.git
+cd axion-protocol
+
+# Initialize governance in a target workspace
+node bin/axion.js init --target /path/to/target-workspace
+
+# Or register user-level slash commands for your agent environment
+node bin/axion.js init --user
 ```
 
-*Automatically configures `.agents/skills/` (Antigravity), `.claude/commands/` (Claude Code), `tools/`, `policies/` and `schemas/` with SHA-256 verification.*
+*(The installer compares SHA-256 hashes to automatically back up pre-existing files if they differ before writing).*
 
 ### 3. Verify Health & Governance State
 
 ```bash
-npx axion check
+# Audit the project workspace from the cloned CLI
+node bin/axion.js check --target /path/to/target-workspace
 ```
 
 Output:
 ```text
 [Axion Health Check] Auditando proyecto...
-  ✓ PASS   Motor Node.js: v24.x (requiere >= 20)
+  ✓ PASS   Motor Node.js: v24.x (requiere >= 22.13.0)
   ✓ PASS   Hook PreToolUse: ejercitado en vivo (bloquea destructivos)
   ✓ PASS   Slash Commands: 12/12 en .agents/skills · 12/12 en .claude/commands
   ✓ PASS   Killswitch: RUNNING — sin parada activa
 
-[Axion Protocol v1.3.1-rc.3] 12/12 comprobaciones en verde. Gobernanza operativa.
+[Axion Protocol v1.4.0-beta.1] 13/13 comprobaciones en verde. Gobernanza operativa.
 ```
 
 ---
@@ -107,7 +117,7 @@ Axion Protocol provides 12 core slash commands designed to work in synergy. For 
 | :--- | :--- | :--- |
 | `/drive` | Autonomous Execution | Meta-orchestrator in closed-loop with *Fast-Loop* vs. *Deep-Loop* bifurcation. |
 | `/clarify` | Socratic Intent Gate | 2 structured A/B/C human questions without technical jargon. |
-| `/critic` | Asymptotic Excellence | Universal polymorphic auditor evaluating the 7 Sovereign Maturity Frontiers. |
+| `/debug` | Systematic Debugging | 4-phase root-cause debugging cycle verified by physical evidence. |
 | `/premortem` | Failure Simulation | 6-month adversarial failure autopsy and blast-radius boundary calculation. |
 | `/preflight` | Terminal Security | Structured pre-execution command classifier (`shell: false`). |
 | `/snapshot` | State Recovery | Deterministic SHA-256 tree checkpoints and natural language rollback. |
@@ -115,7 +125,7 @@ Axion Protocol provides 12 core slash commands designed to work in synergy. For 
 | `/review` | Multi-Lens Audit | Selective code inspection via 4 lenses (Technical, Functional, UX, Architecture). |
 | `/memory` | Persistent Memory | 4-tier fractal memory (< 150 token anchor) preventing cross-session drift. |
 | `/profile` | Human Calibration | Calibrates user profile across 5 operational dimensions (Voice, IDE, Cadence). |
-| `/halt` | Emergency Killswitch | Immediate fail-closed operational freeze (`.axion/HALT`). |
+| `/halt` | Emergency Killswitch | Operational freeze via local lockfile (`.axion/HALT`). |
 | `/attest` | Cryptography | in-toto Statement v1 DSSE envelopes signed with Ed25519. |
 
 ---

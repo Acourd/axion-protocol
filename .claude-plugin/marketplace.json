@@ -5,14 +5,14 @@
     "url": "https://github.com/Acourd"
   },
   "metadata": {
-    "description": "Gobernanza fail-closed para operaciones de IA agentiva: freno de intencion, clasificacion de riesgo antes de la terminal, parada de emergencia y evidencia criptografica verificable por terceros."
+    "description": "Herramientas locales experimentales de gobernanza para flujos de agentes: freno de intencion, clasificacion de comandos previa a terminal, puntos de control y auditoria local, con limites dependientes de integraciones incluidas."
   },
   "plugins": [
     {
       "name": "axion-protocol",
       "source": "./",
-      "description": "12 comandos de gobernanza, puerta PreToolUse fail-closed, reversion determinista verificada antes de escribir, y atestaciones in-toto v1 comprobables con cosign o cualquier herramienta SLSA. Sin dependencias externas.",
-      "version": "1.3.1-rc.3",
+      "description": "12 comandos de gobernanza experimental, clasificacion de comandos previa a terminal, puntos de control locales y registro de evidencia. Enforcement dependiente de hooks e integraciones incluidas (Claude Code, Antigravity). Sin dependencias externas.",
+      "version": "1.4.0-beta.1",
       "author": {
         "name": "Adria",
         "url": "https://github.com/Acourd"

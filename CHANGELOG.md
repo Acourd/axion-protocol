@@ -2,13 +2,36 @@
 
 Todos los cambios relevantes de Axion Protocol se documentarán aquí.
 
-## [1.3.1-rc.3] — 2026-09-02 · Lanzamiento General (GA) & Blindaje Criptográfico Total
+## [1.4.0-beta.1] — 2026-09-12 · Preparación de Beta Pública
 
-Lanzamiento oficial de producción de Axion Protocol v1.3.1-rc.3 (Sovereign GA Candidate). Sella formalmente la resolución verificada de los 18 hallazgos de auditoría adversarial, blindaje de terminal fail-closed, consenso bizantino multi-agente, atestación in-toto Merkle y acabado visual Obsidian Glass.
+Versión preliminar de preparación para beta pública de Axion Protocol (GitHub source only; canal npm y releases públicas bloqueadas hasta autorización posterior). Consolida el estado basal del runtime, eleva el motor a Node `>=22.13.0` y resuelve fragilidades de estado y portabilidad multiplataforma.
+
+### Fixed
+
+- **Retención y Nomenclatura en Snapshots (`tools/context_shield.js` y `ax_f_063`)**: Eliminada sobreescritura silenciosa ante timestamps concurrentes idénticos mediante sufijo determinista secuencial (`_001`), con ordenación FIFO y límite estricto de retención de 10 snapshots.
+- **Portabilidad de Rutas en CI Windows (`.github/workflows/ci.yml`)**: Sustitución de rutas POSIX fijas por `${{ runner.temp }}` y normalización multiplataforma.
+- **Chequeo de Motor en Salud del Workspace (`tools/health_check.js`)**: Alineado el umbral de verificación del motor de ejecución a `Node.js >= 22.13.0` con la función determinista `evaluarMotorNode()`.
+
+### Changed
+
+- **Elevación de Requisito de Runtime (`package.json`, `README.md`, `README.es.md`)**: El motor mínimo soportado se eleva a Node `>=22.13.0` para garantizar disponibilidad de APIs nativas integradas (`node:sqlite`).
+- **Alineación de Comandos y Comprobaciones**: Sincronizadas las 13 comprobaciones en verde devueltas por `health_check.js` en los ejemplos de ejecución de los READMEs; corrección de `/critic` por `/debug` en la tabla de comandos activos.
+- **Matriz de CI Multiplataforma**: Actualizada la matriz de prueba a Node 22 y Node 24 sobre Ubuntu, macOS y Windows; retirado Node 20.
+
+### Enhanced
+
+- **Suite de Verificación Determinista**: 233 de 233 suites passing al 100% con cero dependencias externas y ejecución paralela bajo perfil aislado.
+- **Prueba Unitaria de Umbral de Motor (`ax_f_050`)**: Verificación formal de que Node 20 y Node 22.12 fallan, mientras que Node 22.13 y Node 24 pasan.
+
+---
+
+## [1.3.1-rc.3] — 2026-09-02 · Candidato a Release (RC.3) & Pruebas de Gobernanza Local
+
+Candidato a release de Axion Protocol v1.3.1-rc.3. Consolida la resolución verificada de 18 hallazgos de auditoría, herramientas locales de preflight para agentes, pruebas de laboratorio de consenso multi-agente y atestación Merkle experimental.
 
 ### Added
 
-- **Sellado Criptográfico Merkle Total e in-toto Statement v1 (`tools/repo_attestation_generator.js` y `M_001_RELEASE_GA`)**: Atestación formal DSSE Ed25519 con PAE (Pre-Authentication Encoding) sobre todos los sujetos del repositorio (270+ archivos).
+- **Sellado Criptográfico Merkle e in-toto Statement v1 (`tools/repo_attestation_generator.js` y `M_001_RELEASE_GA`)**: Atestación experimental DSSE Ed25519 con PAE (Pre-Authentication Encoding) sobre sujetos del repositorio.
 - **Gestor de Revocación Criptográfica Formal (`tools/revocation_manager.js`)**: Emisión y validación de Listas de Revocación de Certificados (CRL) con firmas Ed25519 y protección anti-replay.
 - **Acabado Obsidian Glass & Micro-Tipografía Suiza (`docs/site/style.css` y Misiones `M-VIS-001` a `M-VIS-003`)**: Sistema de tokens de diseño, curvas de resorte elástico (`--ease-spring`, `--ease-bounce`), contraste WCAG AAA en dark/light y soporte de reducción de movimiento con cero `!important`.
 - **Generador Soberano Dual de SBOMs (`tools/sbom_sovereign_generator.js`)**: Cobertura exhaustiva de los 139 módulos en formatos SPDX 2.3 y CycloneDX sin dependencias externas.
@@ -20,7 +43,7 @@ Lanzamiento oficial de producción de Axion Protocol v1.3.1-rc.3 (Sovereign GA C
 - **Evasión Léxica y Metacaracteres (`tools/structured_command.js`)**: Tokenización posicional completa inmune a expansiones `$IFS`, concatenaciones encadenadas (`;|&`) y evaluadores de intérpretes (`-c`, `-e`, `-enc`).
 - **Inyecciones Shell en Asistentes Git (`tools/git_assistant.js` y `tools/pipeline_fast_gate.js`)**: Migración absoluta a `spawnSync` con `{ shell: false }`.
 - **Fusión AST Concurrente & Canales P2P (`tools/swarm_ast_arbiter.js` y `tools/swarm_p2p_channel.js`)**: Aislamiento a nivel de kernel mediante lockfiles OS atómicos (`wx`) y corte posicional determinista.
-- **Consenso Multi-Agente BFT (`tools/swarm_consensus_arbiter.js`)**: Calibración a supermayoría Bizantina estricta ($\ge 2/3$), deduplicación de 1 voto por `voterId` y cómputo de quórum con abstenciones en el denominador.
+- **Consenso Multi-Agente BFT (`tools/swarm_consensus_arbiter.js`)**: Pruebas de laboratorio de supermayoría Bizantina ($\ge 2/3$), deduplicación de 1 voto por `voterId` y cómputo de quórum con abstenciones en el denominador.
 - **Restauración Atómica de Checkpoints (`tools/checkpoint.js`)**: Escritura transaccional en `.tmp` y promoción atómica vía `renameSync`.
 - **Serialización Canónica en Sobres PAE DSSE (`tools/attestation.js`)**: Adhesión matemática a la norma internacional RFC 8785 (`canonicalize`).
 

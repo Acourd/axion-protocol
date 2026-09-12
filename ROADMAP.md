@@ -1,26 +1,28 @@
 # Roadmap — Axion Protocol
 
-## Estado Actual — v1.1.0-alpha (Consolidado)
+## Estado Actual — v1.4.0-beta.1 (Preparación de beta pública)
 
-- [x] **Clarificación de Intención:** Aclarador secuencial en 3 sub-pasos sin tecnicismos (`tools/intent_clarifier.js`).
+- [x] **Clarificación de Intención:** Aclarador socrático de 2 preguntas A/B/C sin tecnicismos (`tools/intent_clarifier.js`).
 - [x] **Compilador de Políticas de Riesgo:** Motor de evaluación de riesgos `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` (`tools/risk_policy_compiler.js`).
-- [x] **Seguridad y Atribución Ed25519:** Firma digital, atestación independiente y consumo único de *nonces* (`tools/approval_ed25519.js` y `tools/check_ed25519.js`).
-- [x] **Ejecución Estructurada y Preflight:** Aislamiento con `shell: false` y validación léxica de sintaxis (`tools/structured_command.js` y `tools/preflight.js`).
+- [x] **Aprobación y Atribución Ed25519:** Firma digital, atestación independiente y consumo único de *nonces* (`tools/approval_ed25519.js` y `tools/check_ed25519.js`).
+- [x] **Ejecución Estructurada y Preflight:** Aislamiento con `shell: false` y validación léxica de comandos (`tools/structured_command.js` y `tools/preflight.js`).
 - [x] **Evidencias Criptográficas SHA-256:** Manifiestos de auditoría inmutables vinculados a misión, riesgo, estado y rollback (`tools/evidence_hasher.js`).
-- [x] **Workflow Runner Fail-Closed:** Orquestador de las 7 fases (`tools/workflow_runner.js`).
+- [x] **Workflow Runner:** Orquestador local de las 7 fases (`tools/workflow_runner.js`).
 - [x] **Instalador Autónomo de 1 Paso:** Copia protegida e idempotente (`install.js`).
-- [x] **Licencia Abierta:** Licencia MIT aprobada (`LICENSE`).
-- [x] **CI/CD Automático:** Integración continua con GitHub Actions (`.github/workflows/ci.yml`).
+- [x] **Licencia Abierta:** Licencia Apache-2.0 aprobada (`LICENSE`).
+- [x] **CI/CD Multiplataforma:** Integración continua en Node 22/24 sobre Ubuntu, macOS y Windows (`.github/workflows/ci.yml`).
+- [x] **Integraciones Incluidas:** Hooks de Antigravity (`.agents/hooks/`) y Claude Code bridge (`CLAUDE.md`, `.claude/commands/`).
+- [x] **Resiliencia de Estado y Retención:** Mitigación de colisiones de marcas temporales y retención FIFO en snapshots (`tools/context_shield.js`).
+- [x] **Suite de Verificación Determinista:** 233 suites passing al 100% con cero dependencias externas (`tests/run_all.js`).
 
 ---
 
-## Próximo hito — v1.2.0-beta (Integración de Adaptadores Nativos)
+## Próximo hito — v1.4.0-beta.2 / Release Pública (Tras autorización humana)
 
-- [ ] Adaptador directo para Hooks de Antigravity 2.0 (`.agents/hooks.json`).
+- [ ] Creación de Tag y GitHub Release (`v1.4.0-beta.1`) formal tras aprobación del PR.
+- [ ] Evaluación de empaquetado para distribución en registro público (NPM bloqueado en fase preparatoria).
 - [ ] Adaptador directo para MCP (Model Context Protocol).
 - [ ] Dashboard interactivo refinado (`tools/dashboard.html`) con métricas en tiempo real.
-- [x] Empaquetado NPM para distribución CLI global (`npx axion-protocol`). Preparado y verificado
-      con `npm pack --dry-run`; **sin publicar** todavía.
 
 ---
 
@@ -28,3 +30,4 @@
 
 - No se planea un runtime universal desacoplado del usuario.
 - No se busca reemplazar motores de capacidades técnicas (como `ag-kit` o `ECC`), sino actuar como su capa de gobernanza.
+- No se realizan publicaciones automáticas a registros de paquetes externos sin aprobación humana expresa.
