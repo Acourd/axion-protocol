@@ -118,10 +118,17 @@ jobs:
         shell: bash
         run: |
           set -e
-          mkdir -p ${{ runner.temp }}/axion-dist
-          npm pack --pack-destination ${{ runner.temp }}/axion-dist
-          TARBALL=$(ls ${{ runner.temp }}/axion-dist/*.tgz)
-          mkdir -p ${{ runner.temp }}/axion-consumer && cd ${{ runner.temp }}/axion-consumer
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            TEMP_DIR=$(cygpath -u "$RUNNER_TEMP")
+          else
+            TEMP_DIR="$RUNNER_TEMP"
+          fi
+          DIST_DIR="$TEMP_DIR/axion-dist"
+          CONSUMER_DIR="$TEMP_DIR/axion-consumer"
+          mkdir -p "$DIST_DIR" "$CONSUMER_DIR"
+          npm pack --pack-destination "$DIST_DIR"
+          TARBALL=$(find "$DIST_DIR" -name '*.tgz' -print -quit)
+          cd "$CONSUMER_DIR"
           npm init -y > /dev/null
           npm install "$TARBALL"
           npx axion init
