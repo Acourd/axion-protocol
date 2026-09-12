@@ -3,7 +3,7 @@
 > **The Sovereign Governance Harness & Deterministic Safety Engine for Autonomous AI Agents.**  
 > *Transform unpredictable AI agent workflows into verifiable, fail-closed, production-grade software engineering.*
 >
-> **Status**: EXPERIMENTAL runtime. Enforcement does not intercept arbitrary OS-level shell commands automatically without the integrated agent hook. Requires **Node.js 20** or later. Zero external npm dependencies.
+> **Status**: EXPERIMENTAL runtime. Enforcement does not intercept arbitrary OS-level shell commands automatically without the integrated agent hook. Requires **Node.js 22.13** or later. Zero external npm dependencies.
 
 [![CI Status](https://img.shields.io/badge/CI-233%20Suites-informational.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
 [![Version](https://img.shields.io/badge/Version-v1.3.1--rc.3-0969da.svg?style=flat-square)](package.json)

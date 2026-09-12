@@ -3,7 +3,7 @@
 > **El Arnés de Gobernanza Soberana y Motor de Seguridad Determinista para IA Agentiva.**  
 > *Convierte el desarrollo errático e impredecible con IA en ingeniería de software determinista, verificable y lista para producción.*
 >
-> **Estado**: Runtime EXPERIMENTAL. El enforcement no intercepta comandos de shell del sistema operativo automáticamente sin el hook de agente integrado. Requiere **Node.js 20** o superior. Cero dependencias externas de npm.
+> **Estado**: Runtime EXPERIMENTAL. El enforcement no intercepta comandos de shell del sistema operativo automáticamente sin el hook de agente integrado. Requiere **Node.js 22.13** o superior. Cero dependencias externas de npm.
 
 [![Estado de CI](https://img.shields.io/badge/CI-233%20Suites-informational.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
 [![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.3.1--rc.3-0969da.svg?style=flat-square)](package.json)
