@@ -181,4 +181,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { runVerificationLoop, detectarVerificador };
+module.exports = { runVerificationLoop, detectarVerificador, parseSuiteCounts };

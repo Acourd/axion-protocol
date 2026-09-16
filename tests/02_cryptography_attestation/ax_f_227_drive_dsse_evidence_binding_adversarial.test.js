@@ -1,19 +1,18 @@
 'use strict';
 
 /**
- * AX-F-227: Invariantes adversariales de atestación basada en evidencia (P0-C).
+ * AX-F-227: Invariantes adversariales de atestación con autoridad separada (P0-C).
  *
- * Demuestra que la corrección cierra la fabricación de métricas y de evidencia:
- * 1. Sin claves no hay atestación: falla explícita (no genera ni rota en silencio).
- * 2. La creación de claves es atómica y con permisos 0600 en POSIX.
- * 3. Cifras fabricadas del llamador no producen una atestación verificada.
- * 4. Un JSON de evidencia sin SHA declarado se rechaza explícitamente.
- * 5. Un JSON fabricado con SHA correcto pero sin entrada en el ledger no es VERIFIED.
- * 6. Un productor no autorizado se rechaza explícitamente.
- * 7. Solo la evidencia registrada por el productor (ledger encadenado y firmado) da VERIFIED.
- * 8. Una ejecución fallida registrada no da VERIFIED.
- * 9. Un ledger manipulado invalida la evidencia.
- * 10. Clave corrupta: fallo explícito sin reparación silenciosa (fixture umask-safe).
+ * Contrato tras el cierre del hallazgo "autoridad de evidencia no separada":
+ * - La evidencia externa, incluso firmada y registrada en el ledger, NUNCA es VERIFIED:
+ *   el firmante no observó la ejecución. Máximo estado: EXTERNAL_EVIDENCE, sin métricas.
+ * - VERIFIED solo se emite ejecutando la suite DENTRO del componente firmante
+ *   (`runSuiteAndAttest`), con cifras leídas de la salida real del proceso.
+ * - Un actor con la clave local no puede obtener VERIFIED con `runner: never-executed`
+ *   ni con cifras arbitrarias: solo ejecutando.
+ *
+ * Cubre además: SHA obligatorio, productor autorizado, ledger encadenado/firmado,
+ * manipulación detectada, fixtures umask-safe, CLI `--evidence` con SHA automático.
  */
 
 const assert = require('assert');
@@ -21,10 +20,13 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
+const { spawnSync } = require('child_process');
 const DriveDsseAttester = require('../../tools/drive_dsse_attester.js');
 const { recordEvidence, sha256 } = require('../../tools/evidence_ledger.js');
 
-console.log('=== AX-F-227 Atestación evidence-bound: pruebas adversariales ===\n');
+console.log('=== AX-F-227 Atestación con autoridad separada: pruebas adversariales ===\n');
+
+const ROOT = path.resolve(__dirname, '..', '..');
 
 function capturarError(fn) {
   try {
@@ -58,6 +60,13 @@ function payloadTestRun(overrides = {}) {
     outputSha256: sha256('salida controlada'),
     ...overrides
   };
+}
+
+function crearRaizConRunner(bodyRunner) {
+  const raiz = fs.mkdtempSync(path.join(os.tmpdir(), 'axion-attester-run-'));
+  fs.mkdirSync(path.join(raiz, 'tests'), { recursive: true });
+  fs.writeFileSync(path.join(raiz, 'tests', 'run_all.js'), bodyRunner, 'utf8');
+  return raiz;
 }
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'axion-dsse-'));
@@ -119,15 +128,13 @@ try {
   assert.strictEqual(errSinSha.code, 'ERR_EVIDENCE_HASH_REQUIRED');
   console.log('✓ Evidencia sin SHA declarado rechazada (ERR_EVIDENCE_HASH_REQUIRED)');
 
-  // 6. JSON fabricado con SHA correcto pero sin ledger: NO es VERIFIED
+  // 6. JSON fabricado con SHA correcto pero sin ledger: NO es verificado
   const fabricadoConSha = attester.attestSession({
     missionId: 'MISSION_FABRICADA_SHA',
     title: 'JSON suelto con SHA',
     evidence: { testRun: { path: sinSha, sha256: sha256(fs.readFileSync(sinSha)) } }
   });
-  assert.strictEqual(fabricadoConSha.verificationStatus, 'UNVERIFIED', 'Un JSON suelto no puede acreditar ejecución');
-  const stmtSuelto = JSON.parse(Buffer.from(fabricadoConSha.dsseEnvelope.payload, 'base64').toString('utf8'));
-  assert.match(stmtSuelto.predicate.verification.reason, /ledger/i, 'La razón debe mencionar el ledger');
+  assert.strictEqual(fabricadoConSha.verificationStatus, 'UNVERIFIED');
   console.log('✓ JSON con SHA correcto pero sin ledger queda UNVERIFIED');
 
   // 7. Productor no autorizado: rechazo explícito
@@ -142,28 +149,33 @@ try {
   assert.strictEqual(errProductor.code, 'ERR_EVIDENCE_PRODUCER_MISMATCH');
   console.log('✓ Productor no autorizado rechazado (ERR_EVIDENCE_PRODUCER_MISMATCH)');
 
-  // 8. Evidencia real registrada por el productor: VERIFIED con vínculo de ledger
   const signer = signerFor(attester);
-  const producida = recordEvidence(root, payloadTestRun({ signer }));
-  const verificada = attester.attestSession({
-    missionId: 'MISSION_VERIFICADA',
-    title: 'Evidencia registrada',
-    suitesPassed: 9999,
-    evidence: { testRun: { path: producida.path, sha256: producida.sha256 } }
-  });
-  assert.strictEqual(verificada.verificationStatus, 'VERIFIED');
-  const stmtOk = JSON.parse(Buffer.from(verificada.dsseEnvelope.payload, 'base64').toString('utf8'));
-  assert.strictEqual(stmtOk.predicate.verification.status, 'VERIFIED');
-  assert.strictEqual(stmtOk.predicate.verification.ledger.valid, true);
-  assert.strictEqual(stmtOk.predicate.governance.suitesPassed, 3, 'Las cifras verificadas vienen del artefacto, no del llamador');
-  const evidencia = stmtOk.predicate.verification.evidence.find((e) => e.slot === 'testRun');
-  assert.strictEqual(evidencia.sha256, producida.sha256, 'El SHA-256 debe corresponder al artefacto real');
-  assert.strictEqual(evidencia.producer, 'tools/verify_changes.js');
-  assert.strictEqual(evidencia.ledgerSeq, 1, 'La evidencia debe estar registrada en el ledger');
-  assert.ok(attester.verifyAttestation(verificada.dsseEnvelope).valid);
-  console.log('✓ Evidencia registrada por el productor produce VERIFIED con ledger firmado');
 
-  // 9. Ejecución fallida registrada: UNVERIFIED
+  // 8. El escenario auditado: actor con la clave firma "runner: never-executed" y 999
+  //    suites. Aunque el ledger esté íntegro, NO obtiene VERIFIED ni métricas de gobierno.
+  const neverExecuted = recordEvidence(root, payloadTestRun({
+    runner: 'never-executed',
+    suites: { total: 999, passed: 999, failed: 0 },
+    signer
+  }));
+  const fabricadaRegistrada = attester.attestSession({
+    missionId: 'MISSION_NEVER_EXECUTED',
+    title: 'Evidencia registrada pero no ejecutada',
+    suitesPassed: 999,
+    evidence: { testRun: { path: neverExecuted.path, sha256: neverExecuted.sha256 } }
+  });
+  assert.strictEqual(fabricadaRegistrada.verificationStatus, 'EXTERNAL_EVIDENCE',
+    'La evidencia externa registrada no puede ser VERIFIED');
+  const stmtRegistrado = JSON.parse(Buffer.from(fabricadaRegistrada.dsseEnvelope.payload, 'base64').toString('utf8'));
+  assert.strictEqual(stmtRegistrado.predicate.verification.status, 'EXTERNAL_EVIDENCE');
+  assert.strictEqual(stmtRegistrado.predicate.verification.mode, 'EXTERNAL_EVIDENCE');
+  assert.strictEqual(stmtRegistrado.predicate.governance.suitesPassed, null, 'No se publican métricas desde un archivo externo');
+  assert.strictEqual(stmtRegistrado.predicate.mission.converged, null);
+  assert.strictEqual(stmtRegistrado.predicate.verification.externalEvidence.suites.passed, 999, 'La cifra externa queda etiquetada como no observada');
+  assert.strictEqual(stmtRegistrado.predicate.verification.externalEvidence.trust, 'REGISTERED_NOT_OBSERVED');
+  console.log('✓ Evidencia externa con clave local: EXTERNAL_EVIDENCE, sin VERIFIED ni métricas');
+
+  // 9. Evidencia externa fallida registrada: UNVERIFIED
   const fallida = recordEvidence(root, payloadTestRun({
     exitCode: 1,
     status: 'FAIL',
@@ -175,10 +187,10 @@ try {
     title: 'Suite en rojo',
     evidence: { testRun: { path: fallida.path, sha256: fallida.sha256 } }
   });
-  assert.strictEqual(conFallo.verificationStatus, 'UNVERIFIED', 'Una ejecución fallida no puede atestarse como éxito');
-  console.log('✓ Ejecución fallida registrada produce UNVERIFIED');
+  assert.strictEqual(conFallo.verificationStatus, 'UNVERIFIED');
+  console.log('✓ Evidencia externa fallida produce UNVERIFIED');
 
-  // 10. Ledger manipulado: la evidencia deja de verificar
+  // 10. Ledger manipulado: la evidencia externa deja de estar registrada
   const ledgerFile = path.join(evidenciaDir, 'ledger.jsonl');
   const lineas = fs.readFileSync(ledgerFile, 'utf8').split('\n').filter(Boolean);
   const primera = JSON.parse(lineas[0]);
@@ -188,18 +200,57 @@ try {
   const conLedgerRoto = attester.attestSession({
     missionId: 'MISSION_LEDGER_ROTO',
     title: 'Ledger manipulado',
-    evidence: { testRun: { path: producida.path, sha256: producida.sha256 } }
+    evidence: { testRun: { path: neverExecuted.path, sha256: neverExecuted.sha256 } }
   });
-  assert.strictEqual(conLedgerRoto.verificationStatus, 'UNVERIFIED', 'Un ledger manipulado no puede verificar');
-  console.log('✓ Ledger manipulado invalida la evidencia (UNVERIFIED)');
+  assert.strictEqual(conLedgerRoto.verificationStatus, 'UNVERIFIED');
+  console.log('✓ Ledger manipulado invalida la evidencia externa (UNVERIFIED)');
 
-  // 11. keyid ajeno: la verificación no acepta cualquier clave
-  const envelopeAjeno = JSON.parse(JSON.stringify(verificada.dsseEnvelope));
+  // 11. VERIFIED solo por ejecución dentro del firmante: runner que pasa
+  const raizOk = crearRaizConRunner(
+    "console.log('suites totales : 3');console.log('en verde       : 3');console.log('en rojo        : 0');process.exit(0);"
+  );
+  try {
+    const atesterEjecutor = new DriveDsseAttester(raizOk);
+    atesterEjecutor.ensureKeyPair();
+    const ejecutada = atesterEjecutor.runSuiteAndAttest({ missionId: 'MISSION_EJECUTADA', title: 'Ejecución real' });
+    assert.strictEqual(ejecutada.verificationStatus, 'VERIFIED');
+    const stmtEjecutado = JSON.parse(Buffer.from(ejecutada.dsseEnvelope.payload, 'base64').toString('utf8'));
+    assert.strictEqual(stmtEjecutado.predicate.verification.mode, 'EXECUTED_IN_SIGNER');
+    assert.strictEqual(stmtEjecutado.predicate.governance.suitesPassed, 3, 'Las cifras provienen de la salida del proceso real');
+    assert.strictEqual(stmtEjecutado.predicate.mission.converged, true);
+    assert.strictEqual(stmtEjecutado.predicate.verification.evidence[0].producer, 'tools/drive_dsse_attester.js');
+    assert.strictEqual(stmtEjecutado.predicate.verification.ledger.valid, true);
+    assert.ok(atesterEjecutor.verifyAttestation(ejecutada.dsseEnvelope).valid);
+    console.log('✓ runSuiteAndAttest con runner real: VERIFIED con cifras observadas en el proceso');
+  } finally {
+    fs.rmSync(raizOk, { recursive: true, force: true });
+  }
+
+  // 12. VERIFIED no se emite si la ejecución observada falla
+  const raizFallo = crearRaizConRunner(
+    "console.log('suites totales : 3');console.log('en verde       : 2');console.log('en rojo        : 1');process.exit(1);"
+  );
+  try {
+    const atesterFallo = new DriveDsseAttester(raizFallo);
+    atesterFallo.ensureKeyPair();
+    const ejecutadaFallo = atesterFallo.runSuiteAndAttest({ missionId: 'MISSION_FALLO_REAL', title: 'Fallo real' });
+    assert.strictEqual(ejecutadaFallo.verificationStatus, 'UNVERIFIED');
+    const stmtFallo = JSON.parse(Buffer.from(ejecutadaFallo.dsseEnvelope.payload, 'base64').toString('utf8'));
+    assert.strictEqual(stmtFallo.predicate.governance.suitesPassed, 2, 'Las cifras observadas se reportan tal cual');
+    assert.strictEqual(stmtFallo.predicate.governance.suitesFailed, 1);
+    assert.strictEqual(stmtFallo.predicate.mission.converged, false);
+    console.log('✓ runSuiteAndAttest con runner que falla: UNVERIFIED con cifras reales');
+  } finally {
+    fs.rmSync(raizFallo, { recursive: true, force: true });
+  }
+
+  // 13. keyid ajeno: la verificación no acepta cualquier clave
+  const envelopeAjeno = JSON.parse(JSON.stringify(fabricadaRegistrada.dsseEnvelope));
   envelopeAjeno.signatures[0].keyid = 'ed25519:0000000000000000';
   assert.strictEqual(attester.verifyAttestation(envelopeAjeno).valid, false);
   console.log('✓ keyid ajeno rechazado por la verificación');
 
-  // 12. Clave corrupta: fallo explícito, fixture con permisos fijados (umask-safe)
+  // 14. Clave corrupta: fallo explícito, fixture con permisos fijados (umask-safe)
   const rootCorrupto = fs.mkdtempSync(path.join(os.tmpdir(), 'axion-dsse-corrupto-'));
   try {
     const attesterCorrupto = new DriveDsseAttester(rootCorrupto);
@@ -219,7 +270,20 @@ try {
     fs.rmSync(rootCorrupto, { recursive: true, force: true });
   }
 
-  console.log('\nPASS: AX-F-227 — Atestación basada en evidencia y ledger verificada adversarialmente.');
+  // 15. CLI --evidence: calcula el SHA por sí misma y ya no muere con ERR_EVIDENCE_HASH_REQUIRED
+  const attesterRepo = new DriveDsseAttester(ROOT);
+  attesterRepo.ensureKeyPair();
+  const producidaRepo = recordEvidence(ROOT, payloadTestRun({ signer: signerFor(attesterRepo) }));
+  const cli = spawnSync(process.execPath, [
+    path.join(ROOT, 'tools', 'drive_dsse_attester.js'),
+    '--evidence', producidaRepo.path
+  ], { encoding: 'utf8' });
+  assert.strictEqual(cli.status, 0, `CLI debe salir con 0, salió ${cli.status}: ${cli.stderr}`);
+  assert.ok(cli.stdout.includes('EXTERNAL_EVIDENCE'), 'El CLI debe reportar EXTERNAL_EVIDENCE (no VERIFIED)');
+  assert.ok(!cli.stderr.includes('ERR_EVIDENCE_HASH_REQUIRED'), 'El CLI no debe exigir un SHA que no puede suministrar');
+  console.log('✓ CLI --evidence: SHA automático y estado EXTERNAL_EVIDENCE, sin error de interfaz');
+
+  console.log('\nPASS: AX-F-227 — Autoridad de evidencia separada verificada adversarialmente.');
 } finally {
   try {
     fs.rmSync(root, { recursive: true, force: true });

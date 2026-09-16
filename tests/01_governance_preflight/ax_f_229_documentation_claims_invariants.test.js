@@ -50,7 +50,7 @@ extraerTodos(leer('CONTRIBUTING.md'), /All (\d+) test suites pass/, 'CONTRIBUTIN
 extraerTodos(leer('ROADMAP.md'), /(\d+) suites deterministas \(resultado verificado en CI\)/, 'ROADMAP.md');
 extraerTodos(leer('docs/ASYMPTOTIC_MATURITY_REPORT.md'), /(\d+) deterministic test suites/, 'ASYMPTOTIC_MATURITY_REPORT.md');
 extraerTodos(leer('docs/ASYMPTOTIC_MATURITY_REPORT.es.md'), /(\d+) suites deterministas/, 'ASYMPTOTIC_MATURITY_REPORT.es.md');
-extraerTodos(leer('docs/attestation_viewer.html'), /\((\d+) Suites Deterministas\)/, 'attestation_viewer.html');
+extraerTodos(leer('docs/attestation_viewer.html'), /\(suite: (\d+) pruebas · resultado en CI\)/, 'attestation_viewer.html');
 extraerTodos(leer('docs/site/index.html'), /Distribución de las (\d+) Suites/, 'docs/site/index.html (título)');
 extraerTodos(leer('docs/site/index.html'), /id="telemetry-text">(\d+) Suites/, 'docs/site/index.html (telemetría)');
 extraerTodos(leer('docs/site/script.js'), /statusPill: 'v[\w.-]+ · (\d+) Suites'/, 'docs/site/script.js (statusPill)');
@@ -66,6 +66,8 @@ for (const rel of ['README.md', 'README.es.md', 'docs/site/index.html', 'docs/si
   assert.ok(!/\d+\s+Suites?\s+PASS/i.test(contenido), `${rel} no puede declarar PASS desde un conteo`);
   assert.ok(!/Suites in Green|Suites en Verde/i.test(contenido), `${rel} no puede declarar "green" desde un conteo`);
 }
+assert.ok(!/\d+\s+Suites?[^<]{0,60}PASS/i.test(leer('docs/attestation_viewer.html')),
+  'attestation_viewer.html no puede combinar un conteo con PASS; el resultado se consulta en CI');
 assert.ok(/CI publishes the verified result/.test(leer('README.md')), 'README.md debe remitir el resultado verificado a CI');
 console.log('✓ Conteos separados de veredictos: los resultados se remiten a CI');
 

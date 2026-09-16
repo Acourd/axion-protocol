@@ -5062,7 +5062,7 @@ function sincronizarPromptEngineering() {
 
 function sincronizarAttestationViewer(totalSuites) {
   return reemplazar('docs/attestation_viewer.html', [
-    (c) => c.replace(/\((\d+) Suites Deterministas\)/g, `(${totalSuites} Suites Deterministas)`)
+    (c) => c.replace(/\(suite: \d+ pruebas · resultado en CI\)/g, `(suite: ${totalSuites} pruebas · resultado en CI)`)
   ]);
 }
 

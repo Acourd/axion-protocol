@@ -2,7 +2,7 @@
 'use strict';
 
 /**
- * Axion Protocol — Drive DSSE & in-toto v1 Cryptographic Attester (Evidence-Bound)
+ * Axion Protocol — Drive DSSE & in-toto v1 Cryptographic Attester (Authority-Separated)
  *
  * Emite y verifica atestaciones in-toto Statement v1 selladas en sobre DSSE con firma
  * asimétrica Ed25519:
@@ -10,13 +10,14 @@
  *    si faltan, están corruptas o tienen permisos inseguros, la operación falla.
  * 2. La creación de claves es una acción explícita (`generateKeyPair`/`ensureKeyPair`)
  *    con escritura atómica y permisos restrictivos (0600 en plataformas POSIX).
- * 3. Vincula el predicado a artefactos de evidencia reales (ruta + SHA-256) producidos
- *    por ejecuciones (tools/verify_changes.js, tools/vibeguard_gate.js). Sin evidencia,
- *    la atestación declara `verification.status = 'UNVERIFIED'` y NO afirma éxito.
- * 4. Las métricas que aporte el llamador se registran como claims no verificados;
+ * 3. La evidencia externa (aunque venga firmada y registrada en el ledger) NUNCA es
+ *    `VERIFIED`: el firmante no observó la ejecución. Máximo estado: `EXTERNAL_EVIDENCE`,
+ *    sin métricas de gobierno en el predicado.
+ * 4. `VERIFIED` solo se emite ejecutando la suite DENTRO de este componente
+ *    (`runSuiteAndAttest`, CLI `--run-suite`): las cifras provienen de la salida real
+ *    del proceso (exit code + conteos), nunca de parámetros del llamador.
+ * 5. Las métricas que aporte el llamador se registran como claims no verificados;
  *    jamás como hechos ni como `true` fijo.
- *
- * La firma prueba QUIÉN firmó el JSON; la evidencia prueba A QUÉ se ancla.
  *
  * Cero dependencias externas.
  */
@@ -337,39 +338,37 @@ class DriveDsseAttester {
       }
     }
 
-    const status = testRunVerified ? 'VERIFIED' : 'UNVERIFIED';
+    // La evidencia externa, aun firmada y registrada en el ledger, NO acredita ejecución
+    // observada por el firmante. El máximo estado posible es EXTERNAL_EVIDENCE y no se
+    // publican métricas de gobierno desde un archivo: VERIFIED solo se emite ejecutando
+    // la suite dentro de este componente (runSuiteAndAttest).
+    const structurallyBound = testRunVerified;
+    const status = structurallyBound ? 'EXTERNAL_EVIDENCE' : 'UNVERIFIED';
     return {
       status,
-      reason: status === 'VERIFIED' ? 'Evidencia de ejecución real, con SHA declarado y registrada en ledger firmado.' : problems.join(' '),
+      reason: structurallyBound
+        ? 'Evidencia externa firmada y registrada; no observada por el firmante (no acredita ejecución).'
+        : problems.join(' '),
       artifacts,
-      testRun: testRunVerified ? testRun : null,
-      vibeGuard: vibeGuardVerified ? vibeGuard : null,
+      testRun: null,
+      vibeGuard: null,
+      externalEvidence: structurallyBound
+        ? {
+            trust: 'REGISTERED_NOT_OBSERVED',
+            producer: testRun.parsed.producer,
+            runner: testRun.parsed.runner,
+            suites: testRun.parsed.suites,
+            exitCode: testRun.parsed.exitCode,
+            ledgerSeq: testRun.ledgerSeq || null
+          }
+        : null,
       ledger: { valid: ledger.valid, entries: ledger.entries.length, reason: ledger.reason || null },
-      assurance: 'EVIDENCE_BOUND+LEDGER_SIGNED',
-      limitation: 'La firma acredita autoría del JSON y del registro; no prueba por sí sola la ejecución frente a un actor con acceso al mismo usuario y a la clave privada local.'
+      assurance: 'EVIDENCE_BOUND+LEDGER_SIGNED_NOT_EXECUTED',
+      limitation: 'La firma acredita autoría y registro; la ejecución no fue observada por el firmante. VERIFIED solo se emite ejecutando la suite dentro de este componente.'
     };
   }
 
-  /**
-   * Emite una atestación in-toto v1 sellada en sobre DSSE para una sesión de /drive.
-   * Sin evidencia válida emite estado UNVERIFIED y no afirma éxito.
-   */
-  attestSession(sessionData = {}) {
-    const {
-      missionId = `mission_${Date.now()}`,
-      title = 'Sesión Autónoma /drive',
-      iterations = 1,
-      evidence = null
-    } = sessionData;
-
-    const { publicKeyPem, privateKeyPem } = this.loadKeyPair();
-    const keyId = this.keyIdFor(publicKeyPem);
-
-    const merkleEngine = new MerkleCacheEngine(this.root);
-    const merkle = merkleEngine.computeMerkleRoot();
-
-    const verification = this.evaluateEvidence(evidence);
-
+  buildCallerClaims(sessionData = {}) {
     // Métricas aportadas por el llamador: se registran como claims no verificados,
     // nunca como hechos. El llamador no puede acreditar resultados por sí mismo.
     const callerClaims = {};
@@ -378,9 +377,25 @@ class DriveDsseAttester {
         callerClaims[key] = sessionData[key];
       }
     }
+    return Object.keys(callerClaims).length > 0
+      ? { trust: 'CALLER_ASSERTED', values: callerClaims }
+      : null;
+  }
 
-    const testRun = verification.testRun ? verification.testRun.parsed : null;
-    const vibeGuard = verification.vibeGuard ? verification.vibeGuard.parsed : null;
+  buildSigner() {
+    const { privateKeyPem, publicKeyPem } = this.loadKeyPair();
+    return {
+      keyId: this.keyIdFor(publicKeyPem),
+      sign: (buffer) => crypto.sign(null, buffer, privateKeyPem)
+    };
+  }
+
+  /**
+   * Construye, firma y persiste el sobre DSSE in-toto v1.
+   */
+  emitStatement({ mission, verification, governance, unverifiedClaims, merkle }) {
+    const { publicKeyPem, privateKeyPem } = this.loadKeyPair();
+    const keyId = this.keyIdFor(publicKeyPem);
 
     const statement = {
       _type: 'https://in-toto.io/Statement/v1',
@@ -394,47 +409,10 @@ class DriveDsseAttester {
       ],
       predicateType: 'https://axion.dev/attestations/drive-session/v1',
       predicate: {
-        mission: {
-          missionId,
-          title,
-          converged: verification.status === 'VERIFIED' ? true : null,
-          iterations,
-          timestamp: new Date().toISOString()
-        },
-        verification: {
-          status: verification.status,
-          assurance: verification.assurance,
-          reason: verification.reason,
-          limitation: verification.limitation,
-          ledger: {
-            valid: verification.ledger.valid,
-            entries: verification.ledger.entries,
-            reason: verification.ledger.reason
-          },
-          evidence: verification.artifacts.map((a) => ({
-            slot: a.slot,
-            uri: a.uri,
-            sha256: a.sha256,
-            bytes: a.bytes,
-            producer: a.parsed.producer,
-            ledgerSeq: a.ledgerSeq || null
-          }))
-        },
-        governance: {
-          suitesPassed: testRun ? Number(testRun.suites.passed) : null,
-          suitesTotal: testRun ? Number(testRun.suites.total) : null,
-          suitesFailed: testRun ? Number(testRun.suites.failed) : null,
-          testRunExitCode: testRun ? testRun.exitCode : null,
-          testRunCommand: testRun ? testRun.runner : null,
-          testRunFinishedAt: testRun ? testRun.finishedAt : null,
-          vibeGuardStrictClean: verification.vibeGuard ? true : null,
-          vibeGuardFindings: vibeGuard ? Number(vibeGuard.findings) : null,
-          vibeGuardFinishedAt: vibeGuard ? vibeGuard.finishedAt : null,
-          trackedFilesCount: merkle.filesCount
-        },
-        unverifiedClaims: Object.keys(callerClaims).length > 0
-          ? { trust: 'CALLER_ASSERTED', values: callerClaims }
-          : null,
+        mission,
+        verification,
+        governance,
+        unverifiedClaims,
         runtime: {
           nodeVersion: process.version,
           platform: process.platform,
@@ -473,6 +451,168 @@ class DriveDsseAttester {
       verificationStatus: verification.status,
       dsseEnvelope
     };
+  }
+
+  /**
+   * Emite una atestación in-toto v1 para evidencia externa aportada.
+   * Nunca emite VERIFIED: la ejecución no es observada por el firmante.
+   */
+  attestSession(sessionData = {}) {
+    const {
+      missionId = `mission_${Date.now()}`,
+      title = 'Sesión Autónoma /drive',
+      iterations = 1,
+      evidence = null
+    } = sessionData;
+
+    const merkle = new MerkleCacheEngine(this.root).computeMerkleRoot();
+    const verification = this.evaluateEvidence(evidence);
+
+    const verificationBlock = {
+      status: verification.status,
+      mode: 'EXTERNAL_EVIDENCE',
+      assurance: verification.assurance,
+      reason: verification.reason,
+      limitation: verification.limitation,
+      ledger: {
+        valid: verification.ledger.valid,
+        entries: verification.ledger.entries,
+        reason: verification.ledger.reason
+      },
+      evidence: verification.artifacts.map((a) => ({
+        slot: a.slot,
+        uri: a.uri,
+        sha256: a.sha256,
+        bytes: a.bytes,
+        producer: a.parsed.producer,
+        ledgerSeq: a.ledgerSeq || null
+      })),
+      externalEvidence: verification.externalEvidence
+    };
+
+    return this.emitStatement({
+      mission: {
+        missionId,
+        title,
+        converged: null,
+        iterations,
+        timestamp: new Date().toISOString()
+      },
+      verification: verificationBlock,
+      governance: {
+        suitesPassed: null,
+        suitesTotal: null,
+        suitesFailed: null,
+        testRunExitCode: null,
+        testRunCommand: null,
+        testRunFinishedAt: null,
+        vibeGuardStrictClean: null,
+        vibeGuardFindings: null,
+        vibeGuardFinishedAt: null,
+        trackedFilesCount: merkle.filesCount
+      },
+      unverifiedClaims: this.buildCallerClaims(sessionData),
+      merkle
+    });
+  }
+
+  /**
+   * Ejecuta la suite DENTRO del componente firmante y solo entonces puede emitir
+   * VERIFIED. Las cifras y el veredicto provienen de la observación directa del
+   * proceso (exit code + salida), nunca de parámetros del llamador.
+   */
+  runSuiteAndAttest(sessionData = {}, options = {}) {
+    const { spawnSync } = require('child_process');
+    const { detectarVerificador, parseSuiteCounts } = require('./verify_changes.js');
+    const { recordEvidence } = require('./evidence_ledger.js');
+
+    const {
+      missionId = `mission_${Date.now()}`,
+      title = 'Sesión verificada por ejecución',
+      iterations = 1
+    } = sessionData;
+
+    const runner = detectarVerificador(this.root);
+    if (!runner) {
+      throw this.fail('ERR_RUNNER_NOT_FOUND', `No hay suite ejecutable en ${this.root} (ni tests/run_all.js ni script test).`);
+    }
+    // Fail-fast: sin claves no tiene sentido ejecutar la suite para luego no poder firmar.
+    this.loadKeyPair();
+
+    const startedAtMs = Date.now();
+    const r = spawnSync(runner.executable, runner.args, {
+      cwd: this.root,
+      encoding: 'utf8',
+      shell: false,
+      timeout: options.timeoutMs || 10 * 60 * 1000,
+      windowsHide: true
+    });
+    const finishedAtMs = Date.now();
+    const output = `${r.stdout || ''}${r.stderr || ''}`;
+    const suites = parseSuiteCounts(output);
+    const exitCode = typeof r.status === 'number' ? r.status : null;
+    const observed = !r.error && exitCode === 0 && suites.total > 0 && suites.failed === 0 && suites.passed === suites.total;
+    const command = `${path.basename(runner.executable)} ${runner.args.join(' ')}`;
+
+    const produced = recordEvidence(this.root, {
+      schema: 'axion.execution/v1',
+      producer: 'tools/drive_dsse_attester.js',
+      runner: runner.etiqueta,
+      command,
+      exitCode: exitCode === null ? 1 : exitCode,
+      status: observed ? 'PASS' : 'FAIL',
+      suites,
+      startedAt: new Date(startedAtMs).toISOString(),
+      finishedAt: new Date(finishedAtMs).toISOString(),
+      durationMs: finishedAtMs - startedAtMs,
+      outputSha256: crypto.createHash('sha256').update(output).digest('hex'),
+      signer: this.buildSigner()
+    });
+
+    const merkle = new MerkleCacheEngine(this.root).computeMerkleRoot();
+
+    return this.emitStatement({
+      mission: {
+        missionId,
+        title,
+        converged: observed,
+        iterations,
+        timestamp: new Date().toISOString()
+      },
+      verification: {
+        status: observed ? 'VERIFIED' : 'UNVERIFIED',
+        mode: 'EXECUTED_IN_SIGNER',
+        assurance: 'EXECUTED_IN_SIGNER',
+        reason: observed
+          ? 'Suite ejecutada y observada por el firmante (exit code 0, cero fallos).'
+          : `Ejecución no superada (error=${r.error ? r.error.message : 'ninguno'}, exitCode=${exitCode}, total=${suites.total}, passed=${suites.passed}, failed=${suites.failed}).`,
+        limitation: 'La ejecución fue observada por este proceso; sustituir los archivos de la suite en disco queda fuera del perímetro de confianza.',
+        ledger: { valid: true, entries: produced.entry.seq, reason: null },
+        evidence: [{
+          slot: 'testRun',
+          uri: produced.relPath,
+          sha256: produced.sha256,
+          bytes: produced.bytes,
+          producer: 'tools/drive_dsse_attester.js',
+          ledgerSeq: produced.entry.seq
+        }],
+        externalEvidence: null
+      },
+      governance: {
+        suitesPassed: exitCode === null ? null : suites.passed,
+        suitesTotal: exitCode === null ? null : suites.total,
+        suitesFailed: exitCode === null ? null : suites.failed,
+        testRunExitCode: exitCode,
+        testRunCommand: runner.etiqueta,
+        testRunFinishedAt: new Date(finishedAtMs).toISOString(),
+        vibeGuardStrictClean: null,
+        vibeGuardFindings: null,
+        vibeGuardFinishedAt: null,
+        trackedFilesCount: merkle.filesCount
+      },
+      unverifiedClaims: this.buildCallerClaims(sessionData),
+      merkle
+    });
   }
 
   /**
@@ -536,15 +676,49 @@ if (require.main === module) {
     }
   }
 
+  if (args.includes('--run-suite')) {
+    try {
+      const res = attester.runSuiteAndAttest({
+        missionId: 'MISSION_EXECUTED_IN_SIGNER',
+        title: 'Sellado por ejecución dentro del firmante'
+      });
+      console.log(`  Archivo sellado: ${res.attestationPath}`);
+      console.log(`  Merkle Root:     ${res.merkleRoot}`);
+      console.log(`  Key ID:          ed25519:${res.keyId}`);
+      console.log(`  Verificación:    ${res.verificationStatus}`);
+      process.exit(res.verificationStatus === 'VERIFIED' ? 0 : 1);
+    } catch (err) {
+      console.error(`✗ ${err.code || 'ERROR'}: ${err.message}`);
+      process.exit(2);
+    }
+  }
+
   console.log('[Axion DSSE Attester] Emitiendo atestación in-toto v1 con firma Ed25519:');
   const evidenceIndex = args.indexOf('--evidence');
   const evidencePath = evidenceIndex !== -1 ? args[evidenceIndex + 1] : null;
+  const evidenceShaIndex = args.indexOf('--evidence-sha');
+  const evidenceShaArg = evidenceShaIndex !== -1 ? args[evidenceShaIndex + 1] : null;
 
   try {
+    let evidence = null;
+    if (evidencePath) {
+      // La referencia exige SHA-256: se calcula del archivo y, si el llamador lo
+      // declara, debe coincidir con el real.
+      const absPath = path.isAbsolute(evidencePath) ? evidencePath : path.resolve(process.cwd(), evidencePath);
+      if (!fs.existsSync(absPath)) {
+        throw attester.fail('ERR_EVIDENCE_MISSING', `Artefacto de evidencia no existe: ${evidencePath}`);
+      }
+      const actualSha = crypto.createHash('sha256').update(fs.readFileSync(absPath)).digest('hex');
+      if (evidenceShaArg && evidenceShaArg !== actualSha) {
+        throw attester.fail('ERR_EVIDENCE_HASH_MISMATCH', `--evidence-sha no coincide con el archivo (${actualSha}).`);
+      }
+      evidence = { testRun: { path: absPath, sha256: actualSha } };
+    }
+
     const res = attester.attestSession({
       missionId: 'MISSION_CRYPTO_SEAL',
       title: 'Sellado Criptográfico de Sesión /drive',
-      evidence: evidencePath ? { testRun: { path: evidencePath } } : null
+      evidence
     });
 
     console.log(`  Archivo sellado: ${res.attestationPath}`);
