@@ -21,51 +21,71 @@ console.log('=== AX-F-153 Invariantes del Árbitro de Sincronización de Enjambr
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const sandbox = path.join(ROOT, 'scratch', `test_swarm_sandbox_${Date.now()}`);
-fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
+const stateDir = path.join(sandbox, '.axion', 'state');
+fs.mkdirSync(stateDir, { recursive: true });
+
+// Fixture persistido con expiresAt en el pasado antes de instanciar SwarmArbiter
+const locksFile = path.join(stateDir, 'swarm-locks.json');
+const expiredFixture = [
+  {
+    resource: 'tools/orphaned_lock.js',
+    agentId: 'worker_agent_ghost',
+    acquiredAt: new Date(Date.now() - 120000).toISOString(),
+    expiresAt: new Date(Date.now() - 60000).toISOString(),
+    token: 'deadbeef00000000deadbeef00000000'
+  }
+];
+fs.writeFileSync(locksFile, JSON.stringify(expiredFixture, null, 2), 'utf8');
 
 try {
   const arbiter = new SwarmArbiter(sandbox);
 
-  // 1. Validar adquisición de bloqueo por Agente A
-  const lock1 = arbiter.acquireLock('worker_agent_alpha', 'tools/crypto_signer.js', 1000);
+  // 1. Validar carga y poda determinista de fixture persistido expirado antes de instanciar SwarmArbiter
+  assert.strictEqual(arbiter.locks.has('tools/orphaned_lock.js'), true, 'El fixture expirado debe cargarse en memoria');
+  const pruneExpired = arbiter.pruneExpiredLocks();
+  assert.strictEqual(pruneExpired.prunedCount, 1, 'Debe podar deterministamente exactamente 1 lock expirado');
+  assert.strictEqual(arbiter.listLocks().length, 0, 'La lista debe quedar vacía tras podar el lock expirado');
+  console.log('✓ Poda determinista por TTL validada con fixture persistido en el pasado');
+
+  // 2. Validar adquisición de bloqueo por Agente A
+  const lock1 = arbiter.acquireLock('worker_agent_alpha', 'tools/crypto_signer.js', 60000);
   assert.strictEqual(lock1.acquired, true);
   assert.ok(lock1.lock.token);
   console.log(`✓ Bloqueo adquirido para 'worker_agent_alpha' sobre tools/crypto_signer.js`);
 
-  // 2. Validar detección de conflicto por Agente B
-  const conflict = arbiter.acquireLock('worker_agent_beta', 'tools/crypto_signer.js', 1000);
+  // 3. Validar detección de conflicto por Agente B
+  const conflict = arbiter.acquireLock('worker_agent_beta', 'tools/crypto_signer.js', 60000);
   assert.strictEqual(conflict.acquired, false);
   assert.strictEqual(conflict.reason, 'CONFLICT');
   assert.strictEqual(conflict.heldBy, 'worker_agent_alpha');
   console.log('✓ Detección y contención de conflicto concurrente validada');
 
-  // 3. Validar rechazo de liberación no autorizada
+  // 4. Validar rechazo de liberación no autorizada
   const unauthRelease = arbiter.releaseLock('worker_agent_beta', 'tools/crypto_signer.js');
   assert.strictEqual(unauthRelease.released, false);
   assert.strictEqual(unauthRelease.reason, 'UNAUTHORIZED');
   console.log('✓ Rechazo de liberación no autorizada por agente ajeno validado');
 
-  // 4. Validar liberación exitosa por dueño
+  // 5. Validar liberación exitosa por dueño
   const validRelease = arbiter.releaseLock('worker_agent_alpha', 'tools/crypto_signer.js');
   assert.strictEqual(validRelease.released, true);
   console.log('✓ Liberación legítima de recurso validada');
 
-  // 5. Validar poda automática por TTL
-  arbiter.acquireLock('worker_agent_gamma', 'tools/temp_patch.js', 10); // TTL 10ms
+  // 6. Validar conservación de bloqueo con TTL activo en el futuro (lock no expirado, sin sleeps ni busy-waits)
+  const lockGamma = arbiter.acquireLock('worker_agent_gamma', 'tools/temp_patch.js', 60000);
+  assert.strictEqual(lockGamma.acquired, true);
   assert.strictEqual(arbiter.listLocks().length, 1);
-  
-  // Pausa determinista para expirar TTL
-  const t0 = Date.now();
-  while (Date.now() - t0 < 30) { /* spin */ }
-
-  const pruneRes = arbiter.pruneExpiredLocks();
-  assert.strictEqual(pruneRes.prunedCount, 1);
+  const pruneActive = arbiter.pruneExpiredLocks();
+  assert.strictEqual(pruneActive.prunedCount, 0, 'No debe podar locks con TTL activo en el futuro');
+  assert.strictEqual(arbiter.listLocks().length, 1, 'El bloqueo futuro debe permanecer activo');
+  const releaseGamma = arbiter.releaseLock('worker_agent_gamma', 'tools/temp_patch.js');
+  assert.strictEqual(releaseGamma.released, true);
   assert.strictEqual(arbiter.listLocks().length, 0);
-  console.log('✓ Poda automática y auto-limpieza de bloqueos huérfanos por TTL validada');
+  console.log('✓ Conservación de bloqueos activos futuros (no expirados) validada');
 
-  // 6. Validar integración con DriveEngine
+  // 7. Validar integración con DriveEngine
   const driveEngine = new DriveEngine(ROOT);
-  const driveLock = driveEngine.acquireSwarmLock('drive_subagent_1', 'scratch/dummy.txt', 5000);
+  const driveLock = driveEngine.acquireSwarmLock('drive_subagent_1', 'scratch/dummy.txt', 60000);
   assert.strictEqual(driveLock.acquired, true);
   const driveList = driveEngine.listSwarmLocks();
   assert.ok(driveList.length >= 1);

@@ -138,9 +138,25 @@ class SmartIncrementalRunner {
   /**
    * Ejecuta únicamente las suites afectadas.
    */
-  runIncremental(modifiedFiles = null) {
+  runIncremental(modifiedFiles = null, options = {}) {
     const targetModified = modifiedFiles || this.getModifiedFiles();
     const affectedTests = this.findAffectedTests(targetModified);
+
+    if (affectedTests.length === 0) {
+      if (options && typeof options.fallbackRunner === 'function') {
+        return options.fallbackRunner(targetModified);
+      }
+      return {
+        modifiedFiles: targetModified,
+        affectedTestsCount: 0,
+        allPass: false,
+        status: 'NO_TESTS_MAPPED',
+        reason: 'NO_TESTS_MAPPED',
+        totalDurationMs: 0,
+        results: [],
+        message: 'No se mapearon pruebas para los archivos modificados. Prohibido evaluar [].every como verde.'
+      };
+    }
 
     const t0 = Date.now();
     const results = [];
@@ -159,12 +175,13 @@ class SmartIncrementalRunner {
     }
 
     const totalDurationMs = Date.now() - t0;
-    const allPass = results.every(r => r.pass);
+    const allPass = results.length > 0 && results.every(r => r.pass);
 
     return {
       modifiedFiles: targetModified,
       affectedTestsCount: affectedTests.length,
       allPass,
+      status: allPass ? 'ALL_PASS' : 'TESTS_FAILED',
       totalDurationMs,
       results
     };
@@ -182,6 +199,11 @@ if (require.main === module) {
 
   for (const r of report.results) {
     console.log(`  ${r.pass ? 'PASS' : 'FAIL'}  ${r.test.padEnd(65)} (${r.durationMs} ms)`);
+  }
+
+  if (report.status === 'NO_TESTS_MAPPED' || report.affectedTestsCount === 0) {
+    console.log(`\n⚠️ NO_TESTS_MAPPED: No se mapearon pruebas para los archivos modificados. Se requiere verificación explícita.`);
+    process.exit(1);
   }
 
   if (report.allPass) {
