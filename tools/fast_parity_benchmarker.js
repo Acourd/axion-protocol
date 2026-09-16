@@ -78,6 +78,9 @@ class FastParityBenchmarker {
     const dsseAttester = new DriveDsseAttester(this.root);
     const capManager = new CapabilityManager(this.root);
 
+    // Bootstrap explícito del keyring para medir la firma real; nunca rota claves.
+    dsseAttester.ensureKeyPair();
+
     searchIndexer.loadIndex();
 
     const memBefore = process.memoryUsage();

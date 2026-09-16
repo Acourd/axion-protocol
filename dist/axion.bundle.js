@@ -4,7 +4,7 @@
 /**
  * Axion Protocol — Standalone Single-File Bundle
  * Versión: 1.4.0-beta.1 (Zero-Dependency)
- * Compilado: 2026-09-12T06:11:16.812Z
+ * Compilado: 1970-01-01T00:00:00.000Z
  */
 
 const __modules = {};
@@ -2127,11 +2127,12 @@ class AgentShieldScanner {
       try {
         const DriveDsseAttester = require('./drive_dsse_attester.js');
         const attester = new DriveDsseAttester(this.root);
+        // Bootstrap explícito del keyring: sin esto, un checkout limpio no puede atestar
+        // y el reporte quedaría sin evidencia. Nunca rota claves existentes.
+        attester.ensureKeyPair();
         report.attestation = attester.attestSession({
           missionId: 'AGENT_SHIELD_AUDIT',
           title: 'Auditoría de Seguridad Agéntica AgentShield',
-          suitesPassed: 153,
-          chaosVectorsBlocked: 10000,
           converged: pass,
           iterations: 1
         });
@@ -3793,7 +3794,6 @@ class DynamicRuleWeaver {
       `# Axion Protocol — Reglas P0 Dinámicas Contextualizadas`,
       ``,
       `**Stack Detectado:** ${stackNames}`,
-      `**Fecha de Tejido:** ${new Date().toISOString()}`,
       `**Arquitectura:** Soberana Fail-Closed Zero-Dependency`,
       ``,
       `## 🛡️ Invariantes Universales P0 (Aplicables a todo el proyecto)`,
@@ -3817,7 +3817,16 @@ class DynamicRuleWeaver {
     const digest = crypto.createHash('sha256').update(content).digest('hex');
 
     const targetFile = path.join(this.rulesDir, 'active-stack-governance.md');
-    fs.writeFileSync(targetFile, content, 'utf8');
+    // Escritura idempotente y atómica: si el contenido ya es el canónico no se toca
+    // el archivo (evita churn de hashes en SBOM y lecturas parciales en concurrencia).
+    let written = false;
+    const existente = fs.existsSync(targetFile) ? fs.readFileSync(targetFile, 'utf8') : null;
+    if (existente !== content) {
+      const tmpFile = `${targetFile}.tmp-${process.pid}-${Date.now()}`;
+      fs.writeFileSync(tmpFile, content, 'utf8');
+      fs.renameSync(tmpFile, targetFile);
+      written = true;
+    }
 
     return {
       success: true,
@@ -3825,6 +3834,7 @@ class DynamicRuleWeaver {
       stackNames,
       targetFile,
       digest,
+      written,
       content
     };
   }
@@ -4910,8 +4920,12 @@ module.exports = SwarmP2PChannel;
  * Axion Protocol — Sincronizador Atómico de Métricas y Documentación por Dominios.
  *
  * Escanea dinámicamente el estado real del repositorio en los 5 Dominios Fundamentales
- * de Gobernanza, e inyecta las métricas de forma atómica en README.md, README.es.md,
- * docs/site/index.html y docs/site/script.js.
+ * de Gobernanza, e inyecta las métricas verificables en las superficies vivas:
+ * README.md, README.es.md, CONTRIBUTING.md, docs/ASYMPTOTIC_MATURITY_REPORT.md(.es),
+ * docs/PROMPT_ENGINEERING.md, docs/attestation_viewer.html y docs/site/.
+ *
+ * Los documentos históricos (CHANGELOG.md, docs/HANDOFF.md) no se reescriben:
+ * son registro de lo que ocurrió, no métricas vivas.
  *
  * Cero dependencias externas.
  */
@@ -4949,110 +4963,199 @@ function contarSuites(dirRaiz = ROOT) {
   return { total, desglose };
 }
 
-function sincronizarReadme(totalSuites, desglose) {
-  const ruta = path.join(ROOT, 'README.md');
+function leerVersion() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version || '0.0.0';
+  } catch (_) {
+    return '0.0.0';
+  }
+}
+
+function reemplazar(archivo, transformaciones) {
+  const ruta = path.join(ROOT, archivo);
   if (!fs.existsSync(ruta)) return false;
-
   let contenido = fs.readFileSync(ruta, 'utf8');
-
-  // Actualizar encabezados y conteos principales
-  contenido = contenido.replace(
-    /Axion Protocol includes \*\*\d+ deterministic test suites\*\*/g,
-    `Axion Protocol includes **${totalSuites} deterministic test suites**`
-  );
-
-  // Actualizar línea de resumen de la tabla de dominios
-  contenido = contenido.replace(
-    /\*\*Total: \d+ suites/g,
-    `**Total: ${totalSuites} suites`
-  );
-
-  // Actualizar filas de la tabla de dominios
-  contenido = contenido.replace(/\|\s*🛡️\s*\*\*Governance & Preflight\*\*\s*\|[^|]+\|\s*\d+\s*\|/g, 
-    `| 🛡️ **Governance & Preflight** | PreToolUse hooks, lexical preflight, killswitch, risk policy compiler, structured commands, workflow state machine, drive engine | ${desglose.governance} |`);
-  contenido = contenido.replace(/\|\s*🔐\s*\*\*Cryptography & Attestation\*\*\s*\|[^|]+\|\s*\d+\s*\|/g, 
-    `| 🔐 **Cryptography & Attestation** | DSSE/PAE envelopes, RFC 8785 canonical JSON, in-toto Statement v1, Ed25519 signatures, evidence binding, revocation | ${desglose.cryptography} |`);
-  contenido = contenido.replace(/\|\s*🧭\s*\*\*Intent & Socratic UX\*\*\s*\|[^|]+\|\s*\d+\s*\|/g, 
-    `| 🧭 **Intent & Socratic UX** | 2-question clarifier, A/B/C contracts, SHA-256 intent sealing, profile calibration, interactive wizard, deep reasoning | ${desglose.intent} |`);
-  contenido = contenido.replace(/\|\s*💾\s*\*\*State, Checkpoints & Recovery\*\*\s*\|[^|]+\|\s*\d+\s*\|/g, 
-    `| 💾 **State, Checkpoints & Recovery** | Atomic snapshots, rollback plan validation, memory guard limits, context shield anchoring, evidence hasher, governance drift detection | ${desglose.state} |`);
-  contenido = contenido.replace(/\|\s*⚡\s*\*\*Adversarial Resilience\*\*\s*\|[^|]+\|\s*\d+\s*\|/g, 
-    `| ⚡ **Adversarial Resilience** | 100+ mutation vectors, pre-mortem verdict derivation, VibeGuard lexical gate, boilerplate detection, fuzzer burst resilience | ${desglose.adversarial} |`);
-
-  // Actualizar desglose en el bloque details
-  contenido = contenido.replace(
-    /All suites live under `tests\/`[^.\n]+/g,
-    `All suites live under \`tests/\` organized across the **5 Core Domain Pillars**: **Governance** (${desglose.governance}), **Cryptography** (${desglose.cryptography}), **Intent** (${desglose.intent}), **State** (${desglose.state}), and **Adversarial** (${desglose.adversarial})`
-  );
-
+  for (const fn of transformaciones) {
+    contenido = fn(contenido);
+  }
   fs.writeFileSync(ruta, contenido, 'utf8');
   return true;
+}
+
+function sincronizarReadme(totalSuites, desglose) {
+  return reemplazar('README.md', [
+    (c) => c.replace(
+      /Axion Protocol includes \*\*\d+ deterministic test suites\*\*/g,
+      `Axion Protocol includes **${totalSuites} deterministic test suites**`
+    ),
+    (c) => c.replace(/\*\*Total: \d+ suites\*\* across the 5 governance domains\.(?: CI publishes the verified result\.)?/g,
+      `**Total: ${totalSuites} suites** across the 5 governance domains. CI publishes the verified result.`),
+    (c) => c.replace(/\*\*Total: \d+ suites\*\*/g, `**Total: ${totalSuites} suites**`),
+    (c) => c.replace(/CI-\d+%20Suites/g, `CI-${totalSuites}%20Suites`),
+    (c) => c.replace(/passed in ~[\d.]+s \(\d+ concurrent workers\)\./g, 'passed across the 5 governance domains.'),
+    (c) => c.replace(/\|\s*🛡️\s*\*\*Governance & Preflight\*\*\s*\|[^|]+\|\s*\d+\s*\|/g,
+      `| 🛡️ **Governance & Preflight** | PreToolUse hooks, lexical preflight, killswitch, risk policy compiler, structured commands, workflow state machine, drive engine | ${desglose.governance} |`),
+    (c) => c.replace(/\|\s*🔐\s*\*\*Cryptography & Attestation\*\*\s*\|[^|]+\|\s*\d+\s*\|/g,
+      `| 🔐 **Cryptography & Attestation** | DSSE/PAE envelopes, RFC 8785 canonical JSON, in-toto Statement v1, Ed25519 signatures, evidence binding, revocation | ${desglose.cryptography} |`),
+    (c) => c.replace(/\|\s*🧭\s*\*\*Intent & Socratic UX\*\*\s*\|[^|]+\|\s*\d+\s*\|/g,
+      `| 🧭 **Intent & Socratic UX** | 2-question clarifier, A/B/C contracts, SHA-256 intent sealing, profile calibration, interactive wizard, deep reasoning | ${desglose.intent} |`),
+    (c) => c.replace(/\|\s*💾\s*\*\*State, Checkpoints & Recovery\*\*\s*\|[^|]+\|\s*\d+\s*\|/g,
+      `| 💾 **State, Checkpoints & Recovery** | Atomic snapshots, rollback plan validation, memory guard limits, context shield anchoring, evidence hasher, governance drift detection | ${desglose.state} |`),
+    (c) => c.replace(/\|\s*⚡\s*\*\*Adversarial Resilience\*\*\s*\|[^|]+\|\s*\d+\s*\|/g,
+      `| ⚡ **Adversarial Resilience** | Mutation vectors, pre-mortem verdict derivation, VibeGuard lexical gate, boilerplate detection, fuzzer burst resilience | ${desglose.adversarial} |`),
+    (c) => c.replace(
+      /All suites live under `tests\/`[^.\n]+/g,
+      `All suites live under \`tests/\` organized across the **5 Core Domain Pillars**: **Governance** (${desglose.governance}), **Cryptography** (${desglose.cryptography}), **Intent** (${desglose.intent}), **State** (${desglose.state}), and **Adversarial** (${desglose.adversarial})`
+    )
+  ]);
 }
 
 function sincronizarReadmeEs(totalSuites) {
-  const ruta = path.join(ROOT, 'README.es.md');
-  if (!fs.existsSync(ruta)) return false;
-
-  let contenido = fs.readFileSync(ruta, 'utf8');
-
-  contenido = contenido.replace(
-    /incluye \*\*\d+ suites de prueba deterministas\*\*/g,
-    `incluye **${totalSuites} suites de prueba deterministas**`
-  );
-
-  contenido = contenido.replace(
-    /# Ejecutar las \d+ suites de prueba/g,
-    `# Ejecutar las ${totalSuites} suites de prueba`
-  );
-
-  fs.writeFileSync(ruta, contenido, 'utf8');
-  return true;
+  return reemplazar('README.es.md', [
+    (c) => c.replace(/incluye \*\*\d+ suites de prueba deterministas\*\*/g, `incluye **${totalSuites} suites de prueba deterministas**`),
+    (c) => c.replace(/# Ejecutar las \d+ suites de prueba/g, `# Ejecutar las ${totalSuites} suites de prueba`),
+    (c) => c.replace(/CI-\d+%20Suites/g, `CI-${totalSuites}%20Suites`)
+  ]);
 }
 
-function sincronizarSitioWeb(totalSuites) {
+function sincronizarRoadmap(totalSuites) {
+  return reemplazar('ROADMAP.md', [
+    (c) => c.replace(/\d+ suites (?:passing al 100%|en verde en CI)/g, `${totalSuites} suites deterministas (resultado verificado en CI)`)
+  ]);
+}
+
+function sincronizarTestsReadme(totalSuites) {
+  return reemplazar('tests/README.md', [
+    (c) => c.replace(/## 5 dominios y \d+ suites/g, `## 5 dominios y ${totalSuites} suites`)
+  ]);
+}
+
+function sincronizarContributing(totalSuites) {
+  return reemplazar('CONTRIBUTING.md', [
+    (c) => c.replace(/All \d+\+? deterministic suites across all 5 governance domains must pass/g,
+      `All ${totalSuites} deterministic suites across all 5 governance domains must pass`),
+    (c) => c.replace(/- \[ \] All \d+\+? test suites pass with Exit Code 0\./g,
+      `- [ ] All ${totalSuites} test suites pass with Exit Code 0.`),
+    (c) => c.replace(/\*\*exactly \d+ consolidated skills\*\* in `\.agents\/skills\/` and \d+ slash commands in `\.claude\/commands\/`/g,
+      '**the consolidated skills** in `.agents/skills/` and the matching slash commands in `.claude/commands/`')
+  ]);
+}
+
+function sincronizarMaturityReport(totalSuites) {
+  const updates = [
+    (c) => c.replace(/\d+ deterministic test suites/g, `${totalSuites} deterministic test suites`),
+    (c) => c.replace(/\d+ suites deterministas/g, `${totalSuites} suites deterministas`),
+    (c) => c.replace(/Consolidate \d+ test suites/g, `Consolidate ${totalSuites} test suites`),
+    (c) => c.replace(/Consolidar \d+ suites/g, `Consolidar ${totalSuites} suites`)
+  ];
+  const r1 = reemplazar('docs/ASYMPTOTIC_MATURITY_REPORT.md', updates);
+  const r2 = reemplazar('docs/ASYMPTOTIC_MATURITY_REPORT.es.md', updates);
+  return r1 || r2;
+}
+
+function sincronizarPromptEngineering() {
+  return reemplazar('docs/PROMPT_ENGINEERING.md', [
+    (c) => c.replace(/Suite de regresión superada con exit code 0 \(\d+\/\d+ suites en verde\)\./g,
+      'Suite de regresión superada con exit code 0, según la salida real del runner.')
+  ]);
+}
+
+function sincronizarAttestationViewer(totalSuites) {
+  return reemplazar('docs/attestation_viewer.html', [
+    (c) => c.replace(/\(suite: \d+ pruebas · resultado en CI\)/g, `(suite: ${totalSuites} pruebas · resultado en CI)`)
+  ]);
+}
+
+function sincronizarSitioWeb(totalSuites, desglose, version) {
   const rutaHtml = path.join(ROOT, 'docs', 'site', 'index.html');
   const rutaJs = path.join(ROOT, 'docs', 'site', 'script.js');
+  const porcentaje = (n) => ((n / totalSuites) * 100).toFixed(1);
+
+  let actualizado = false;
 
   if (fs.existsSync(rutaHtml)) {
     let html = fs.readFileSync(rutaHtml, 'utf8');
+    html = html.replace(/\d+ Suites PASS/g, `${totalSuites} Suites`);
+    html = html.replace(/GitHub · \d+\/\d+/g, `GitHub · ${totalSuites} suites`);
+    html = html.replace(/<strong>\d+\/\d+<\/strong> suites PASS/g, `<strong>${totalSuites}</strong> suites`);
+    html = html.replace(/✓ \d+\/\d+ PASS<\/span> \d+ suites de prueba/g, `✓ ${totalSuites} suites en el árbol</span> ${totalSuites} suites de prueba`);
+    html = html.replace(/Distribución de las \d+ Suites/g, `Distribución de las ${totalSuites} Suites`);
+    html = html.replace(/(\d+) \/ \1/g, `${totalSuites} suites`);
+    html = html.replace(/suite de \d+ pruebas/g, `suite de ${totalSuites} pruebas`);
+    html = html.replace(/Todos los Dominios \(\d+\)/g, `Todos los Dominios (${totalSuites})`);
+    html = html.replace(/Verificado \(\d+\/\d+\)/g, 'Verificado (CI)');
+    html = html.replace(/\d+ suites verificadas · Exit Code 0/g, `${totalSuites} suites · resultados publicados por CI`);
+    html = html.replace(/Suites in Green \(\d+%\)/g, 'Suites in Repository');
+    html = html.replace(/Suites en Verde \(\d+%\)/g, 'Suites en el Repositorio');
 
-    html = html.replace(/v1\.2\.0-beta\.1 · \d+ Suites PASS/g, `v1.2.0-beta.1 · ${totalSuites} Suites PASS`);
-    html = html.replace(/GitHub · \d+\/\d+/g, `GitHub · ${totalSuites}/${totalSuites}`);
-    html = html.replace(/<strong>\d+\/\d+<\/strong> suites PASS/g, `<strong>${totalSuites}/${totalSuites}</strong> suites PASS`);
-    html = html.replace(/✓ \d+\/\d+ PASS<\/span> \d+ suites de prueba/g, `✓ ${totalSuites}/${totalSuites} PASS</span> ${totalSuites} suites de prueba`);
+    const dominios = [
+      { key: 'governance', width: porcentaje(desglose.governance) },
+      { key: 'cryptography', width: porcentaje(desglose.cryptography) },
+      { key: 'intent', width: porcentaje(desglose.intent) },
+      { key: 'state', width: porcentaje(desglose.state) },
+      { key: 'adversarial', width: porcentaje(desglose.adversarial) }
+    ];
+    let indice = 0;
+    html = html.replace(/<strong>\d+ suites \([\d.]+%\)<\/strong>/g, (match) => {
+      const d = dominios[indice++];
+      return d ? `<strong>${desglose[d.key]} suites (${d.width}%)</strong>` : match;
+    });
+    indice = 0;
+    html = html.replace(/width: [\d.]+%;/g, (match) => {
+      const d = dominios[indice++];
+      return d ? `width: ${d.width}%;` : match;
+    });
 
     fs.writeFileSync(rutaHtml, html, 'utf8');
+    actualizado = true;
   }
 
   if (fs.existsSync(rutaJs)) {
     let js = fs.readFileSync(rutaJs, 'utf8');
-
-    js = js.replace(/statusPill:\s*'v1\.2\.0-beta\.1 · \d+ Suites PASS'/g, `statusPill: 'v1.2.0-beta.1 · ${totalSuites} Suites PASS'`);
-    js = js.replace(/statSuites:\s*'<strong>\d+\/\d+<\/strong> suites PASS'/g, `statSuites: '<strong>${totalSuites}/${totalSuites}</strong> suites PASS'`);
+    js = js.replace(/statusPill:\s*'v[\w.-]+ · \d+ Suites(?: PASS)?'/g, `statusPill: 'v${version} · ${totalSuites} Suites'`);
+    js = js.replace(/statSuites:\s*'<strong>\d+(?:\/\d+)?<\/strong> suites(?: PASS)?'/g, `statSuites: '<strong>${totalSuites}</strong> suites'`);
     js = js.replace(/Executes \d+ automated test suites/g, `Executes ${totalSuites} automated test suites`);
     js = js.replace(/Ejecuta \d+ suites de prueba automáticas/g, `Ejecuta ${totalSuites} suites de prueba automáticas`);
-
+    js = js.replace(/'✓ \d+\/\d+ suites PASS[^']*'/g, `'✓ [simulación] ${totalSuites} suites · este panel no ejecuta la suite'`);
+    js = js.replace(/telemetryStatus: '\d+ Suites(?: PASS)?'/g, `telemetryStatus: '${totalSuites} Suites'`);
+    js = js.replace(/the full \d+ automated test suites/g, `the full ${totalSuites} automated test suites`);
+    js = js.replace(/suite de \d+ pruebas/g, `suite de ${totalSuites} pruebas`);
+    js = js.replace(/(?:All Domains|Todos los Dominios) \(\d+\)/g, (m) => m.startsWith('Todo') ? `Todos los Dominios (${totalSuites})` : `All Domains (${totalSuites})`);
+    js = js.replace(/breakdownTitle: 'Distribution of the \d+ Suites'/g, `breakdownTitle: 'Distribution of the ${totalSuites} Suites'`);
+    js = js.replace(/breakdownTitle: 'Distribución de las \d+ Suites'/g, `breakdownTitle: 'Distribución de las ${totalSuites} Suites'`);
+    js = js.replace(/(?:Verified|Verificado) \((\d+)\/\d+\)/g, (m) => m.startsWith('Verificado') ? 'Verificado (CI)' : 'Verified (CI)');
+    js = js.replace(/Suites in Green \(\d+%\)/g, 'Suites in Repository');
+    js = js.replace(/Suites en Verde \(\d+%\)/g, 'Suites en el Repositorio');
+    js = js.replace(/Suites in Green \(CI verified\)/g, 'Suites in Repository');
+    js = js.replace(/Suites en Verde \(verificado en CI\)/g, 'Suites en el Repositorio');
     fs.writeFileSync(rutaJs, js, 'utf8');
+    actualizado = true;
   }
 
-  return true;
+  return actualizado;
 }
 
 function sincronizarTodo(dirRaiz = ROOT) {
   const { total, desglose } = contarSuites(dirRaiz);
-  const rReadme = sincronizarReadme(total, desglose);
-  const rReadmeEs = sincronizarReadmeEs(total);
-  const rWeb = sincronizarSitioWeb(total);
+  const version = leerVersion();
 
-  return {
-    totalSuites: total,
-    desglose,
-    archivosActualizados: {
-      readme: rReadme,
-      readmeEs: rReadmeEs,
-      sitioWeb: rWeb,
-    },
+  if (path.resolve(dirRaiz) !== ROOT) {
+    return { totalSuites: total, desglose, archivosActualizados: {} };
+  }
+
+  const archivosActualizados = {
+    readme: sincronizarReadme(total, desglose),
+    readmeEs: sincronizarReadmeEs(total),
+    roadmap: sincronizarRoadmap(total),
+    testsReadme: sincronizarTestsReadme(total),
+    contributing: sincronizarContributing(total),
+    maturityReport: sincronizarMaturityReport(total),
+    promptEngineering: sincronizarPromptEngineering(),
+    attestationViewer: sincronizarAttestationViewer(total),
+    sitioWeb: sincronizarSitioWeb(total, desglose, version)
   };
+
+  return { totalSuites: total, desglose, version, archivosActualizados };
 }
 
 function main() {
@@ -5064,7 +5167,9 @@ function main() {
   console.log(`  - 🧭 Intent & Socratic UX:             ${resultado.desglose.intent}`);
   console.log(`  - 💾 State, Checkpoints & Recovery:    ${resultado.desglose.state}`);
   console.log(`  - ⚡ Adversarial Resilience:           ${resultado.desglose.adversarial}`);
-  console.log('\n✓ Métricas inyectadas atómicamente en README.md, README.es.md, docs/site/index.html y docs/site/script.js');
+  console.log('\n✓ Métricas inyectadas en README.md, README.es.md, CONTRIBUTING.md,');
+  console.log('  docs/ASYMPTOTIC_MATURITY_REPORT.md(.es.md), docs/PROMPT_ENGINEERING.md,');
+  console.log('  docs/attestation_viewer.html y docs/site/.');
 }
 
 if (require.main === module) {

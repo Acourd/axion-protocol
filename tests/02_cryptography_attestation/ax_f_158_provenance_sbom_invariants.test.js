@@ -39,15 +39,19 @@ for (const comp of sbom.components) {
 assert.ok(fs.existsSync(sbom.savedPath), 'Debe persistir sbom.cyclonedx.json');
 console.log(`✓ SBOM CycloneDX v1.5 validado: ${sbom.components.length} componentes auditados y sellados con SHA-256`);
 
-// 2. Generar y validar Procedencia SLSA v1.0
+// 2. Generar y validar procedencia in-toto v1 (descriptiva, SIN reclamo SLSA)
 const slsa = generator.generateSlsaProvenance();
 assert.strictEqual(slsa._type, 'https://in-toto.io/Statement/v1', 'Debe ser in-toto Statement v1');
-assert.strictEqual(slsa.predicateType, 'https://slsa.dev/provenance/v1', 'Debe ser predicado SLSA Provenance v1.0');
+assert.strictEqual(slsa.predicateType, 'https://slsa.dev/provenance/v1', 'Debe usar la estructura de predicado SLSA Provenance v1.0');
 assert.ok(Array.isArray(slsa.subject) && slsa.subject.length > 0, 'Debe incluir subject');
-assert.strictEqual(slsa.predicate.buildDefinition.internalParameters.slsaLevel, 'SLSA_LEVEL_3');
+assert.strictEqual(slsa.predicate.buildDefinition.internalParameters.slsaLevel, 'NOT_ASSERTED', 'No debe reclamarse nivel SLSA');
+assert.strictEqual(slsa.predicate.buildDefinition.internalParameters.provenanceStatus, 'DESCRIPTIVE_ONLY');
+assert.strictEqual(slsa.predicate.buildDefinition.internalParameters.slsaVerification, 'NOT_VERIFIED');
+assert.strictEqual(slsa.predicate.buildDefinition.externalParameters.artifactBinding, 'SBOM_ONLY_UNBOUND');
 assert.ok(slsa.predicate.runDetails.builder.id, 'Debe identificar el builder');
+assert.strictEqual(typeof slsa.predicate.runDetails.builder.identityVerified, 'boolean');
 assert.ok(fs.existsSync(slsa.savedPath), 'Debe persistir provenance.slsa.json');
-console.log(`✓ Atestación in-toto SLSA v1.0 validada: Nivel ${slsa.predicate.buildDefinition.internalParameters.slsaLevel}`);
+console.log(`✓ Procedencia in-toto v1 validada como descriptiva (slsaLevel: ${slsa.predicate.buildDefinition.internalParameters.slsaLevel})`);
 
 // 3. Validar integración con DriveEngine
 const driveEngine = new DriveEngine(ROOT);

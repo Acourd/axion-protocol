@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, master ]
 
+# Permisos mínimos: la CI solo necesita leer el repositorio.
+permissions:
+  contents: read
+
 # Lo que este pipeline aprendió por las malas: pasar las suites no demuestra que el
 # producto funcione. La v1.2.0-beta.0 tenía 38/38 en verde con el hook PreToolUse muerto,
 # sin ningún slash command en Claude Code y con un tarball que no llevaba la gobernanza.
@@ -22,10 +26,10 @@ jobs:
       matrix:
         node-version: [22.x, 24.x]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -47,8 +51,8 @@ jobs:
     name: Puertas de calidad y salud
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
 
@@ -105,8 +109,8 @@ jobs:
         # Matriz Multi-SO completa: Ubuntu, Windows y macOS
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
 
@@ -174,8 +178,8 @@ jobs:
     name: Manifiestos de distribución
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
 
@@ -198,3 +202,27 @@ jobs:
             if (pkg.version !== p.version) { console.error('FALLO: package.json v'+pkg.version+' y plugin.json v'+p.version+' no coinciden'); process.exit(1); }
             console.log('OK: las tres versiones coinciden en '+p.version);
           "
+
+      # El SBOM versionado debe representar el estado real de la superficie publicada:
+      # si un archivo distribuido falta o cambió de hash, esto falla.
+      - name: SBOM de la superficie distribuida
+        run: node tools/sbom_sovereign_generator.js --verify
+
+      # Reproducibilidad: regenerar no debe producir deriva en artefactos versionados.
+      - name: SBOM reproducible sin deriva
+        run: |
+          node tools/sbom_sovereign_generator.js
+          git diff --exit-code -- docs/sbom sbom
+
+      - name: Bundle standalone reproducible sin deriva
+        run: |
+          node tools/bundle_compiler.js
+          git diff --exit-code -- dist/axion.bundle.js
+
+      - name: Documentación de conteos sincronizada
+        run: |
+          node tools/sync_doc_stats.js
+          git diff --exit-code -- README.md README.es.md CONTRIBUTING.md ROADMAP.md tests/README.md docs/ASYMPTOTIC_MATURITY_REPORT.md docs/ASYMPTOTIC_MATURITY_REPORT.es.md docs/PROMPT_ENGINEERING.md docs/attestation_viewer.html docs/site
+
+      - name: Higiene del diff
+        run: git diff --check

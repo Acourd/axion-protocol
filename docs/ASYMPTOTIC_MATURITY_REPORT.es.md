@@ -1,65 +1,51 @@
-# Axion Protocol — Reporte de Madurez Asintótica Soberana v2.0
+# Axion Protocol — Autoevaluación de Madurez Asintótica (v3.0)
 
-> **Evaluación Empírica de las 7 Fronteras Soberanas y Hoja de Ruta Evolutiva 10x.**
-
----
-
-## 🏛️ Resumen Ejecutivo
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                 AXION PROTOCOL — MATRIZ DE MADUREZ SOBERANA (v2.0)          │
-├──────────────────────────────────────┬─────────────┬────────────────────────┤
-│ Frontera de Excelencia               │ Puntaje(AMR)│ Horizonte Evolutivo    │
-├──────────────────────────────────────┼─────────────┼────────────────────────┤
-│ 1. Verificación Formal e Invariantes │ 20%         │ Solvers SMT y Pruebas  │
-│ 2. Aislamiento y Ejecución Segura    │ 22%         │ Micro-Sandboxing de SO │
-│ 3. Densidad Cognitiva y Tokens       │ 28%         │ Fast-Loops en sub-300ms│
-│ 4. Memoria Fractal Anti-Deriva       │ 25%         │ Grafo Merkle SQLite    │
-│ 5. Evolución Adaptativa y Auto-Cura  │ 24%         │ Motor de Síntesis AST  │
-│ 6. Trazabilidad Inmutable DSSE       │ 32%         │ in-toto v1 Statement   │
-│ 7. Radar Anti-Vibecoding Semántico   │ 25%         │ VibeGuard Clean-Code   │
-├──────────────────────────────────────┼─────────────┼────────────────────────┤
-│ 🏆 MADUREZ FUNDACIONAL GLOBAL        │ 25.1%       │ Alpha Soberano (Día 1) │
-└──────────────────────────────────────┴─────────────┴────────────────────────┘
-```
+> **Estado experimental.** Este documento es una autoevaluación cualitativa del propio
+> proyecto. **No** es una certificación, una auditoría independiente ni una medición
+> reproducible. Las puntuaciones numéricas publicadas en revisiones anteriores (v2.0)
+> fueron retiradas por ser subjetivas y no reproducibles.
 
 ---
 
-## 🔍 Las 7 Fronteras de Madurez Soberana
+## Estado Actual Verificado
 
-### 1. Verificación Formal e Invariantes de Estado (20%)
-* **Estado Actual:** 195 suites deterministas (100% PASS) en 5 dominios de gobernanza.
-* **Horizonte Asintótico:** Demostración matemática formal mediante solvers SMT/Z3 en espacios de estados no explorados.
-
-### 2. Aislamiento y Ejecución Segura Fail-Closed (22%)
-* **Estado Actual:** Análisis léxico en `PreToolUse` con ejecución mediante `shell: false`.
-* **Horizonte Asintótico:** Micro-contenedores efímeros con árboles de archivos aislados por cada sub-agente.
-
-### 3. Densidad Cognitiva y Economía de Tokens (28%)
-* **Estado Actual:** Fast-Loop (< 300 ms) y podado topológico de tokens `sliceASTFocus`.
-* **Horizonte Asintótico:** Podado de contexto sin redundancias reduciendo el consumo de tokens en un 80%.
-
-### 4. Memoria Fractal y Resistencia a la Deriva (25%)
-* **Estado Actual:** Grafo SQLite local y 85 entradas persistentes en `.axion/memory/`.
-* **Horizonte Asintótico:** Indexación fractal Merkle multi-sesión distribuida entre nodos.
-
-### 5. Evolución Adaptativa y Auto-Recuperación (24%)
-* **Estado Actual:** Reversión atómica en < 5ms verificada con checkpoints SHA-256.
-* **Horizonte Asintótico:** Síntesis autónoma de parches AST que corrigen regresiones multi-archivo sin intervención humana.
-
-### 6. Trazabilidad Inmutable DSSE (32%)
-* **Estado Actual:** Sobres in-toto Statement v1 con firmas Ed25519 y JSON canónico RFC 8785.
-* **Horizonte Asintótico:** Registro de transparencia P2P con soporte para llaves de seguridad por hardware (YubiKey/WebAuthn).
-
-### 7. Radar Anti-Vibecoding y Calidad de Código (25%)
-* **Estado Actual:** VibeGuard escaneando 126 archivos con cero antipatrones.
-* **Horizonte Asintótico:** Verificador semántico profundo que audita la alineación conceptual de cada instrucción con la intención del usuario.
+- 238 suites deterministas se ejecutan en CI (`node tests/run_all.js`) en los 5 dominios de gobernanza.
+- La CI ejercita salud (`axion check`), la compuerta de calidad VibeGuard, el hook
+  PreToolUse, la parada de emergencia, la reversión determinista y la cadena de atestación.
+- El empaquetado multi-SO se prueba instalando el tarball real de `npm pack` en Ubuntu, macOS y Windows.
+- El SBOM cubre la superficie publicada declarada en `package.json#files`; la procedencia
+  es descriptiva y no reclama ningún nivel SLSA.
+- La ejecución de código arbitrario permanece deshabilitada: este runtime no incluye un
+  sandbox de seguridad.
 
 ---
 
-## 🚀 Escalera Evolutiva de 3 Peldaños
+## Las 7 Fronteras Soberanas (Estado Declarado, Sin Puntajes)
 
-* **Peldaño 1 — Optimización Local Inmediata:** Consolidar 195 suites y bloqueos AST sub-milisegundo.
-* **Peldaño 2 — Salto Estructural 10x:** Coordinación Swarm v2.0 con bus P2P Ed25519 y quórum bizantino BFT.
-* **Peldaño 3 — Horizonte Asintótico Soberano:** Operación continua sin fallos con cero fricción cognitiva para usuarios no técnicos.
+1. **Verificación Formal e Invariantes** — Parcial: existen contratos AST, validación de
+   esquemas y suites de invariantes locales; no hay demostración formal con SMT/Z3.
+2. **Aislamiento y Ejecución Segura Fail-Closed** — Parcial: existen preflight léxico,
+   ejecución con `shell: false` y parada de emergencia; no hay aislamiento a nivel de SO
+   ni micro-sandbox.
+3. **Densidad Cognitiva y Economía de Tokens** — Parcial: hay herramientas locales de
+   podado de contexto; el ahorro depende de la carga y no está garantizado.
+4. **Memoria Fractal y Resistencia a la Deriva** — Parcial: existen grafo de memoria local
+   y checkpoints; sin garantías distribuidas ni respaldo por hardware.
+5. **Evolución Adaptativa y Auto-Recuperación** — Parcial: los bucles de convergencia y la
+   síntesis de parches AST son experimentales; la revisión humana sigue siendo necesaria.
+6. **Trazabilidad Inmutable DSSE** — Parcial: existen sobres in-toto Statement v1 con firmas
+   Ed25519 y JSON canónico RFC 8785; la evidencia se ancla por ruta + hash de artefacto, y
+   la firma acredita autoría del JSON, no la ejecución de la carga.
+7. **Radar Anti-Vibecoding Semántico** — Parcial: la compuerta léxica VibeGuard corre en CI;
+   la verificación semántica profunda de intención no está implementada.
+
+---
+
+## Escalera Evolutiva de 3 Peldaños
+
+* **Peldaño 1 — Optimización Local Inmediata:** mantener la suite, la salud y las compuertas
+  de calidad verdes y reproducibles en CI.
+* **Peldaño 2 — Salto Estructural 10x:** coordinación multi-agente con mensajería
+  autenticada y quórum de consenso (experimental).
+* **Peldaño 3 — Horizonte Asintótico Soberano:** operación continua sin fallos con cero
+  fricción cognitiva para usuarios no técnicos (no alcanzado; es una dirección, no un claim).

@@ -42,10 +42,15 @@ const coldEval = sandboxEngine.evaluateFastForward();
 assert.strictEqual(coldEval.canFastForward, false, 'Cold cache no debe autorizar Fast-Forward');
 console.log('✓ Cold cache evaluado correctamente: Full cycle requerido');
 
-// 3. Sellar estado y validar Fast-Forward hit
-sandboxEngine.sealState(merkle, { testsPassed: true });
+// 3. Sellar estado y validar Fast-Forward hit (fail-closed: exige las 4 fases verdes)
+sandboxEngine.sealState(merkle, {
+  testsPassed: true,
+  vibeGuardPassed: true,
+  smtProofPassed: true,
+  chaosFuzzPassed: true
+});
 const warmEval = sandboxEngine.evaluateFastForward();
-assert.strictEqual(warmEval.canFastForward, true, 'Warm cache con Merkle Root idéntico debe autorizar Fast-Forward');
+assert.strictEqual(warmEval.canFastForward, true, 'Warm cache con Merkle Root idéntico y 4 fases verdes debe autorizar Fast-Forward');
 console.log('✓ Warm cache verificado: Fast-Forward autorizado en sub-milisegundos');
 
 // 4. Mutar archivo y verificar invalidación de caché

@@ -241,7 +241,7 @@ class DriveMissionMatrix {
       {
         quadrant: 'BACKLOG_RESUME',
         prefix: QUADRANTS.BACKLOG_RESUME.tag,
-        title: 'Verificación de Atestaciones DSSE y Trazabilidad SLSA Local',
+        title: 'Verificación de Atestaciones DSSE y Trazabilidad in-toto Local',
         description: 'Validar sobres in-toto DSSE Ed25519 sobre el estado del repositorio y SBOMs.'
       },
       {

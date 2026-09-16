@@ -90,6 +90,9 @@ exit 0
     let attestationDigest = 'simulated';
     try {
       const attester = new DriveDsseAttester(this.root);
+      // Bootstrap explícito del keyring local en la primera ejecución de la compuerta.
+      // Nunca rota claves existentes: si están corruptas o inseguras, falla.
+      attester.ensureKeyPair();
       const attestRes = attester.emitAttestation({
         missionId: `pre-commit-${Date.now()}`,
         title: 'Git Pre-Commit Governance Verification (VibeGuard Gate)',

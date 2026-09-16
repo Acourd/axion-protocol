@@ -2,21 +2,27 @@
 'use strict';
 
 /**
- * Axion Protocol — Drive Worker Sandbox & Hard Watchdog Engine
+ * Axion Protocol — Drive Worker Runner (Capacidad de ejecución arbitraria DESHABILITADA)
  *
- * Ejecutor aislado de tareas en Worker Threads con salvaguardas de memoria y CPU:
- * 1. Aislamiento de memoria estricto mediante resourceLimits (Heap Max: 64MB).
- * 2. Watchdog de tiempo límite con terminación forzada e instantánea (worker.terminate()).
- * 3. Captura determinista de excepciones, OOM (Out of Memory) y timeouts sin congelar el proceso principal.
- * 4. Telemetría de uso de memoria y tiempo de ejecución por tarea.
+ * ADVERTENCIA DE SEGURIDAD (NO ES UN SANDBOX DE SEGURIDAD):
+ * Un Worker Thread NO aísla del host: comparte proceso, filesystem, variables de
+ * entorno, `process`, `require`, red y CPU. Los `resourceLimits` solo acotan memoria
+ * del heap; no confinan efectos. Por eso este módulo ya NO acepta ni ejecuta
+ * JavaScript arbitrario (`new Function`, `eval`, `Worker(..., { eval: true })`).
+ *
+ * Estado fail-closed: `runSandboxed` siempre responde `SANDBOX_UNAVAILABLE` sin
+ * ejecutar una sola línea del payload. La ejecución de código de terceros requiere
+ * aislamiento real de proceso/contenedor/VM, que este proyecto no provee todavía.
  *
  * Cero dependencias externas.
  */
 
-const { Worker, isMainThread, parentPort, workerData } = require('node:worker_threads');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
+
+const UNAVAILABLE_REASON = 'NO_REAL_ISOLATION: Worker threads comparten host (filesystem, process, env, require, red). ' +
+  'La ejecución de JavaScript arbitrario está deshabilitada fail-closed hasta disponer de aislamiento de proceso/contenedor/VM.';
 
 class DriveWorkerSandbox {
   constructor(options = {}) {
@@ -25,134 +31,44 @@ class DriveWorkerSandbox {
   }
 
   /**
-   * Ejecuta código o una función en un worker thread aislado con límites estrictos.
+   * ¿Existe aislamiento real de proceso/contenedor/VM? Hoy no.
+   */
+  isAvailable() {
+    return {
+      available: false,
+      status: 'SANDBOX_UNAVAILABLE',
+      reason: UNAVAILABLE_REASON
+    };
+  }
+
+  /**
+   * Rechaza la ejecución de código arbitrario de forma explícita y sin efectos.
+   * No se acepta `taskCodeString`, no se instancia ningún Worker, no se evalúa nada.
    */
   runSandboxed(taskCodeString, payload = {}, options = {}) {
-    const timeoutMs = options.timeoutMs || this.defaultTimeoutMs;
-    const maxHeap = options.maxHeapMb || this.maxHeapMb;
+    const rejectedBytes = typeof taskCodeString === 'string' ? Buffer.byteLength(taskCodeString, 'utf8') : 0;
+    void payload;
+    void options;
 
-    return new Promise((resolve) => {
-      const startTime = Date.now();
-      let isSettled = false;
-
-      // Código contenedor para el worker thread
-      const workerWrapperCode = `
-        const { parentPort, workerData } = require('node:worker_threads');
-        try {
-          const taskFn = new Function('payload', workerData.code);
-          const result = taskFn(workerData.payload);
-          parentPort.postMessage({ pass: true, result });
-        } catch (err) {
-          parentPort.postMessage({ pass: false, error: err.message, stack: err.stack });
-        }
-      `;
-
-      let worker;
-      try {
-        worker = new Worker(workerWrapperCode, {
-          eval: true,
-          workerData: {
-            code: taskCodeString,
-            payload
-          },
-          resourceLimits: {
-            maxOldGenerationSizeMb: maxHeap,
-            maxYoungGenerationSizeMb: Math.max(8, Math.floor(maxHeap / 4))
-          }
-        });
-      } catch (err) {
-        return resolve({
-          pass: false,
-          error: `Error al instanciar Worker Sandbox: ${err.message}`,
-          executionTimeMs: Date.now() - startTime,
-          terminatedByWatchdog: false
-        });
-      }
-
-      // Watchdog Timer
-      const watchdogTimer = setTimeout(() => {
-        if (!isSettled) {
-          isSettled = true;
-          worker.terminate().then(() => {
-            resolve({
-              pass: false,
-              error: `Watchdog Timeout: Tarea excedió el límite de ${timeoutMs}ms`,
-              executionTimeMs: Date.now() - startTime,
-              terminatedByWatchdog: true
-            });
-          }).catch((termErr) => {
-            resolve({
-              pass: false,
-              error: `Watchdog Timeout & Terminate Error: ${termErr.message}`,
-              executionTimeMs: Date.now() - startTime,
-              terminatedByWatchdog: true
-            });
-          });
-        }
-      }, timeoutMs);
-
-      worker.on('message', (msg) => {
-        if (!isSettled) {
-          isSettled = true;
-          clearTimeout(watchdogTimer);
-          worker.terminate().catch(() => {});
-          resolve({
-            pass: msg.pass,
-            result: msg.result,
-            error: msg.error,
-            executionTimeMs: Date.now() - startTime,
-            terminatedByWatchdog: false
-          });
-        }
-      });
-
-      worker.on('error', (err) => {
-        if (!isSettled) {
-          isSettled = true;
-          clearTimeout(watchdogTimer);
-          resolve({
-            pass: false,
-            error: `Worker Runtime Error / OOM: ${err.message}`,
-            executionTimeMs: Date.now() - startTime,
-            terminatedByWatchdog: false
-          });
-        }
-      });
-
-      worker.on('exit', (code) => {
-        if (!isSettled) {
-          isSettled = true;
-          clearTimeout(watchdogTimer);
-          resolve({
-            pass: code === 0,
-            error: code === 0 ? null : `Worker finalizó con código de salida ${code}`,
-            executionTimeMs: Date.now() - startTime,
-            terminatedByWatchdog: false
-          });
-        }
-      });
+    return Promise.resolve({
+      pass: false,
+      executed: false,
+      status: 'SANDBOX_UNAVAILABLE',
+      error: `${UNAVAILABLE_REASON} (payload rechazado: ${rejectedBytes} bytes)`,
+      executionTimeMs: 0,
+      terminatedByWatchdog: false
     });
   }
 }
 
 if (require.main === module) {
   const sandbox = new DriveWorkerSandbox();
-  console.log('[Axion Worker Sandbox] Evaluando aislamiento de hilos y watchdog:');
-
-  (async () => {
-    // 1. Tarea exitosa inocua
-    const t1 = await sandbox.runSandboxed('return { message: "Hola desde Sandbox", value: payload.x * 2 };', { x: 21 });
-    console.log(`\n  [1. Tarea Exitosa] Pass: ${t1.pass} · Tiempo: ${t1.executionTimeMs}ms · Resultado:`, t1.result);
-
-    // 2. Tarea con bucle infinito (Watchdog)
-    console.log('\n  [2. Tarea con Bucle Infinito] Probando Watchdog (Timeout 500ms)...');
-    const t2 = await sandbox.runSandboxed('while(true) {}', {}, { timeoutMs: 500 });
-    console.log(`  Resultado Watchdog: Pass: ${t2.pass} · Watchdog: ${t2.terminatedByWatchdog} · Error: "${t2.error}"`);
-
-    // 3. Tarea con excepción
-    const t3 = await sandbox.runSandboxed('throw new Error("Fallo de prueba en sandbox");');
-    console.log(`\n  [3. Tarea con Excepción] Pass: ${t3.pass} · Error Capturado: "${t3.error}"`);
-  })();
+  const state = sandbox.isAvailable();
+  console.log('[Axion Worker Runner] Estado de aislamiento:');
+  console.log(`  Disponible: ${state.available}`);
+  console.log(`  Estado:     ${state.status}`);
+  console.log(`  Motivo:     ${state.reason}`);
+  console.log('  Capacidad de ejecución arbitraria: DESHABILITADA (fail-closed).');
 }
 
 module.exports = DriveWorkerSandbox;
