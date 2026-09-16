@@ -862,10 +862,81 @@ class DriveEngine {
   /**
    * Obtiene la selección curada de misiones formateadas visualmente desde el reservorio permanente.
    */
-  getVaultMissionSelection(limit = 4, contextText = '') {
+  getVaultMissionSelection(limit = 4, contextText = '', options = {}) {
     const MissionBacklogVault = require('./mission_backlog_vault.js');
     const vault = new MissionBacklogVault(this.root);
-    return vault.getVisualMissionSelection(limit, contextText);
+    return vault.getVisualMissionSelection(limit, contextText, options);
+  }
+
+  /**
+   * Crea un contexto observable de misión (MissionContext) para el espacio de trabajo.
+   * Cero mocks: extrae exclusivamente hechos observables del entorno local real.
+   *
+   * @param {string|object|null} intentOrOptions - Intención explícita u opciones de contexto
+   * @returns {MissionContext}
+   */
+  createMissionContext(intentOrOptions = null) {
+    const { MissionContext } = require('./mission_context.js');
+    return new MissionContext(this.root, intentOrOptions);
+  }
+
+  /**
+   * Ruta pública de solo lectura del orquestador contextual (/drive).
+   * 1. Extrae hechos observables de Git, package.json, estado de pruebas, journal o intención explícita.
+   * 2. Si el repositorio está limpio y no hay evidencia ni intención, devuelve BLOCKED_CONTEXT_REQUIRED.
+   * 3. Si hay evidencia u orden explícita, sintetiza propuestas acotadas (de 0 a 5) respaldadas por cápsulas de evidencia.
+   *
+   * @param {string|object|null} intentOrOptions - Intención explícita o contexto de llamada
+   * @param {number} maxCount - Número máximo de propuestas sintetizadas (por defecto 5)
+   * @returns {object} { status, valid, overallConfidence, proposals, [missingFields, requiredHumanAction, reason] }
+   */
+  getContextualMissionProposals(intentOrOptions = null, maxCount = 5) {
+    const limit = (intentOrOptions && typeof intentOrOptions === 'object' && typeof intentOrOptions.maxCount === 'number')
+      ? intentOrOptions.maxCount
+      : maxCount;
+    const ctx = this.createMissionContext(intentOrOptions);
+    const validation = ctx.validateContext();
+    if (!validation.valid) {
+      return {
+        status: 'BLOCKED_CONTEXT_REQUIRED',
+        valid: false,
+        overallConfidence: ctx.confidence,
+        missingFields: validation.missingFields,
+        requiredHumanAction: validation.requiredHumanAction,
+        reason: validation.reason,
+        proposals: []
+      };
+    }
+    const proposals = ctx.synthesizeEvidenceBasedMissions(limit);
+    return {
+      status: 'CONTEXT_VERIFIED',
+      valid: true,
+      overallConfidence: ctx.confidence,
+      missingFields: [],
+      proposals
+    };
+  }
+
+  /**
+   * Crea un contrato formal determinista y verificable (MissionContract) a partir de una propuesta seleccionada.
+   * Enforza cápsulas estructuradas de evidencia completas, las 12 skills canónicas y digest SHA-256 reproducible.
+   *
+   * @param {object} missionData - Datos de la propuesta de misión seleccionada
+   * @returns {MissionContract}
+   */
+  createContextualMissionContract(missionData) {
+    const { MissionContract } = require('./mission_context.js');
+    return new MissionContract(missionData);
+  }
+
+  /**
+   * Alias de compatibilidad: crea un contrato formal a partir de una propuesta contextual.
+   *
+   * @param {object} missionData - Datos de la propuesta de misión seleccionada
+   * @returns {MissionContract}
+   */
+  createMissionContractFromContext(missionData) {
+    return this.createContextualMissionContract(missionData);
   }
 
   /**
@@ -1686,6 +1757,8 @@ function main() {
   const args = process.argv.slice(2);
   let target = process.cwd();
   let isDeep = false;
+  let isContextual = false;
+  let intent = null;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--target' && args[i + 1]) {
       target = args[i + 1];
@@ -1693,9 +1766,21 @@ function main() {
     if (args[i] === '--deep') {
       isDeep = true;
     }
+    if (args[i] === '--contextual') {
+      isContextual = true;
+    }
+    if (args[i] === '--intent' && args[i + 1]) {
+      intent = args[i + 1];
+    }
   }
 
   const engine = new DriveEngine(target);
+  if (isContextual) {
+    const proposals = engine.getContextualMissionProposals(intent);
+    console.log(JSON.stringify(proposals, null, 2));
+    process.exit(proposals.valid ? 0 : 2);
+  }
+
   if (isDeep) {
     const deepRes = engine.runDeepAudit({ targetDir: target });
     console.log(JSON.stringify(deepRes, null, 2));

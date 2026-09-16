@@ -24,8 +24,13 @@ fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 
 const matrix = new DriveMissionMatrix(sandbox);
 
-// 1. Validar generación de matriz de 3 a 5 opciones
-const menu4 = matrix.generateCuratedMissions({ currentFocus: 'NEW_FEATURE', maxOptions: 4 });
+// 1a. Validar que por defecto con repo limpio devuelve bloqueo fail-closed
+const defaultMenu = matrix.generateCuratedMissions({ currentFocus: 'NEW_FEATURE', maxOptions: 4 });
+assert.strictEqual(defaultMenu.status, 'BLOCKED_CONTEXT_REQUIRED');
+assert.strictEqual(defaultMenu.totalOffered, 0);
+
+// 1b. Validar generación de matriz de 3 a 5 opciones (con includeUnverified explícito)
+const menu4 = matrix.generateCuratedMissions({ currentFocus: 'NEW_FEATURE', maxOptions: 4, includeUnverified: true });
 assert.ok(menu4.missions.length >= 3 && menu4.missions.length <= 5, 'Debe retornar entre 3 y 5 opciones');
 assert.strictEqual(menu4.missions.length, 4);
 console.log(`✓ Catálogo curado generado: ${menu4.missions.length} opciones estructuradas`);
@@ -52,7 +57,7 @@ console.log('✓ Persistencia atómica de foco y backlog verificada');
 
 // 5. Validar integración con DriveEngine
 const driveEngine = new DriveEngine(ROOT);
-const driveMenu = driveEngine.getCuratedMissionMatrix({ maxOptions: 3 });
+const driveMenu = driveEngine.getCuratedMissionMatrix({ maxOptions: 3, includeUnverified: true });
 assert.strictEqual(driveMenu.missions.length, 3);
 console.log('✓ Integración DriveEngine.getCuratedMissionMatrix() verificada');
 

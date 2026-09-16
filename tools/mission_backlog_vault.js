@@ -15,6 +15,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { verifyBacklogItemEvidence } = require('./mission_context.js');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -33,7 +34,6 @@ class MissionBacklogVault {
     this.root = path.resolve(projectRoot);
     this.stateDir = path.join(this.root, '.axion', 'state');
     this.vaultFile = path.join(this.stateDir, 'mission_vault.json');
-    this.ensureStateDir();
   }
 
   ensureStateDir() {
@@ -42,56 +42,112 @@ class MissionBacklogVault {
     }
   }
 
+  _getDefaultReservoir() {
+    return [
+      {
+        id: 'M_HIST_001_RELEASE_GA',
+        category: 'RELEASE_SEAL',
+        title: 'Sellado Criptográfico Merkle Total y Certificación Release v1.2.0-GA',
+        summary: 'Atestación formal in-toto DSSE Ed25519 sobre los 270+ archivos del repositorio (histórico v1.2.0).',
+        evidenceTrigger: null,
+        evidence: [],
+        status: 'OBSOLETE_CANDIDATE',
+        confidence: 'UNVERIFIED',
+        verified: false,
+        priority: 10
+      },
+      {
+        id: 'M_HIST_002_STRESS_SIMULATOR',
+        category: 'STRESS_BENCHMARK',
+        title: 'Simulador de Cargas Extremas y Benchmarking Asintótico de 50.000 Transacciones',
+        summary: 'Simular 50.000 operaciones concurrentes en SQLite para medir latencias sub-milisegundo (histórico).',
+        evidenceTrigger: null,
+        evidence: [],
+        status: 'OBSOLETE_CANDIDATE',
+        confidence: 'UNVERIFIED',
+        verified: false,
+        priority: 10
+      },
+      {
+        id: 'M_HIST_003_FORENSIC_TELEMETRY',
+        category: 'NEW_FEATURE',
+        title: 'Motor de Telemetría Forense y Detección de Regresiones en Tiempo Real',
+        summary: 'Capturar diffs de estado y diagnósticos de memoria tras cada ciclo de ejecución para auditoría continua (histórico).',
+        evidenceTrigger: null,
+        evidence: [],
+        status: 'OBSOLETE_CANDIDATE',
+        confidence: 'UNVERIFIED',
+        verified: false,
+        priority: 10
+      },
+      {
+        id: 'M_HIST_004_CONVERGENCE_AUTO_RESOLVER',
+        category: 'AUTO_HEALING',
+        title: 'Auto-Curación y Reconciliación de Tipos AST con Retropropagación Semántica',
+        summary: 'Resolver automáticamente discrepancias de tipos y contratos en APIs sin intervención humana (histórico).',
+        evidenceTrigger: null,
+        evidence: [],
+        status: 'OBSOLETE_CANDIDATE',
+        confidence: 'UNVERIFIED',
+        verified: false,
+        priority: 10
+      }
+    ];
+  }
+
   loadVault() {
     if (fs.existsSync(this.vaultFile)) {
       try {
-        return JSON.parse(fs.readFileSync(this.vaultFile, 'utf8'));
+        const vault = JSON.parse(fs.readFileSync(this.vaultFile, 'utf8'));
+        // Clasificación no destructiva de misiones históricas y exigencia de evidencia para verified
+        if (Array.isArray(vault.reservoir)) {
+          vault.reservoir.forEach(item => {
+            const verification = verifyBacklogItemEvidence(item, this.root);
+            const title = (item.title || '').toLowerCase();
+            const isHistorical = title.includes('v1.2.0') || title.includes('50.000') || title.includes('merkle total') || title.includes('115+');
+            if (isHistorical) {
+              if (item.status !== 'ARCHIVED' && item.status !== 'POSTPONED') {
+                item.status = 'OBSOLETE_CANDIDATE';
+              }
+              item.confidence = 'UNVERIFIED';
+              item.verified = false;
+              item.evidence = verification.capsules;
+            } else if (!verification.verified) {
+              // Estar en cola no demuestra verificabilidad: sin evidencia observable verificable, queda UNVERIFIED
+              item.confidence = 'UNVERIFIED';
+              item.verified = false;
+              item.evidence = verification.capsules;
+            } else {
+              item.verified = Boolean(item.verified === true && verification.verified);
+              item.confidence = item.verified ? 'HIGH' : 'UNVERIFIED';
+              item.evidence = verification.capsules;
+            }
+          });
+        }
+        return vault;
       } catch (readErr) {
-        // En caso de corrupción, inicializar
+        // En caso de corrupción, devolver estado recuperable SIN sobrescribir el archivo en disco
+        return {
+          version: '1.4.0',
+          corrupted: true,
+          readError: readErr.message,
+          status: 'RECOVERABLE_CORRUPTED_READ',
+          updatedAt: new Date().toISOString(),
+          activeFocus: 'GENERAL',
+          reservoir: this._getDefaultReservoir()
+        };
       }
     }
     return {
-      version: '1.2.0',
+      version: '1.4.0',
       updatedAt: new Date().toISOString(),
       activeFocus: 'GENERAL',
-      reservoir: [
-        {
-          id: 'M_001_RELEASE_GA',
-          category: 'RELEASE_SEAL',
-          title: 'Sellado Criptográfico Merkle Total y Certificación Release v1.2.0-GA',
-          summary: 'Atestación formal in-toto DSSE Ed25519 sobre los 270+ archivos del repositorio y congelación del CHANGELOG.',
-          status: 'QUEUED',
-          priority: 95
-        },
-        {
-          id: 'M_002_STRESS_SIMULATOR',
-          category: 'STRESS_BENCHMARK',
-          title: 'Simulador de Cargas Extremas y Benchmarking Asintótico de 50.000 Transacciones',
-          summary: 'Simular 50.000 operaciones concurrentes en SQLite para medir latencias sub-milisegundo bajo estrés.',
-          status: 'QUEUED',
-          priority: 85
-        },
-        {
-          id: 'M_003_FORENSIC_TELEMETRY',
-          category: 'NEW_FEATURE',
-          title: 'Motor de Telemetría Forense y Detección de Regresiones en Tiempo Real',
-          summary: 'Capturar diffs de estado y diagnósticos de memoria tras cada ciclo de ejecución para auditoría continua.',
-          status: 'QUEUED',
-          priority: 88
-        },
-        {
-          id: 'M_004_CONVERGENCE_AUTO_RESOLVER',
-          category: 'AUTO_HEALING',
-          title: 'Auto-Curación y Reconciliación de Tipos AST con Retropropagación Semántica',
-          summary: 'Resolver automáticamente discrepancias de tipos y contratos en APIs sin intervención humana.',
-          status: 'QUEUED',
-          priority: 90
-        }
-      ]
+      reservoir: this._getDefaultReservoir()
     };
   }
 
   saveVault(vault) {
+    this.ensureStateDir();
     vault.updatedAt = new Date().toISOString();
     fs.writeFileSync(this.vaultFile, JSON.stringify(vault, null, 2), 'utf8');
   }
@@ -102,7 +158,95 @@ class MissionBacklogVault {
   formatOptionDisplay(mission, isRecommended = false) {
     const badge = BADGES[mission.category] || { icon: '📌', label: mission.category };
     const recPrefix = isRecommended ? '(Recomendado) ' : '';
-    return `${recPrefix}${badge.icon} [${badge.label}] ${mission.title} — ${mission.summary}`;
+    const unverifiedTag = (mission.verified === true) ? '' : ' [NO VERIFICADA]';
+    return `${recPrefix}${badge.icon} [${badge.label}] ${mission.title} — ${mission.summary}${unverifiedTag}`;
+  }
+
+  /**
+   * Obtiene exclusivamente las misiones activas que cuentan con evidencia verificable real.
+   * Con repositorio limpio y sin intención, devuelve un array vacío (cero misiones seleccionables).
+   */
+  getSelectableMissions(limit = 4, contextText = '') {
+    const vault = this.loadVault();
+    const selectable = vault.reservoir
+      .filter(m => m.status === 'QUEUED' && m.verified === true)
+      .map(m => {
+        const affinity = this.computeContextAffinity(m, contextText);
+        return {
+          ...m,
+          effectivePriority: (m.priority || 0) + affinity
+        };
+      })
+      .sort((a, b) => b.effectivePriority - a.effectivePriority);
+
+    return selectable.slice(0, limit);
+  }
+
+  /**
+   * Obtiene la selección curada de misiones formateadas visualmente respetando afinidad contextual.
+   * Por defecto (fail-closed), oculta misiones históricas y no verificadas.
+   * Solo incluye misiones no verificadas si options.includeUnverified === true.
+   */
+  getVisualMissionSelection(limit = 4, contextText = '', options = {}) {
+    const vault = this.loadVault();
+    const includeUnverified = Boolean(options.includeUnverified);
+    const requireOnlyVerified = Boolean(options.onlyVerified) || !includeUnverified;
+
+    if (requireOnlyVerified) {
+      const selectable = this.getSelectableMissions(limit, contextText);
+      if (selectable.length === 0) {
+        return {
+          status: 'BLOCKED_CONTEXT_REQUIRED',
+          totalInReservoir: vault.reservoir.length,
+          displayedCount: 0,
+          selectableCount: 0,
+          options: [],
+          reason: 'No hay misiones activas verificables en el reservorio.'
+        };
+      }
+      return {
+        status: 'READY',
+        totalInReservoir: vault.reservoir.length,
+        displayedCount: selectable.length,
+        selectableCount: selectable.length,
+        options: selectable.map((m, idx) => ({
+          id: m.id,
+          category: m.category,
+          title: m.title,
+          summary: m.summary,
+          effectivePriority: m.effectivePriority,
+          formattedOption: this.formatOptionDisplay(m, idx === 0)
+        }))
+      };
+    }
+
+    const sorted = vault.reservoir
+      .map(m => {
+        const affinity = this.computeContextAffinity(m, contextText);
+        return {
+          ...m,
+          effectivePriority: (m.priority || 0) + affinity
+        };
+      })
+      .sort((a, b) => b.effectivePriority - a.effectivePriority);
+
+    const selected = sorted.slice(0, limit);
+    const selectableCount = vault.reservoir.filter(m => m.status === 'QUEUED' && m.verified === true).length;
+
+    return {
+      status: selectableCount > 0 ? 'READY' : 'UNVERIFIED_CATALOG',
+      totalInReservoir: vault.reservoir.length,
+      displayedCount: selected.length,
+      selectableCount,
+      options: selected.map((m, idx) => ({
+        id: m.id,
+        category: m.category,
+        title: m.title,
+        summary: m.summary,
+        effectivePriority: m.effectivePriority,
+        formattedOption: this.formatOptionDisplay(m, idx === 0)
+      }))
+    };
   }
 
   /**
@@ -112,12 +256,17 @@ class MissionBacklogVault {
     if (!mission || !mission.title) return null;
     const vault = this.loadVault();
     const id = mission.id || `M_${Date.now().toString(36).toUpperCase()}_${(mission.category || 'GEN').toUpperCase()}`;
+    const verification = verifyBacklogItemEvidence(mission, this.root);
     const newMission = {
       id,
       category: mission.category || 'NEW_FEATURE',
       title: mission.title,
       summary: mission.summary || mission.description || '',
+      evidenceTrigger: mission.evidenceTrigger || null,
+      evidence: verification.capsules,
       status: mission.status || 'QUEUED',
+      confidence: verification.confidence,
+      verified: Boolean(verification.verified && mission.verified === true),
       priority: Number(mission.priority) || 80,
       createdAt: new Date().toISOString()
     };
@@ -201,38 +350,6 @@ class MissionBacklogVault {
     }
 
     return score;
-  }
-
-  /**
-   * Obtiene la selección curada de misiones formateadas visualmente respetando afinidad contextual.
-   */
-  getVisualMissionSelection(limit = 4, contextText = '') {
-    const vault = this.loadVault();
-    const sorted = vault.reservoir
-      .filter(m => m.status === 'QUEUED')
-      .map(m => {
-        const affinity = this.computeContextAffinity(m, contextText);
-        return {
-          ...m,
-          effectivePriority: (m.priority || 0) + affinity
-        };
-      })
-      .sort((a, b) => b.effectivePriority - a.effectivePriority);
-
-    const selected = sorted.slice(0, limit);
-
-    return {
-      totalInReservoir: vault.reservoir.length,
-      displayedCount: selected.length,
-      options: selected.map((m, idx) => ({
-        id: m.id,
-        category: m.category,
-        title: m.title,
-        summary: m.summary,
-        effectivePriority: m.effectivePriority,
-        formattedOption: this.formatOptionDisplay(m, idx === 0)
-      }))
-    };
   }
 }
 
