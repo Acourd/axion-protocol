@@ -49,11 +49,14 @@ try {
   assert.strictEqual(resHalted.mode, 'HALTED');
   console.log('✓ Aborto fail-closed ante killswitch activo verificado');
 
-  // 4. Restauración tras resume
+  // 4. Restauración tras resume (con salvaguarda fail-closed: skipVerification retorna UNVERIFIED)
   resume({ haltDir });
   const resResumed = engine.runCycle({ targetDir: tempDir, skipVerification: true });
-  assert.strictEqual(resResumed.pass, true);
-  console.log('✓ Ejecución restaurada tras resume verificada');
+  assert.strictEqual(resResumed.pass, false);
+  assert.strictEqual(resResumed.status, 'UNVERIFIED');
+  assert.strictEqual(resResumed.reason, 'VERIFICATION_SKIPPED');
+  assert.notStrictEqual(resResumed.reason, 'SYSTEM_HALTED');
+  console.log('✓ Ejecución restaurada tras resume verificada (fail-closed: unverified sin verificación real)');
 
   // 5. Evaluación de intención interactiva (@clarify integración)
   const intentVague = engine.evaluateIntent('agrega cosas');
@@ -74,6 +77,38 @@ try {
   assert.strictEqual(backtracked.success, true);
   assert.strictEqual(backtracked.attempts, 2);
   console.log('✓ Backtracking y recuperación en bucle cerrado verificado');
+
+  // 7. Salvaguarda de fallo en rollback (corrupción de checkpoint)
+  const corruptDir = fs.mkdtempSync(path.join(os.tmpdir(), 'axion-drive-corrupt-'));
+  try {
+    fs.writeFileSync(path.join(corruptDir, 'dummy.txt'), 'contenido original');
+    const corruptEngine = new DriveEngine(corruptDir);
+    const backtrackedFail = corruptEngine.runWithBacktracking(() => {
+      const cpBase = path.join(corruptDir, '.axion', 'checkpoints');
+      if (fs.existsSync(cpBase)) {
+        const cpDirs = fs.readdirSync(cpBase);
+        if (cpDirs.length > 0) {
+          const filesDir = path.join(cpBase, cpDirs[0], 'files');
+          if (fs.existsSync(path.join(filesDir, 'dummy.txt'))) {
+            fs.writeFileSync(path.join(filesDir, 'dummy.txt'), 'contenido corrompido');
+          }
+        }
+      }
+      return { pass: false, reason: 'Fallo simulado para probar rollback fallido' };
+    }, { targetDir: corruptDir, maxAttempts: 1 });
+
+    assert.strictEqual(backtrackedFail.success, false);
+    assert.strictEqual(backtrackedFail.status, 'ROLLBACK_FAILED');
+    assert.strictEqual(backtrackedFail.checkpointCreated, true);
+    assert.strictEqual(backtrackedFail.rollbackAttempted, true);
+    assert.strictEqual(backtrackedFail.rollbackSucceeded, false);
+    assert.strictEqual(backtrackedFail.rolledBack, false);
+    console.log('✓ Manejo fail-closed de fallo en rollback verificado (ROLLBACK_FAILED)');
+  } finally {
+    try {
+      fs.rmSync(corruptDir, { recursive: true, force: true });
+    } catch (_) {}
+  }
 
 } finally {
   try {

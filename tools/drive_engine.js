@@ -85,7 +85,33 @@ class DriveEngine {
   /**
    * Ejecuta una tarea atómica mediante Short-Circuit de Fast-Loop con verificación incremental ultra-rápida.
    */
-  executeFastLoopShortCircuit(actionDescription = 'Cambio atómico puntual', impactedFiles = []) {
+  executeFastLoopShortCircuit(actionDescription = 'Cambio atómico puntual', impactedFiles = [], options = {}) {
+    // 1. Verificación fail-closed de Killswitch
+    const haltDir = path.join(this.root, '.axion');
+    if (typeof isHalted === 'function' && isHalted({ haltDir })) {
+      return {
+        status: 'HALTED',
+        pass: false,
+        mode: 'FAST_LOOP_SHORT_CIRCUIT',
+        action: actionDescription,
+        message: 'Parada de emergencia activa (killswitch HALT).'
+      };
+    }
+
+    // 2. Restricción cooperativa de flujo mediado: la mutación requiere declaración explícita del llamador
+    const isDeclaredAuth = Boolean(options && options.callerDeclaredAuthorization === true);
+    if (options && options.mutate === true && !isDeclaredAuth) {
+      return {
+        status: 'CALLER_AUTHORIZATION_REQUIRED',
+        pass: false,
+        mode: 'FAST_LOOP_SHORT_CIRCUIT',
+        action: actionDescription,
+        reason: 'MUTATION_REQUIRES_DECLARED_AUTHORIZATION',
+        restrictionType: 'COOPERATIVE_MEDIATED_FLOW',
+        message: 'Restricción cooperativa de Drive: la edición de archivos requiere que el llamador declare explícitamente autorización previa (options.callerDeclaredAuthorization). Drive opera por defecto en modo de planificación/lectura y no valida independientemente la voluntad humana fuera de su flujo mediado.'
+      };
+    }
+
     const t0 = performance.now();
     const SmartIncrementalRunner = require('./smart_incremental_runner.js');
     const runner = new SmartIncrementalRunner(this.root);
@@ -93,16 +119,30 @@ class DriveEngine {
 
     const durationMs = (performance.now() - t0).toFixed(1);
 
+    if (runResult.affectedTestsCount === 0 || runResult.status === 'NO_TESTS_MAPPED') {
+      return {
+        status: 'NO_TESTS_MAPPED',
+        pass: false,
+        mode: 'FAST_LOOP_SHORT_CIRCUIT',
+        action: actionDescription,
+        durationMs: parseFloat(durationMs),
+        suitesPassed: 0,
+        affectedTestsCount: 0,
+        message: 'No se mapearon pruebas deterministas para los archivos indicados. Se requiere verificación explícita.'
+      };
+    }
+
     return {
       status: runResult.allPass ? 'SUCCESS' : 'FAILURE',
+      pass: Boolean(runResult.allPass),
       mode: 'FAST_LOOP_SHORT_CIRCUIT',
       action: actionDescription,
       durationMs: parseFloat(durationMs),
-      suitesPassed: runResult.totalExecuted,
+      suitesPassed: runResult.totalExecuted || runResult.affectedTestsCount,
       report: this.formatExecutiveReport({
         action: actionDescription,
-        metrics: `${runResult.totalExecuted} suites en verde en ${durationMs}ms (Short-Circuit Fast-Loop)`,
-        nextVector: 'Listo para el siguiente requerimiento con cero fricción'
+        metrics: `${runResult.affectedTestsCount} suites en verde en ${durationMs}ms (Short-Circuit Fast-Loop)`,
+        nextVector: 'Listo para el siguiente requerimiento previa confirmación'
       })
     };
   }
@@ -1252,29 +1292,117 @@ class DriveEngine {
    */
   runWithBacktracking(taskFn, options = {}) {
     const targetDir = path.resolve(options.targetDir || this.root);
+    const haltDir = path.join(targetDir, '.axion');
+
+    // 1. Verificación fail-closed de Killswitch al inicio
+    let detenido = false;
+    try {
+      detenido = typeof isHalted === 'function' && isHalted({ haltDir });
+    } catch (error) {
+      return {
+        success: false,
+        status: 'HALTED',
+        checkpointCreated: false,
+        rollbackAttempted: false,
+        rollbackSucceeded: false,
+        rolledBack: false,
+        error: `No se pudo determinar el estado de parada (${error.message}). Ante la duda, no se ejecuta.`
+      };
+    }
+    if (detenido) {
+      return {
+        success: false,
+        status: 'HALTED',
+        checkpointCreated: false,
+        rollbackAttempted: false,
+        rollbackSucceeded: false,
+        rolledBack: false,
+        error: 'Parada de emergencia activa (killswitch HALT). Ejecución abortada.'
+      };
+    }
+
+    // 2. Restricción cooperativa de flujo mediado: la mutación requiere declaración explícita del llamador
+    const isDeclaredAuth = Boolean(options && options.callerDeclaredAuthorization === true);
+    if (options && options.mutate === true && !isDeclaredAuth) {
+      return {
+        success: false,
+        status: 'CALLER_AUTHORIZATION_REQUIRED',
+        checkpointCreated: false,
+        rollbackAttempted: false,
+        rollbackSucceeded: false,
+        rolledBack: false,
+        restrictionType: 'COOPERATIVE_MEDIATED_FLOW',
+        error: 'Restricción cooperativa de Drive: la mutación de archivos requiere que el llamador declare explícitamente autorización previa (options.callerDeclaredAuthorization).'
+      };
+    }
+
     const maxAttempts = options.maxAttempts || 2;
     let initialCheckpoint = null;
+    let checkpointCreated = false;
 
+    // 3. Creación de checkpoint preventivo con fallo bloqueante si falla
     if (options.autoCheckpoint !== false && typeof crearCheckpoint === 'function') {
       try {
-        initialCheckpoint = crearCheckpoint(targetDir, { etiqueta: 'pre-drive-task' });
+        const cp = crearCheckpoint(targetDir, { etiqueta: 'pre-drive-task' });
+        if (cp && (cp.checkpointId || cp.id)) {
+          initialCheckpoint = cp;
+          checkpointCreated = true;
+        } else {
+          return {
+            success: false,
+            status: 'CHECKPOINT_CREATION_FAILED',
+            checkpointCreated: false,
+            rollbackAttempted: false,
+            rollbackSucceeded: false,
+            rolledBack: false,
+            error: 'Fallo al crear checkpoint preventivo: resultado inválido'
+          };
+        }
       } catch (err) {
-        // En modo sandbox, capturar sin interrumpir
+        return {
+          success: false,
+          status: 'CHECKPOINT_CREATION_FAILED',
+          checkpointCreated: false,
+          rollbackAttempted: false,
+          rollbackSucceeded: false,
+          rolledBack: false,
+          error: `Fallo al crear checkpoint preventivo: ${err.message}`
+        };
       }
     }
 
     let lastError = null;
     let attempts = 0;
+    let rollbackAttempted = false;
+    let rollbackSucceeded = false;
 
     while (attempts < maxAttempts) {
       attempts++;
+
+      // Re-verificar killswitch antes de cada intento
+      if (typeof isHalted === 'function' && isHalted({ haltDir })) {
+        return {
+          success: false,
+          status: 'HALTED',
+          attempts,
+          checkpointCreated,
+          rollbackAttempted,
+          rollbackSucceeded,
+          rolledBack: false,
+          error: 'Parada de emergencia activa detectada durante el ciclo.'
+        };
+      }
+
       try {
         const result = typeof taskFn === 'function' ? taskFn(attempts) : { pass: true };
         if (result && result.pass) {
           return {
             success: true,
             attempts,
-            checkpointId: initialCheckpoint ? initialCheckpoint.checkpointId : null,
+            checkpointCreated,
+            rollbackAttempted: false,
+            rollbackSucceeded: false,
+            checkpointId: initialCheckpoint ? (initialCheckpoint.checkpointId || initialCheckpoint.id) : null,
             result
           };
         }
@@ -1283,21 +1411,53 @@ class DriveEngine {
         lastError = err;
       }
 
-      // Si falla y se puede revertir, ejecutar rollback determinista al checkpoint inicial
+      // Si falla y existe checkpoint, ejecutar rollback con fallo bloqueante si la restauración falla
       if (initialCheckpoint && typeof restaurarCheckpoint === 'function') {
+        rollbackAttempted = true;
         try {
-          restaurarCheckpoint(targetDir, initialCheckpoint.checkpointId);
+          const cpId = initialCheckpoint.checkpointId || initialCheckpoint.id;
+          const rRes = restaurarCheckpoint(targetDir, cpId);
+          const ok = Boolean(rRes && (rRes.pass || rRes.status === 'RESTORE_SUCCESS'));
+          if (ok) {
+            rollbackSucceeded = true;
+          } else {
+            return {
+              success: false,
+              status: 'ROLLBACK_FAILED',
+              attempts,
+              checkpointCreated: true,
+              rollbackAttempted: true,
+              rollbackSucceeded: false,
+              rolledBack: false,
+              checkpointId: cpId,
+              error: `Fallo bloqueante en restauración de checkpoint: ${(rRes && rRes.status) || 'RESTORE_FAILED'}`
+            };
+          }
         } catch (rErr) {
-          // Captura de resguardo
+          return {
+            success: false,
+            status: 'ROLLBACK_FAILED',
+            attempts,
+            checkpointCreated: true,
+            rollbackAttempted: true,
+            rollbackSucceeded: false,
+            rolledBack: false,
+            checkpointId: initialCheckpoint.checkpointId || initialCheckpoint.id,
+            error: `Fallo bloqueante en restauración de checkpoint: ${rErr.message}`
+          };
         }
       }
     }
 
     return {
       success: false,
+      status: 'MAX_ATTEMPTS_EXCEEDED',
       attempts,
-      rolledBack: Boolean(initialCheckpoint),
-      checkpointId: initialCheckpoint ? initialCheckpoint.checkpointId : null,
+      checkpointCreated,
+      rollbackAttempted,
+      rollbackSucceeded,
+      rolledBack: rollbackSucceeded,
+      checkpointId: initialCheckpoint ? (initialCheckpoint.checkpointId || initialCheckpoint.id) : null,
       error: lastError ? (lastError.message || String(lastError)) : 'Fallo repetido en tarea autónoma'
     };
   }
@@ -1310,12 +1470,6 @@ class DriveEngine {
     const haltDir = path.join(targetDir, '.axion');
 
     // 1. Salvaguarda Fail-Closed: Killswitch
-    //
-    // El catch estaba mudo. Hoy no ocultaba nada —readHaltState esta documentado como
-    // "nunca lanza" y lo cumple: toda rama de fallo devuelve halted:true— pero tragarse
-    // una excepcion bajo un rotulo que dice "fail-closed" es exactamente el constructo que
-    // convertiria esta puerta en fail-open el dia que isHalted empiece a lanzar. Ante la
-    // duda no se ejecuta, que es la misma regla que aplica el propio killswitch.
     let detenido;
     try {
       detenido = typeof isHalted === 'function' && isHalted({ haltDir });
@@ -1338,37 +1492,79 @@ class DriveEngine {
 
     const classification = this.classifyContext(options);
 
+    // 2. Deep-Loop Fail-Closed: exige deliberación previa obligatoria
     let deliberation = null;
-    if (classification.requiresDeliberation && options.deliberationPayload) {
+    if (classification.requiresDeliberation) {
+      if (!options.deliberationPayload) {
+        return {
+          pass: false,
+          status: 'BLOCKED_DELIBERATION_REQUIRED',
+          mode: classification.mode,
+          reason: 'BLOCKED_DELIBERATION_REQUIRED',
+          message: 'DEEP_LOOP exige deliberación profunda previa para tareas estructurales o críticas.'
+        };
+      }
       const deepEngine = new DeepReasoningEngine(targetDir);
       deliberation = deepEngine.evaluateDeliberation(options.deliberationPayload);
-      const isApproved = deliberation.status === 'APPROVED' || deliberation.status === 'APPROVED_FOR_EXECUTION';
+      const isApproved = deliberation && (deliberation.status === 'APPROVED' || deliberation.status === 'APPROVED_FOR_EXECUTION');
       if (!isApproved) {
         return {
           pass: false,
+          status: 'DEEP_DELIBERATION_REJECTED',
           mode: classification.mode,
           reason: 'DEEP_DELIBERATION_REJECTED',
-          deliberation
+          deliberation,
+          message: 'Deliberación profunda rechazada por violar invariantes o exceder límites.'
         };
       }
     }
 
-    if (options.skipVerification) {
+    // 3. Restricciones cooperativas de flujo mediado: modo por defecto planificación / read-only
+    const isDeclaredAuth = Boolean(options && options.callerDeclaredAuthorization === true);
+    if (options.mutate === true && !isDeclaredAuth) {
       return {
-        pass: true,
+        pass: false,
+        status: 'CALLER_AUTHORIZATION_REQUIRED',
         mode: classification.mode,
-        deliberation: deliberation ? deliberation.deliberation_id : null,
-        verification: { pass: true, skipped: true }
+        reason: 'MUTATION_REQUIRES_DECLARED_AUTHORIZATION',
+        restrictionType: 'COOPERATIVE_MEDIATED_FLOW',
+        message: 'Restricción cooperativa de Drive: la edición de archivos requiere que el llamador declare explícitamente autorización previa (options.callerDeclaredAuthorization). Drive opera por defecto en modo de planificación/lectura y no valida independientemente la voluntad humana fuera de su flujo mediado.'
       };
     }
 
-    // 2. Ejecución de verificación determinista
+    const isDeclaredGitAuth = Boolean(options && options.callerDeclaredGitAuthorization === true);
+    if (options.gitAction && !isDeclaredGitAuth) {
+      return {
+        pass: false,
+        status: 'CALLER_AUTHORIZATION_REQUIRED',
+        mode: classification.mode,
+        reason: 'GIT_ACTION_REQUIRES_DECLARED_AUTHORIZATION',
+        restrictionType: 'COOPERATIVE_MEDIATED_FLOW',
+        message: `Restricción cooperativa de Drive: la operación '${options.gitAction}' requiere declaración explícita de autorización por el llamador (options.callerDeclaredGitAuthorization).`
+      };
+    }
+
+    // 4. Sin Verificación no hay Éxito: skipVerification nunca declara éxito
+    if (options.skipVerification) {
+      return {
+        pass: false,
+        status: 'UNVERIFIED',
+        mode: classification.mode,
+        reason: 'VERIFICATION_SKIPPED',
+        deliberation: deliberation ? (deliberation.deliberation_id || deliberation.id || null) : null,
+        verification: { pass: false, skipped: true, certified: false },
+        message: 'Ejecución no verificada: skipVerification prohíbe declarar éxito o certificar.'
+      };
+    }
+
+    // 5. Ejecución de verificación determinista
     const verification = runVerificationLoop(targetDir);
 
     return {
       pass: verification.pass,
+      status: verification.pass ? 'SUCCESS' : 'FAILURE',
       mode: classification.mode,
-      deliberation: deliberation ? deliberation.deliberation_id : null,
+      deliberation: deliberation ? (deliberation.deliberation_id || deliberation.id || null) : null,
       verification
     };
   }

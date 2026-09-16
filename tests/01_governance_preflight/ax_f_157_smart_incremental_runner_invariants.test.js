@@ -45,4 +45,19 @@ const driveDiffReport = driveEngine.runIncrementalDiffTests(['tools/identity_can
 assert.strictEqual(driveDiffReport.allPass, true);
 console.log('✓ Integración DriveEngine.runIncrementalDiffTests() verificada');
 
+// 5. Validar salvaguarda fail-closed ante archivos no mapeados (prohibición de [].every vacío)
+const unmappedReport = runner.runIncremental(['docs/UNMAPPED_DOCUMENT_TEST_FAIL_CLOSED.md']);
+assert.strictEqual(unmappedReport.allPass, false);
+assert.strictEqual(unmappedReport.status, 'NO_TESTS_MAPPED');
+assert.strictEqual(unmappedReport.reason, 'NO_TESTS_MAPPED');
+assert.strictEqual(unmappedReport.affectedTestsCount, 0);
+assert.strictEqual(unmappedReport.results.length, 0);
+
+const scUnmapped = driveEngine.executeFastLoopShortCircuit('Acción en doc no mapeado', ['docs/UNMAPPED_DOCUMENT_TEST_FAIL_CLOSED.md']);
+assert.strictEqual(scUnmapped.pass, false);
+assert.strictEqual(scUnmapped.status, 'NO_TESTS_MAPPED');
+assert.strictEqual(scUnmapped.affectedTestsCount, 0);
+assert.strictEqual(scUnmapped.suitesPassed, 0);
+console.log('✓ Salvaguarda fail-closed ante 0 pruebas mapeadas verificada ([].every bloqueado)');
+
 console.log('\nPASS AX-F-157 — Invariantes del ejecutor incremental por AST Diff demostrados al 100%.');
