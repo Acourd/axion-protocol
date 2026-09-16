@@ -33,6 +33,12 @@ const EVIDENCE_SCHEMAS = {
   vibeGuard: 'axion.vibeguard/v1'
 };
 const EVIDENCE_SLOTS = ['testRun', 'vibeGuard'];
+// Productor autorizado por slot: la evidencia debe declararlo y estar registrada en el
+// ledger firmado por la clave local. Un JSON suelto no acredita una ejecución.
+const EVIDENCE_PRODUCERS = {
+  testRun: 'tools/verify_changes.js',
+  vibeGuard: 'tools/vibeguard_gate.js'
+};
 
 class DriveDsseAttester {
   constructor(projectRoot = ROOT) {
@@ -102,8 +108,6 @@ class DriveDsseAttester {
         `Par de claves incompleto en ${this.keysDir} (priv=${hasPriv}, pub=${hasPub}). No se rota ni se completa en silencio.`);
     }
 
-    this.assertSecurePermissions(privPath);
-
     const privateKeyPem = fs.readFileSync(privPath, 'utf8');
     const publicKeyPem = fs.readFileSync(pubPath, 'utf8');
 
@@ -118,6 +122,10 @@ class DriveDsseAttester {
     if (derivedPublicPem.trim() !== publicKeyPem.trim()) {
       throw this.fail('ERR_KEYS_CORRUPT', `La clave pública en ${pubPath} no corresponde a la clave privada.`);
     }
+
+    // La validación de permisos va después del parseo: una clave corrupta se reporta
+    // como corrupta aunque su modo dependa del umask del proceso que la escribió.
+    this.assertSecurePermissions(privPath);
 
     return { publicKeyPem, privateKeyPem };
   }
@@ -194,15 +202,19 @@ class DriveDsseAttester {
   }
 
   /**
-   * Valida un artefacto de evidencia aportado: existe, su hash coincide con el
-   * declarado (si lo hay), y su esquema es el esperado. Devuelve ruta relativa,
-   * SHA-256 real, bytes y contenido parseado.
+   * Valida un artefacto de evidencia aportado: existe, declara su SHA-256 y coincide,
+   * su esquema es el esperado y su productor es el autorizado para el slot.
    */
   loadEvidenceArtifact(slot, evidence) {
     const expectedSchema = EVIDENCE_SCHEMAS[slot];
+    const expectedProducer = EVIDENCE_PRODUCERS[slot];
     const ref = evidence[slot];
     if (!ref || typeof ref !== 'object' || typeof ref.path !== 'string' || ref.path.trim() === '') {
       throw this.fail('ERR_EVIDENCE_INVALID', `Evidencia '${slot}' sin path válido.`);
+    }
+    if (typeof ref.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(ref.sha256)) {
+      throw this.fail('ERR_EVIDENCE_HASH_REQUIRED',
+        `Evidencia '${slot}' debe declarar el SHA-256 (64 hex) del artefacto; sin él no es verificable.`);
     }
 
     const absPath = path.isAbsolute(ref.path) ? ref.path : path.resolve(this.root, ref.path);
@@ -211,7 +223,7 @@ class DriveDsseAttester {
     }
 
     const actualSha256 = this.sha256File(absPath);
-    if (ref.sha256 && ref.sha256 !== actualSha256) {
+    if (ref.sha256 !== actualSha256) {
       throw this.fail('ERR_EVIDENCE_HASH_MISMATCH',
         `Hash declarado para '${slot}' no coincide con el archivo (${actualSha256}).`);
     }
@@ -228,6 +240,11 @@ class DriveDsseAttester {
         `Artefacto '${slot}' declara schema '${String(parsed.schema)}'; se esperaba '${expectedSchema}'.`);
     }
 
+    if (parsed.producer !== expectedProducer) {
+      throw this.fail('ERR_EVIDENCE_PRODUCER_MISMATCH',
+        `Artefacto '${slot}' declara productor '${String(parsed.producer)}'; se esperaba '${expectedProducer}'.`);
+    }
+
     return {
       slot,
       uri: path.relative(this.root, absPath).split(path.sep).join('/'),
@@ -238,11 +255,26 @@ class DriveDsseAttester {
   }
 
   /**
-   * Evalúa la evidencia. `verified` exige una ejecución real con exit 0 y cero fallos.
+   * Verifica el ledger de evidencia completo (cadena + firmas con la clave local).
+   */
+  verifyEvidenceLedger() {
+    const { verifyLedger } = require('./evidence_ledger.js');
+    const { publicKeyPem } = this.loadKeyPair();
+    return verifyLedger(this.root, publicKeyPem);
+  }
+
+  /**
+   * Evalúa la evidencia. `VERIFIED` exige una ejecución real con exit 0, cero fallos,
+   * SHA-256 declarado y una entrada en el ledger encadenado y firmada por el productor.
    */
   evaluateEvidence(evidence) {
     if (!evidence || typeof evidence !== 'object') {
-      return { status: 'UNVERIFIED', artifacts: [], reason: 'No se aportó evidencia de ejecución.' };
+      return {
+        status: 'UNVERIFIED',
+        artifacts: [],
+        ledger: { valid: false, entries: 0, reason: 'sin evidencia aportada' },
+        reason: 'No se aportó evidencia de ejecución.'
+      };
     }
 
     const artifacts = [];
@@ -254,8 +286,30 @@ class DriveDsseAttester {
       }
     }
 
+    const ledger = this.verifyEvidenceLedger();
+    if (!ledger.valid) {
+      problems.push(`Ledger de evidencia inválido: ${ledger.reason}.`);
+    }
+
+    const bindToLedger = (artifact) => {
+      if (!artifact) return null;
+      if (!ledger.valid) return null;
+      const entry = ledger.entries.find(
+        (e) => e.artifactSha256 === artifact.sha256 && e.producer === artifact.parsed.producer
+      );
+      if (!entry) {
+        problems.push(`Evidencia '${artifact.slot}' sin entrada de ledger firmada por su productor.`);
+        return null;
+      }
+      artifact.ledgerSeq = entry.seq;
+      artifact.ledgerRecordedAt = entry.recordedAt;
+      return entry;
+    };
+
     const testRun = artifacts.find((a) => a.slot === 'testRun');
     const vibeGuard = artifacts.find((a) => a.slot === 'vibeGuard');
+    const testRunEntry = bindToLedger(testRun);
+    const vibeGuardEntry = bindToLedger(vibeGuard);
 
     let testRunVerified = false;
     if (testRun) {
@@ -264,8 +318,10 @@ class DriveDsseAttester {
       const total = Number(suites.total);
       const passed = Number(suites.passed);
       const failed = Number(suites.failed);
-      testRunVerified = p.exitCode === 0 && failed === 0 && total > 0 && passed === total;
-      if (!testRunVerified) {
+      testRunVerified = p.exitCode === 0 && failed === 0 && total > 0 && passed === total && Boolean(testRunEntry);
+      if (!testRunVerified && !testRunEntry) {
+        problems.push('testRun no está registrado en el ledger firmado.');
+      } else if (!testRunVerified) {
         problems.push(`testRun no acredita éxito real (exitCode=${p.exitCode}, total=${suites.total}, passed=${suites.passed}, failed=${suites.failed}).`);
       }
     } else {
@@ -275,21 +331,22 @@ class DriveDsseAttester {
     let vibeGuardVerified = false;
     if (vibeGuard) {
       const p = vibeGuard.parsed;
-      vibeGuardVerified = p.pass === true && Number(p.findings) === 0;
+      vibeGuardVerified = p.pass === true && Number(p.findings) === 0 && Boolean(vibeGuardEntry);
       if (!vibeGuardVerified) {
-        problems.push(`vibeGuard no acredita limpieza (pass=${p.pass}, findings=${p.findings}).`);
+        problems.push(`vibeGuard no acredita limpieza registrada en ledger (pass=${p.pass}, findings=${p.findings}).`);
       }
     }
 
     const status = testRunVerified ? 'VERIFIED' : 'UNVERIFIED';
     return {
       status,
-      reason: status === 'VERIFIED' ? 'Evidencia de ejecución real con exit 0 verificada.' : problems.join(' '),
+      reason: status === 'VERIFIED' ? 'Evidencia de ejecución real, con SHA declarado y registrada en ledger firmado.' : problems.join(' '),
       artifacts,
       testRun: testRunVerified ? testRun : null,
       vibeGuard: vibeGuardVerified ? vibeGuard : null,
-      assurance: 'EVIDENCE_BOUND',
-      limitation: 'La firma acredita autoría del JSON; el enlace de evidencia acredita ruta y hash del artefacto, no la identidad del host que lo produjo.'
+      ledger: { valid: ledger.valid, entries: ledger.entries.length, reason: ledger.reason || null },
+      assurance: 'EVIDENCE_BOUND+LEDGER_SIGNED',
+      limitation: 'La firma acredita autoría del JSON y del registro; no prueba por sí sola la ejecución frente a un actor con acceso al mismo usuario y a la clave privada local.'
     };
   }
 
@@ -349,11 +406,18 @@ class DriveDsseAttester {
           assurance: verification.assurance,
           reason: verification.reason,
           limitation: verification.limitation,
+          ledger: {
+            valid: verification.ledger.valid,
+            entries: verification.ledger.entries,
+            reason: verification.ledger.reason
+          },
           evidence: verification.artifacts.map((a) => ({
             slot: a.slot,
             uri: a.uri,
             sha256: a.sha256,
-            bytes: a.bytes
+            bytes: a.bytes,
+            producer: a.parsed.producer,
+            ledgerSeq: a.ledgerSeq || null
           }))
         },
         governance: {

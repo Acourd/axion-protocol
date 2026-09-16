@@ -32,6 +32,22 @@ for (const r of verificacion.results) {
 assert.ok(verificacion.results.length >= 2, 'Deben existir los SBOM comprometidos en docs/sbom y sbom/');
 console.log(`✓ ${verificacion.results.length} SBOM comprometidos coinciden con la superficie distribuida`);
 
+// 1b. Contabilidad explícita de exclusiones autorreferenciales
+const generado = sbom.generateCycloneDX();
+const candidatos = sbom.publishedCandidates();
+const exclusiones = sbom.selfReferenceExclusions();
+assert.strictEqual(generado.components.length + exclusiones.length, candidatos.length,
+  'componentes + exclusiones declaradas deben cuadrar con la superficie publicada');
+const propExcl = generado.metadata.properties.find((p) => p.name === 'axion:sbomExcludedSelfReference');
+assert.ok(propExcl, 'El SBOM debe declarar las exclusiones autorreferenciales');
+assert.deepStrictEqual(JSON.parse(propExcl.value).map((d) => d.path), exclusiones.map((e) => e.path));
+for (const e of exclusiones) {
+  assert.ok(fs.existsSync(path.join(ROOT, e.path)), `la exclusión declarada debe existir: ${e.path}`);
+  assert.ok(e.path.startsWith('docs/sbom/'), `la exclusión debe ser un SBOM publicado, no ${e.path}`);
+}
+assert.strictEqual(generado.metadata.properties.find((p) => p.name === 'axion:sbomIncludedCount').value, String(generado.components.length));
+console.log(`✓ Exclusiones autorreferenciales declaradas: ${exclusiones.length} (${exclusiones.map((e) => e.path).join(', ')})`);
+
 // 2. Adversarial: mutar el hash de un componente se detecta
 const cdxPath = path.join(ROOT, 'docs', 'sbom', 'sbom.cyclonedx.json');
 const manifiesto = JSON.parse(fs.readFileSync(cdxPath, 'utf8'));

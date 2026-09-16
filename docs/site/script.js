@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
       toastSoundOff: '✕ Haptic audio muted',
       toastCopied: '✓ Command copied to clipboard',
       toastCopyFail: 'Could not copy to clipboard automatically.',
-      statusPill: 'v1.4.0-beta.1 · 238 Suites PASS',
+      statusPill: 'v1.4.0-beta.1 · 238 Suites',
       navHero: 'Home',
       navSwarm: 'Swarm Engine',
       navSandbox: 'CLI Sandbox',
@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
       heroLead: 'Execution engine operating in <code>fail-closed</code> mode (95.7 KB). Intercepts terminal tool calls with <code>shell: false</code>, arbitrates concurrent AST namespace collisions, and guarantees SHA-256 byte-accurate state rollback.',
       installBoxLabel: 'QUICKSTART COMMAND',
       copyLabel: 'Copy',
-      telemetryStatus: '238 Suites PASS',
-      metricSuites: 'Suites in Green (CI verified)',
+      telemetryStatus: '238 Suites',
+      metricSuites: 'Suites in Repository',
       metricDeps: 'External Dependencies',
       metricRollback: 'Rollback SHA-256',
       metricBft: 'BFT Rounds / sec',
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tdAntigravityMech: 'Modular Skills / P0 Rules / Interactive Modals',
       tdClaudeMech: 'Native Slash Commands / CLAUDE.md',
       tdCursorMech: 'MDC Rules / Agent Profiles',
-      tdVerified: 'Verified (238/238)',
+      tdVerified: 'Verified (CI)',
       tdNative: 'Native (100% Parity)',
       tdNativeCmds: 'Native (12 Commands)',
       tdSynced: 'Synchronized',
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
       toastSoundOff: '✕ Sonido háptico silenciado',
       toastCopied: '✓ Comando copiado al portapapeles',
       toastCopyFail: 'No se pudo copiar automáticamente.',
-      statusPill: 'v1.4.0-beta.1 · 238 Suites PASS',
+      statusPill: 'v1.4.0-beta.1 · 238 Suites',
       navHero: 'Inicio',
       navSwarm: 'Swarm Engine',
       navSandbox: 'Simulador CLI',
@@ -206,8 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
       heroLead: 'Motor de ejecución en modo <code>fail-closed</code> (95.7 KB). Intercepta llamadas de terminal sin sub-shell, arbitra colisiones concurrentes en el árbol AST y garantiza reversión atómica verificada con SHA-256.',
       installBoxLabel: 'COMANDO DE INICIO RÁPIDO',
       copyLabel: 'Copiar',
-      telemetryStatus: '238 Suites PASS',
-      metricSuites: 'Suites en Verde (verificado en CI)',
+      telemetryStatus: '238 Suites',
+      metricSuites: 'Suites en el Repositorio',
       metricDeps: 'Dependencias Externas',
       metricRollback: 'Rollback SHA-256',
       metricBft: 'Rondas BFT / seg',
@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tdAntigravityMech: 'Skills Modulares / Reglas P0 / Modales Interactivos',
       tdClaudeMech: 'Slash Commands Nativos / CLAUDE.md',
       tdCursorMech: 'MDC Rules / Perfiles de Agente',
-      tdVerified: 'Verificado (238/238)',
+      tdVerified: 'Verificado (CI)',
       tdNative: 'Nativo (100% Paridad)',
       tdNativeCmds: 'Nativo (12 Comandos)',
       tdSynced: 'Sincronizado',
@@ -717,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
       playSuccessChime();
       appendTerminalLinesStaggered([
         { type: 'info', text: '[/verify] Ejecutando suite de 238 pruebas deterministas en 8 workers...' },
-        { type: 'pass', text: '✓ 238/238 suites PASS (exit code 0)' }
+        { type: 'pass', text: '✓ [simulación] 238 suites · este panel no ejecuta la suite' }
       ]);
     } else if (clean.includes('rm -rf') || clean.includes('drop database') || clean.includes(':(){ :|:& };:')) {
       playAlertBeep();

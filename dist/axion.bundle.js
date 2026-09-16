@@ -4988,6 +4988,8 @@ function sincronizarReadme(totalSuites, desglose) {
       /Axion Protocol includes \*\*\d+ deterministic test suites\*\*/g,
       `Axion Protocol includes **${totalSuites} deterministic test suites**`
     ),
+    (c) => c.replace(/\*\*Total: \d+ suites\*\* across the 5 governance domains\.(?: CI publishes the verified result\.)?/g,
+      `**Total: ${totalSuites} suites** across the 5 governance domains. CI publishes the verified result.`),
     (c) => c.replace(/\*\*Total: \d+ suites\*\*/g, `**Total: ${totalSuites} suites**`),
     (c) => c.replace(/CI-\d+%20Suites/g, `CI-${totalSuites}%20Suites`),
     (c) => c.replace(/passed in ~[\d.]+s \(\d+ concurrent workers\)\./g, 'passed across the 5 governance domains.'),
@@ -5018,7 +5020,7 @@ function sincronizarReadmeEs(totalSuites) {
 
 function sincronizarRoadmap(totalSuites) {
   return reemplazar('ROADMAP.md', [
-    (c) => c.replace(/\d+ suites passing al 100%/g, `${totalSuites} suites en verde en CI`)
+    (c) => c.replace(/\d+ suites (?:passing al 100%|en verde en CI)/g, `${totalSuites} suites deterministas (resultado verificado en CI)`)
   ]);
 }
 
@@ -5073,16 +5075,18 @@ function sincronizarSitioWeb(totalSuites, desglose, version) {
 
   if (fs.existsSync(rutaHtml)) {
     let html = fs.readFileSync(rutaHtml, 'utf8');
-    html = html.replace(/\d+ Suites PASS/g, `${totalSuites} Suites PASS`);
-    html = html.replace(/GitHub · \d+\/\d+/g, `GitHub · ${totalSuites}/${totalSuites}`);
-    html = html.replace(/<strong>\d+\/\d+<\/strong> suites PASS/g, `<strong>${totalSuites}/${totalSuites}</strong> suites PASS`);
-    html = html.replace(/✓ \d+\/\d+ PASS<\/span> \d+ suites de prueba/g, `✓ ${totalSuites}/${totalSuites} PASS</span> ${totalSuites} suites de prueba`);
+    html = html.replace(/\d+ Suites PASS/g, `${totalSuites} Suites`);
+    html = html.replace(/GitHub · \d+\/\d+/g, `GitHub · ${totalSuites} suites`);
+    html = html.replace(/<strong>\d+\/\d+<\/strong> suites PASS/g, `<strong>${totalSuites}</strong> suites`);
+    html = html.replace(/✓ \d+\/\d+ PASS<\/span> \d+ suites de prueba/g, `✓ ${totalSuites} suites en el árbol</span> ${totalSuites} suites de prueba`);
     html = html.replace(/Distribución de las \d+ Suites/g, `Distribución de las ${totalSuites} Suites`);
-    html = html.replace(/(\d+) \/ \1/g, `${totalSuites} / ${totalSuites}`);
+    html = html.replace(/(\d+) \/ \1/g, `${totalSuites} suites`);
     html = html.replace(/suite de \d+ pruebas/g, `suite de ${totalSuites} pruebas`);
     html = html.replace(/Todos los Dominios \(\d+\)/g, `Todos los Dominios (${totalSuites})`);
-    html = html.replace(/Verificado \(\d+\/\d+\)/g, `Verificado (${totalSuites}/${totalSuites})`);
-    html = html.replace(/\d+ suites verificadas · Exit Code 0/g, `${totalSuites} suites verificadas · Exit Code 0`);
+    html = html.replace(/Verificado \(\d+\/\d+\)/g, 'Verificado (CI)');
+    html = html.replace(/\d+ suites verificadas · Exit Code 0/g, `${totalSuites} suites · resultados publicados por CI`);
+    html = html.replace(/Suites in Green \(\d+%\)/g, 'Suites in Repository');
+    html = html.replace(/Suites en Verde \(\d+%\)/g, 'Suites en el Repositorio');
 
     const dominios = [
       { key: 'governance', width: porcentaje(desglose.governance) },
@@ -5108,20 +5112,22 @@ function sincronizarSitioWeb(totalSuites, desglose, version) {
 
   if (fs.existsSync(rutaJs)) {
     let js = fs.readFileSync(rutaJs, 'utf8');
-    js = js.replace(/statusPill:\s*'v[\w.-]+ · \d+ Suites PASS'/g, `statusPill: 'v${version} · ${totalSuites} Suites PASS'`);
-    js = js.replace(/statSuites:\s*'<strong>\d+\/\d+<\/strong> suites PASS'/g, `statSuites: '<strong>${totalSuites}/${totalSuites}</strong> suites PASS'`);
+    js = js.replace(/statusPill:\s*'v[\w.-]+ · \d+ Suites(?: PASS)?'/g, `statusPill: 'v${version} · ${totalSuites} Suites'`);
+    js = js.replace(/statSuites:\s*'<strong>\d+(?:\/\d+)?<\/strong> suites(?: PASS)?'/g, `statSuites: '<strong>${totalSuites}</strong> suites'`);
     js = js.replace(/Executes \d+ automated test suites/g, `Executes ${totalSuites} automated test suites`);
     js = js.replace(/Ejecuta \d+ suites de prueba automáticas/g, `Ejecuta ${totalSuites} suites de prueba automáticas`);
-    js = js.replace(/'✓ \d+\/\d+ suites PASS[^']*'/g, `'✓ ${totalSuites}/${totalSuites} suites PASS (exit code 0)'`);
-    js = js.replace(/telemetryStatus: '\d+ Suites PASS'/g, `telemetryStatus: '${totalSuites} Suites PASS'`);
+    js = js.replace(/'✓ \d+\/\d+ suites PASS[^']*'/g, `'✓ [simulación] ${totalSuites} suites · este panel no ejecuta la suite'`);
+    js = js.replace(/telemetryStatus: '\d+ Suites(?: PASS)?'/g, `telemetryStatus: '${totalSuites} Suites'`);
     js = js.replace(/the full \d+ automated test suites/g, `the full ${totalSuites} automated test suites`);
     js = js.replace(/suite de \d+ pruebas/g, `suite de ${totalSuites} pruebas`);
     js = js.replace(/(?:All Domains|Todos los Dominios) \(\d+\)/g, (m) => m.startsWith('Todo') ? `Todos los Dominios (${totalSuites})` : `All Domains (${totalSuites})`);
     js = js.replace(/breakdownTitle: 'Distribution of the \d+ Suites'/g, `breakdownTitle: 'Distribution of the ${totalSuites} Suites'`);
     js = js.replace(/breakdownTitle: 'Distribución de las \d+ Suites'/g, `breakdownTitle: 'Distribución de las ${totalSuites} Suites'`);
-    js = js.replace(/(?:Verified|Verificado) \((\d+)\/\d+\)/g, (m) => m.startsWith('Verificado') ? `Verificado (${totalSuites}/${totalSuites})` : `Verified (${totalSuites}/${totalSuites})`);
-    js = js.replace(/Suites in Green \(\d+%\)/g, 'Suites in Green (CI verified)');
-    js = js.replace(/Suites en Verde \(\d+%\)/g, 'Suites en Verde (verificado en CI)');
+    js = js.replace(/(?:Verified|Verificado) \((\d+)\/\d+\)/g, (m) => m.startsWith('Verificado') ? 'Verificado (CI)' : 'Verified (CI)');
+    js = js.replace(/Suites in Green \(\d+%\)/g, 'Suites in Repository');
+    js = js.replace(/Suites en Verde \(\d+%\)/g, 'Suites en el Repositorio');
+    js = js.replace(/Suites in Green \(CI verified\)/g, 'Suites in Repository');
+    js = js.replace(/Suites en Verde \(verificado en CI\)/g, 'Suites en el Repositorio');
     fs.writeFileSync(rutaJs, js, 'utf8');
     actualizado = true;
   }

@@ -24,7 +24,10 @@ const crypto = require('crypto');
 const ROOT = path.resolve(__dirname, '..');
 
 const ALWAYS_PUBLISHED = ['package.json', 'README.md', 'LICENSE', 'NOTICE'];
-const EXCLUDED_PREFIXES = ['docs/site/', 'sbom/', 'docs/sbom/'];
+// Excluidos por no publicarse (package.json#files niega docs/site) o por no ser código.
+const NON_PUBLISHED_PREFIXES = ['docs/site/'];
+// Excluidos del inventario por autorreferencia: el SBOM no puede hashearse a sí mismo.
+const SELF_REFERENCE_PREFIXES = ['docs/sbom/', 'sbom/'];
 
 /**
  * Marca temporal reproducible: SOURCE_DATE_EPOCH si está definido, o el epoch.
@@ -80,25 +83,31 @@ class SovereignSBOMGenerator {
     }
   }
 
-  isExcluded(relPath) {
+  isNonPublished(relPath) {
     const normalized = relPath.split(path.sep).join('/');
-    if (EXCLUDED_PREFIXES.some((p) => normalized.startsWith(p))) return true;
+    if (NON_PUBLISHED_PREFIXES.some((p) => normalized.startsWith(p))) return true;
     if (/\.tgz$/.test(normalized)) return true;
     if (normalized.split('/').some((seg) => seg === 'node_modules' || seg.startsWith('.sandbox'))) return true;
     return false;
   }
 
+  isSelfReference(relPath) {
+    const normalized = relPath.split(path.sep).join('/');
+    return SELF_REFERENCE_PREFIXES.some((p) => normalized.startsWith(p));
+  }
+
   /**
-   * Superficie distribuida real: package.json#files + archivos siempre publicados.
+   * Candidatos publicados (npm pack): package.json#files + archivos siempre publicados,
+   * sin exclusiones de autorreferencia. Incluye los propios SBOM bajo docs/sbom/.
    */
-  distributedSurface() {
+  publishedCandidates() {
     const pkg = this.loadPackageInfo();
     const files = [];
     const seen = new Set();
 
     const pushFile = (absPath) => {
       const relPath = path.relative(this.root, absPath).split(path.sep).join('/');
-      if (this.isExcluded(relPath) || seen.has(relPath)) return;
+      if (this.isNonPublished(relPath) || seen.has(relPath)) return;
       seen.add(relPath);
       const content = fs.readFileSync(absPath);
       files.push({
@@ -117,7 +126,7 @@ class SovereignSBOMGenerator {
     for (const entry of entries) {
       if (typeof entry !== 'string' || entry.startsWith('!')) continue;
       const clean = entry.replace(/\/$/, '');
-      if (this.isExcluded(clean)) continue;
+      if (this.isNonPublished(clean)) continue;
       const abs = path.join(this.root, clean);
       if (!fs.existsSync(abs)) continue;
 
@@ -143,11 +152,31 @@ class SovereignSBOMGenerator {
   }
 
   /**
+   * Archivos publicados que quedan fuera del inventario por autorreferencia.
+   * Se declaran explícitamente en el SBOM (metadata/documentComment + conteo).
+   */
+  selfReferenceExclusions() {
+    return this.publishedCandidates()
+      .filter((f) => this.isSelfReference(f.path))
+      .map((f) => ({ path: f.path, reason: 'self-reference: el SBOM no puede hashearse a sí mismo' }))
+      .sort((a, b) => a.path.localeCompare(b.path));
+  }
+
+  /**
+   * Superficie distribuida indexada: candidatos publicados menos las exclusiones
+   * autorreferenciales declaradas.
+   */
+  distributedSurface() {
+    return this.publishedCandidates().filter((f) => !this.isSelfReference(f.path));
+  }
+
+  /**
    * Genera el SBOM en formato CycloneDX v1.5 JSON.
    */
   generateCycloneDX() {
     const version = this.getPackageVersion();
     const files = this.distributedSurface();
+    const excluded = this.selfReferenceExclusions();
     const timestamp = deterministicTimestamp();
     const serialNumber = `urn:uuid:${contentUuid(JSON.stringify(files))}`;
 
@@ -187,7 +216,10 @@ class SovereignSBOMGenerator {
         properties: [
           { name: 'axion:zeroDependencies', value: 'true' },
           { name: 'axion:runtimeIntegrity', value: 'FAIL_CLOSED' },
-          { name: 'axion:sbomSurface', value: 'package.json#files (publish surface)' }
+          { name: 'axion:sbomSurface', value: 'package.json#files (publish surface)' },
+          { name: 'axion:sbomIncludedCount', value: String(files.length) },
+          { name: 'axion:sbomExcludedCount', value: String(excluded.length) },
+          { name: 'axion:sbomExcludedSelfReference', value: JSON.stringify(excluded) }
         ]
       },
       components
@@ -200,6 +232,7 @@ class SovereignSBOMGenerator {
   generateSPDX() {
     const version = this.getPackageVersion();
     const files = this.distributedSurface();
+    const excluded = this.selfReferenceExclusions();
     const timestamp = deterministicTimestamp();
     const surfaceDigest = crypto.createHash('sha256').update(JSON.stringify(files)).digest('hex');
 
@@ -219,6 +252,7 @@ class SovereignSBOMGenerator {
       SPDXID: 'SPDXRef-DOCUMENT',
       name: 'axion-protocol',
       documentNamespace: `https://github.com/Acourd/axion-protocol/spdx/${surfaceDigest}`,
+      documentComment: `Superficie publicada indexada: ${files.length} archivos. Excluidos por autorreferencia (declarados): ${excluded.length} — ${excluded.map((e) => e.path).join(', ') || 'ninguno'}.`,
       creationInfo: {
         created: timestamp,
         creators: ['Tool: SovereignSBOMGenerator-3.0.0', 'Organization: Axion Protocol']

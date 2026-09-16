@@ -37,15 +37,34 @@ function parseSuiteCounts(output) {
 }
 
 /**
- * Escribe un artefacto de evidencia verificable (ruta + SHA-256) para que la capa
- * de atestación pueda anclarse a una ejecución real en vez de a cifras del llamador.
+ * Firma del productor de evidencia: la clave local del keyring de atestación.
+ * Sin esta firma, la entrada del ledger no es válida para el atestador.
+ */
+function buildEvidenceSigner(raiz) {
+  const DriveDsseAttester = require('./drive_dsse_attester.js');
+  const attester = new DriveDsseAttester(raiz);
+  attester.ensureKeyPair();
+  const { privateKeyPem, publicKeyPem } = attester.loadKeyPair();
+  return {
+    keyId: attester.keyIdFor(publicKeyPem),
+    sign: (buffer) => crypto.sign(null, buffer, privateKeyPem)
+  };
+}
+
+/**
+ * Escribe un artefacto de evidencia verificable (SHA-256 obligatorio en el consumidor)
+ * y lo registra en el ledger encadenado y firmado por el productor.
  */
 function writeEvidenceArtifact(raiz, ejecucion, resultado) {
   const suites = parseSuiteCounts(resultado.output || '');
   const startedAtMs = ejecucion.startedAtMs;
   const finishedAtMs = Date.now();
-  const evidence = {
+  const output = resultado.output || '';
+  const { recordEvidence } = require('./evidence_ledger.js');
+
+  const produced = recordEvidence(raiz, {
     schema: EVIDENCE_SCHEMA,
+    producer: 'tools/verify_changes.js',
     runner: ejecucion.etiqueta,
     command: `${path.basename(ejecucion.executable)} ${ejecucion.args.join(' ')}`,
     exitCode: 0,
@@ -54,19 +73,16 @@ function writeEvidenceArtifact(raiz, ejecucion, resultado) {
     startedAt: new Date(startedAtMs).toISOString(),
     finishedAt: new Date(finishedAtMs).toISOString(),
     durationMs: finishedAtMs - startedAtMs,
-    outputSha256: crypto.createHash('sha256').update(resultado.output || '').digest('hex')
-  };
+    outputSha256: crypto.createHash('sha256').update(output).digest('hex'),
+    signer: buildEvidenceSigner(raiz)
+  });
 
-  const evidenceDir = path.join(raiz, '.axion', 'evidence');
-  fs.mkdirSync(evidenceDir, { recursive: true });
-  const digest = crypto.createHash('sha256').update(JSON.stringify(evidence)).digest('hex');
-  const finalPath = path.join(evidenceDir, `verification-${digest.slice(0, 16)}.json`);
-  const tmpPath = `${finalPath}.tmp-${process.pid}`;
-  fs.writeFileSync(tmpPath, JSON.stringify(evidence, null, 2), 'utf8');
-  fs.renameSync(tmpPath, finalPath);
-  evidence.path = finalPath;
-  evidence.sha256 = crypto.createHash('sha256').update(fs.readFileSync(finalPath)).digest('hex');
-  return evidence;
+  return {
+    path: produced.path,
+    relPath: produced.relPath,
+    sha256: produced.sha256,
+    ledgerSeq: produced.entry.seq
+  };
 }
 
 /**
@@ -146,7 +162,7 @@ function runVerificationLoop(targetDir, options = {}) {
   let evidence = null;
   try {
     evidence = writeEvidenceArtifact(raiz, { etiqueta: v.etiqueta, executable: v.executable, args: v.args, startedAtMs }, { output: salida });
-    console.log(`  Evidencia verificable: ${path.relative(raiz, evidence.path)} (SHA-256 ${evidence.sha256.slice(0, 16)}...)`);
+    console.log(`  Evidencia verificable: ${evidence.relPath} (SHA-256 ${evidence.sha256.slice(0, 16)}..., ledger #${evidence.ledgerSeq})`);
   } catch (evidenceErr) {
     console.error(`  ADVERTENCIA: no se pudo escribir el artefacto de evidencia: ${evidenceErr.message}`);
   }

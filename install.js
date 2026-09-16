@@ -394,6 +394,7 @@ function runInstallation(targetDir) {
     'checkpoint.js',
     'context_shield.js',
     'verify_changes.js',
+    'evidence_ledger.js',
     'health_check.js',
     'emit_attestation.js',
     'vibeguard_gate.js',

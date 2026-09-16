@@ -47,17 +47,27 @@ extraerTodos(leer('README.es.md'), /incluye \*\*(\d+) suites de prueba determini
 extraerTodos(leer('README.es.md'), /# Ejecutar las (\d+) suites de prueba/, 'README.es.md (comando)');
 extraerTodos(leer('CONTRIBUTING.md'), /All (\d+) deterministic suites/, 'CONTRIBUTING.md (invariante)');
 extraerTodos(leer('CONTRIBUTING.md'), /All (\d+) test suites pass/, 'CONTRIBUTING.md (PR)');
-extraerTodos(leer('ROADMAP.md'), /(\d+) suites en verde en CI/, 'ROADMAP.md');
+extraerTodos(leer('ROADMAP.md'), /(\d+) suites deterministas \(resultado verificado en CI\)/, 'ROADMAP.md');
 extraerTodos(leer('docs/ASYMPTOTIC_MATURITY_REPORT.md'), /(\d+) deterministic test suites/, 'ASYMPTOTIC_MATURITY_REPORT.md');
 extraerTodos(leer('docs/ASYMPTOTIC_MATURITY_REPORT.es.md'), /(\d+) suites deterministas/, 'ASYMPTOTIC_MATURITY_REPORT.es.md');
 extraerTodos(leer('docs/attestation_viewer.html'), /\((\d+) Suites Deterministas\)/, 'attestation_viewer.html');
 extraerTodos(leer('docs/site/index.html'), /Distribución de las (\d+) Suites/, 'docs/site/index.html (título)');
-extraerTodos(leer('docs/site/index.html'), /(\d+) Suites PASS/, 'docs/site/index.html (telemetría)');
-extraerTodos(leer('docs/site/script.js'), /(\d+) Suites PASS/g, 'docs/site/script.js (telemetría)');
-extraerTodos(leer('docs/site/script.js'), /statusPill: 'v[\w.-]+ · (\d+) Suites PASS'/, 'docs/site/script.js (statusPill)');
-extraerTodos(leer('docs/site/script.js'), /telemetryStatus: '(\d+) Suites PASS'/, 'docs/site/script.js (telemetryStatus)');
-extraerTodos(leer('docs/site/script.js'), /✓ (\d+)\/\d+ suites PASS/, 'docs/site/script.js (log)');
+extraerTodos(leer('docs/site/index.html'), /id="telemetry-text">(\d+) Suites/, 'docs/site/index.html (telemetría)');
+extraerTodos(leer('docs/site/script.js'), /statusPill: 'v[\w.-]+ · (\d+) Suites'/, 'docs/site/script.js (statusPill)');
+extraerTodos(leer('docs/site/script.js'), /telemetryStatus: '(\d+) Suites'/, 'docs/site/script.js (telemetryStatus)');
+extraerTodos(leer('docs/site/script.js'), /Distribution of the (\d+) Suites/, 'docs/site/script.js (breakdown)');
+extraerTodos(leer('docs/site/script.js'), /\[simulación\] (\d+) suites/, 'docs/site/script.js (log simulado)');
 console.log(`✓ Todas las superficies vivas declaran el conteo real (${real} suites)`);
+
+// 1b. Los conteos no pueden convertirse en veredictos de aprobación
+for (const rel of ['README.md', 'README.es.md', 'docs/site/index.html', 'docs/site/script.js']) {
+  const contenido = leer(rel);
+  assert.ok(!/\d+\s*\/\s*\d+\s+(?:suites\s+)?PASS/i.test(contenido), `${rel} no puede inferir PASS desde un conteo`);
+  assert.ok(!/\d+\s+Suites?\s+PASS/i.test(contenido), `${rel} no puede declarar PASS desde un conteo`);
+  assert.ok(!/Suites in Green|Suites en Verde/i.test(contenido), `${rel} no puede declarar "green" desde un conteo`);
+}
+assert.ok(/CI publishes the verified result/.test(leer('README.md')), 'README.md debe remitir el resultado verificado a CI');
+console.log('✓ Conteos separados de veredictos: los resultados se remiten a CI');
 
 // 2. Claims SLSA de nivel: prohibidos
 const superficiesClaims = [

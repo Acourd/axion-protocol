@@ -147,7 +147,7 @@ npm test
 | 💾 **State, Checkpoints & Recovery** | Atomic snapshots, rollback plan validation, memory guard limits, context shield anchoring, evidence hasher, governance drift detection | 23 |
 | ⚡ **Adversarial Resilience** | Mutation vectors, pre-mortem verdict derivation, VibeGuard lexical gate, boilerplate detection, fuzzer burst resilience | 18 |
 
-**Total: 238 suites** across the 5 governance domains.
+**Total: 238 suites** across the 5 governance domains. CI publishes the verified result.
 
 ---
 
