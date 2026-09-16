@@ -33,9 +33,9 @@ Al recibir `/drive`, el agente aplica un arnés de gobernanza dentro de los fluj
 ## 📋 Protocolo de Ejecución en 5 Pasos
 
 ### Paso 1: Reconocimiento, Diagnóstico y Planificación (Read-Only)
-- Lee el proyecto, stack y requerimiento activo sin modificar archivos.
-- Auto-equipa las skills requeridas según el contexto (`premortem`, `clean-code`, `systematic-debugging`, `verify`, etc.).
-- Si la intención es ambigua o difusa (<10 palabras sin objetivo claro), activa `/clarify` para emitir 2 preguntas A/B/C y sellar un `IntentContract` antes de proponer cambios.
+- Lee el proyecto, stack, estado Git y requerimiento activo sin modificar archivos, extrayendo hechos observables (rama, HEAD, diff, pruebas).
+- Auto-equipa exclusivamente skills canónicas requeridas según el contexto (`clarify`, `premortem`, `debug`, `verify`, `review`, etc.).
+- Si la intención es ambigua o difusa (<10 palabras sin objetivo claro) o no hay evidencia en el repositorio, devuelve estado bloqueado (`BLOCKED_CONTEXT_REQUIRED`) o activa `/clarify` para emitir 2 preguntas A/B/C y sellar un `IntentContract` antes de proponer cambios.
 
 ### Paso 2: Resguardo Preventivo y Solicitud de Confirmación
 - Presenta el plan de cambios al usuario y solicita confirmación humana explícita en la conversación antes de editar código.
@@ -90,12 +90,13 @@ Toda ejecución concluye con este formato exacto:
 Cuando `/drive` se invoca sin tarea específica o de forma exploratoria:
 
 1. **En Antigravity / Interfaces con selector interactivo**:
-   - Invoca la herramienta `ask_question` para renderizar el modal interactivo con opciones seleccionables de 1 clic.
+   - Invoca la herramienta `ask_question` para renderizar el modal interactivo con opciones seleccionables de 1 clic sintetizadas a partir de hechos observables (cambios en árbol de trabajo, estado de pruebas, journal persistido o backlog verificado).
 2. **En Claude Code / Terminal / Voz**:
-   - Presenta inmediatamente 3 misiones estructuradas en texto claro:
+   - Presenta inmediatamente entre 3 y 5 propuestas estructuradas basadas en evidencia observable:
      - ⚡ **[INGENIERÍA]** <Título> — <Descripción concisa>
      - 📜 **[GOBERNANZA]** <Título> — <Descripción concisa>
      - ✨ **[NUEVA FUNCIÓN]** <Título> — <Descripción concisa>
+   - Si no existe evidencia observable en el repositorio ni intención explícita del usuario, devuelve estado bloqueado (`BLOCKED_CONTEXT_REQUIRED`) y no auto-ejecuta ninguna misión estática inventada.
 
 ---
 

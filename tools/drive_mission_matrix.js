@@ -19,6 +19,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { verifyBacklogItemEvidence } = require('./mission_context.js');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -34,7 +35,6 @@ class DriveMissionMatrix {
     this.root = path.resolve(projectRoot);
     this.stateDir = path.join(this.root, '.axion', 'state');
     this.backlogFile = path.join(this.stateDir, 'mission_backlog_matrix.json');
-    this.ensureStateDir();
   }
 
   ensureStateDir() {
@@ -43,38 +43,101 @@ class DriveMissionMatrix {
     }
   }
 
+  _getDefaultPendingBacklog() {
+    return [
+      {
+        id: 'BACKLOG_HIST_01_RELEASE_GA',
+        quadrant: 'BACKLOG_RESUME',
+        title: 'Sellado Criptográfico Merkle Total y Certificación Release v1.2.0-GA',
+        description: 'Generar la atestación formal in-toto DSSE Ed25519 sobre todo el repositorio (histórico v1.2.0).',
+        evidenceTrigger: null,
+        evidence: [],
+        status: 'OBSOLETE_CANDIDATE',
+        confidence: 'UNVERIFIED',
+        verified: false
+      },
+      {
+        id: 'BACKLOG_HIST_02_STRESS_SIMULATOR',
+        quadrant: 'STRESS_BENCHMARK',
+        title: 'Simulador de Cargas Extremas y Benchmarking Asintótico de 50.000 Transacciones',
+        description: 'Simular 50.000 operaciones concurrentes en SQLite para medir latencias sub-milisegundo bajo estrés (histórico).',
+        evidenceTrigger: null,
+        evidence: [],
+        status: 'OBSOLETE_CANDIDATE',
+        confidence: 'UNVERIFIED',
+        verified: false
+      },
+      {
+        id: 'BACKLOG_HIST_03_FORENSIC_TELEMETRY',
+        quadrant: 'NEW_FEATURE',
+        title: 'Motor de Telemetría Forense y Detección de Regresiones en Tiempo Real',
+        description: 'Capturar diffs de estado y diagnósticos de memoria tras cada ciclo de ejecución para auditoría continua (histórico).',
+        evidenceTrigger: null,
+        evidence: [],
+        status: 'OBSOLETE_CANDIDATE',
+        confidence: 'UNVERIFIED',
+        verified: false
+      },
+      {
+        id: 'BACKLOG_HIST_04_CONVERGENCE_AUTO_RESOLVER',
+        quadrant: 'AUTO_HEALING',
+        title: 'Auto-Curación y Reconciliación de Tipos AST con Retropropagación Semántica',
+        description: 'Resolver automáticamente discrepancias de tipos y contratos en APIs sin intervención humana (histórico).',
+        evidenceTrigger: null,
+        evidence: [],
+        status: 'OBSOLETE_CANDIDATE',
+        confidence: 'UNVERIFIED',
+        verified: false
+      }
+    ];
+  }
+
   loadBacklog() {
     if (fs.existsSync(this.backlogFile)) {
       try {
-        return JSON.parse(fs.readFileSync(this.backlogFile, 'utf8'));
+        const parsed = JSON.parse(fs.readFileSync(this.backlogFile, 'utf8'));
+        // Clasificación no destructiva de misiones históricas y exigencia de evidencia estructurada
+        if (Array.isArray(parsed.pendingBacklog)) {
+          parsed.pendingBacklog.forEach(item => {
+            const verification = verifyBacklogItemEvidence(item, this.root);
+            const title = (item.title || '').toLowerCase();
+            const isHistorical = title.includes('v1.2.0') || title.includes('50.000') || title.includes('merkle total') || title.includes('115+');
+            if (isHistorical) {
+              item.status = 'OBSOLETE_CANDIDATE';
+              item.confidence = 'UNVERIFIED';
+              item.verified = false;
+              item.evidence = verification.capsules;
+            } else if (!verification.verified) {
+              item.confidence = 'UNVERIFIED';
+              item.verified = false;
+              item.evidence = verification.capsules;
+            } else {
+              item.verified = Boolean(item.verified === true && verification.verified);
+              item.confidence = item.verified ? 'HIGH' : 'UNVERIFIED';
+              item.status = item.status || 'QUEUED';
+              item.evidence = verification.capsules;
+            }
+          });
+        }
+        return parsed;
       } catch (readErr) {
-        // En caso de corrupción, retornar backlog por defecto
+        // En caso de corrupción, retornar estructura recuperable SIN sobrescribir el archivo en disco
+        return {
+          corrupted: true,
+          readError: readErr.message,
+          status: 'RECOVERABLE_CORRUPTED_READ',
+          updatedAt: new Date().toISOString(),
+          activeFocus: 'NEW_FEATURE',
+          completedMissions: [],
+          pendingBacklog: this._getDefaultPendingBacklog()
+        };
       }
     }
     return {
       updatedAt: new Date().toISOString(),
       activeFocus: 'NEW_FEATURE',
       completedMissions: [],
-      pendingBacklog: [
-        {
-          id: 'BACKLOG_01_RELEASE_SEAL_GA',
-          quadrant: 'BACKLOG_RESUME',
-          title: 'Sellado Criptográfico Merkle Total y Certificación Release v1.2.0-GA',
-          description: 'Generar la atestación formal in-toto DSSE Ed25519 sobre todo el repositorio.'
-        },
-        {
-          id: 'FEATURE_02_PLUGIN_PACKAGER',
-          quadrant: 'NEW_FEATURE',
-          title: 'Generador y Empaquetador Autónomo de Módulos & Plugins Zero-Dependency',
-          description: 'Añadir a /drive la capacidad de construir y registrar nuevas herramientas completas.'
-        },
-        {
-          id: 'HEALING_03_SEMANTIC_TYPE_RESOLVER',
-          quadrant: 'AUTO_HEALING',
-          title: 'Auto-Curación AST Multi-Fase con Inferencia Semántica de Tipos y Contratos',
-          description: 'Resolver automáticamente discrepancias de API y exports en bucle cerrado.'
-        }
-      ]
+      pendingBacklog: this._getDefaultPendingBacklog()
     };
   }
 
@@ -87,15 +150,69 @@ class DriveMissionMatrix {
   }
 
   /**
-   * Genera un catálogo curado de 3 a 5 misiones organizadas por cuadrante según el enfoque actual.
+   * Obtiene exclusivamente las misiones del backlog que están activas y verificadas con evidencia física.
+   * Con repositorio limpio y sin intención, devuelve un array vacío (cero misiones seleccionables).
    */
-  generateCuratedMissions({ currentFocus = 'NEW_FEATURE', maxOptions = 4 } = {}) {
+  getSelectableMissions() {
     const backlog = this.loadBacklog();
+    return (Array.isArray(backlog.pendingBacklog) ? backlog.pendingBacklog : [])
+      .filter(item => item.status === 'QUEUED' && item.verified === true);
+  }
+
+  /**
+   * Genera un catálogo curado de 3 a 5 misiones organizadas por cuadrante según el enfoque actual.
+   * Por defecto (fail-closed), oculta misiones canónicas estáticas y backlog no verificado.
+   * Solo incluye misiones no verificadas si options.includeUnverified === true.
+   */
+  generateCuratedMissions({ currentFocus = 'NEW_FEATURE', maxOptions = 4, includeUnverified = false, onlyVerified = false } = {}) {
+    const backlog = this.loadBacklog();
+    const selectableMissions = this.getSelectableMissions();
+    const showUnverified = Boolean(includeUnverified && !onlyVerified);
+
+    if (!showUnverified) {
+      if (selectableMissions.length === 0) {
+        return {
+          status: 'BLOCKED_CONTEXT_REQUIRED',
+          activeFocus: currentFocus,
+          totalOffered: 0,
+          selectableCount: 0,
+          missions: [],
+          reason: 'Repositorio limpio sin misiones verificables en backlog ni intención observable.'
+        };
+      }
+      const selected = selectableMissions.slice(0, Math.min(5, maxOptions)).map(item => {
+        const qKey = item.quadrant || 'NEW_FEATURE';
+        const qInfo = QUADRANTS[qKey] || QUADRANTS.NEW_FEATURE;
+        return {
+          id: item.id,
+          quadrant: qKey,
+          prefix: qInfo.tag,
+          title: item.title,
+          description: item.description || item.summary || '',
+          evidence: item.evidence || [],
+          verified: true,
+          confidence: item.confidence || 'HIGH',
+          formattedOption: `[${qInfo.tag}] ${item.title} — ${item.description || item.summary || ''}`
+        };
+      });
+      return {
+        status: 'READY',
+        activeFocus: currentFocus,
+        totalOffered: selected.length,
+        selectableCount: selectableMissions.length,
+        missions: selected
+      };
+    }
+
     const curated = [];
 
-    // Priorizar ítems dinámicos del backlog guardado si existen
-    if (Array.isArray(backlog.pendingBacklog) && backlog.pendingBacklog.length > 0) {
-      for (const item of backlog.pendingBacklog) {
+    // Priorizar ítems dinámicos del backlog guardado si existen y están activos (no obsoletos)
+    const activePending = Array.isArray(backlog.pendingBacklog)
+      ? backlog.pendingBacklog.filter(item => item.status !== 'OBSOLETE_CANDIDATE')
+      : [];
+
+    if (activePending.length > 0) {
+      for (const item of activePending) {
         const qKey = item.quadrant || 'NEW_FEATURE';
         const qInfo = QUADRANTS[qKey] || QUADRANTS.NEW_FEATURE;
         curated.push({
@@ -107,31 +224,31 @@ class DriveMissionMatrix {
       }
     }
 
-    // Asegurar los 4 cuadrantes con misiones canónicas si la lista es corta
+    // Asegurar los 4 cuadrantes con misiones canónicas si se solicitó explícitamente includeUnverified
     const canonicals = [
       {
         quadrant: 'NEW_FEATURE',
         prefix: QUADRANTS.NEW_FEATURE.tag,
-        title: 'Generador y Empaquetador Autónomo de Módulos & Plugins Zero-Dependency',
-        description: 'Permitir a /drive construir, aislar y registrar nuevas herramientas funcionales completas con 1 clic.'
+        title: 'Orquestación Contextual Gobernada y Verificación Observable',
+        description: 'Estructurar el ciclo de ingeniería bajo MissionContext y las 12 skills canónicas.'
       },
       {
         quadrant: 'AUTO_HEALING',
         prefix: QUADRANTS.AUTO_HEALING.tag,
-        title: 'Motor de Auto-Curación AST Multi-Fase con Inferencia Semántica',
-        description: 'Sintetizar parches automáticos para resolver dependencias faltantes y discrepancias de contratos en bucle cerrado.'
+        title: 'Diagnóstico Sistemático y Reconciliación de Suites de Prueba',
+        description: 'Detectar y eliminar flakiness temporal en suites sin alterar contratos públicos.'
       },
       {
         quadrant: 'BACKLOG_RESUME',
         prefix: QUADRANTS.BACKLOG_RESUME.tag,
-        title: 'Sellado Criptográfico Merkle Total y Certificación Release v1.2.0-GA',
-        description: 'Emitir el sobre DSSE in-toto v1 con firma Ed25519 sobre los 270+ archivos y sellar la versión definitiva.'
+        title: 'Verificación de Atestaciones DSSE y Trazabilidad SLSA Local',
+        description: 'Validar sobres in-toto DSSE Ed25519 sobre el estado del repositorio y SBOMs.'
       },
       {
         quadrant: 'CORE_ENGINEERING',
         prefix: QUADRANTS.CORE_ENGINEERING.tag,
-        title: 'Simulador de Cargas Extremas y Benchmarking Asintótico Concurrente',
-        description: 'Simular 50.000 operaciones en paralelo para auditar latencias y consistencia bajo estrés.'
+        title: 'Auditoría de Salud e Invariantes del Workspace',
+        description: 'Ejecutar comprobación de salud de 13 puertas y verificar integridad de esquemas.'
       }
     ];
 
@@ -152,10 +269,12 @@ class DriveMissionMatrix {
 
     return {
       activeFocus: currentFocus,
+      status: selectableMissions.length > 0 ? 'READY' : 'UNVERIFIED_CATALOG',
       totalOffered: selectedMissions.length,
+      selectableCount: selectableMissions.length,
       missions: selectedMissions.map(m => ({
         quadrant: m.quadrant,
-        formattedOption: `${m.prefix} ${m.title} — ${m.description}`,
+        formattedOption: `${m.prefix} ${m.title} — ${m.description} [NO VERIFICADA]`,
         title: m.title,
         description: m.description
       }))

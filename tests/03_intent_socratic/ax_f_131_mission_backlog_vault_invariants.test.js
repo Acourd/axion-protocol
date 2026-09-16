@@ -31,14 +31,19 @@ assert.ok(Array.isArray(initialVault.reservoir), 'El reservorio debe ser un arra
 assert.ok(initialVault.reservoir.length >= 4, 'Debe contener al menos 4 misiones iniciales');
 console.log(`✓ Reservorio cargado con éxito: ${initialVault.reservoir.length} misiones indexadas`);
 
-// 2. Validar formateo visual de opciones
-const selection = vault.getVisualMissionSelection(4);
+// 2a. Validar que por defecto con repo limpio devuelve bloqueo fail-closed
+const defaultSelection = vault.getVisualMissionSelection(4);
+assert.strictEqual(defaultSelection.status, 'BLOCKED_CONTEXT_REQUIRED');
+assert.strictEqual(defaultSelection.displayedCount, 0);
+
+// 2b. Validar formateo visual de opciones (con includeUnverified explícito)
+const selection = vault.getVisualMissionSelection(4, '', { includeUnverified: true });
 assert.strictEqual(selection.displayedCount, 4);
 assert.ok(selection.options[0].formattedOption.startsWith('(Recomendado)'), 'La primera opción debe ser la recomendada');
 assert.ok(selection.options[0].formattedOption.includes('[') && selection.options[0].formattedOption.includes(']'));
 console.log('✓ Formateo visual de alta legibilidad e insignias validado');
 
-// 2b. Validar mutaciones del ciclo de vida (add, postpone, archive, reemerge)
+// 2c. Validar mutaciones del ciclo de vida (add, postpone, archive, reemerge)
 const added = vault.addMission({ title: 'Misión Test Dinámica', category: 'NEW_FEATURE', priority: 99 });
 assert.ok(added && added.id, 'Debe agregar la misión con ID');
 assert.strictEqual(vault.loadVault().reservoir.some(m => m.id === added.id), true);
@@ -58,7 +63,7 @@ console.log('✓ Mutaciones de ciclo de vida (add, postpone, archive, reemerge) 
 
 // 3. Validar integración con DriveEngine
 const driveEngine = new DriveEngine(ROOT);
-const driveSelection = driveEngine.getVaultMissionSelection(3);
+const driveSelection = driveEngine.getVaultMissionSelection(3, '', { includeUnverified: true });
 assert.strictEqual(driveSelection.displayedCount, 3);
 console.log('✓ Integración DriveEngine.getVaultMissionSelection() verificada');
 
