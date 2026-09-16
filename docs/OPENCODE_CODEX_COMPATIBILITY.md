@@ -35,7 +35,7 @@ For air-gapped, containerized, or micro-sandboxed OpenCode workspaces:
 ```bash
 # Execute the governance pipeline from a single standalone file
 # (the bundle is regenerated per release; no static size is claimed here)
-node dist/axion.bundle.js verify
+node dist/axion.bundle.js help
 ```
 
 ### 3. Native Rules & Directives (`.opencode/rules/`)

@@ -3,13 +3,14 @@
 /**
  * Axion Protocol — Invariantes de Atestación in-toto Statement v1 y Sobre DSSE Ed25519 para /drive.
  *
- * Valida de forma estricta:
- * 1. Generación y preservación determinista de par de claves asimétricas Ed25519.
+ * Valida de forma estricta (contrato evidence-bound P0-C):
+ * 1. Creación/validación explícita de par de claves asimétricas Ed25519 (sin rotación silenciosa).
  * 2. Construcción canónica del predicado in-toto v1 vinculado al Merkle Root del repositorio.
- * 3. Formato y codificación DSSE PAE (Pre-Authentication Encoding).
- * 4. Verificación criptográfica positiva (PASS) con firma válida.
- * 5. Detección inmediata y rechazo (FAIL) ante adulteración de payload o firma.
- * 6. Integración transparente con DriveEngine.
+ * 3. Sin evidencia ejecutada, la atestación declara UNVERIFIED y no afirma éxito.
+ * 4. Las cifras del llamador quedan marcadas como claims no verificados.
+ * 5. Verificación criptográfica positiva (PASS) con firma válida.
+ * 6. Detección inmediata y rechazo (FAIL) ante adulteración de payload o firma.
+ * 7. Integración transparente con DriveEngine.
  */
 
 const assert = require('assert');
@@ -23,13 +24,14 @@ console.log('=== AX-F-112 Invariantes de Atestación in-toto DSSE Ed25519 para /
 const ROOT = path.resolve(__dirname, '..', '..');
 const attester = new DriveDsseAttester(ROOT);
 
-// 1. Validar par de claves Ed25519
-const keyPair = attester.getOrCreateKeyPair();
+// 1. Validar par de claves Ed25519 (creación explícita si es la primera vez)
+const keyPair = attester.ensureKeyPair();
 assert.ok(keyPair.publicKeyPem.includes('BEGIN PUBLIC KEY'), 'Debe existir clave pública PEM');
 assert.ok(keyPair.privateKeyPem.includes('BEGIN PRIVATE KEY'), 'Debe existir clave privada PEM');
-console.log('✓ Par de claves asimétricas Ed25519 cargado/generado correctamente');
+assert.ok(keyPair.keyId && keyPair.keyId.length === 16, 'Debe derivar un keyId de 16 hex');
+console.log('✓ Par de claves asimétricas Ed25519 cargado/creado explícitamente');
 
-// 2. Emitir atestación de prueba
+// 2. Emitir atestación de prueba sin evidencia: debe quedar UNVERIFIED
 const attestRes = attester.attestSession({
   missionId: 'MISSION_INVARIANTS_TEST',
   title: 'Validación de Atestación Criptográfica',
@@ -42,18 +44,23 @@ const attestRes = attester.attestSession({
 assert.ok(attestRes.attestationPath, 'Debe retornar ruta de archivo de atestación');
 assert.ok(fs.existsSync(attestRes.attestationPath), 'El archivo .dsse.json debe existir en disco');
 assert.ok(attestRes.merkleRoot && attestRes.merkleRoot.length === 64, 'Debe enlazar el Merkle Root');
+assert.strictEqual(attestRes.verificationStatus, 'UNVERIFIED', 'Sin evidencia la atestación no puede declararse verificada');
 console.log(`✓ Sobre DSSE in-toto v1 emitido y sellado en: ${path.basename(attestRes.attestationPath)}`);
 
-// 3. Validar verificación positiva
+// 3. Validar verificación positiva de firma + honestidad del predicado
 const verifyValid = attester.verifyAttestation(attestRes.dsseEnvelope);
 assert.strictEqual(verifyValid.valid, true, 'La verificación de firma DSSE debe ser exitosa (PASS)');
 assert.strictEqual(verifyValid.statement._type, 'https://in-toto.io/Statement/v1');
 assert.strictEqual(verifyValid.statement.predicate.mission.missionId, 'MISSION_INVARIANTS_TEST');
-console.log('✓ Verificación matemática de firma asimétrica Ed25519 DSSE exitosa (PASS)');
+assert.strictEqual(verifyValid.statement.predicate.verification.status, 'UNVERIFIED');
+assert.strictEqual(verifyValid.statement.predicate.mission.converged, null, 'converged no puede afirmarse sin evidencia');
+assert.strictEqual(verifyValid.statement.predicate.governance.suitesPassed, null, 'suitesPassed no puede fijarse sin evidencia');
+assert.strictEqual(verifyValid.statement.predicate.governance.vibeGuardStrictClean, null, 'vibeGuardStrictClean no puede fijarse sin evidencia');
+assert.strictEqual(verifyValid.statement.predicate.unverifiedClaims.values.suitesPassed, 128, 'La cifra del llamador queda como claim no verificado');
+console.log('✓ Verificación matemática de firma Ed25519 DSSE exitosa y predicado UNVERIFIED honesto');
 
 // 4. Validar detección de adulteración (Tampering)
 const tamperedEnvelope = JSON.parse(JSON.stringify(attestRes.dsseEnvelope));
-// Modificar un carácter del payload base64
 const decodedPayload = JSON.parse(Buffer.from(tamperedEnvelope.payload, 'base64').toString('utf8'));
 decodedPayload.predicate.mission.title = 'Título Adulterado';
 tamperedEnvelope.payload = Buffer.from(JSON.stringify(decodedPayload)).toString('base64');
@@ -71,6 +78,7 @@ const driveAttest = driveEngine.certifyDriveSession({
 });
 
 assert.ok(driveAttest.attestationPath, 'DriveEngine debe certificar la sesión vía DSSE');
+assert.strictEqual(driveAttest.verificationStatus, 'UNVERIFIED');
 console.log('✓ Integración DriveEngine.certifyDriveSession() verificada');
 
 console.log('\nPASS AX-F-112 — Invariantes de atestación criptográfica in-toto DSSE verificados al 100%.');

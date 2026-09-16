@@ -95,7 +95,7 @@ class AntigravityDriveHarness {
         title: '🔐 [Misión C] Blindaje de Invariantes Criptográficos y Atestación in-toto v1 / DSSE',
         category: 'CRYPTO_ATTESTATION',
         depth: 'HIGH',
-        description: 'Verificar la cadena de custodia completa del repositorio, probar listas de revocación de claves Ed25519 y emitir atestación formal in-toto con firma asimétrica verificable por cosign/SLSA.',
+        description: 'Verificar la cadena de custodia completa del repositorio, probar listas de revocación de claves Ed25519 y emitir atestación formal in-toto con firma asimétrica verificable con herramientas in-toto.',
         phases: [
           'Verificación de canonicalización RFC 8785 en todos los manifiestos JSON',
           'Prueba de resistencia ante firmas forjadas y claves revocadas',

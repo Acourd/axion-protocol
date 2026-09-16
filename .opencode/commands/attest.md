@@ -1,6 +1,6 @@
 ---
 name: attest
-description: Emite y verifica atestaciones in-toto Statement v1 en sobre DSSE con firma Ed25519, compatibles con SLSA y cosign.
+description: Emite y verifica atestaciones in-toto Statement v1 en sobre DSSE con firma Ed25519, formato in-toto v1; sin certificación SLSA.
 ---
 
 # /attest — Atestación Criptográfica in-toto / DSSE (Axion Protocol)

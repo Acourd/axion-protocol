@@ -123,16 +123,15 @@ class AgentChaosMonkey {
     let strictlyRejected = 0;
     const DriveDsseAttester = require('./drive_dsse_attester.js');
     const attester = new DriveDsseAttester(this.root);
+    // Sin keyring no habría firma real que corromper: el vector quedaría vacío.
+    attester.ensureKeyPair();
 
     for (let i = 0; i < iterations; i++) {
       try {
         const emitRes = attester.emitAttestation({
           missionId: `chaos-${i}`,
           title: `Prueba de Caos ${i}`,
-          converged: true,
-          iterations: 1,
-          suitesPassed: 160,
-          chaosVectorsBlocked: 100
+          iterations: 1
         });
 
         const envelope = JSON.parse(JSON.stringify(emitRes.dsseEnvelope));

@@ -641,7 +641,7 @@ class DriveEngine {
   }
 
   /**
-   * Exporta la matriz de conformidad contra SLSA L3, in-toto v1, NIST SSDF y OWASP.
+   * Exporta la autoevaluación de conformidad (SLSA sin certificación de nivel, in-toto v1, NIST SSDF y OWASP).
    */
   generateComplianceMatrix() {
     const ComplianceMatrixExporter = require('./compliance_matrix_exporter.js');

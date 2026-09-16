@@ -1,65 +1,49 @@
-# Axion Protocol — Asymptotic Sovereign Maturity Report v2.0
+# Axion Protocol — Asymptotic Maturity Self-Assessment (v3.0)
 
-> **Empirical Evaluation of the 7 Sovereign Frontiers and 10x Evolutionary Roadmap.**
-
----
-
-## 🏛️ Executive Summary
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                 AXION PROTOCOL — SOVEREIGN MATURITY MATRIX (v2.0)            │
-├──────────────────────────────────────┬─────────────┬────────────────────────┤
-│ Frontier                             │ Score (AMR) │ Evolutionary Horizon   │
-├──────────────────────────────────────┼─────────────┼────────────────────────┤
-│ 1. Formal Verification & Invariants  │ 20%         │ SMT Solver & Proofs    │
-│ 2. Fail-Closed Isolation & Runtime   │ 22%         │ OS-Level MicroVM Ring  │
-│ 3. Cognitive Density & Token Economy │ 28%         │ Sub-300ms Fast Loops   │
-│ 4. Fractal Memory & Anti-Drift       │ 25%         │ SQLite Merkle Graph    │
-│ 5. Adaptive Evolution & Self-Healing │ 24%         │ AST Synthesis Engine   │
-│ 6. Immutable DSSE Traceability       │ 32%         │ in-toto v1 Statement   │
-│ 7. Semantic Anti-Vibecoding Radar    │ 25%         │ VibeGuard Clean-Code   │
-├──────────────────────────────────────┼─────────────┼────────────────────────┤
-│ 🏆 GLOBAL FOUNDATIONAL MATURITY      │ 25.1%       │ Day-1 Sovereign Alpha  │
-└──────────────────────────────────────┴─────────────┴────────────────────────┘
-```
+> **Experimental status.** This document is a qualitative self-assessment by the project
+> itself. It is **not** a certification, an independent audit, or a reproducible
+> measurement. The numeric maturity scores published in earlier revisions (v2.0) were
+> removed because they were subjective and not reproducible.
 
 ---
 
-## 🔍 The 7 Sovereign Maturity Frontiers
+## Verified Current State
 
-### 1. Formal Verification & Invariants (20%)
-* **Current State:** 195 deterministic test suites (100% PASS) across 5 domains.
-* **Asymptotic Horizon:** Mathematical proofs of invariant correctness across unvisited state spaces via Z3/SMT solvers.
-
-### 2. Fail-Closed Isolation & Runtime Sandboxing (22%)
-* **Current State:** Lexical `PreToolUse` analysis with `shell: false` execution.
-* **Asymptotic Horizon:** Ephemeral micro-sandboxes with isolated file trees per agent worker.
-
-### 3. Cognitive Density & Token Economy (28%)
-* **Current State:** Fast-Loop (< 300 ms) execution and `sliceASTFocus` token budget guard.
-* **Asymptotic Horizon:** Zero-redundancy context pruning reducing session token consumption by 80%.
-
-### 4. Fractal Memory & Anti-Drift (25%)
-* **Current State:** Local SQLite memory graph and 85 persistent convention records in `.axion/memory/`.
-* **Asymptotic Horizon:** Multi-session vectorless Merkle memory indexing across distributed nodes.
-
-### 5. Adaptive Evolution & Self-Healing (24%)
-* **Current State:** Atomic rollback in < 5ms verified via SHA-256 checkpoints.
-* **Asymptotic Horizon:** Autonomous AST patch synthesis resolving multi-file compiler regressions without human intervention.
-
-### 6. Immutable DSSE Traceability (32%)
-* **Current State:** in-toto Statement v1 envelopes with Ed25519 signatures and RFC 8785 canonical JSON.
-* **Asymptotic Horizon:** Decentralized P2P transparency log with hardware security key (YubiKey/WebAuthn) support.
-
-### 7. Semantic Anti-Vibecoding Radar (25%)
-* **Current State:** Lexical VibeGuard scanning 126 files with zero antipatterns.
-* **Asymptotic Horizon:** Deep AST semantic intent verifier preventing subtle logic deviations from user goals.
+- 238 deterministic test suites run in CI (`node tests/run_all.js`) across the 5 governance domains.
+- CI exercises health (`axion check`), the VibeGuard quality gate, the PreToolUse hook,
+  the killswitch, deterministic rollback, and the attestation chain.
+- Multi-OS packaging is tested by installing the real `npm pack` tarball on Ubuntu, macOS and Windows.
+- The SBOM covers the published surface declared in `package.json#files`; provenance is
+  descriptive and claims no SLSA level.
+- Arbitrary code execution remains disabled: there is no security sandbox in this runtime.
 
 ---
 
-## 🚀 3-Tier Evolutionary Ladder
+## The 7 Sovereign Frontiers (Declared State, No Scores)
 
-* **Tier 1 — Immediate Local Excellence:** Consolidate 195 test suites and sub-millisecond AST locking.
-* **Tier 2 — 10x Structural Leap:** Multi-agent Swarm v2.0 coordination with Ed25519 P2P message bus and BFT quorum consensus.
-* **Tier 3 — Sovereign Asymptotic Horizon:** Continuous zero-defect agentic operations with zero cognitive friction for non-technical users.
+1. **Formal Verification & Invariants** — Partial: AST contracts, schema validation and
+   local invariant suites exist; there is no SMT/Z3 machine-checked proof.
+2. **Fail-Closed Isolation & Runtime Safety** — Partial: lexical preflight, `shell: false`
+   execution and killswitch exist; no OS-level isolation or micro-sandbox.
+3. **Cognitive Density & Token Economy** — Partial: local context pruning tooling exists;
+   savings claims depend on workload and are not guaranteed.
+4. **Fractal Memory & Anti-Drift** — Partial: local memory graph and checkpoints exist;
+   no distributed or hardware-backed guarantees.
+5. **Adaptive Evolution & Self-Healing** — Partial: convergence loops and AST patch
+   synthesis are experimental; human review remains required.
+6. **Immutable DSSE Traceability** — Partial: in-toto Statement v1 envelopes with Ed25519
+   signatures and RFC 8785 canonical JSON exist; evidence is bound by artifact path+hash,
+   and the signature proves authorship of the JSON, not execution of the payload.
+7. **Semantic Anti-Vibecoding Radar** — Partial: lexical VibeGuard gate runs in CI;
+   deep semantic intent verification is not implemented.
+
+---
+
+## 3-Tier Evolutionary Ladder
+
+* **Tier 1 — Immediate Local Excellence:** Keep the suite, health checks and quality gates
+  green and reproducible in CI.
+* **Tier 2 — 10x Structural Leap:** Multi-agent coordination with authenticated messaging
+  and quorum consensus (experimental).
+* **Tier 3 — Asymptotic Horizon:** Continuous zero-defect agentic operations with zero
+  cognitive friction for non-technical users (not achieved; treated as direction, not claim).

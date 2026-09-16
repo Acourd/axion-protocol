@@ -19,6 +19,16 @@ const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
 
+/**
+ * Marca de compilación reproducible: SOURCE_DATE_EPOCH si existe, o el epoch.
+ * Evita que cada compilación modifique un artefacto versionado.
+ */
+function deterministicBuildTimestamp() {
+  const raw = Number(process.env.SOURCE_DATE_EPOCH);
+  const ms = Number.isFinite(raw) && raw > 0 ? raw * 1000 : 0;
+  return new Date(ms).toISOString();
+}
+
 const CORE_MODULES = [
   'tools/preflight.js',
   'tools/structured_command.js',
@@ -100,7 +110,7 @@ ${code}
 /**
  * Axion Protocol — Standalone Single-File Bundle
  * Versión: ${pkgVersion} (Zero-Dependency)
- * Compilado: ${new Date().toISOString()}
+ * Compilado: ${deterministicBuildTimestamp()}
  */
 
 const __modules = {};

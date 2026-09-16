@@ -5,10 +5,14 @@
  * Axion Protocol — Sovereign SBOM (Software Bill of Materials) Generator
  *
  * Genera manifiestos SBOM deterministas para inventario local de componentes:
- * 1. Mapeo estructurado conforme a los esquemas CycloneDX v1.5 y SPDX 2.3 JSON.
+ * 1. La superficie indexada es la realmente distribuida: se expande `package.json#files`
+ *    (respetando exclusiones), más los archivos que npm publica siempre. Los SBOM de
+ *    salida y `docs/site/` quedan excluidos para evitar auto-referencia.
  * 2. Cero dependencias externas: indexación nativa de hashes SHA-256 de módulos locales.
  * 3. Declaración de 'Zero Third-Party Dependencies' basada en package.json y el inventario local generado (dependencies: {}).
  * 4. Genera inventarios locales con hashes SHA-256, sin certificar procedencia, autoridad externa ni integridad de ejecución.
+ * 5. `verifyCommittedSboms()` compara los SBOM versionados contra el estado real del
+ *    árbol: si un archivo distribuido falta o cambió de hash, la verificación falla.
  *
  * Ubicación canónica de salida: docs/sbom/ (con réplica espejo en sbom/ para compatibilidad).
  */
@@ -19,45 +23,30 @@ const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
 
+const ALWAYS_PUBLISHED = ['package.json', 'README.md', 'LICENSE', 'NOTICE'];
+const EXCLUDED_PREFIXES = ['docs/site/', 'sbom/', 'docs/sbom/'];
+
+/**
+ * Marca temporal reproducible: SOURCE_DATE_EPOCH si está definido, o el epoch.
+ * Nunca se usa el reloj de pared: dos ejecuciones deben producir bytes idénticos.
+ */
+function deterministicTimestamp() {
+  const raw = Number(process.env.SOURCE_DATE_EPOCH);
+  const ms = Number.isFinite(raw) && raw > 0 ? raw * 1000 : 0;
+  return new Date(ms).toISOString();
+}
+
+/**
+ * Identificador estable derivado del contenido (UUID con forma canónica).
+ */
+function contentUuid(content) {
+  const h = crypto.createHash('sha256').update(content).digest('hex');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+}
+
 class SovereignSBOMGenerator {
   constructor(projectRoot = ROOT) {
     this.root = path.resolve(projectRoot);
-  }
-
-  /**
-   * Recorre recursivamente los archivos del código fuente del kernel.
-   */
-  collectProjectFiles() {
-    const files = [];
-    const scanDirs = ['tools', 'bin', '.agents/skills'];
-
-    for (const dir of scanDirs) {
-      const fullDir = path.join(this.root, dir);
-      if (!fs.existsSync(fullDir)) continue;
-
-      const walk = (d) => {
-        const entries = fs.readdirSync(d, { withFileTypes: true });
-        for (const entry of entries) {
-          const fullPath = path.join(d, entry.name);
-          if (entry.isDirectory()) {
-            walk(fullPath);
-          } else if (entry.isFile() && (entry.name.endsWith('.js') || entry.name.endsWith('.md') || entry.name.endsWith('.json'))) {
-            const relPath = path.relative(this.root, fullPath).replace(/\\/g, '/');
-            const content = fs.readFileSync(fullPath);
-            const sha256 = crypto.createHash('sha256').update(content).digest('hex');
-            files.push({
-              path: relPath,
-              sizeBytes: content.length,
-              sha256
-            });
-          }
-        }
-      };
-
-      walk(fullDir);
-    }
-
-    return files.sort((a, b) => a.path.localeCompare(b.path));
   }
 
   /**
@@ -81,16 +70,88 @@ class SovereignSBOMGenerator {
     return pkg.version;
   }
 
+  loadPackageInfo() {
+    const pkgPath = path.join(this.root, 'package.json');
+    if (!fs.existsSync(pkgPath)) return { files: [] };
+    try {
+      return JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    } catch (_) {
+      return { files: [] };
+    }
+  }
+
+  isExcluded(relPath) {
+    const normalized = relPath.split(path.sep).join('/');
+    if (EXCLUDED_PREFIXES.some((p) => normalized.startsWith(p))) return true;
+    if (/\.tgz$/.test(normalized)) return true;
+    if (normalized.split('/').some((seg) => seg === 'node_modules' || seg.startsWith('.sandbox'))) return true;
+    return false;
+  }
+
+  /**
+   * Superficie distribuida real: package.json#files + archivos siempre publicados.
+   */
+  distributedSurface() {
+    const pkg = this.loadPackageInfo();
+    const files = [];
+    const seen = new Set();
+
+    const pushFile = (absPath) => {
+      const relPath = path.relative(this.root, absPath).split(path.sep).join('/');
+      if (this.isExcluded(relPath) || seen.has(relPath)) return;
+      seen.add(relPath);
+      const content = fs.readFileSync(absPath);
+      files.push({
+        path: relPath,
+        sizeBytes: content.length,
+        sha256: crypto.createHash('sha256').update(content).digest('hex')
+      });
+    };
+
+    for (const entry of ALWAYS_PUBLISHED) {
+      const abs = path.join(this.root, entry);
+      if (fs.existsSync(abs) && fs.statSync(abs).isFile()) pushFile(abs);
+    }
+
+    const entries = Array.isArray(pkg.files) ? pkg.files : [];
+    for (const entry of entries) {
+      if (typeof entry !== 'string' || entry.startsWith('!')) continue;
+      const clean = entry.replace(/\/$/, '');
+      if (this.isExcluded(clean)) continue;
+      const abs = path.join(this.root, clean);
+      if (!fs.existsSync(abs)) continue;
+
+      if (fs.statSync(abs).isFile()) {
+        pushFile(abs);
+        continue;
+      }
+
+      const walk = (d) => {
+        for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+          const child = path.join(d, e.name);
+          if (e.isDirectory()) {
+            walk(child);
+          } else if (e.isFile()) {
+            pushFile(child);
+          }
+        }
+      };
+      walk(abs);
+    }
+
+    return files.sort((a, b) => a.path.localeCompare(b.path));
+  }
+
   /**
    * Genera el SBOM en formato CycloneDX v1.5 JSON.
    */
   generateCycloneDX() {
-    const files = this.collectProjectFiles();
-    const timestamp = new Date().toISOString();
-    const serialNumber = `urn:uuid:${crypto.randomUUID()}`;
     const version = this.getPackageVersion();
+    const files = this.distributedSurface();
+    const timestamp = deterministicTimestamp();
+    const serialNumber = `urn:uuid:${contentUuid(JSON.stringify(files))}`;
 
-    const components = files.map((f, idx) => ({
+    const components = files.map((f) => ({
       type: 'file',
       'bom-ref': `pkg:generic/axion-protocol/${f.path}`,
       name: f.path,
@@ -114,7 +175,7 @@ class SovereignSBOMGenerator {
       metadata: {
         timestamp,
         tools: [
-          { vendor: 'Axion Protocol', name: 'SovereignSBOMGenerator', version: '2.0.0' }
+          { vendor: 'Axion Protocol', name: 'SovereignSBOMGenerator', version: '3.0.0' }
         ],
         component: {
           type: 'application',
@@ -125,7 +186,8 @@ class SovereignSBOMGenerator {
         },
         properties: [
           { name: 'axion:zeroDependencies', value: 'true' },
-          { name: 'axion:runtimeIntegrity', value: 'FAIL_CLOSED' }
+          { name: 'axion:runtimeIntegrity', value: 'FAIL_CLOSED' },
+          { name: 'axion:sbomSurface', value: 'package.json#files (publish surface)' }
         ]
       },
       components
@@ -136,9 +198,10 @@ class SovereignSBOMGenerator {
    * Genera el SBOM en formato SPDX 2.3 JSON.
    */
   generateSPDX() {
-    const files = this.collectProjectFiles();
-    const timestamp = new Date().toISOString();
     const version = this.getPackageVersion();
+    const files = this.distributedSurface();
+    const timestamp = deterministicTimestamp();
+    const surfaceDigest = crypto.createHash('sha256').update(JSON.stringify(files)).digest('hex');
 
     const spdxFiles = files.map((f, idx) => ({
       fileName: `./${f.path}`,
@@ -155,10 +218,10 @@ class SovereignSBOMGenerator {
       dataLicense: 'CC0-1.0',
       SPDXID: 'SPDXRef-DOCUMENT',
       name: 'axion-protocol',
-      documentNamespace: `https://github.com/Acourd/axion-protocol/spdx/${Date.now()}`,
+      documentNamespace: `https://github.com/Acourd/axion-protocol/spdx/${surfaceDigest}`,
       creationInfo: {
         created: timestamp,
-        creators: ['Tool: SovereignSBOMGenerator-2.0.0', 'Organization: Axion Protocol']
+        creators: ['Tool: SovereignSBOMGenerator-3.0.0', 'Organization: Axion Protocol']
       },
       packages: [
         {
@@ -172,6 +235,61 @@ class SovereignSBOMGenerator {
         }
       ],
       files: spdxFiles
+    };
+  }
+
+  /**
+   * Compara un manifiesto CycloneDX contra la superficie real.
+   * Devuelve missing/mismatched/extra y `valid` solo si los tres están vacíos.
+   */
+  compareManifestToSurface(manifest) {
+    const expected = new Map(this.distributedSurface().map((f) => [f.path, f.sha256]));
+    const declared = new Map();
+    for (const comp of (manifest && manifest.components) || []) {
+      const hashEntry = (comp.hashes || []).find((h) => h.alg === 'SHA-256');
+      declared.set(comp.name, hashEntry ? hashEntry.content : null);
+    }
+
+    const missing = [...expected.keys()].filter((k) => !declared.has(k));
+    const mismatched = [...expected.keys()].filter((k) => declared.has(k) && declared.get(k) !== expected.get(k));
+    const extra = [...declared.keys()].filter((k) => !expected.has(k));
+
+    return {
+      valid: missing.length === 0 && mismatched.length === 0 && extra.length === 0,
+      expectedCount: expected.size,
+      declaredCount: declared.size,
+      missing,
+      mismatched,
+      extra
+    };
+  }
+
+  /**
+   * Verifica los SBOM versionados contra el estado actual del árbol.
+   */
+  verifyCommittedSboms() {
+    const locations = [
+      path.join(this.root, 'docs', 'sbom', 'sbom.cyclonedx.json'),
+      path.join(this.root, 'sbom', 'sbom.cyclonedx.json')
+    ];
+
+    const results = locations.map((location) => {
+      const rel = path.relative(this.root, location).split(path.sep).join('/');
+      if (!fs.existsSync(location)) {
+        return { path: rel, valid: false, reason: 'MISSING_COMMITTED_SBOM' };
+      }
+      let manifest;
+      try {
+        manifest = JSON.parse(fs.readFileSync(location, 'utf8'));
+      } catch (parseErr) {
+        return { path: rel, valid: false, reason: `UNREADABLE_COMMITTED_SBOM: ${parseErr.message}` };
+      }
+      return { path: rel, ...this.compareManifestToSurface(manifest) };
+    });
+
+    return {
+      valid: results.length > 0 && results.every((r) => r.valid),
+      results
     };
   }
 
@@ -208,8 +326,23 @@ class SovereignSBOMGenerator {
 // Ejecución CLI directa
 if (require.main === module) {
   const sbom = new SovereignSBOMGenerator();
+  const args = process.argv.slice(2);
+
+  if (args.includes('--verify')) {
+    const verification = sbom.verifyCommittedSboms();
+    for (const r of verification.results) {
+      console.log(`[${r.valid ? 'OK' : 'FALLO'}] ${r.path} (declarados: ${r.declaredCount}, esperados: ${r.expectedCount})`);
+      if (!r.valid) {
+        console.log(`  missing: ${(r.missing || []).slice(0, 5).join(', ')}${(r.missing || []).length > 5 ? ' ...' : ''}`);
+        console.log(`  mismatched: ${(r.mismatched || []).slice(0, 5).join(', ')}${(r.mismatched || []).length > 5 ? ' ...' : ''}`);
+        console.log(`  extra: ${(r.extra || []).slice(0, 5).join(', ')}${(r.extra || []).length > 5 ? ' ...' : ''}`);
+      }
+    }
+    process.exit(verification.valid ? 0 : 1);
+  }
+
   const res = sbom.exportSBOMs();
-  console.log(`[Axion Sovereign SBOM] Manifiestos generados exitosamente (${res.componentCount} módulos):`);
+  console.log(`[Axion Sovereign SBOM] Manifiestos generados exitosamente (${res.componentCount} archivos de la superficie distribuida):`);
   console.log(`  ✓ CycloneDX: ${res.cdxPath}`);
   console.log(`  ✓ SPDX 2.3 : ${res.spdxPath}`);
 }

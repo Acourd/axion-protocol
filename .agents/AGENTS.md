@@ -14,7 +14,7 @@ Axion Protocol incorpora 12 comandos de gobernanza diseñados para coexistir sin
 
 | Comando | Qué hace |
 | :--- | :--- |
-| **`/attest`** | Emite y verifica atestaciones in-toto Statement v1 en sobre DSSE con firma Ed25519, compatibles con SLSA y cosign. |
+| **`/attest`** | Emite y verifica atestaciones in-toto Statement v1 en sobre DSSE con firma Ed25519, formato in-toto v1; sin certificación SLSA. |
 | **`/clarify`** | Aclara peticiones ambiguas mediante exactamente 2 preguntas humanas con opciones A/B/C antes de tocar código. |
 | **`/debug`** | Ciclo sistemático de depuración en 4 fases con causa raíz y verificación por evidencia, sin parches ciegos. |
 | **`/drive`** | Meta-orquestador autónomo universal de alta densidad cognitiva en bucle cerrado. |

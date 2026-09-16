@@ -2,13 +2,17 @@
 'use strict';
 
 /**
- * Axion Protocol — CycloneDX SBOM & SLSA Provenance Generator
+ * Axion Protocol — CycloneDX SBOM & in-toto Provenance Generator (Descriptive, Not SLSA-Verified)
  *
- * Generador nativo zero-dependency de SBOM CycloneDX v1.5 y procedencia SLSA v1.0:
- * 1. Genera Software Bill of Materials (SBOM) en formato CycloneDX v1.5 JSON.
- * 2. Mapea todos los componentes, herramientas, políticas y esquemas con sus digests SHA-256.
- * 3. Construye atestaciones de procedencia in-toto Statement v1 con predicado SLSA v1.0.
- * 4. Exporta reportes a .axion/reports/sbom.cyclonedx.json y provenance.slsa.json.
+ * Genera SBOM CycloneDX v1.5 y un Statement in-toto v1 con estructura de procedencia:
+ * 1. El SBOM cubre los componentes de código distribuidos por package.json.
+ * 2. La procedencia se emite desde la identidad del entorno real (CI o host local).
+ * 3. NO se declara ningún nivel SLSA. Este proyecto no emite provenance SLSA verificable
+ *    (requiere un builder controlado e identidad de CI atestada). El predicado declara
+ *    explícitamente `provenanceStatus: 'DESCRIPTIVE_ONLY'` y `slsaLevel: 'NOT_ASSERTED'`.
+ * 4. Si se aporta un artefacto construido (`--artifact <path>`), el subject se enlaza a su
+ *    SHA-256 real; si no, el subject apunta solo al digest del SBOM y se declara sin enlace
+ *    de artefacto.
  *
  * Cero dependencias externas.
  */
@@ -18,6 +22,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
+const DEFAULT_REPO_URL = 'https://github.com/Acourd/axion-protocol';
 
 class ProvenanceSbomGenerator {
   constructor(projectRoot = ROOT) {
@@ -44,7 +49,7 @@ class ProvenanceSbomGenerator {
 
   loadPackageInfo() {
     const pkgJsonPath = path.join(this.root, 'package.json');
-    const fallback = { name: 'axion-protocol', version: '1.2.0-beta.1', description: 'Agentic Safety & Governance Protocol' };
+    const fallback = { name: 'axion-protocol', version: '0.0.0-unknown', description: 'Experimental local governance runtime' };
     if (!fs.existsSync(pkgJsonPath)) return fallback;
     try {
       const parsed = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
@@ -55,50 +60,104 @@ class ProvenanceSbomGenerator {
     }
   }
 
+  repositoryUrl(pkgInfo) {
+    const url = pkgInfo.repository && pkgInfo.repository.url ? String(pkgInfo.repository.url) : DEFAULT_REPO_URL;
+    return url.replace(/^git\+/, '').replace(/\.git$/, '');
+  }
+
   generateUuid() {
     return crypto.randomUUID ? crypto.randomUUID() : `urn:uuid:${crypto.randomBytes(16).toString('hex')}`;
   }
 
   /**
-   * Recolecta componentes de código del proyecto para el SBOM.
+   * Identidad real del builder: run de GitHub Actions si está disponible,
+   * host local declarado como no verificado en caso contrario.
+   */
+  resolveBuilder() {
+    const isGitHubActions = process.env.GITHUB_ACTIONS === 'true';
+    const repo = process.env.GITHUB_REPOSITORY;
+    const runId = process.env.GITHUB_RUN_ID;
+    if (isGitHubActions && repo && runId) {
+      return {
+        id: `https://github.com/${repo}/actions/runs/${runId}`,
+        identityVerified: true,
+        environment: 'github-actions'
+      };
+    }
+    return {
+      id: 'urn:axion:builder:local-host',
+      identityVerified: false,
+      environment: 'local-host'
+    };
+  }
+
+  /**
+   * Recolecta componentes de código distribuidos (declarados en package.json#files).
    */
   collectComponents() {
     const components = [];
-    const scannedDirs = ['tools', 'bin', 'adapters', 'policies', 'schemas'];
+    const pkgInfo = this.loadPackageInfo();
+    const version = pkgInfo.version;
 
-    for (const d of scannedDirs) {
-      const fullDir = path.join(this.root, d);
-      if (!fs.existsSync(fullDir)) continue;
-
-      const entries = fs.readdirSync(fullDir, { withFileTypes: true });
-      for (const e of entries) {
-        if (e.isFile()) {
-          const filePath = path.join(fullDir, e.name);
-          const relPath = path.relative(this.root, filePath).split(path.sep).join('/');
-          const digest = this.sha256File(filePath);
-
-          components.push({
-            type: d === 'tools' || d === 'bin' ? 'application' : 'file',
-            name: e.name,
-            group: `axion-protocol.${d}`,
-            version: '1.2.0-beta.1',
-            purl: `pkg:generic/axion-protocol/${relPath}@1.2.0-beta.1`,
-            hashes: [
-              {
-                alg: 'SHA-256',
-                content: digest
-              }
-            ],
-            properties: [
-              { name: 'axion:path', value: relPath },
-              { name: 'axion:governed', value: 'true' }
-            ]
-          });
-        }
-      }
+    const roots = new Set();
+    const filesField = Array.isArray(pkgInfo.files) ? pkgInfo.files : [];
+    for (const entry of filesField) {
+      if (typeof entry !== 'string' || entry.startsWith('!')) continue;
+      const clean = entry.replace(/\/$/, '');
+      roots.add(clean);
+    }
+    for (const dir of ['tools', 'bin', 'adapters', 'policies', 'schemas', 'core']) {
+      roots.add(dir);
     }
 
-    return components;
+    const seen = new Set();
+    const pushFile = (absPath) => {
+      const relPath = path.relative(this.root, absPath).split(path.sep).join('/');
+      if (seen.has(relPath)) return;
+      if (relPath === 'package.json') return;
+      if (relPath.startsWith('docs/site/') || relPath.startsWith('sbom/') || relPath.startsWith('docs/sbom/')) return;
+      if (/\.tgz$/.test(relPath)) return;
+      seen.add(relPath);
+      components.push({
+        type: relPath.startsWith('tools/') || relPath.startsWith('bin/') ? 'application' : 'file',
+        name: relPath,
+        group: 'axion-protocol.distributed',
+        version,
+        purl: `pkg:generic/axion-protocol/${relPath}@${version}`,
+        hashes: [
+          { alg: 'SHA-256', content: this.sha256File(absPath) }
+        ],
+        properties: [
+          { name: 'axion:path', value: relPath },
+          { name: 'axion:governed', value: 'true' }
+        ]
+      });
+    };
+
+    for (const rootRel of roots) {
+      const abs = path.join(this.root, rootRel);
+      if (!fs.existsSync(abs)) continue;
+      const stat = fs.statSync(abs);
+      if (stat.isFile()) {
+        if (!rootRel.startsWith('package.json')) pushFile(abs);
+        continue;
+      }
+
+      const walk = (dir) => {
+        for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+          const child = path.join(dir, e.name);
+          if (e.isDirectory()) {
+            if (e.name === 'node_modules' || e.name.startsWith('.sandbox')) continue;
+            walk(child);
+          } else if (e.isFile()) {
+            pushFile(child);
+          }
+        }
+      };
+      walk(abs);
+    }
+
+    return components.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   /**
@@ -107,6 +166,7 @@ class ProvenanceSbomGenerator {
   generateCycloneDxSbom(options = {}) {
     const components = this.collectComponents();
     const pkgInfo = this.loadPackageInfo();
+    const version = pkgInfo.version;
 
     const sbom = {
       bomFormat: 'CycloneDX',
@@ -117,23 +177,26 @@ class ProvenanceSbomGenerator {
         timestamp: new Date().toISOString(),
         tools: [
           {
-            vendor: 'Axion Protocol Security',
+            vendor: 'Axion Protocol',
             name: 'ProvenanceSbomGenerator',
-            version: '1.2.0-beta.1'
+            version
           }
         ],
         component: {
           type: 'framework',
           name: pkgInfo.name,
-          version: pkgInfo.version,
+          version,
           description: pkgInfo.description,
           licenses: [{ license: { id: 'Apache-2.0' } }]
-        }
+        },
+        properties: [
+          { name: 'axion:provenanceStatus', value: 'DESCRIPTIVE_ONLY' }
+        ]
       },
       components,
       dependencies: [
         {
-          ref: `pkg:generic/axion-protocol@${pkgInfo.version}`,
+          ref: `pkg:generic/axion-protocol@${version}`,
           dependsOn: components.map(c => c.purl)
         }
       ]
@@ -149,47 +212,79 @@ class ProvenanceSbomGenerator {
   }
 
   /**
-   * Genera atestación de procedencia in-toto v1 con predicado SLSA Provenance v1.0.
+   * Genera un Statement in-toto v1 con estructura de procedencia.
+   * Honestidad explícita: no es provenance SLSA verificable y no declara nivel.
+   *
+   * @param {object} options
+   * @param {string} [options.artifactPath] Artefacto construido (p. ej. el .tgz de npm pack).
+   * @param {boolean} [options.save]
    */
   generateSlsaProvenance(options = {}) {
     const pkgInfo = this.loadPackageInfo();
     const pkgName = pkgInfo.name || 'axion-protocol';
+    const repoUrl = this.repositoryUrl(pkgInfo);
+    const builder = this.resolveBuilder();
 
     const sbom = this.generateCycloneDxSbom({ save: false });
     const sbomDigest = this.sha256(JSON.stringify(sbom));
 
-    const statement = {
-      _type: 'https://in-toto.io/Statement/v1',
-      subject: [
+    let subject;
+    let artifactBinding;
+    if (options.artifactPath) {
+      const absArtifact = path.isAbsolute(options.artifactPath)
+        ? options.artifactPath
+        : path.resolve(this.root, options.artifactPath);
+      if (!fs.existsSync(absArtifact) || !fs.statSync(absArtifact).isFile()) {
+        throw new Error(`Artefacto para provenance no existe: ${options.artifactPath}`);
+      }
+      subject = [
+        {
+          name: path.basename(absArtifact),
+          digest: { sha256: this.sha256File(absArtifact) }
+        }
+      ];
+      artifactBinding = 'ARTIFACT_HASH_BOUND';
+    } else {
+      subject = [
         {
           name: pkgName,
-          digest: {
-            sha256: sbomDigest
-          }
+          digest: { sha256: sbomDigest }
         }
-      ],
+      ];
+      artifactBinding = 'SBOM_ONLY_UNBOUND';
+    }
+
+    const statement = {
+      _type: 'https://in-toto.io/Statement/v1',
+      subject,
       predicateType: 'https://slsa.dev/provenance/v1',
       predicate: {
         buildDefinition: {
           buildType: 'https://axion-protocol.dev/governance/build/v1',
           externalParameters: {
-            source: 'git+https://github.com/shoshin/axion-protocol',
-            entryPoint: 'bin/axion.js'
+            source: repoUrl,
+            entryPoint: 'bin/axion.js',
+            artifactBinding
           },
           internalParameters: {
-            slsaLevel: 'SLSA_LEVEL_3',
+            provenanceStatus: 'DESCRIPTIVE_ONLY',
+            slsaLevel: 'NOT_ASSERTED',
+            slsaVerification: 'NOT_VERIFIED',
+            note: 'Procedencia descriptiva emitida localmente. Este proyecto no emite provenance SLSA verificable y no reclama ningún nivel.',
             governanceEngine: 'Axion Dual-Surface Protocol'
           },
           resolvedDependencies: [
             {
-              uri: 'pkg:generic/node@24.19.0',
-              digest: { runtime: 'node-lts' }
+              uri: `pkg:generic/node@${process.version}`,
+              digest: { runtime: 'node-stdlib-only' }
             }
           ]
         },
         runDetails: {
           builder: {
-            id: 'https://axion-protocol.dev/builders/autonomous-orchestrator@1.2.0-beta.1'
+            id: builder.id,
+            identityVerified: builder.identityVerified,
+            environment: builder.environment
           },
           metadata: {
             invocationId: this.generateUuid(),
@@ -218,17 +313,21 @@ class ProvenanceSbomGenerator {
 
 if (require.main === module) {
   const generator = new ProvenanceSbomGenerator();
-  console.log('[Axion Provenance & SBOM] Generando SBOM CycloneDX v1.5 y procedencia SLSA v1.0...\n');
+  const args = process.argv.slice(2);
+  const artifactIndex = args.indexOf('--artifact');
+  const artifactPath = artifactIndex !== -1 ? args[artifactIndex + 1] : null;
+
+  console.log('[Axion Provenance & SBOM] Generando SBOM CycloneDX v1.5 y procedencia descriptiva (NO SLSA-verificada)...\n');
 
   const sbom = generator.generateCycloneDxSbom();
-  console.log(`✓ SBOM CycloneDX v1.5 generado con ${sbom.components.length} componentes.`);
+  console.log(`✓ SBOM CycloneDX v1.5 generado con ${sbom.components.length} componentes distribuidos.`);
   console.log(`  Guardado en: ${sbom.savedPath}`);
 
-  const slsa = generator.generateSlsaProvenance();
-  console.log(`✓ Atestación in-toto SLSA v1.0 generada con éxito.`);
-  console.log(`  Guardado en: ${slsa.savedPath}\n`);
+  const provenance = generator.generateSlsaProvenance({ artifactPath });
+  console.log(`✓ Statement in-toto con estructura de procedencia generado (provenanceStatus: DESCRIPTIVE_ONLY).`);
+  console.log(`  Guardado en: ${provenance.savedPath}`);
 
-  console.log('🎉 PASS: SBOM y procedencia criptográfica generados al 100%.');
+  console.log('\nPASS: SBOM generado. La procedencia es descriptiva y no reclama nivel SLSA.');
 }
 
 module.exports = ProvenanceSbomGenerator;

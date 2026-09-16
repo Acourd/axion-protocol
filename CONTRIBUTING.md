@@ -11,14 +11,14 @@ Every contribution must satisfy these 5 sovereign rules before being merged:
 1. **Zero External Dependencies:**
    - Axion Protocol has **`{}`** in its `dependencies`. No `npm`, `pip`, or external packages may be added. All algorithms, cryptography, and tooling use pure Node.js standard library.
 2. **Deterministic TDD & 100% Green Suite:**
-   - Redact test assertions in `tests/` *before* modifying code. All 186+ deterministic suites across all 5 governance domains must pass with `exit code 0`.
+   - Redact test assertions in `tests/` *before* modifying code. All 238 deterministic suites across all 5 governance domains must pass with `exit code 0`.
 3. **VibeGuard Shield Compliance:**
    - Code must pass `node bin/axion.js vibeguard` with zero findings:
      - No silent exceptions (`catch` blocks must not silently discard errors).
      - No unhandled `TODO` or `FIXME` comments.
      - No untyped or loose shell executions (`shell: false` is strictly required).
 4. **Preservation of the 12 Canonical Skills:**
-   - The kernel maintains **exactly 12 consolidated skills** in `.agents/skills/` and 12 slash commands in `.claude/commands/`. Modular additions must be registered via the CLI dispatcher or global user scope.
+   - The kernel maintains **the consolidated skills** in `.agents/skills/` and the matching slash commands in `.claude/commands/`. Modular additions must be registered via the CLI dispatcher or global user scope.
 5. **Multi-OS Parity:**
    - All code must run identically on **Linux, macOS, and Windows** without path separator assumptions (always use `path.join` and normalized POSIX separators).
 
@@ -60,7 +60,7 @@ node tests/run_all.js
 
 ## 📋 Pull Request Requirements
 
-- [ ] All 186+ test suites pass with Exit Code 0.
+- [ ] All 238 test suites pass with Exit Code 0.
 - [ ] VibeGuard reports 0 anti-patterns.
 - [ ] Documentation statistics synchronized (`node tools/sync_doc_stats.js`).
 - [ ] Descriptive commit message following Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`).

@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
       toastSoundOff: '✕ Haptic audio muted',
       toastCopied: '✓ Command copied to clipboard',
       toastCopyFail: 'Could not copy to clipboard automatically.',
-      statusPill: 'v2.0.0-rc.1 · 201 Suites PASS',
+      statusPill: 'v1.4.0-beta.1 · 238 Suites PASS',
       navHero: 'Home',
       navSwarm: 'Swarm Engine',
       navSandbox: 'CLI Sandbox',
@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
       heroLead: 'Execution engine operating in <code>fail-closed</code> mode (95.7 KB). Intercepts terminal tool calls with <code>shell: false</code>, arbitrates concurrent AST namespace collisions, and guarantees SHA-256 byte-accurate state rollback.',
       installBoxLabel: 'QUICKSTART COMMAND',
       copyLabel: 'Copy',
-      telemetryStatus: '201 Suites PASS',
-      metricSuites: 'Suites in Green (100%)',
+      telemetryStatus: '238 Suites PASS',
+      metricSuites: 'Suites in Green (CI verified)',
       metricDeps: 'External Dependencies',
       metricRollback: 'Rollback SHA-256',
       metricBft: 'BFT Rounds / sec',
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
       step05Name: 'BUILD',
       step05Desc: 'Synchronous preflight lexical inspection in PreToolUse with isolated execution using structured shell: false.',
       step06Name: 'AUDIT',
-      step06Desc: 'Runs the full 201 automated test suites, performs strict VibeGuard anti-pattern scans, and validates exit code 0.',
+      step06Desc: 'Runs the full 238 automated test suites, performs strict VibeGuard anti-pattern scans, and validates exit code 0.',
       step07Name: 'PROMOTE',
       step07Desc: 'Issues in-toto Statement v1 cryptographic provenance in DSSE envelope with Ed25519 signature and localized summary.',
       socraticBadge: 'SOCRATIC BRAKE · /clarify',
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
       radarBadge: 'TOPOLOGY & BLAST RADIUS',
       radarTitle: 'Architecture Radar & Impact Analysis',
       radarDesc: 'Visually explore the 5 domains and their interconnected modules. Click any node to compute its transitive blast radius and inspect verified invariants:',
-      chipAllDomains: 'All Domains (201)',
+      chipAllDomains: 'All Domains (238)',
       chipGovDomain: '01 Governance (110)',
       chipCryptoDomain: '02 Cryptography (27)',
       chipIntentDomain: '03 Intent (23)',
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
       telemetryDesc: 'Live monitoring of deterministic throughput, memory consumption, and continuous verification:',
       chartBadge: 'LIVE THROUGHPUT',
       chartTitle: 'BFT Consensus Rounds & Validations / Sec',
-      breakdownTitle: 'Distribution of the 201 Suites',
+      breakdownTitle: 'Distribution of the 238 Suites',
       d1Name: '01 Governance & Preflight',
       d2Name: '02 Cryptography & Attestation',
       d3Name: '03 Intent & Socratic UX',
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tdAntigravityMech: 'Modular Skills / P0 Rules / Interactive Modals',
       tdClaudeMech: 'Native Slash Commands / CLAUDE.md',
       tdCursorMech: 'MDC Rules / Agent Profiles',
-      tdVerified: 'Verified (201/201)',
+      tdVerified: 'Verified (238/238)',
       tdNative: 'Native (100% Parity)',
       tdNativeCmds: 'Native (12 Commands)',
       tdSynced: 'Synchronized',
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
       toastSoundOff: '✕ Sonido háptico silenciado',
       toastCopied: '✓ Comando copiado al portapapeles',
       toastCopyFail: 'No se pudo copiar automáticamente.',
-      statusPill: 'v2.0.0-rc.1 · 201 Suites PASS',
+      statusPill: 'v1.4.0-beta.1 · 238 Suites PASS',
       navHero: 'Inicio',
       navSwarm: 'Swarm Engine',
       navSandbox: 'Simulador CLI',
@@ -206,8 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
       heroLead: 'Motor de ejecución en modo <code>fail-closed</code> (95.7 KB). Intercepta llamadas de terminal sin sub-shell, arbitra colisiones concurrentes en el árbol AST y garantiza reversión atómica verificada con SHA-256.',
       installBoxLabel: 'COMANDO DE INICIO RÁPIDO',
       copyLabel: 'Copiar',
-      telemetryStatus: '201 Suites PASS',
-      metricSuites: 'Suites en Verde (100%)',
+      telemetryStatus: '238 Suites PASS',
+      metricSuites: 'Suites en Verde (verificado en CI)',
       metricDeps: 'Dependencias Externas',
       metricRollback: 'Rollback SHA-256',
       metricBft: 'Rondas BFT / seg',
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
       step05Name: 'CONSTRUIR',
       step05Desc: 'Inspección léxica síncrona en PreToolUse con ejecución aislada mediante shell: false.',
       step06Name: 'AUDITAR',
-      step06Desc: 'Ejecución real de la suite de 201 pruebas, escaneo VibeGuard de antipatrones y validación de salida con exit code 0.',
+      step06Desc: 'Ejecución real de la suite de 238 pruebas, escaneo VibeGuard de antipatrones y validación de salida con exit code 0.',
       step07Name: 'PROMOVER',
       step07Desc: 'Generación del sobre criptográfico in-toto v1 en formato DSSE y reporte ejecutivo en el idioma del usuario.',
       socraticBadge: 'FRENO SOCRÁTICO · /clarify',
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
       radarBadge: 'TOPOLOGÍA Y BLAST RADIUS',
       radarTitle: 'Radar de Arquitectura & Análisis de Impacto',
       radarDesc: 'Explora visualmente los 5 dominios y sus módulos interconectados. Haz clic en cualquier nodo para calcular su radio de impacto transitivo e inspeccionar sus invariantes:',
-      chipAllDomains: 'Todos los Dominios (201)',
+      chipAllDomains: 'Todos los Dominios (238)',
       chipGovDomain: '01 Gobernanza (110)',
       chipCryptoDomain: '02 Criptografía (27)',
       chipIntentDomain: '03 Intención (23)',
@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
       telemetryDesc: 'Supervisión en vivo de rendimiento determinista, consumo de memoria y verificación continua:',
       chartBadge: 'LIVE THROUGHPUT',
       chartTitle: 'Rondas de Consenso BFT & Validaciones / Seg',
-      breakdownTitle: 'Distribución de las 201 Suites',
+      breakdownTitle: 'Distribución de las 238 Suites',
       d1Name: '01 Gobernanza & Preflight',
       d2Name: '02 Criptografía & Atestación',
       d3Name: '03 Intención & UX Socrática',
@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tdAntigravityMech: 'Skills Modulares / Reglas P0 / Modales Interactivos',
       tdClaudeMech: 'Slash Commands Nativos / CLAUDE.md',
       tdCursorMech: 'MDC Rules / Perfiles de Agente',
-      tdVerified: 'Verificado (201/201)',
+      tdVerified: 'Verificado (238/238)',
       tdNative: 'Nativo (100% Paridad)',
       tdNativeCmds: 'Nativo (12 Comandos)',
       tdSynced: 'Sincronizado',
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
       descVerify: 'Verificación determinista por ejecución real de la suite de pruebas completa, con exigencia estricta de exit code 0.',
       descSnapshot: 'Guarda y restaura puntos de control deterministas verificados con SHA-256 independientes del árbol de Git.',
       descPreflight: 'Clasifica el riesgo de comandos de terminal antes de su ejecución con veredictos ALLOW, NEEDS_REVIEW o DENY.',
-      descAttest: 'Emite y valida atestaciones in-toto Statement v1 en sobre DSSE con firmas Ed25519 compatibles con SLSA y cosign.',
+      descAttest: 'Emite y valida atestaciones in-toto Statement v1 en sobre DSSE con firmas Ed25519, formato in-toto v1; sin certificación SLSA.',
       descMemory: 'Memoria persistente del proyecto y anclaje de contexto anti-deriva entre sesiones de trabajo continuas.',
       descDebug: 'Ciclo sistemático de depuración en 4 fases con análisis de causa raíz y verificación por evidencia reproducible.',
       descPremortem: 'Simulación adversarial de fracaso a 6 meses y cálculo del radio de explosión antes de iniciar la programación.',
@@ -716,8 +716,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (clean === '/verify') {
       playSuccessChime();
       appendTerminalLinesStaggered([
-        { type: 'info', text: '[/verify] Ejecutando suite de 203 pruebas deterministas en 8 workers...' },
-        { type: 'pass', text: '✓ 203/203 suites PASS (0 FAIL, tiempo: 14.12s, exit code 0)' }
+        { type: 'info', text: '[/verify] Ejecutando suite de 238 pruebas deterministas en 8 workers...' },
+        { type: 'pass', text: '✓ 238/238 suites PASS (exit code 0)' }
       ]);
     } else if (clean.includes('rm -rf') || clean.includes('drop database') || clean.includes(':(){ :|:& };:')) {
       playAlertBeep();
@@ -1337,7 +1337,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const pmCommands = {
     npx: 'npx axion-protocol onboard',
-    node: 'node dist/axion.bundle.js verify',
+    node: 'node dist/axion.bundle.js help',
     pnpm: 'pnpm dlx axion-protocol onboard'
   };
 

@@ -318,11 +318,12 @@ class AgentShieldScanner {
       try {
         const DriveDsseAttester = require('./drive_dsse_attester.js');
         const attester = new DriveDsseAttester(this.root);
+        // Bootstrap explícito del keyring: sin esto, un checkout limpio no puede atestar
+        // y el reporte quedaría sin evidencia. Nunca rota claves existentes.
+        attester.ensureKeyPair();
         report.attestation = attester.attestSession({
           missionId: 'AGENT_SHIELD_AUDIT',
           title: 'Auditoría de Seguridad Agéntica AgentShield',
-          suitesPassed: 153,
-          chaosVectorsBlocked: 10000,
           converged: pass,
           iterations: 1
         });

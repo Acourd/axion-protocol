@@ -5,7 +5,7 @@
  * Axion Protocol — Compliance & Standard Matrix Exporter
  *
  * Mapeo y exportador de conformidad con marcos y estándares para /drive:
- * 1. SLSA Level 3 (Supply-chain Levels for Software Artifacts v1.0).
+ * 1. SLSA v1.0 (mapeo autoevaluado; sin certificación de nivel).
  * 2. in-toto Statement v1 & DSSE Specification.
  * 3. NIST SP 800-218 (Secure Software Development Framework - SSDF).
  * 4. OWASP Top 10 2025 / LLM Security Guidance.
@@ -22,7 +22,7 @@ const ROOT = path.resolve(__dirname, '..');
 
 const COMPLIANCE_FRAMEWORKS = {
   SLSA_L3: {
-    name: 'SLSA v1.0 Level 3 (Supply Chain Security - Self-Assessed Mapping)',
+    name: 'SLSA v1.0 (Supply Chain Security - Self-Assessed Mapping; sin certificación de nivel)',
     clauses: [
       { id: 'SLSA-SRC-01', requirement: 'Historial de versiones y custodia de cambios criptográfica', status: 'SELF_ASSESSED', evidence: 'tools/git_governance_hook.js & Merkle Cache' },
       { id: 'SLSA-BLD-01', requirement: 'Entorno de compilación aislado y reproducible zero-dependency', status: 'SELF_ASSESSED', evidence: 'tools/bundle_compiler.js (0 node_modules)' },

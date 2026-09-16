@@ -43,6 +43,11 @@ assert.ok(fs.existsSync(bundlePath), 'El bundle standalone debe existir');
 const bundleExec = spawnSync(process.execPath, [bundlePath], { encoding: 'utf8' });
 assert.strictEqual(bundleExec.status, 0, 'Bundle debe ejecutar con exit code 0');
 assert.ok(bundleExec.stdout.toLowerCase().includes('axion'), 'Salida debe mostrar Axion');
+
+// El ejemplo publicado debe ser ejecutable: se corre el subcomando documentado.
+const bundleHelp = spawnSync(process.execPath, [bundlePath, 'help'], { encoding: 'utf8' });
+assert.strictEqual(bundleHelp.status, 0, 'El subcomando documentado "help" debe salir con código 0');
+assert.ok(bundleHelp.stdout.includes('Subcomandos disponibles'), 'help debe listar los subcomandos disponibles');
 console.log('  ✓ Invariante 2: Standalone bundle probado y ejecutable directamente sin dependencias.');
 
 // Invariante 3: Documentación oficial de compatibilidad
@@ -52,7 +57,20 @@ assert.ok(fs.existsSync(docEn), 'docs/OPENCODE_CODEX_COMPATIBILITY.md debe exist
 assert.ok(fs.existsSync(docEs), 'docs/OPENCODE_CODEX_COMPATIBILITY.es.md debe existir');
 
 const contentEn = fs.readFileSync(docEn, 'utf8');
+const contentEs = fs.readFileSync(docEs, 'utf8');
 assert.ok(contentEn.includes('OpenCode') && contentEn.includes('Codex'));
+
+// El ejemplo publicado debe coincidir con el subcomando que esta prueba ejecuta.
+for (const [nombre, contenido] of [['EN', contentEn], ['ES', contentEs]]) {
+  assert.ok(contenido.includes('node dist/axion.bundle.js help'), `${nombre}: el ejemplo del bundle debe ser "help"`);
+  assert.ok(!contenido.includes('node dist/axion.bundle.js verify'), `${nombre}: el ejemplo roto "verify" debe estar retirado`);
+}
+
+// Ninguna de las dos lenguas puede declarar tamaño estático ni ahorros no reproducibles.
+for (const [nombre, contenido] of [['EN', contentEn], ['ES', contentEs]]) {
+  assert.ok(!/\d+(?:\.\d+)?\s*kB\b/i.test(contenido), `${nombre}: no debe declarar tamaño estático del bundle`);
+  assert.ok(!/\b80\s*%/.test(contenido), `${nombre}: no debe declarar ahorro sin benchmark versionado`);
+}
 console.log('  ✓ Invariante 3: Documentación técnica de integración validada en ambas lenguas.');
 
 console.log('\nPASS: AX-F-184 — Compatibilidad e Integración con OpenCode y Codex verificada al 100%.');
