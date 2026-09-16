@@ -223,7 +223,9 @@ class DriveDsseAttester {
       throw this.fail('ERR_EVIDENCE_MISSING', `Artefacto de evidencia '${slot}' no existe: ${ref.path}`);
     }
 
-    const actualSha256 = this.sha256File(absPath);
+    // Lectura única: el mismo buffer se hashea y se parsea (sin TOCTOU entre hash y parseo).
+    const content = fs.readFileSync(absPath);
+    const actualSha256 = crypto.createHash('sha256').update(content).digest('hex');
     if (ref.sha256 !== actualSha256) {
       throw this.fail('ERR_EVIDENCE_HASH_MISMATCH',
         `Hash declarado para '${slot}' no coincide con el archivo (${actualSha256}).`);
@@ -231,7 +233,7 @@ class DriveDsseAttester {
 
     let parsed;
     try {
-      parsed = JSON.parse(fs.readFileSync(absPath, 'utf8'));
+      parsed = JSON.parse(content.toString('utf8'));
     } catch (parseErr) {
       throw this.fail('ERR_EVIDENCE_INVALID', `Artefacto '${slot}' no es JSON válido: ${parseErr.message}`);
     }
@@ -520,6 +522,11 @@ class DriveDsseAttester {
    * Ejecuta la suite DENTRO del componente firmante y solo entonces puede emitir
    * VERIFIED. Las cifras y el veredicto provienen de la observación directa del
    * proceso (exit code + salida), nunca de parámetros del llamador.
+   *
+   * Fail-closed estricto:
+   * - El ledger se valida antes de anexar y después de anexar; cualquier fallo bloquea VERIFIED.
+   * - Se sella el Merkle Root antes y después de la ejecución; si el árbol mutó durante
+   *   la corrida, el sellado posterior no puede representar la prueba y VERIFIED se bloquea.
    */
   runSuiteAndAttest(sessionData = {}, options = {}) {
     const { spawnSync } = require('child_process');
@@ -539,6 +546,10 @@ class DriveDsseAttester {
     // Fail-fast: sin claves no tiene sentido ejecutar la suite para luego no poder firmar.
     this.loadKeyPair();
 
+    const merkleEngine = new MerkleCacheEngine(this.root);
+    const merkleBefore = merkleEngine.computeMerkleRoot();
+    const ledgerBefore = this.verifyEvidenceLedger();
+
     const startedAtMs = Date.now();
     const r = spawnSync(runner.executable, runner.args, {
       cwd: this.root,
@@ -551,51 +562,79 @@ class DriveDsseAttester {
     const output = `${r.stdout || ''}${r.stderr || ''}`;
     const suites = parseSuiteCounts(output);
     const exitCode = typeof r.status === 'number' ? r.status : null;
-    const observed = !r.error && exitCode === 0 && suites.total > 0 && suites.failed === 0 && suites.passed === suites.total;
+    const ranGreen = !r.error && exitCode === 0 && suites.total > 0 && suites.failed === 0 && suites.passed === suites.total;
     const command = `${path.basename(runner.executable)} ${runner.args.join(' ')}`;
 
-    const produced = recordEvidence(this.root, {
-      schema: 'axion.execution/v1',
-      producer: 'tools/drive_dsse_attester.js',
-      runner: runner.etiqueta,
-      command,
-      exitCode: exitCode === null ? 1 : exitCode,
-      status: observed ? 'PASS' : 'FAIL',
-      suites,
-      startedAt: new Date(startedAtMs).toISOString(),
-      finishedAt: new Date(finishedAtMs).toISOString(),
-      durationMs: finishedAtMs - startedAtMs,
-      outputSha256: crypto.createHash('sha256').update(output).digest('hex'),
-      signer: this.buildSigner()
-    });
+    const merkleAfter = merkleEngine.computeMerkleRoot();
+    const treeStable = merkleBefore.readErrors.length === 0
+      && merkleAfter.readErrors.length === 0
+      && merkleBefore.merkleRoot === merkleAfter.merkleRoot;
 
-    const merkle = new MerkleCacheEngine(this.root).computeMerkleRoot();
+    // Solo se anexa con ledger íntegro; anexar a una cadena rota lanzaría ERR_LEDGER_INVALID.
+    let produced = null;
+    let ledgerAfter = ledgerBefore;
+    if (ledgerBefore.valid) {
+      produced = recordEvidence(this.root, {
+        schema: 'axion.execution/v1',
+        producer: 'tools/drive_dsse_attester.js',
+        runner: runner.etiqueta,
+        command,
+        exitCode: exitCode === null ? 1 : exitCode,
+        status: ranGreen ? 'PASS' : 'FAIL',
+        suites,
+        startedAt: new Date(startedAtMs).toISOString(),
+        finishedAt: new Date(finishedAtMs).toISOString(),
+        durationMs: finishedAtMs - startedAtMs,
+        outputSha256: crypto.createHash('sha256').update(output).digest('hex'),
+        signer: this.buildSigner()
+      });
+      ledgerAfter = this.verifyEvidenceLedger();
+    }
+
+    const verified = ranGreen && treeStable && ledgerAfter.valid;
+    const reasons = [];
+    if (!ranGreen) reasons.push(`ejecución no superada (error=${r.error ? r.error.message : 'ninguno'}, exitCode=${exitCode}, total=${suites.total}, passed=${suites.passed}, failed=${suites.failed})`);
+    if (!treeStable) reasons.push('el árbol rastreado cambió durante la ejecución; el sellado posterior no representa el estado probado');
+    if (!ledgerAfter.valid) reasons.push(`ledger inválido (${ledgerAfter.reason || 'cadena no verificable'})`);
 
     return this.emitStatement({
       mission: {
         missionId,
         title,
-        converged: observed,
+        converged: verified,
         iterations,
         timestamp: new Date().toISOString()
       },
       verification: {
-        status: observed ? 'VERIFIED' : 'UNVERIFIED',
+        status: verified ? 'VERIFIED' : 'UNVERIFIED',
         mode: 'EXECUTED_IN_SIGNER',
         assurance: 'EXECUTED_IN_SIGNER',
-        reason: observed
-          ? 'Suite ejecutada y observada por el firmante (exit code 0, cero fallos).'
-          : `Ejecución no superada (error=${r.error ? r.error.message : 'ninguno'}, exitCode=${exitCode}, total=${suites.total}, passed=${suites.passed}, failed=${suites.failed}).`,
-        limitation: 'La ejecución fue observada por este proceso; sustituir los archivos de la suite en disco queda fuera del perímetro de confianza.',
-        ledger: { valid: true, entries: produced.entry.seq, reason: null },
-        evidence: [{
-          slot: 'testRun',
-          uri: produced.relPath,
-          sha256: produced.sha256,
-          bytes: produced.bytes,
-          producer: 'tools/drive_dsse_attester.js',
-          ledgerSeq: produced.entry.seq
-        }],
+        reason: verified
+          ? 'Suite ejecutada y observada por el firmante (exit code 0, cero fallos) con árbol estable y ledger íntegro.'
+          : `No verificado: ${reasons.join('; ')}.`,
+        limitation: 'La ejecución fue observada por este proceso y el árbol sellado antes/después coincide; sustituir archivos durante la corrida o la suite en disco antes de ella queda fuera del perímetro de confianza.',
+        tree: {
+          stable: treeStable,
+          merkleBefore: merkleBefore.merkleRoot,
+          merkleAfter: merkleAfter.merkleRoot,
+          readErrors: merkleBefore.readErrors.length + merkleAfter.readErrors.length
+        },
+        ledger: {
+          valid: ledgerAfter.valid,
+          verifiedBefore: ledgerBefore.valid,
+          entries: ledgerAfter.entries.length,
+          reason: ledgerAfter.reason || null
+        },
+        evidence: produced
+          ? [{
+              slot: 'testRun',
+              uri: produced.relPath,
+              sha256: produced.sha256,
+              bytes: produced.bytes,
+              producer: 'tools/drive_dsse_attester.js',
+              ledgerSeq: produced.entry.seq
+            }]
+          : [],
         externalEvidence: null
       },
       governance: {
@@ -608,10 +647,10 @@ class DriveDsseAttester {
         vibeGuardStrictClean: null,
         vibeGuardFindings: null,
         vibeGuardFinishedAt: null,
-        trackedFilesCount: merkle.filesCount
+        trackedFilesCount: merkleAfter.filesCount
       },
       unverifiedClaims: this.buildCallerClaims(sessionData),
-      merkle
+      merkle: merkleAfter
     });
   }
 

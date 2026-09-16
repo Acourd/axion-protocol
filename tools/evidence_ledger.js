@@ -57,22 +57,39 @@ function computeEntryHash(entry) {
 function readLedger(root) {
   const file = ledgerPath(root);
   if (!fs.existsSync(file)) return [];
-  return fs.readFileSync(file, 'utf8')
-    .split('\n')
-    .filter((line) => line.trim() !== '')
-    .map((line) => JSON.parse(line));
+  const lines = fs.readFileSync(file, 'utf8').split('\n').filter((line) => line.trim() !== '');
+  const entries = [];
+  for (let i = 0; i < lines.length; i++) {
+    try {
+      entries.push(JSON.parse(lines[i]));
+    } catch (parseErr) {
+      const err = new Error(`entrada ${i + 1}: JSON ilegible (${parseErr.message})`);
+      err.code = 'ERR_LEDGER_UNREADABLE';
+      throw err;
+    }
+  }
+  return entries;
 }
 
 /**
  * Valida la cadena completa y, si se aporta clave pública, exige firma válida en cada
  * entrada. Cualquier ruptura invalida todo el ledger: no hay fast-forward de evidencia.
+ * Nunca lanza: una entrada ilegible se reporta como ledger inválido.
  */
 function verifyLedger(root, publicKeyPem) {
-  const entries = readLedger(root);
+  let entries;
+  try {
+    entries = readLedger(root);
+  } catch (readErr) {
+    return { valid: false, reason: readErr.message, entries: [] };
+  }
   let previous = GENESIS_HASH;
 
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
+    if (!entry || typeof entry !== 'object') {
+      return { valid: false, reason: `entrada ${i + 1}: no es un objeto`, entries };
+    }
     if (entry.schema !== LEDGER_SCHEMA) {
       return { valid: false, reason: `entrada ${i + 1}: schema inesperado`, entries };
     }
@@ -109,7 +126,15 @@ function appendEntry(root, payload) {
   const dir = evidenceDir(root);
   fs.mkdirSync(dir, { recursive: true });
 
-  const entries = readLedger(root);
+  // Fail-closed: no se anexa a una cadena rota; se exige ledger íntegro antes de escribir.
+  const state = verifyLedger(root);
+  if (!state.valid) {
+    const err = new Error(`No se anexa evidencia: ledger inválido (${state.reason}).`);
+    err.code = 'ERR_LEDGER_INVALID';
+    throw err;
+  }
+
+  const entries = state.entries;
   const previous = entries.length > 0 ? entries[entries.length - 1].entryHash : GENESIS_HASH;
 
   const entry = {

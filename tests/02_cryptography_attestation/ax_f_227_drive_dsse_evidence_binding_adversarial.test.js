@@ -244,6 +244,53 @@ try {
     fs.rmSync(raizFallo, { recursive: true, force: true });
   }
 
+  // 12b. Ledger corrupto preexistente: aunque la ejecución sea verde, NO hay VERIFIED
+  const raizLedgerRoto = crearRaizConRunner(
+    "console.log('suites totales : 3');console.log('en verde       : 3');console.log('en rojo        : 0');process.exit(0);"
+  );
+  try {
+    const atesterLedgerRoto = new DriveDsseAttester(raizLedgerRoto);
+    atesterLedgerRoto.ensureKeyPair();
+    const dirEvidencia = path.join(raizLedgerRoto, '.axion', 'evidence');
+    fs.mkdirSync(dirEvidencia, { recursive: true });
+    fs.writeFileSync(path.join(dirEvidencia, 'ledger.jsonl'), '{"schema":"roto"}\n', 'utf8');
+    const conLedgerPrevioRoto = atesterLedgerRoto.runSuiteAndAttest({ missionId: 'MISSION_LEDGER_PREVIO', title: 'Ledger previo roto' });
+    assert.strictEqual(conLedgerPrevioRoto.verificationStatus, 'UNVERIFIED', 'Un ledger roto no puede sostener VERIFIED');
+    const stmtLedgerRoto = JSON.parse(Buffer.from(conLedgerPrevioRoto.dsseEnvelope.payload, 'base64').toString('utf8'));
+    assert.strictEqual(stmtLedgerRoto.predicate.verification.ledger.valid, false);
+    assert.strictEqual(stmtLedgerRoto.predicate.verification.ledger.verifiedBefore, false);
+    assert.strictEqual(stmtLedgerRoto.predicate.verification.evidence.length, 0, 'No se anexa evidencia a una cadena rota');
+    assert.strictEqual(stmtLedgerRoto.predicate.governance.suitesPassed, 3, 'La ejecución sí ocurrió y se reporta tal cual');
+    console.log('✓ Ledger corrupto previo: ejecución observada pero UNVERIFIED (sin VERIFIED ni anexado)');
+  } finally {
+    fs.rmSync(raizLedgerRoto, { recursive: true, force: true });
+  }
+
+  // 12c. TOCTOU del árbol: el runner termina verde pero muta un archivo rastreado
+  const raizMutante = crearRaizConRunner(
+    "const fs=require('fs');const path=require('path');" +
+    "fs.writeFileSync(path.join(__dirname,'..','tools','tracked.js'),'mutado '+Date.now());" +
+    "console.log('suites totales : 3');console.log('en verde       : 3');console.log('en rojo        : 0');process.exit(0);"
+  );
+  fs.mkdirSync(path.join(raizMutante, 'tools'), { recursive: true });
+  fs.writeFileSync(path.join(raizMutante, 'tools', 'tracked.js'), 'original', 'utf8');
+  try {
+    const atesterMutante = new DriveDsseAttester(raizMutante);
+    atesterMutante.ensureKeyPair();
+    const conArbolMutado = atesterMutante.runSuiteAndAttest({ missionId: 'MISSION_TOCTOU', title: 'Árbol mutado en corrida' });
+    assert.strictEqual(conArbolMutado.verificationStatus, 'UNVERIFIED', 'Un árbol mutado durante la corrida no puede declarar VERIFIED');
+    const stmtMutado = JSON.parse(Buffer.from(conArbolMutado.dsseEnvelope.payload, 'base64').toString('utf8'));
+    assert.strictEqual(stmtMutado.predicate.verification.tree.stable, false);
+    assert.notStrictEqual(
+      stmtMutado.predicate.verification.tree.merkleBefore,
+      stmtMutado.predicate.verification.tree.merkleAfter,
+      'La raíz previa y la posterior deben diferir si el árbol mutó'
+    );
+    console.log('✓ TOCTOU del árbol: mutación durante la corrida bloquea VERIFIED');
+  } finally {
+    fs.rmSync(raizMutante, { recursive: true, force: true });
+  }
+
   // 13. keyid ajeno: la verificación no acepta cualquier clave
   const envelopeAjeno = JSON.parse(JSON.stringify(fabricadaRegistrada.dsseEnvelope));
   envelopeAjeno.signatures[0].keyid = 'ed25519:0000000000000000';

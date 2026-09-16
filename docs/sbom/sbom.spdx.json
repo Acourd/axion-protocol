@@ -3,7 +3,7 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "axion-protocol",
-  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/4abf921a4ad4ffb48d0559170dbbaef437c2d15b8f91e3593337843daccdf250",
+  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/bec469c3420df9521ae24c1269423930d1fc382928ca6d74eb895f746dede89c",
   "documentComment": "Superficie publicada indexada: 522 archivos. Excluidos por autorreferencia (declarados): 2 — docs/sbom/sbom.cyclonedx.json, docs/sbom/sbom.spdx.json.",
   "creationInfo": {
     "created": "1970-01-01T00:00:00.000Z",
@@ -4034,7 +4034,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "8a5dd8b4b3e2601873826a9c24df918ccadbd50045fbc5c4ff854a5b0a9243e1"
+          "checksumValue": "34527bd2c26acd478da330147a01e1a65e66881083ae82cc7d101a0f092bdfe9"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -5826,7 +5826,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "29bd7ec283ac17f1600b6b672ee76d553da5e9663d40b12bd1e8016d5f85a13f"
+          "checksumValue": "4e57a221d9e4cf908f4d3293dc357859c6653657f15566600e7df37366cf7c93"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6022,7 +6022,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "0ce1fb4a3909ac9dcde77a11dabe0227ce9e7c8eaa364aca51e135c58102b76e"
+          "checksumValue": "291983ec887759f170474396ad51b9d1a65724049558b557770e49e7f4a63349"
         }
       ],
       "licenseConcluded": "Apache-2.0",

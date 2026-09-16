@@ -1,7 +1,7 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:4abf921a-4ad4-ffb4-8d05-59170dbbaef4",
+  "serialNumber": "urn:uuid:bec469c3-420d-f952-1ae2-4c1269423930",
   "version": 1,
   "metadata": {
     "timestamp": "1970-01-01T00:00:00.000Z",
@@ -7211,7 +7211,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "8a5dd8b4b3e2601873826a9c24df918ccadbd50045fbc5c4ff854a5b0a9243e1"
+          "content": "34527bd2c26acd478da330147a01e1a65e66881083ae82cc7d101a0f092bdfe9"
         }
       ],
       "licenses": [
@@ -7224,7 +7224,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "14904"
+          "value": "18035"
         }
       ]
     },
@@ -10411,7 +10411,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "29bd7ec283ac17f1600b6b672ee76d553da5e9663d40b12bd1e8016d5f85a13f"
+          "content": "4e57a221d9e4cf908f4d3293dc357859c6653657f15566600e7df37366cf7c93"
         }
       ],
       "licenses": [
@@ -10424,7 +10424,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "27142"
+          "value": "29190"
         }
       ]
     },
@@ -10761,7 +10761,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "0ce1fb4a3909ac9dcde77a11dabe0227ce9e7c8eaa364aca51e135c58102b76e"
+          "content": "291983ec887759f170474396ad51b9d1a65724049558b557770e49e7f4a63349"
         }
       ],
       "licenses": [
@@ -10774,7 +10774,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "6526"
+          "value": "7416"
         }
       ]
     },
