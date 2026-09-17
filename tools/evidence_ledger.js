@@ -79,7 +79,8 @@ function sha256(buffer) {
  * Serialización canónica (claves ordenadas) para que el hash encadenado sea estable.
  */
 function canonical(value) {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (value === undefined || value === null) return 'null';
+  if (typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
   return `{${Object.keys(value).sort().map((k) => `${JSON.stringify(k)}:${canonical(value[k])}`).join(',')}}`;
 }
@@ -182,12 +183,12 @@ function appendEntry(root, payload, options = {}) {
       schema: LEDGER_SCHEMA,
       seq: entries.length + 1,
       recordedAt: new Date().toISOString(),
-      producer: payload.producer,
-      command: payload.command,
-      exitCode: payload.exitCode,
-      suites: payload.suites,
-      artifact: payload.artifact,
-      artifactSha256: payload.artifactSha256,
+      producer: payload.producer === undefined ? null : payload.producer,
+      command: payload.command === undefined ? null : payload.command,
+      exitCode: payload.exitCode === undefined ? null : payload.exitCode,
+      suites: payload.suites === undefined ? null : payload.suites,
+      artifact: payload.artifact === undefined ? null : payload.artifact,
+      artifactSha256: payload.artifactSha256 === undefined ? null : payload.artifactSha256,
       prevEntryHash: previous
     };
     if (payload.phase) entry.phase = payload.phase;

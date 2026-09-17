@@ -135,24 +135,59 @@ class DriveDsseAttester {
     }
 
     const absPath = path.isAbsolute(ref.path) ? ref.path : path.resolve(this.root, ref.path);
-    const lstat = fs.existsSync(absPath) ? fs.lstatSync(absPath) : null;
-    if (!lstat || lstat.isSymbolicLink() || !lstat.isFile()) {
-      if (lstat && lstat.isSymbolicLink()) {
+    const O_NOFOLLOW = fs.constants.O_NOFOLLOW || 0;
+
+    if (!O_NOFOLLOW) {
+      let lstat = null;
+      try {
+        lstat = fs.lstatSync(absPath);
+      } catch (_) {
+        throw this.fail('ERR_EVIDENCE_MISSING', `Artefacto de evidencia '${slot}' no existe: ${ref.path}`);
+      }
+      if (lstat.isSymbolicLink()) {
         throw this.fail('ERR_EVIDENCE_SYMLINK', `Artefacto de evidencia '${slot}' no puede ser un symlink: ${ref.path}`);
       }
-      throw this.fail('ERR_EVIDENCE_MISSING', `Artefacto de evidencia '${slot}' no existe o no es un archivo: ${ref.path}`);
+      if (!lstat.isFile()) {
+        throw this.fail('ERR_EVIDENCE_INVALID', `Artefacto de evidencia '${slot}' no es un archivo regular: ${ref.path}`);
+      }
     }
 
-    // La ruta real debe permanecer dentro de la raíz (sin escapes por symlink en ancestros).
-    const realRoot = fs.realpathSync(this.root);
-    const realAbs = fs.realpathSync(absPath);
-    const relReal = path.relative(realRoot, realAbs);
-    if (relReal.startsWith('..') || path.isAbsolute(relReal)) {
-      throw this.fail('ERR_EVIDENCE_ESCAPE', `Artefacto de evidencia '${slot}' resuelve fuera de la raíz: ${ref.path}`);
+    // Descriptor único: se abre con O_NOFOLLOW (POSIX), se valida con fstat y se lee del
+    // mismo descriptor; sin ventana TOCTOU entre comprobación de ruta y lectura.
+    let fd = null;
+    let content = null;
+    try {
+      try {
+        fd = fs.openSync(absPath, fs.constants.O_RDONLY | O_NOFOLLOW);
+      } catch (openErr) {
+        if (openErr.code === 'ELOOP' || openErr.code === 'EMLINK') {
+          throw this.fail('ERR_EVIDENCE_SYMLINK', `Artefacto de evidencia '${slot}' no puede ser un symlink: ${ref.path}`);
+        }
+        if (openErr.code === 'ENOENT') {
+          throw this.fail('ERR_EVIDENCE_MISSING', `Artefacto de evidencia '${slot}' no existe: ${ref.path}`);
+        }
+        throw openErr;
+      }
+
+      const st = fs.fstatSync(fd);
+      if (!st.isFile()) {
+        throw this.fail('ERR_EVIDENCE_INVALID', `Artefacto de evidencia '${slot}' no es un archivo regular: ${ref.path}`);
+      }
+
+      const realRoot = fs.realpathSync(this.root);
+      const realAbs = fs.realpathSync(absPath);
+      const relReal = path.relative(realRoot, realAbs);
+      if (relReal.startsWith('..') || path.isAbsolute(relReal)) {
+        throw this.fail('ERR_EVIDENCE_ESCAPE', `Artefacto de evidencia '${slot}' resuelve fuera de la raíz: ${ref.path}`);
+      }
+
+      content = fs.readFileSync(fd);
+    } finally {
+      if (fd !== null) {
+        try { fs.closeSync(fd); } catch (_) { /* descriptor ya cerrado */ }
+      }
     }
 
-    // Lectura única: el mismo buffer se hashea y se parsea (sin TOCTOU entre hash y parseo).
-    const content = fs.readFileSync(absPath);
     const actualSha256 = crypto.createHash('sha256').update(content).digest('hex');
     if (ref.sha256 !== actualSha256) {
       throw this.fail('ERR_EVIDENCE_HASH_MISMATCH',

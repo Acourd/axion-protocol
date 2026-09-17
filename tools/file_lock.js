@@ -139,17 +139,38 @@ function acquire(lockFile, options = {}) {
 }
 
 /**
- * Liberación condicional por token: un dueño viejo no puede borrar el lock de otro.
+ * Liberación condicional y atómica por token:
+ * 1. rename del lock a una ruta de reclamo (nadie más puede borrarlo entre medias).
+ * 2. verificación del token del archivo reclamado.
+ * 3. solo si es el propio se elimina; si lo reemplazaron, se restaura.
+ * Un lock nuevo jamás se borra desde un dueño viejo.
  */
 function release(lockFile, token) {
-  const actual = leerLock(lockFile);
-  if (!actual || actual.token !== token) return false;
+  const claim = `${lockFile}.release-${process.pid}-${token}`;
   try {
-    fs.unlinkSync(lockFile);
-    return true;
+    fs.renameSync(lockFile, claim);
   } catch (_) {
-    return false;
+    return false; // ya no existe o no es reclamable
   }
+
+  const reclamado = leerLock(claim);
+  if (reclamado && reclamado.token === token) {
+    try {
+      fs.unlinkSync(claim);
+    } catch (_) {
+      // el reclamo ya no existe
+    }
+    return true;
+  }
+
+  // El archivo reclamado pertenece a otro dueño (nos adelantó un reemplazo): restaurarlo.
+  try {
+    if (!fs.existsSync(lockFile)) fs.renameSync(claim, lockFile);
+    else fs.unlinkSync(claim);
+  } catch (_) {
+    // limpieza best-effort
+  }
+  return false;
 }
 
 function withLock(lockFile, fn, options = {}) {

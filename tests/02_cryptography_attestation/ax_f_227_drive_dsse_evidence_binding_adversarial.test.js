@@ -132,9 +132,10 @@ try {
   // 5b. Symlink hacia fuera de la raíz: rechazo explícito
   const externo = path.join(os.tmpdir(), `axion-externo-${Date.now()}.json`);
   fs.writeFileSync(externo, JSON.stringify(payloadTestRun(), null, 2), 'utf8');
+  const rutaEnlace = path.join(evidenciaDir, 'enlace-evidencia.json');
   let enlaceCreado = false;
   try {
-    fs.symlinkSync(externo, path.join(evidenciaDir, 'enlace-evidencia.json'));
+    fs.symlinkSync(externo, rutaEnlace);
     enlaceCreado = true;
   } catch (_) {
     // Windows sin privilegios de symlink: caso omitido
@@ -143,11 +144,11 @@ try {
     const errEnlace = capturarError(() => attester.attestSession({
       missionId: 'MISSION_SYMLINK',
       title: 'Evidencia por symlink',
-      evidence: { testRun: { path: 'enlace-evidencia.json', sha256: sha256(fs.readFileSync(externo)) } }
+      evidence: { testRun: { path: path.relative(root, rutaEnlace).split(path.sep).join('/'), sha256: sha256(fs.readFileSync(externo)) } }
     }));
     assert.ok(errEnlace, 'Un symlink no debe aceptarse como evidencia');
     assert.strictEqual(errEnlace.code, 'ERR_EVIDENCE_SYMLINK');
-    fs.rmSync(path.join(evidenciaDir, 'enlace-evidencia.json'), { force: true });
+    fs.rmSync(rutaEnlace, { force: true });
     console.log('✓ Evidencia por symlink hacia fuera: ERR_EVIDENCE_SYMLINK');
   } else {
     console.log('i Symlink no disponible en esta plataforma: caso omitido');
