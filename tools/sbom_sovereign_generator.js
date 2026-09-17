@@ -299,26 +299,57 @@ class SovereignSBOMGenerator {
   }
 
   /**
-   * Verifica los SBOM versionados contra el estado actual del árbol.
+   * Compara un manifiesto SPDX 2.3 contra la superficie real.
+   */
+  compareSpdxManifestToSurface(manifest) {
+    const expected = new Map(this.distributedSurface().map((f) => [f.path, f.sha256]));
+    const declared = new Map();
+    for (const file of (manifest && manifest.files) || []) {
+      const name = String(file.fileName || '').replace(/^\.\//, '');
+      const checksum = (file.checksums || []).find((c) => c.algorithm === 'SHA256');
+      declared.set(name, checksum ? checksum.checksumValue : null);
+    }
+
+    const missing = [...expected.keys()].filter((k) => !declared.has(k));
+    const mismatched = [...expected.keys()].filter((k) => declared.has(k) && declared.get(k) !== expected.get(k));
+    const extra = [...declared.keys()].filter((k) => !expected.has(k));
+
+    return {
+      valid: missing.length === 0 && mismatched.length === 0 && extra.length === 0,
+      expectedCount: expected.size,
+      declaredCount: declared.size,
+      missing,
+      mismatched,
+      extra
+    };
+  }
+
+  /**
+   * Verifica los SBOM versionados (CycloneDX y SPDX) contra el estado actual del árbol.
    */
   verifyCommittedSboms() {
     const locations = [
-      path.join(this.root, 'docs', 'sbom', 'sbom.cyclonedx.json'),
-      path.join(this.root, 'sbom', 'sbom.cyclonedx.json')
+      { path: path.join(this.root, 'docs', 'sbom', 'sbom.cyclonedx.json'), kind: 'cyclonedx' },
+      { path: path.join(this.root, 'sbom', 'sbom.cyclonedx.json'), kind: 'cyclonedx' },
+      { path: path.join(this.root, 'docs', 'sbom', 'sbom.spdx.json'), kind: 'spdx' },
+      { path: path.join(this.root, 'sbom', 'sbom.spdx.json'), kind: 'spdx' }
     ];
 
-    const results = locations.map((location) => {
+    const results = locations.map(({ path: location, kind }) => {
       const rel = path.relative(this.root, location).split(path.sep).join('/');
       if (!fs.existsSync(location)) {
-        return { path: rel, valid: false, reason: 'MISSING_COMMITTED_SBOM' };
+        return { path: rel, kind, valid: false, reason: 'MISSING_COMMITTED_SBOM' };
       }
       let manifest;
       try {
         manifest = JSON.parse(fs.readFileSync(location, 'utf8'));
       } catch (parseErr) {
-        return { path: rel, valid: false, reason: `UNREADABLE_COMMITTED_SBOM: ${parseErr.message}` };
+        return { path: rel, kind, valid: false, reason: `UNREADABLE_COMMITTED_SBOM: ${parseErr.message}` };
       }
-      return { path: rel, ...this.compareManifestToSurface(manifest) };
+      const comparacion = kind === 'spdx'
+        ? this.compareSpdxManifestToSurface(manifest)
+        : this.compareManifestToSurface(manifest);
+      return { path: rel, kind, ...comparacion };
     });
 
     return {
@@ -365,7 +396,7 @@ if (require.main === module) {
   if (args.includes('--verify')) {
     const verification = sbom.verifyCommittedSboms();
     for (const r of verification.results) {
-      console.log(`[${r.valid ? 'OK' : 'FALLO'}] ${r.path} (declarados: ${r.declaredCount}, esperados: ${r.expectedCount})`);
+      console.log(`[${r.valid ? 'OK' : 'FALLO'}] ${r.path} (${r.kind}; declarados: ${r.declaredCount}, esperados: ${r.expectedCount})`);
       if (!r.valid) {
         console.log(`  missing: ${(r.missing || []).slice(0, 5).join(', ')}${(r.missing || []).length > 5 ? ' ...' : ''}`);
         console.log(`  mismatched: ${(r.mismatched || []).slice(0, 5).join(', ')}${(r.mismatched || []).length > 5 ? ' ...' : ''}`);

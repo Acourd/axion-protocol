@@ -22,6 +22,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const PhaseEvidence = require('./phase_evidence.js');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -204,39 +205,14 @@ class MerkleCacheEngine {
   }
 
   /**
-   * Valida la evidencia de una fase: artefacto dentro del proyecto, hash coincidente,
-   * resultado PASS. Un booleano, una ruta escapada, un artefacto ausente o un hash
-   * divergente no cuentan como evidencia. Devuelve la referencia verificada o null.
+   * Valida la evidencia de una fase delegando en el módulo de evidencia de fase:
+   * artefacto tipado, productor autorizado, dentro de la raíz, sin symlink, hash
+   * vigente y entrada de ledger vinculada. Un booleano o un archivo cualquiera no
+   * cuentan como evidencia.
    */
   validatePhaseEvidence(phaseName, evidence) {
-    if (!evidence || typeof evidence !== 'object') return null;
-    if (evidence.result !== 'PASS') return null;
-    if (typeof evidence.artifact !== 'string' || evidence.artifact.trim() === '') return null;
-    if (typeof evidence.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(evidence.sha256)) return null;
-
-    const abs = path.isAbsolute(evidence.artifact)
-      ? evidence.artifact
-      : path.resolve(this.root, evidence.artifact);
-    const rel = path.relative(this.root, abs);
-    if (rel.startsWith('..') || path.isAbsolute(rel)) return null;
-    if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) return null;
-
-    let actual;
-    try {
-      actual = crypto.createHash('sha256').update(fs.readFileSync(abs)).digest('hex');
-    } catch (readErr) {
-      void readErr;
-      return null;
-    }
-    if (actual !== evidence.sha256) return null;
-
-    return {
-      phase: phaseName,
-      artifact: rel.split(path.sep).join('/'),
-      sha256: actual,
-      result: 'PASS',
-      observedAt: typeof evidence.observedAt === 'string' ? evidence.observedAt : new Date().toISOString()
-    };
+    const res = PhaseEvidence.validatePhaseEvidence(this.root, phaseName, evidence);
+    return res.ok ? res.verified : null;
   }
 
   /**
@@ -260,6 +236,17 @@ class MerkleCacheEngine {
     const phases = {};
     for (const name of PHASE_NAMES) {
       phases[name] = this.validatePhaseEvidence(name, phaseEvidence[name]);
+    }
+
+    // Una misma evidencia no puede acreditar dos fases distintas.
+    const verificadas = PHASE_NAMES.map((n) => phases[n]).filter(Boolean);
+    const shasUnicos = new Set(verificadas.map((v) => v.sha256));
+    const rutasUnicas = new Set(verificadas.map((v) => v.artifact));
+    if (shasUnicos.size !== verificadas.length || rutasUnicas.size !== verificadas.length) {
+      return {
+        sealed: false,
+        reason: 'PHASE_ARTIFACT_REUSE: la misma evidencia (ruta/hash) no puede acreditar fases distintas.'
+      };
     }
 
     const cacheEntry = {
@@ -318,17 +305,24 @@ class MerkleCacheEngine {
       };
     }
 
-    // Re-validación en el momento de autorizar: artefacto existente, dentro del
-    // proyecto, hash vigente y resultado PASS. La evidencia no se congela al sellar.
-    const fasesInvalidas = [];
-    for (const name of PHASE_NAMES) {
-      const verificada = this.validatePhaseEvidence(name, cached.phases[name]);
-      if (!verificada) fasesInvalidas.push(name);
-    }
+    // Re-validación en el momento de autorizar: artefacto tipado, productor autorizado,
+    // ledger vinculado, hash vigente y sin reutilización entre fases.
+    const referencias = PHASE_NAMES.map((name) => this.validatePhaseEvidence(name, cached.phases[name]));
+    const fasesInvalidas = PHASE_NAMES.filter((name, i) => !referencias[i]);
     if (fasesInvalidas.length > 0) {
       return {
         canFastForward: false,
         reason: `Fases sin evidencia verificable vigente (${fasesInvalidas.join(', ')}); Fast-Forward bloqueado.`,
+        cached,
+        current
+      };
+    }
+    const shasDistintos = new Set(referencias.map((r) => r.sha256));
+    const rutasDistintas = new Set(referencias.map((r) => r.artifact));
+    if (shasDistintos.size !== PHASE_NAMES.length || rutasDistintas.size !== PHASE_NAMES.length) {
+      return {
+        canFastForward: false,
+        reason: 'Evidencia reutilizada entre fases distintas; Fast-Forward bloqueado.',
         cached,
         current
       };

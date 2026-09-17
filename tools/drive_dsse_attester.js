@@ -135,8 +135,20 @@ class DriveDsseAttester {
     }
 
     const absPath = path.isAbsolute(ref.path) ? ref.path : path.resolve(this.root, ref.path);
-    if (!fs.existsSync(absPath) || !fs.statSync(absPath).isFile()) {
-      throw this.fail('ERR_EVIDENCE_MISSING', `Artefacto de evidencia '${slot}' no existe: ${ref.path}`);
+    const lstat = fs.existsSync(absPath) ? fs.lstatSync(absPath) : null;
+    if (!lstat || lstat.isSymbolicLink() || !lstat.isFile()) {
+      if (lstat && lstat.isSymbolicLink()) {
+        throw this.fail('ERR_EVIDENCE_SYMLINK', `Artefacto de evidencia '${slot}' no puede ser un symlink: ${ref.path}`);
+      }
+      throw this.fail('ERR_EVIDENCE_MISSING', `Artefacto de evidencia '${slot}' no existe o no es un archivo: ${ref.path}`);
+    }
+
+    // La ruta real debe permanecer dentro de la raíz (sin escapes por symlink en ancestros).
+    const realRoot = fs.realpathSync(this.root);
+    const realAbs = fs.realpathSync(absPath);
+    const relReal = path.relative(realRoot, realAbs);
+    if (relReal.startsWith('..') || path.isAbsolute(relReal)) {
+      throw this.fail('ERR_EVIDENCE_ESCAPE', `Artefacto de evidencia '${slot}' resuelve fuera de la raíz: ${ref.path}`);
     }
 
     // Lectura única: el mismo buffer se hashea y se parsea (sin TOCTOU entre hash y parseo).

@@ -171,6 +171,7 @@ function sincronizarSitioWeb(totalSuites, desglose, version) {
     html = html.replace(/✓ \d+ suites en el árbol<\/span> \d+ suites de prueba/g, `✓ ${totalSuites} suites en el árbol</span> ${totalSuites} suites de prueba`);
     html = html.replace(/Distribución de las \d+ Suites/g, `Distribución de las ${totalSuites} Suites`);
     html = html.replace(/(\d+) \/ \1/g, `${totalSuites} suites`);
+    html = html.replace(/class="m-val">\d+ suites</g, `class="m-val">${totalSuites} suites<`);
     html = html.replace(/(\d+) suites · resultados publicados por CI/g, `${totalSuites} suites · resultados publicados por CI`);
     html = html.replace(/suite de \d+ pruebas/g, `suite de ${totalSuites} pruebas`);
     html = html.replace(/Todos los Dominios \(\d+\)/g, `Todos los Dominios (${totalSuites})`);

@@ -117,6 +117,30 @@ function leerUmbrales() {
   return JSON.parse(fs.readFileSync(THRESHOLDS_PATH, 'utf8'));
 }
 
+/**
+ * Archivos en alcance de cobertura: todo el runtime gobernado (tools/, bin/ y .agents/).
+ * Los archivos nunca cargados cuentan como 0% en el global, para que el alcance no se
+ * reduzca silenciosamente a lo que sí se ejecutó.
+ */
+function archivosEnAlcance() {
+  const out = [];
+  const walk = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (e.isDirectory()) {
+        if (e.name === 'node_modules' || e.name.startsWith('.')) continue;
+        walk(path.join(dir, e.name));
+      } else if (e.isFile() && /\.(js|mjs|cjs)$/.test(e.name)) {
+        out.push(path.join(dir, e.name));
+      }
+    }
+  };
+  walk(path.join(ROOT, 'tools'));
+  walk(path.join(ROOT, 'bin'));
+  walk(path.join(ROOT, '.agents'));
+  return out;
+}
+
 async function main() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'axion-v8-coverage-'));
   const homeAislado = fs.mkdtempSync(path.join(os.tmpdir(), 'axion-coverage-home-'));
@@ -147,10 +171,14 @@ async function main() {
     });
   });
 
-  if (code !== 0) {
-    console.error('La suite no terminó en verde; la cobertura no se evalúa sobre una corrida roja.');
+  if (code === null) {
+    console.error('La suite no pudo ejecutarse; no hay cobertura que evaluar.');
     fs.rmSync(tmp, { recursive: true, force: true });
+    fs.rmSync(homeAislado, { recursive: true, force: true });
     process.exit(2);
+  }
+  if (code !== 0) {
+    console.warn('ADVERTENCIA: la suite no terminó en verde; la cobertura se evalúa igualmente como diagnóstico.');
   }
 
   // V8 escribe el reporte al salir cada proceso; se espera a que los últimos
@@ -189,15 +217,21 @@ async function main() {
   }
 
   const globalRes = { cubiertas: 0, total: 0 };
-  for (const [abs, ranges] of cobertura) {
-    const rel = path.relative(ROOT, abs).split(path.sep).join('/');
-    if (!(rel.startsWith('tools/') || rel.startsWith('bin/') || rel.startsWith('.agents/'))) continue;
+  const sinCobertura = [];
+  for (const abs of archivosEnAlcance()) {
+    const ranges = cobertura.get(abs) || [];
+    if (ranges.length === 0) sinCobertura.push(path.relative(ROOT, abs).split(path.sep).join('/'));
     const res = lineasCubiertas(fs.readFileSync(abs, 'utf8'), ranges);
     globalRes.cubiertas += res.cubiertas;
     globalRes.total += res.total;
   }
   const globalPct = globalRes.total > 0 ? ((globalRes.cubiertas / globalRes.total) * 100).toFixed(1) : '0.0';
   console.log(`\nCobertura de líneas global (tools/ + bin/ + .agents/): ${globalPct}% (${globalRes.cubiertas}/${globalRes.total})`);
+  if (sinCobertura.length > 0) {
+    console.log(`  Archivos en alcance sin cobertura registrada (cuentan como 0%): ${sinCobertura.length}`);
+    for (const rel of sinCobertura.slice(0, 8)) console.log(`    - ${rel}`);
+    if (sinCobertura.length > 8) console.log(`    ... y ${sinCobertura.length - 8} más`);
+  }
 
   const reportePath = (() => {
     const i = process.argv.indexOf('--report');
@@ -210,6 +244,10 @@ async function main() {
 
   if (fallos > 0) {
     console.error(`\nFAIL: ${fallos} archivo(s) crítico(s) por debajo del umbral.`);
+    process.exit(1);
+  }
+  if (code !== 0) {
+    console.error('\nFAIL: la suite no terminó en verde en la corrida de cobertura.');
     process.exit(1);
   }
   console.log('\nPASS: umbrales de cobertura de rutas críticas cumplidos.');

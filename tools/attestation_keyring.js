@@ -16,6 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const FileLock = require('./file_lock.js');
 
 function sleepSync(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -35,36 +36,6 @@ function abrirExclusivo(filePath, mode) {
     }
   }
   return fs.openSync(filePath, 'wx', mode);
-}
-
-/**
- * Lock de creación de claves: serializa a los creadores para que nunca convivan
- * "priv sin pub" ni "pub sin priv" por interleaving entre procesos.
- */
-function acquireKeygenLock(keysDir, timeoutMs = 10000, staleMs = 30000) {
-  const lock = path.join(keysDir, '.keygen.lock');
-  const deadline = Date.now() + timeoutMs;
-  while (true) {
-    try {
-      const fd = abrirExclusivo(lock, 0o600);
-      fs.closeSync(fd);
-      return lock;
-    } catch (err) {
-      if (err.code !== 'EEXIST') throw err;
-      try {
-        const stat = fs.statSync(lock);
-        if (Date.now() - stat.mtimeMs > staleMs) fs.unlinkSync(lock);
-      } catch (_) {
-        // el titular liberó entre stat y unlink
-      }
-      if (Date.now() >= deadline) {
-        const lockErr = new Error('No se pudo adquirir el lock de creación de claves.');
-        lockErr.code = 'ERR_KEYS_LOCKED';
-        throw lockErr;
-      }
-      sleepSync(25);
-    }
-  }
 }
 
 class AttestationKeyring {
@@ -159,9 +130,13 @@ class AttestationKeyring {
         `Ya existe material de clave en ${this.keysDir}. La rotación debe ser una decisión explícita y auditada.`);
     }
 
-    // Serializa creadores: sin lock, dos procesos pueden intercalar priv/pub y dejar
-    // un par inconsistente (priv=false, pub=true) aunque cada archivo use O_EXCL.
-    const lock = acquireKeygenLock(this.keysDir);
+    // Serializa creadores con lock de propiedad verificable: sin esto, dos procesos
+    // pueden intercalar priv/pub y dejar un par inconsistente aunque cada archivo use O_EXCL.
+    const lock = FileLock.acquire(path.join(this.keysDir, '.keygen.lock'), {
+      timeoutMs: 10000,
+      staleMs: 30000,
+      code: 'ERR_KEYS_LOCKED'
+    });
     try {
       if (fs.existsSync(privPath) || fs.existsSync(pubPath)) {
         throw this.fail('ERR_KEYS_EXIST',
@@ -211,11 +186,7 @@ class AttestationKeyring {
         keysDir: this.keysDir
       };
     } finally {
-      try {
-        fs.unlinkSync(lock);
-      } catch (_) {
-        // lock ya liberado
-      }
+      FileLock.release(lock.lockFile, lock.token);
     }
   }
 

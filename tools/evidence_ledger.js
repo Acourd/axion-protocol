@@ -20,6 +20,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const FileLock = require('./file_lock.js');
 
 const LEDGER_SCHEMA = 'axion.evidence-ledger/v1';
 const GENESIS_HASH = '0'.repeat(64);
@@ -39,72 +40,34 @@ function lockPath(root) {
   return path.join(evidenceDir(root), LOCK_FILE);
 }
 
-function sleepSync(ms) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-}
-
 /**
- * Lock exclusivo del ledger mediante creación atómica O_EXCL.
- * - Recupera un lock huérfano por antigüedad (staleMs).
- * - Fail-closed: si no lo adquiere antes del timeout, lanza ERR_LEDGER_LOCKED.
+ * Lock exclusivo del ledger con token de propietario y lease por PID:
+ * - Nunca se roba un lock cuyo dueño siga vivo, aunque sea antiguo.
+ * - La recuperación reclama atómicamente (rename) y verifica el token observado.
+ * - La liberación es condicional al token: un dueño viejo no borra el lock ajeno.
+ * - Fail-closed: al agotar el timeout lanza ERR_LEDGER_LOCKED.
  */
 function acquireLock(root, options = {}) {
-  const dir = evidenceDir(root);
-  fs.mkdirSync(dir, { recursive: true });
   const file = lockPath(root);
-  const timeoutMs = Number.isFinite(options.lockTimeoutMs) ? options.lockTimeoutMs : DEFAULT_LOCK_TIMEOUT_MS;
-  const staleMs = Number.isFinite(options.lockStaleMs) ? options.lockStaleMs : DEFAULT_LOCK_STALE_MS;
-  const deadline = Date.now() + timeoutMs;
-
-  while (true) {
-    try {
-      const fd = fs.openSync(file, 'wx');
-      fs.writeSync(fd, `${process.pid}:${Date.now()}`);
-      fs.closeSync(fd);
-      return file;
-    } catch (err) {
-      // EEXIST: lock tomado. EPERM/EACCES: contención transitoria de Windows/AV al
-      // crear o eliminar el mismo archivo; se reintenta hasta el timeout.
-      if (err.code !== 'EEXIST' && err.code !== 'EPERM' && err.code !== 'EACCES') throw err;
-
-      let stat = null;
-      try {
-        stat = fs.statSync(file);
-      } catch (_) {
-        continue; // el titular liberó entre el open y el stat (o aún no existe)
-      }
-      if (Date.now() - stat.mtimeMs > staleMs) {
-        try {
-          fs.unlinkSync(file);
-        } catch (_) {
-          // otra instancia lo recuperó primero
-        }
-        continue;
-      }
-      if (Date.now() >= deadline) {
-        const lockErr = new Error(`No se pudo adquirir el lock del ledger en ${timeoutMs}ms.`);
-        lockErr.code = 'ERR_LEDGER_LOCKED';
-        throw lockErr;
-      }
-      sleepSync(15 + Math.floor(Math.random() * 20));
-    }
-  }
+  const lock = FileLock.acquire(file, {
+    timeoutMs: Number.isFinite(options.lockTimeoutMs) ? options.lockTimeoutMs : DEFAULT_LOCK_TIMEOUT_MS,
+    staleMs: Number.isFinite(options.lockStaleMs) ? options.lockStaleMs : DEFAULT_LOCK_STALE_MS,
+    code: 'ERR_LEDGER_LOCKED'
+  });
+  return { lockFile: file, token: lock.token };
 }
 
-function releaseLock(file) {
-  try {
-    fs.unlinkSync(file);
-  } catch (_) {
-    // ya liberado
-  }
+function releaseLock(lock) {
+  if (!lock || typeof lock !== 'object') return false;
+  return FileLock.release(lock.lockFile, lock.token);
 }
 
 function withLock(root, fn, options = {}) {
-  const file = acquireLock(root, options);
+  const lock = acquireLock(root, options);
   try {
     return fn();
   } finally {
-    releaseLock(file);
+    releaseLock(lock);
   }
 }
 
@@ -227,6 +190,7 @@ function appendEntry(root, payload, options = {}) {
       artifactSha256: payload.artifactSha256,
       prevEntryHash: previous
     };
+    if (payload.phase) entry.phase = payload.phase;
     entry.entryHash = computeEntryHash(entry);
 
     if (payload.signer) {

@@ -16,7 +16,8 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const DriveDsseAttester = require('../../tools/drive_dsse_attester.js');
-const { recordEvidence, readLedger, lockPath, withLock, sha256 } = require('../../tools/evidence_ledger.js');
+const { recordEvidence, readLedger, lockPath, withLock, sha256, acquireLock, releaseLock } = require('../../tools/evidence_ledger.js');
+const { leerLock } = require('../../tools/file_lock.js');
 const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 
 console.log('=== AX-F-233 Lock transaccional del ledger: concurrencia y recuperación ===\n');
@@ -154,8 +155,8 @@ try {
     assert.strictEqual(fs.existsSync(lock), false, 'El lock debe liberarse tras el anexado');
     console.log('✓ Lock huérfano recuperado por antigüedad; siguiente anexado en seq 21 y lock liberado');
 
-    // 4. Lock activo: fail-closed sin escribir
-    fs.writeFileSync(lock, `${process.pid}:${Date.now()}`, 'utf8');
+    // 4. Lock activo (dueño vivo): fail-closed sin escribir
+    fs.writeFileSync(lock, JSON.stringify({ token: 'otro-proceso', pid: process.pid, createdAt: Date.now() }), 'utf8');
     const antes = readLedger(sandbox).length;
     let errorLock = null;
     try {
@@ -186,7 +187,17 @@ try {
     assert.strictEqual(readLedger(sandbox).length, antes, 'No debe escribirse nada con el lock activo');
     console.log('✓ Lock activo: ERR_LEDGER_LOCKED y ledger intacto (fail-closed)');
 
-    // 5. withLock devuelve el valor y libera incluso ante excepción
+    // 5. Propiedad del lock: un token viejo no puede borrar el lock de otro proceso
+    fs.writeFileSync(lock, JSON.stringify({ token: 'dueno-viejo', pid: 999999, createdAt: Date.now() - 120000 }), 'utf8');
+    const nuevoLock = acquireLock(sandbox, { lockTimeoutMs: 5000 });
+    assert.strictEqual(leerLock(lock).token, nuevoLock.token, 'La recuperación debe crear un lock con token nuevo');
+    assert.strictEqual(releaseLock({ lockFile: lock, token: 'dueno-viejo' }), false, 'Un token ajeno no debe borrar el lock vigente');
+    assert.strictEqual(leerLock(lock).token, nuevoLock.token, 'El lock del dueño actual sigue intacto');
+    assert.strictEqual(releaseLock(nuevoLock), true);
+    assert.strictEqual(fs.existsSync(lock), false);
+    console.log('✓ Propiedad del lock: borrado condicional por token (un dueño viejo no borra el lock ajeno)');
+
+    // 6. withLock devuelve el valor y libera siempre
     const valor = withLock(sandbox, () => 42);
     assert.strictEqual(valor, 42);
     assert.strictEqual(fs.existsSync(lock), false);

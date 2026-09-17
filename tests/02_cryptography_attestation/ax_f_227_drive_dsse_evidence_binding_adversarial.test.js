@@ -129,6 +129,31 @@ try {
   assert.strictEqual(errSinSha.code, 'ERR_EVIDENCE_HASH_REQUIRED');
   console.log('✓ Evidencia sin SHA declarado rechazada (ERR_EVIDENCE_HASH_REQUIRED)');
 
+  // 5b. Symlink hacia fuera de la raíz: rechazo explícito
+  const externo = path.join(os.tmpdir(), `axion-externo-${Date.now()}.json`);
+  fs.writeFileSync(externo, JSON.stringify(payloadTestRun(), null, 2), 'utf8');
+  let enlaceCreado = false;
+  try {
+    fs.symlinkSync(externo, path.join(evidenciaDir, 'enlace-evidencia.json'));
+    enlaceCreado = true;
+  } catch (_) {
+    // Windows sin privilegios de symlink: caso omitido
+  }
+  if (enlaceCreado) {
+    const errEnlace = capturarError(() => attester.attestSession({
+      missionId: 'MISSION_SYMLINK',
+      title: 'Evidencia por symlink',
+      evidence: { testRun: { path: 'enlace-evidencia.json', sha256: sha256(fs.readFileSync(externo)) } }
+    }));
+    assert.ok(errEnlace, 'Un symlink no debe aceptarse como evidencia');
+    assert.strictEqual(errEnlace.code, 'ERR_EVIDENCE_SYMLINK');
+    fs.rmSync(path.join(evidenciaDir, 'enlace-evidencia.json'), { force: true });
+    console.log('✓ Evidencia por symlink hacia fuera: ERR_EVIDENCE_SYMLINK');
+  } else {
+    console.log('i Symlink no disponible en esta plataforma: caso omitido');
+  }
+  fs.rmSync(externo, { force: true });
+
   // 6. JSON fabricado con SHA correcto pero sin ledger: NO es verificado
   const fabricadoConSha = attester.attestSession({
     missionId: 'MISSION_FABRICADA_SHA',

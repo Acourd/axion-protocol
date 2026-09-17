@@ -84,6 +84,29 @@ assert.strictEqual(cmpExtra.valid, false);
 assert.ok(cmpExtra.extra.includes('tools/archivo-fantasma.js'), 'Debe detectar el componente extra');
 console.log('✓ Componente extra detectado como extra');
 
+// 4c. SPDX versionado: hash divergente y archivo ausente se detectan
+assert.ok(verificacion.results.some((r) => r.kind === 'spdx'), 'La verificación debe cubrir los manifiestos SPDX');
+const spdxPath = path.join(ROOT, 'docs', 'sbom', 'sbom.spdx.json');
+const spdx = JSON.parse(fs.readFileSync(spdxPath, 'utf8'));
+const indiceSpdx = spdx.files.findIndex((f) => f.fileName === './tools/merkle_cache_fast_forward.js');
+assert.ok(indiceSpdx !== -1, 'El SPDX debe incluir la herramienta Merkle');
+assert.strictEqual(
+  spdx.files[indiceSpdx].checksums.find((c) => c.algorithm === 'SHA256').checksumValue,
+  sha256(path.join(ROOT, 'tools', 'merkle_cache_fast_forward.js')),
+  'El checksum SPDX debe coincidir con el archivo real'
+);
+const spdxMutado = JSON.parse(JSON.stringify(spdx));
+spdxMutado.files[indiceSpdx].checksums.find((c) => c.algorithm === 'SHA256').checksumValue = 'f'.repeat(64);
+const cmpSpdxHash = sbom.compareSpdxManifestToSurface(spdxMutado);
+assert.strictEqual(cmpSpdxHash.valid, false);
+assert.ok(cmpSpdxHash.mismatched.includes('tools/merkle_cache_fast_forward.js'));
+const spdxFaltante = JSON.parse(JSON.stringify(spdx));
+spdxFaltante.files.splice(indiceSpdx, 1);
+const cmpSpdxFaltante = sbom.compareSpdxManifestToSurface(spdxFaltante);
+assert.strictEqual(cmpSpdxFaltante.valid, false);
+assert.ok(cmpSpdxFaltante.missing.includes('tools/merkle_cache_fast_forward.js'));
+console.log('✓ SPDX: checksum divergente y archivo ausente detectados');
+
 // 4b. Reproducibilidad: dos generaciones deben producir bytes idénticos
 const otraInstancia = new SovereignSBOMGenerator(ROOT);
 const cdx1 = JSON.stringify(sbom.generateCycloneDX());
