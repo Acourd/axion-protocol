@@ -11,7 +11,8 @@ const { compileRiskPolicy } = require('../../tools/risk_policy_compiler.js');
 const { executeHybridWorkflow } = require('../../tools/workflow_runner.js');
 
 const root = path.resolve(__dirname, '..', '..');
-const runtimeDir = path.join(root, '.phase-e', 'test-runtime', `workflow-${process.pid}-${Date.now()}`);
+const { crearSandbox } = require('../../tools/test_sandbox.js');
+const runtimeDir = path.join(crearSandbox('phase-e-workflow'), `workflow-${process.pid}-${Date.now()}`);
 const consumptionDir = path.join(runtimeDir, 'consumption');
 fs.mkdirSync(consumptionDir, { recursive: true });
 

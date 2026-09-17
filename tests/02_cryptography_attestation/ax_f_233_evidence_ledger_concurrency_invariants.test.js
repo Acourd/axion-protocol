@@ -54,7 +54,7 @@ try {
     durationMs: 1000,
     outputSha256: String(index).repeat(64).slice(0, 64),
     signer
-  });
+  }, { lockTimeoutMs: 60000 });
   process.stdout.write(JSON.stringify({ ok: true, seq: res.entry.seq, artifact: res.relPath, sha256: res.sha256 }));
 } catch (err) {
   process.stdout.write(JSON.stringify({ ok: false, code: err.code, message: err.message }));
@@ -68,28 +68,36 @@ try {
     attester.ensureKeyPair();
     fs.writeFileSync(writerScript, writerSource, 'utf8');
 
-    // 1-2. 20 escritores concurrentes (con reintento ante EAGAIN transitorio del SO)
+    // 1-2. 20 escritores concurrentes (con reintento ante errores transitorios del SO:
+    // EAGAIN al crear el proceso o terminación externa sin salida).
     function lanzarEscritor(i, intento = 0) {
       return new Promise((resolve) => {
         const child = spawn(process.execPath, [writerScript, sandbox, String(i)], { stdio: ['ignore', 'pipe', 'pipe'] });
         let out = '';
         let errOut = '';
         let settled = false;
+        const reintentar = (motivo) => {
+          if (intento < 2) {
+            setTimeout(() => resolve(lanzarEscritor(i, intento + 1)), 150);
+          } else {
+            resolve({ code: 1, out, errOut: `${motivo} (tras ${intento + 1} intentos)`, index: i });
+          }
+        };
         child.stdout.on('data', (d) => { out += d; });
         child.stderr.on('data', (d) => { errOut += d; });
         child.on('error', (err) => {
           if (settled) return;
           settled = true;
-          if (intento < 3) {
-            setTimeout(() => resolve(lanzarEscritor(i, intento + 1)), 150);
-          } else {
-            resolve({ code: 1, out: '', errOut: `spawn error: ${err.message}`, index: i });
-          }
+          reintentar(`spawn error: ${err.message}`);
         });
-        child.on('close', (code) => {
+        child.on('close', (code, signal) => {
           if (settled) return;
           settled = true;
-          resolve({ code, out, errOut, index: i });
+          if (code !== 0 && out === '' && errOut === '') {
+            reintentar(`terminado sin salida (code=${code}, signal=${signal})`);
+            return;
+          }
+          resolve({ code, signal, out, errOut, index: i });
         });
       });
     }
@@ -100,7 +108,11 @@ try {
     }
     const resultados = await Promise.all(hijos);
     const fallidos = resultados.filter((r) => r.code !== 0);
-    assert.strictEqual(fallidos.length, 0, `Escritores fallidos: ${fallidos.map((f) => `${f.index}:${f.errOut}`).join(' | ')}`);
+    assert.strictEqual(
+      fallidos.length,
+      0,
+      `Escritores fallidos: ${fallidos.map((f) => `#${f.index} code=${f.code} signal=${f.signal || '-'} out=${(f.out || '').slice(0, 200)} err=${(f.errOut || '').slice(0, 200)}`).join(' | ')}`
+    );
 
     const secuencias = resultados.map((r) => JSON.parse(r.out).seq).sort((a, b) => a - b);
     assert.deepStrictEqual(secuencias, Array.from({ length: 20 }, (_, i) => i + 1), 'La secuencia debe ser 1..20 sin huecos ni duplicados');

@@ -48,8 +48,12 @@ assert.strictEqual(veredictoEspurio.status, ATTESTATION_STATUS.INVALID_SIGNATURE
 console.log('✓ Rechazo fail-closed ante claves públicas no autorizadas verificado');
 
 // 4. Invocación CLI con salida 0
-const rCli = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'emit_attestation.js'), '--out', scratchDir]);
-assert.strictEqual(rCli.status, 0, 'CLI de emit_attestation debe salir con código 0');
+const rCli = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'emit_attestation.js'), '--out', scratchDir], { encoding: 'utf8' });
+assert.strictEqual(
+  rCli.status,
+  0,
+  `CLI de emit_attestation debe salir con código 0 (status=${rCli.status}, error=${rCli.error ? rCli.error.message : '-'}, stdout=${(rCli.stdout || '').slice(-300)}, stderr=${(rCli.stderr || '').slice(-300)})`
+);
 console.log('✓ Invocación CLI de autoprueba de atestación verificada');
 
 // 5. Limpieza

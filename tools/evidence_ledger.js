@@ -63,12 +63,15 @@ function acquireLock(root, options = {}) {
       fs.closeSync(fd);
       return file;
     } catch (err) {
-      if (err.code !== 'EEXIST') throw err;
+      // EEXIST: lock tomado. EPERM/EACCES: contención transitoria de Windows/AV al
+      // crear o eliminar el mismo archivo; se reintenta hasta el timeout.
+      if (err.code !== 'EEXIST' && err.code !== 'EPERM' && err.code !== 'EACCES') throw err;
+
       let stat = null;
       try {
         stat = fs.statSync(file);
       } catch (_) {
-        continue; // el titular liberó entre el open y el stat
+        continue; // el titular liberó entre el open y el stat (o aún no existe)
       }
       if (Date.now() - stat.mtimeMs > staleMs) {
         try {

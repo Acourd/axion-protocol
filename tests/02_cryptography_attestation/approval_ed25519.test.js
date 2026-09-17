@@ -14,7 +14,8 @@ const {
 const { hashCanonical } = require('../../tools/canonical_json.js');
 
 const ROOT = path.join(__dirname, '..', '..');
-const FIXTURE_ROOT = path.join(ROOT, '.phase-e', 'test-runtime', 'approval');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
+const FIXTURE_ROOT = crearSandbox('phase-e-approval');
 fs.mkdirSync(FIXTURE_ROOT, { recursive: true });
 
 function uniqueDir(label) {

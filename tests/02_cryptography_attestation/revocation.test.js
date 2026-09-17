@@ -35,7 +35,8 @@ const {
 const { hashCanonical } = require('../../tools/canonical_json.js');
 
 const ROOT = path.join(__dirname, '..', '..');
-const DIR = path.join(ROOT, '.phase-e', 'test-runtime', `revoc-${process.pid}-${Date.now()}`);
+const { crearSandbox } = require('../../tools/test_sandbox.js');
+const DIR = path.join(crearSandbox('phase-e-revoc'), `revoc-${process.pid}-${Date.now()}`);
 fs.mkdirSync(DIR, { recursive: true });
 
 let n = 0;

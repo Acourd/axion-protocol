@@ -66,7 +66,7 @@ const concurrency = Number(valorOpcion('concurrency') || 0) || undefined;
   if (fallos.length > 0) {
     for (const f of fallos.slice(0, 10)) {
       console.log(`\n--- ${f.dominio}/${f.nombre} ---`);
-      const salida = (f.output || f.error || '').split('\n').slice(-18).join('\n').trimEnd();
+      const salida = (f.output || f.error || '').split('\n').slice(-40).join('\n').trimEnd();
       if (salida) console.log(salida);
     }
     console.log(`\nFAIL: ${fallos.length} de ${res.total} suites en rojo.`);
