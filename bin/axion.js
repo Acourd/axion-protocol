@@ -71,6 +71,7 @@ const SUBCOMANDOS = {
   'guard-disk': { script: 'tools/disk_pressure_guard.js', ayuda: 'sensor proactivo de latencia de I/O y auto-mitigación de inflación' },
   'vg-guard': { script: 'tools/vibeguard_storage_hook.js', ayuda: 'ejecuta escaneo de VibeGuard con protección de disco y purgado inline' },
   'test-diff': { script: 'tools/smart_incremental_runner.js', ayuda: 'ejecuta únicamente las suites afectadas por cambios en < 500ms' },
+  'concurrency-check': { script: 'tools/concurrent_suite_check.js', ayuda: 'ejecuta N suites completas simultáneas sobre el mismo checkout y exige cero colisiones' },
   'provenance-sbom': { script: 'tools/provenance_sbom_generator.js', ayuda: 'genera SBOM CycloneDX v1.5 y procedencia in-toto descriptiva (sin certificación SLSA)' },
   record: { script: 'tools/flight_recorder.js', ayuda: 'caja negra agéntica forense y reproductor determinista de sesiones' },
   merkle: { script: 'tools/merkle_integrity_ledger.js', ayuda: 'árbol Merkle criptográfico con pruebas de inclusión y no-repudio' },

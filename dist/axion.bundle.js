@@ -5020,7 +5020,8 @@ function sincronizarReadmeEs(totalSuites) {
 
 function sincronizarRoadmap(totalSuites) {
   return reemplazar('ROADMAP.md', [
-    (c) => c.replace(/\d+ suites (?:passing al 100%|en verde en CI)/g, `${totalSuites} suites deterministas (resultado verificado en CI)`)
+    (c) => c.replace(/\d+ suites (?:passing al 100%|en verde en CI)/g, `${totalSuites} suites deterministas (resultado verificado en CI)`),
+    (c) => c.replace(/\d+ suites deterministas \(resultado verificado en CI\)/g, `${totalSuites} suites deterministas (resultado verificado en CI)`)
   ]);
 }
 
@@ -5076,11 +5077,16 @@ function sincronizarSitioWeb(totalSuites, desglose, version) {
   if (fs.existsSync(rutaHtml)) {
     let html = fs.readFileSync(rutaHtml, 'utf8');
     html = html.replace(/\d+ Suites PASS/g, `${totalSuites} Suites`);
+    html = html.replace(/id="telemetry-text">\d+ Suites/g, `id="telemetry-text">${totalSuites} Suites`);
     html = html.replace(/GitHub · \d+\/\d+/g, `GitHub · ${totalSuites} suites`);
+    html = html.replace(/GitHub · \d+ suites/g, `GitHub · ${totalSuites} suites`);
     html = html.replace(/<strong>\d+\/\d+<\/strong> suites PASS/g, `<strong>${totalSuites}</strong> suites`);
+    html = html.replace(/<strong>\d+<\/strong> suites/g, `<strong>${totalSuites}</strong> suites`);
     html = html.replace(/✓ \d+\/\d+ PASS<\/span> \d+ suites de prueba/g, `✓ ${totalSuites} suites en el árbol</span> ${totalSuites} suites de prueba`);
+    html = html.replace(/✓ \d+ suites en el árbol<\/span> \d+ suites de prueba/g, `✓ ${totalSuites} suites en el árbol</span> ${totalSuites} suites de prueba`);
     html = html.replace(/Distribución de las \d+ Suites/g, `Distribución de las ${totalSuites} Suites`);
     html = html.replace(/(\d+) \/ \1/g, `${totalSuites} suites`);
+    html = html.replace(/(\d+) suites · resultados publicados por CI/g, `${totalSuites} suites · resultados publicados por CI`);
     html = html.replace(/suite de \d+ pruebas/g, `suite de ${totalSuites} pruebas`);
     html = html.replace(/Todos los Dominios \(\d+\)/g, `Todos los Dominios (${totalSuites})`);
     html = html.replace(/Verificado \(\d+\/\d+\)/g, 'Verificado (CI)');
@@ -5117,6 +5123,7 @@ function sincronizarSitioWeb(totalSuites, desglose, version) {
     js = js.replace(/Executes \d+ automated test suites/g, `Executes ${totalSuites} automated test suites`);
     js = js.replace(/Ejecuta \d+ suites de prueba automáticas/g, `Ejecuta ${totalSuites} suites de prueba automáticas`);
     js = js.replace(/'✓ \d+\/\d+ suites PASS[^']*'/g, `'✓ [simulación] ${totalSuites} suites · este panel no ejecuta la suite'`);
+    js = js.replace(/'✓ \[simulación\] \d+ suites[^']*'/g, `'✓ [simulación] ${totalSuites} suites · este panel no ejecuta la suite'`);
     js = js.replace(/telemetryStatus: '\d+ Suites(?: PASS)?'/g, `telemetryStatus: '${totalSuites} Suites'`);
     js = js.replace(/the full \d+ automated test suites/g, `the full ${totalSuites} automated test suites`);
     js = js.replace(/suite de \d+ pruebas/g, `suite de ${totalSuites} pruebas`);

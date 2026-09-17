@@ -23,6 +23,9 @@ const crypto = require('crypto');
 
 const LEDGER_SCHEMA = 'axion.evidence-ledger/v1';
 const GENESIS_HASH = '0'.repeat(64);
+const LOCK_FILE = 'ledger.lock';
+const DEFAULT_LOCK_TIMEOUT_MS = 10000;
+const DEFAULT_LOCK_STALE_MS = 30000;
 
 function evidenceDir(root) {
   return path.join(root, '.axion', 'evidence');
@@ -30,6 +33,76 @@ function evidenceDir(root) {
 
 function ledgerPath(root) {
   return path.join(evidenceDir(root), 'ledger.jsonl');
+}
+
+function lockPath(root) {
+  return path.join(evidenceDir(root), LOCK_FILE);
+}
+
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+/**
+ * Lock exclusivo del ledger mediante creación atómica O_EXCL.
+ * - Recupera un lock huérfano por antigüedad (staleMs).
+ * - Fail-closed: si no lo adquiere antes del timeout, lanza ERR_LEDGER_LOCKED.
+ */
+function acquireLock(root, options = {}) {
+  const dir = evidenceDir(root);
+  fs.mkdirSync(dir, { recursive: true });
+  const file = lockPath(root);
+  const timeoutMs = Number.isFinite(options.lockTimeoutMs) ? options.lockTimeoutMs : DEFAULT_LOCK_TIMEOUT_MS;
+  const staleMs = Number.isFinite(options.lockStaleMs) ? options.lockStaleMs : DEFAULT_LOCK_STALE_MS;
+  const deadline = Date.now() + timeoutMs;
+
+  while (true) {
+    try {
+      const fd = fs.openSync(file, 'wx');
+      fs.writeSync(fd, `${process.pid}:${Date.now()}`);
+      fs.closeSync(fd);
+      return file;
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
+      let stat = null;
+      try {
+        stat = fs.statSync(file);
+      } catch (_) {
+        continue; // el titular liberó entre el open y el stat
+      }
+      if (Date.now() - stat.mtimeMs > staleMs) {
+        try {
+          fs.unlinkSync(file);
+        } catch (_) {
+          // otra instancia lo recuperó primero
+        }
+        continue;
+      }
+      if (Date.now() >= deadline) {
+        const lockErr = new Error(`No se pudo adquirir el lock del ledger en ${timeoutMs}ms.`);
+        lockErr.code = 'ERR_LEDGER_LOCKED';
+        throw lockErr;
+      }
+      sleepSync(15 + Math.floor(Math.random() * 20));
+    }
+  }
+}
+
+function releaseLock(file) {
+  try {
+    fs.unlinkSync(file);
+  } catch (_) {
+    // ya liberado
+  }
+}
+
+function withLock(root, fn, options = {}) {
+  const file = acquireLock(root, options);
+  try {
+    return fn();
+  } finally {
+    releaseLock(file);
+  }
 }
 
 function sha256(buffer) {
@@ -122,51 +195,54 @@ function verifyLedger(root, publicKeyPem) {
   return { valid: true, entries, head: previous };
 }
 
-function appendEntry(root, payload) {
+function appendEntry(root, payload, options = {}) {
   const dir = evidenceDir(root);
   fs.mkdirSync(dir, { recursive: true });
 
-  // Fail-closed: no se anexa a una cadena rota; se exige ledger íntegro antes de escribir.
-  const state = verifyLedger(root);
-  if (!state.valid) {
-    const err = new Error(`No se anexa evidencia: ledger inválido (${state.reason}).`);
-    err.code = 'ERR_LEDGER_INVALID';
-    throw err;
-  }
+  // Sección crítica: lectura de la cadena, validación, anexado y liberación del lock.
+  return withLock(root, () => {
+    // Fail-closed: no se anexa a una cadena rota; se exige ledger íntegro antes de escribir.
+    const state = verifyLedger(root);
+    if (!state.valid) {
+      const err = new Error(`No se anexa evidencia: ledger inválido (${state.reason}).`);
+      err.code = 'ERR_LEDGER_INVALID';
+      throw err;
+    }
 
-  const entries = state.entries;
-  const previous = entries.length > 0 ? entries[entries.length - 1].entryHash : GENESIS_HASH;
+    const entries = state.entries;
+    const previous = entries.length > 0 ? entries[entries.length - 1].entryHash : GENESIS_HASH;
 
-  const entry = {
-    schema: LEDGER_SCHEMA,
-    seq: entries.length + 1,
-    recordedAt: new Date().toISOString(),
-    producer: payload.producer,
-    command: payload.command,
-    exitCode: payload.exitCode,
-    suites: payload.suites,
-    artifact: payload.artifact,
-    artifactSha256: payload.artifactSha256,
-    prevEntryHash: previous
-  };
-  entry.entryHash = computeEntryHash(entry);
-
-  if (payload.signer) {
-    entry.signature = {
-      keyid: payload.signer.keyId,
-      sig: payload.signer.sign(Buffer.from(entry.entryHash, 'utf8')).toString('base64')
+    const entry = {
+      schema: LEDGER_SCHEMA,
+      seq: entries.length + 1,
+      recordedAt: new Date().toISOString(),
+      producer: payload.producer,
+      command: payload.command,
+      exitCode: payload.exitCode,
+      suites: payload.suites,
+      artifact: payload.artifact,
+      artifactSha256: payload.artifactSha256,
+      prevEntryHash: previous
     };
-  }
+    entry.entryHash = computeEntryHash(entry);
 
-  fs.appendFileSync(ledgerPath(root), `${JSON.stringify(entry)}\n`, 'utf8');
-  return entry;
+    if (payload.signer) {
+      entry.signature = {
+        keyid: payload.signer.keyId,
+        sig: payload.signer.sign(Buffer.from(entry.entryHash, 'utf8')).toString('base64')
+      };
+    }
+
+    fs.appendFileSync(ledgerPath(root), `${JSON.stringify(entry)}\n`, 'utf8');
+    return entry;
+  }, options);
 }
 
 /**
  * Registra un artefacto de evidencia y su entrada firmada en el ledger.
  * Devuelve la ruta, el SHA-256 real del archivo y la entrada registrada.
  */
-function recordEvidence(root, payload) {
+function recordEvidence(root, payload, options = {}) {
   const dir = evidenceDir(root);
   fs.mkdirSync(dir, { recursive: true });
 
@@ -200,7 +276,7 @@ function recordEvidence(root, payload) {
     artifact: path.relative(root, finalPath).split(path.sep).join('/'),
     artifactSha256,
     signer: payload.signer
-  });
+  }, options);
 
   return {
     path: finalPath,
@@ -221,6 +297,10 @@ module.exports = {
   GENESIS_HASH,
   evidenceDir,
   ledgerPath,
+  lockPath,
+  acquireLock,
+  releaseLock,
+  withLock,
   sha256,
   canonical,
   computeEntryHash,

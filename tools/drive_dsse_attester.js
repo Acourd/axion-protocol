@@ -132,8 +132,8 @@ class DriveDsseAttester {
   }
 
   /**
-   * Creación explícita de claves. Escritura atómica + permisos restrictivos.
-   * Nunca sobrescribe un par existente (no hay rotación silenciosa).
+   * Creación explícita de claves. Escritura atómica con O_EXCL (sin carreras entre
+   * procesos): nunca sobrescribe un par existente (no hay rotación silenciosa).
    */
   generateKeyPair() {
     const privPath = this.privKeyPath();
@@ -149,18 +149,35 @@ class DriveDsseAttester {
       privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
     });
 
-    const privTmp = `${privPath}.tmp-${process.pid}-${Date.now()}`;
-    fs.writeFileSync(privTmp, privateKey, { encoding: 'utf8', mode: 0o600 });
+    let privFd = null;
+    let pubFd = null;
     try {
-      fs.chmodSync(privTmp, 0o600);
-    } catch (_) {
-      // Windows no implementa modos POSIX; el archivo queda escrito igualmente.
-    }
-    fs.renameSync(privTmp, privPath);
+      privFd = fs.openSync(privPath, 'wx', 0o600);
+      fs.writeSync(privFd, privateKey);
+      fs.closeSync(privFd);
+      privFd = null;
+      try {
+        fs.chmodSync(privPath, 0o600);
+      } catch (_) {
+        // Windows no implementa modos POSIX
+      }
 
-    const pubTmp = `${pubPath}.tmp-${process.pid}-${Date.now()}`;
-    fs.writeFileSync(pubTmp, publicKey, { encoding: 'utf8', mode: 0o644 });
-    fs.renameSync(pubTmp, pubPath);
+      pubFd = fs.openSync(pubPath, 'wx', 0o644);
+      fs.writeSync(pubFd, publicKey);
+      fs.closeSync(pubFd);
+      pubFd = null;
+    } catch (err) {
+      if (privFd !== null) { try { fs.closeSync(privFd); } catch (_) { /* fd ya cerrado */ } }
+      if (pubFd !== null) { try { fs.closeSync(pubFd); } catch (_) { /* fd ya cerrado */ } }
+      // Limpieza de material parcial para no dejar un par a medias.
+      try { if (fs.existsSync(privPath) && !fs.existsSync(pubPath)) fs.unlinkSync(privPath); } catch (_) { /* limpieza best-effort */ }
+      try { if (fs.existsSync(pubPath) && !fs.existsSync(privPath)) fs.unlinkSync(pubPath); } catch (_) { /* limpieza best-effort */ }
+      if (err.code === 'EEXIST') {
+        throw this.fail('ERR_KEYS_EXIST',
+          `Otra instancia creó material de clave en ${this.keysDir}; no se rota en silencio.`);
+      }
+      throw err;
+    }
 
     return {
       publicKeyPem: publicKey,
@@ -173,16 +190,34 @@ class DriveDsseAttester {
 
   /**
    * Acción explícita idempotente: crear si no existe, validar si existe.
+   * Tolera carreras entre procesos (ERR_KEYS_EXIST / par a medio crear).
    * No repara claves corruptas ni inseguras: en ese caso falla.
    */
   ensureKeyPair() {
     const privPath = this.privKeyPath();
     const pubPath = this.pubKeyPath();
     if (!fs.existsSync(privPath) && !fs.existsSync(pubPath)) {
-      return this.generateKeyPair();
+      try {
+        return this.generateKeyPair();
+      } catch (err) {
+        if (err.code !== 'ERR_KEYS_EXIST') throw err;
+        // Otra instancia ganó la carrera; se carga su par.
+      }
     }
-    const pair = this.loadKeyPair();
-    return { ...pair, keyId: this.keyIdFor(pair.publicKeyPem), created: false, keysDir: this.keysDir };
+
+    let ultimoError = null;
+    for (let intento = 0; intento < 40; intento++) {
+      try {
+        const pair = this.loadKeyPair();
+        return { ...pair, keyId: this.keyIdFor(pair.publicKeyPem), created: false, keysDir: this.keysDir };
+      } catch (err) {
+        ultimoError = err;
+        // Ventana de carrera: el otro proceso aún no escribió la clave pública.
+        if (err.code !== 'ERR_KEYS_INCOMPLETE') throw err;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+      }
+    }
+    throw ultimoError;
   }
 
   /**
@@ -443,7 +478,9 @@ class DriveDsseAttester {
 
     const envelopeDigest = crypto.createHash('sha256').update(JSON.stringify(dsseEnvelope)).digest('hex');
     const attestationPath = path.join(this.attestDir, `drive-session-${envelopeDigest.slice(0, 16)}.dsse.json`);
-    fs.writeFileSync(attestationPath, JSON.stringify(dsseEnvelope, null, 2), 'utf8');
+    const tmpPath = `${attestationPath}.tmp-${process.pid}`;
+    fs.writeFileSync(tmpPath, JSON.stringify(dsseEnvelope, null, 2), 'utf8');
+    fs.renameSync(tmpPath, attestationPath);
 
     return {
       attestationPath,
@@ -574,21 +611,30 @@ class DriveDsseAttester {
     let produced = null;
     let ledgerAfter = ledgerBefore;
     if (ledgerBefore.valid) {
-      produced = recordEvidence(this.root, {
-        schema: 'axion.execution/v1',
-        producer: 'tools/drive_dsse_attester.js',
-        runner: runner.etiqueta,
-        command,
-        exitCode: exitCode === null ? 1 : exitCode,
-        status: ranGreen ? 'PASS' : 'FAIL',
-        suites,
-        startedAt: new Date(startedAtMs).toISOString(),
-        finishedAt: new Date(finishedAtMs).toISOString(),
-        durationMs: finishedAtMs - startedAtMs,
-        outputSha256: crypto.createHash('sha256').update(output).digest('hex'),
-        signer: this.buildSigner()
-      });
-      ledgerAfter = this.verifyEvidenceLedger();
+      try {
+        produced = recordEvidence(this.root, {
+          schema: 'axion.execution/v1',
+          producer: 'tools/drive_dsse_attester.js',
+          runner: runner.etiqueta,
+          command,
+          exitCode: exitCode === null ? 1 : exitCode,
+          status: ranGreen ? 'PASS' : 'FAIL',
+          suites,
+          startedAt: new Date(startedAtMs).toISOString(),
+          finishedAt: new Date(finishedAtMs).toISOString(),
+          durationMs: finishedAtMs - startedAtMs,
+          outputSha256: crypto.createHash('sha256').update(output).digest('hex'),
+          signer: this.buildSigner()
+        });
+        ledgerAfter = this.verifyEvidenceLedger();
+      } catch (appendErr) {
+        produced = null;
+        ledgerAfter = {
+          valid: false,
+          entries: ledgerBefore.entries.length,
+          reason: `${appendErr.code || 'ERROR'}: ${appendErr.message}`
+        };
+      }
     }
 
     const verified = ranGreen && treeStable && ledgerAfter.valid;
