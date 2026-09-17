@@ -56,6 +56,19 @@ function resultadoDemostracion() {
   };
 }
 
+function escribirResiliente(ruta, contenido) {
+  for (let intento = 0; intento < 4; intento++) {
+    try {
+      fs.writeFileSync(ruta, contenido, 'utf8');
+      return;
+    } catch (err) {
+      const transitorio = err.code === 'EPERM' || err.code === 'EBUSY' || err.code === 'EACCES';
+      if (!transitorio || intento === 3) throw err;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 * (intento + 1));
+    }
+  }
+}
+
 function emitirYVerificar(dirSalida) {
   const destino = dirSalida || path.join(RAIZ, '.axion', 'attestations');
   fs.mkdirSync(destino, { recursive: true });
@@ -76,9 +89,9 @@ function emitirYVerificar(dirSalida) {
   const rutaClave = path.join(destino, 'selftest-attestation.pub.pem');
   const rutaAviso = path.join(destino, 'README.md');
 
-  fs.writeFileSync(rutaSobre, JSON.stringify(att.envelope, null, 2), 'utf8');
-  fs.writeFileSync(rutaClave, pubPem, 'utf8');
-  fs.writeFileSync(rutaAviso, [
+  escribirResiliente(rutaSobre, JSON.stringify(att.envelope, null, 2));
+  escribirResiliente(rutaClave, pubPem);
+  escribirResiliente(rutaAviso, [
     '# Atestaciones de este directorio',
     '',
     '`selftest-attestation.json` es una DEMOSTRACION. Firma una mision ficticia con un par',
@@ -94,7 +107,7 @@ function emitirYVerificar(dirSalida) {
     'Las atestaciones reales las emite `tools/workflow_runner.js` al cerrar una mision en',
     'estado VERIFIED, firmadas con la clave de una autoridad registrada, no con una efimera.',
     '',
-  ].join('\n'), 'utf8');
+  ].join('\n'));
 
   // Verificar aqui mismo convierte la demostracion en una prueba: si la cadena se
   // rompiera, esta herramienta fallaria en vez de emitir un sobre roto con buena cara.
@@ -120,7 +133,13 @@ function emitirYVerificar(dirSalida) {
 function main() {
   const args = process.argv.slice(2);
   const iOut = args.indexOf('--out');
-  const r = emitirYVerificar(iOut !== -1 ? path.resolve(args[iOut + 1]) : null);
+  let r;
+  try {
+    r = emitirYVerificar(iOut !== -1 ? path.resolve(args[iOut + 1]) : null);
+  } catch (err) {
+    console.error(`FALLO La autoprueba de atestacion no pudo completarse: ${err.code || 'ERROR'}: ${err.message}`);
+    process.exit(1);
+  }
 
   console.log('=== AUTOPRUEBA DE LA CADENA DE ATESTACION (DEMOSTRACION, NO MISION REAL) ===');
   if (!r.pass) {

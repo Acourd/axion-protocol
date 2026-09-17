@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const DynamicRuleWeaver = require('../../tools/dynamic_rule_weaver.js');
@@ -19,7 +20,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-144 Invariantes del Tejedor Dinámico de Reglas P0 ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_weaver_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_weaver_sandbox');
 fs.mkdirSync(path.join(sandbox, '.agents', 'rules'), { recursive: true });
 
 try {

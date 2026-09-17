@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const VibeGuardStorageHook = require('../../tools/vibeguard_storage_hook.js');
@@ -19,7 +20,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-156 Invariantes del Hook de Almacenamiento VibeGuard ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_vg_hook_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_vg_hook_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'checkpoints'), { recursive: true });
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 fs.mkdirSync(path.join(sandbox, 'scratch'), { recursive: true });

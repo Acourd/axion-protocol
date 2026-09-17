@@ -1,4 +1,5 @@
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const { captureHumanFeedback, classifyFeedbackCategory } = require('../../tools/learning_engine.js');
@@ -17,7 +18,7 @@ const cat2 = classifyFeedbackCategory('Ten cuidado con la seguridad, no borres l
 assert.strictEqual(cat2, 'SAFETY_RULE');
 console.log('✓ Retroalimentación de seguridad clasificada como SAFETY_RULE');
 
-const testLearningsFile = path.join(__dirname, '..', '..', 'scratch', 'test_learnings.md');
+const testLearningsFile = path.join(crearSandbox('learning-git'), 'test_learnings.md');
 if (fs.existsSync(testLearningsFile)) fs.unlinkSync(testLearningsFile);
 
 const captureRes = captureHumanFeedback('En este proyecto debemos usar siempre nombres de variables descriptivos', { targetFile: testLearningsFile });

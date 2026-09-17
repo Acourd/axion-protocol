@@ -1,0 +1,13 @@
+{
+  "metodologia": "Cobertura de lineas V8 nativa (NODE_V8_COVERAGE) sobre la suite completa secuencial (--concurrency 1). La cobertura efectiva de una posicion es la del rango mas interno que la contiene (rangos anidados de V8). Denominador: todas las lineas con contenido no vacio de los archivos en alcance (tools/, bin/, .agents/), incluyendo los nunca cargados (0%). LIMITE CONOCIDO: V8 no escribe reporte para procesos terminados con SIGKILL; y las ramas especificas de plataforma (p. ej. reintentos EPERM de Windows) reducen la cobertura en Linux. Los umbrales son pisos de regresion con margen sobre el minimo observado en Windows y Linux, no objetivos de calidad.",
+  "files": {
+    "tools/attestation_keyring.js": 40,
+    "tools/evidence_ledger.js": 38,
+    "tools/drive_dsse_attester.js": 20,
+    "tools/merkle_cache_fast_forward.js": 55,
+    "tools/checkpoint.js": 34,
+    "tools/suite_runner.js": 40,
+    ".agents/hooks/validate-tool-call.mjs": 55,
+    "bin/axion.js": 70
+  }
+}

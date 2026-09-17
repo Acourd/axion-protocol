@@ -47,7 +47,7 @@ class SwarmSimulator {
     log(`${C.bold}${C.cyan}║      🐝  AXION PROTOCOL v2.0 — SIMULADOR DE ENJAMBRE EN VIVO        ║${C.reset}`);
     log(`${C.bold}${C.cyan}╚════════════════════════════════════════════════════════════════════╝${C.reset}\n`);
 
-    const tempDir = path.join(os.tmpdir(), `axion_sim_${Date.now()}`);
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'axion_sim_'));
     fs.mkdirSync(tempDir, { recursive: true });
 
     try {

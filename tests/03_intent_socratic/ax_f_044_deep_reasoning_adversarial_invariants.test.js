@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -8,7 +9,7 @@ const DeepReasoningEngine = require('../../tools/deep_reasoning.js');
 
 console.log('=== AX-F-044 Motor de Razonamiento Profundo, Invariantes y Detección de Vacuidad ===\n');
 
-const sandbox = path.join(os.tmpdir(), `ax_f_044_sandbox_${Date.now()}`);
+const sandbox = crearSandboxTemporal('ax_f_044_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 const engine = new DeepReasoningEngine(sandbox);
 

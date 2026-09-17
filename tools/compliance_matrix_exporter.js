@@ -15,6 +15,7 @@
  */
 
 const fs = require('fs');
+const { writeFileAtomicSync } = require('./atomic_write.js');
 const path = require('path');
 const crypto = require('crypto');
 
@@ -150,8 +151,8 @@ class ComplianceMatrixExporter {
     const matrix = this.evaluateCompliance();
     const mdContent = this.generateMarkdown(matrix);
 
-    fs.writeFileSync(this.mdPath, mdContent, 'utf8');
-    fs.writeFileSync(this.jsonPath, JSON.stringify(matrix, null, 2), 'utf8');
+    writeFileAtomicSync(this.mdPath, mdContent);
+    writeFileAtomicSync(this.jsonPath, JSON.stringify(matrix, null, 2));
 
     const digest = crypto.createHash('sha256')
       .update(mdContent)

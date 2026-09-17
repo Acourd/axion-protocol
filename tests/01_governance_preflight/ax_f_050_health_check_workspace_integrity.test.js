@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -64,7 +65,7 @@ assert.strictEqual(resRoot.checks.every(c => c.pass), true, 'todas las comprobac
 console.log(`✓ ${resRoot.checks.length}/${resRoot.checks.length} comprobaciones de salud en verde sobre el proyecto raíz verificadas`);
 
 // 4. Detección honesta de fallos sobre un directorio vacío
-const emptyDir = path.join(os.tmpdir(), 'axion_test_empty_health_' + Date.now());
+const emptyDir = crearSandboxTemporal('axion_test_empty_health');
 fs.mkdirSync(emptyDir, { recursive: true });
 
 const resEmpty = runHealthCheck(emptyDir);

@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const DriveMissionMatrix = require('../../tools/drive_mission_matrix.js');
@@ -19,7 +20,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-127 Invariantes de la Matriz Estructurada de Misiones para /drive ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_matrix_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_matrix_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 
 const matrix = new DriveMissionMatrix(sandbox);

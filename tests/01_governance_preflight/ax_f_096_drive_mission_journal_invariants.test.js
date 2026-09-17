@@ -13,12 +13,17 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const DriveMissionTracker = require('../../tools/drive_mission_tracker.js');
 
 console.log('=== AX-F-096 Invariantes del Diario Persistente de Misiones de /drive ===\n');
 
+// Estado propio por corrida: el diario sobre el checkout compartido hacía que dos
+// suites concurrentes se reiniciaran el backlog mutuamente (el test resetea estado).
 const ROOT = path.resolve(__dirname, '..', '..');
-const tracker = new DriveMissionTracker(ROOT);
+const sandbox = crearSandbox('test_mission_journal');
+fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
+const tracker = new DriveMissionTracker(sandbox);
 
 // 1. Limpiar estado previo de prueba
 tracker.journal.activeMission = null;
@@ -67,8 +72,11 @@ assert.ok(savedJournal.digest && savedJournal.digest.length === 64, 'Debe persis
 assert.strictEqual(savedJournal.pendingBacklog.length, 1, 'El backlog debe persistir en disco');
 console.log(`✓ Diario de misiones persistido y verificado en disco con digest SHA-256`);
 
-// Limpiar backlog de prueba
+// Limpiar backlog de prueba y sandbox
 tracker.journal.pendingBacklog = [];
 tracker.saveJournal();
+if (fs.existsSync(sandbox)) {
+  fs.rmSync(sandbox, { recursive: true, force: true });
+}
 
 console.log('\nPASS AX-F-096 — Invariantes del diario persistente de misiones verificados al 100%.');

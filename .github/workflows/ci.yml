@@ -226,3 +226,17 @@ jobs:
 
       - name: Higiene del diff
         run: git diff --check
+
+  cobertura:
+    name: Cobertura de rutas críticas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24.x
+
+      # Cobertura V8 nativa (sin dependencias): la suite corre con NODE_V8_COVERAGE y
+      # se exigen umbrales explícitos por archivo crítico (tools/coverage_thresholds.json).
+      - name: Cobertura nativa con umbrales
+        run: node tools/coverage_report.js

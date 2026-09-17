@@ -53,6 +53,7 @@ extraerTodos(leer('docs/ASYMPTOTIC_MATURITY_REPORT.es.md'), /(\d+) suites determ
 extraerTodos(leer('docs/attestation_viewer.html'), /\(suite: (\d+) pruebas · resultado en CI\)/, 'attestation_viewer.html');
 extraerTodos(leer('docs/site/index.html'), /Distribución de las (\d+) Suites/, 'docs/site/index.html (título)');
 extraerTodos(leer('docs/site/index.html'), /id="telemetry-text">(\d+) Suites/, 'docs/site/index.html (telemetría)');
+extraerTodos(leer('docs/site/index.html'), /class="m-val">(\d+) suites</, 'docs/site/index.html (métricas)');
 extraerTodos(leer('docs/site/script.js'), /statusPill: 'v[\w.-]+ · (\d+) Suites'/, 'docs/site/script.js (statusPill)');
 extraerTodos(leer('docs/site/script.js'), /telemetryStatus: '(\d+) Suites'/, 'docs/site/script.js (telemetryStatus)');
 extraerTodos(leer('docs/site/script.js'), /Distribution of the (\d+) Suites/, 'docs/site/script.js (breakdown)');

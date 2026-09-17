@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const DiskPressureGuard = require('../../tools/disk_pressure_guard.js');
@@ -19,7 +20,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-155 Invariantes del Sensor de Presión de Disco e I/O ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_disk_guard_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_disk_guard_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 fs.mkdirSync(path.join(sandbox, '.axion', 'checkpoints'), { recursive: true });
 fs.mkdirSync(path.join(sandbox, 'scratch'), { recursive: true });
@@ -54,11 +55,11 @@ try {
   assert.strictEqual(healResult.afterMetrics.hasPressure, false);
   console.log(`✓ Auto-curación preventiva en caliente ejecutada con éxito (Restablecido a: ${healResult.status})`);
 
-  // 4. Validar integración con DriveEngine
-  const driveEngine = new DriveEngine(ROOT);
+  // 4. Validar integración con DriveEngine (en sandbox: jamás auto-curación sobre el checkout compartido)
+  const driveEngine = new DriveEngine(sandbox);
   const driveEnsure = driveEngine.ensureOptimalDiskState();
   assert.ok(driveEnsure.status);
-  console.log('✓ Integración DriveEngine.ensureOptimalDiskState() verificada');
+  console.log('✓ Integración DriveEngine.ensureOptimalDiskState() verificada (sandbox aislado)');
 
 } finally {
   if (fs.existsSync(sandbox)) {

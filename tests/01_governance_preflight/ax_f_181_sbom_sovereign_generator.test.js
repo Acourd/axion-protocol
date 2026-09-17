@@ -13,6 +13,7 @@
  */
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -50,7 +51,7 @@ for (const comp of cdx.components) {
 console.log('  ✓ Invariante 3: 100% de componentes cuentan con SHA-256 hex64 y licencia Apache-2.0.');
 
 // Invariante 4: Exportación a disco
-const tempDir = path.join(os.tmpdir(), `test_ax_f_181_${Date.now()}`);
+const tempDir = crearSandboxTemporal('test_ax_f_181');
 try {
   const exportRes = sbom.exportSBOMs(tempDir);
   assert.ok(fs.existsSync(exportRes.cdxPath));
@@ -76,7 +77,7 @@ assert.strictEqual(docsSpdx, rootSpdx, 'docs/sbom/sbom.spdx.json y sbom/sbom.spd
 console.log('  ✓ Invariante 5: Paridad exacta validada entre docs/sbom/ (canónica) y sbom/ (espejo).');
 
 // Invariante 6: Comportamiento fail-closed adversarial ante package.json faltante, inválido o sin versión
-const advSandbox = path.join(os.tmpdir(), `ax_f_181_adversarial_${Date.now()}`);
+const advSandbox = crearSandboxTemporal('ax_f_181_adversarial');
 try {
   fs.mkdirSync(advSandbox, { recursive: true });
 

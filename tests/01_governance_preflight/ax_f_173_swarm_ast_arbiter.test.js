@@ -13,6 +13,7 @@
  */
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -21,7 +22,7 @@ const SwarmASTArbiter = require('../../tools/swarm_ast_arbiter.js');
 console.log('=== AX-F-173: Invariantes de SwarmASTArbiter (v2.0 Foundation) ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const tempRoot = path.join(os.tmpdir(), `test_ax_f_173_${Date.now()}`);
+const tempRoot = crearSandboxTemporal('test_ax_f_173');
 fs.mkdirSync(tempRoot, { recursive: true });
 
 try {

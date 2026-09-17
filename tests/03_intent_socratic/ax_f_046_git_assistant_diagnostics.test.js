@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
@@ -9,7 +10,7 @@ const { getGitStatusDiagnosis } = require('../../tools/git_assistant.js');
 console.log('=== AX-F-046 Asistente Git No Técnico y Diagnóstico Amigable ===\n');
 
 const os = require('os');
-const nonGitDir = path.join(os.tmpdir(), 'axion_test_nogit_' + Date.now());
+const nonGitDir = crearSandboxTemporal('axion_test_nogit');
 if (fs.existsSync(nonGitDir)) fs.rmSync(nonGitDir, { recursive: true, force: true });
 fs.mkdirSync(nonGitDir, { recursive: true });
 
@@ -21,7 +22,7 @@ assert.strictEqual(diagNoGit.simpleMessage.includes('Git'), true);
 fs.rmSync(nonGitDir, { recursive: true, force: true });
 console.log('✓ Detección y reporte amigable de carpeta no-Git verificados');
 
-const scratchDir = path.join(os.tmpdir(), 'axion_test_git_' + Date.now());
+const scratchDir = crearSandboxTemporal('axion_test_git');
 if (fs.existsSync(scratchDir)) fs.rmSync(scratchDir, { recursive: true, force: true });
 fs.mkdirSync(scratchDir, { recursive: true });
 

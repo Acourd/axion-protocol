@@ -13,6 +13,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const InstinctSynthesizer = require('../../tools/instinct_synthesizer.js');
@@ -21,7 +22,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-137 Invariantes de Síntesis de Instintos y Aprendizaje Continuo ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_instinct_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_instinct_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 
 try {
@@ -79,8 +80,9 @@ try {
   assert.ok(block.includes('modificación de archivos de atestación'));
   console.log('✓ Formateo de bloque de prompt validado');
 
-  // 6. Validar integración con DriveEngine
-  const driveEngine = new DriveEngine(ROOT);
+  // 6. Validar integración con DriveEngine (en sandbox: el vault sobre el checkout
+  // compartido sufre lost-update entre corridas concurrentes)
+  const driveEngine = new DriveEngine(sandbox);
   const driveSyn = driveEngine.synthesizeProjectInstinct({
     domain: 'TESTING',
     trigger: 'ejecución de suite paralela',

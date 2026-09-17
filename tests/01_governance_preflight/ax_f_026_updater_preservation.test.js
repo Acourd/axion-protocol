@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
@@ -10,7 +11,7 @@ const { runUpdate } = require('../../tools/updater.js');
 console.log('=== AX-F-026 Preservación de Activos de Usuario en Actualizaciones (Updater) ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const scratchDir = path.join(ROOT, 'scratch', 'test_updater_target');
+const scratchDir = crearSandbox('test_updater_target');
 
 // Limpieza previa
 if (fs.existsSync(scratchDir)) {

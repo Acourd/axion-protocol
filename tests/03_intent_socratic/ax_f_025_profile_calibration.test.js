@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
@@ -14,8 +15,8 @@ const ROOT = path.resolve(__dirname, '..', '..');
 // "guardar y releer" deja technical_depth=BUILDER en disco, y si el escenario de "fusión
 // no destructiva" heredase ese estado, su aserción final pasaría aunque la escritura no
 // hiciese nada. Separarlos mantiene ambas comprobaciones capaces de fallar.
-const dirPersistencia = path.join(ROOT, 'scratch', 'test_profile_target');
-const dirFusion = path.join(ROOT, 'scratch', 'test_profile_calibration');
+const dirPersistencia = crearSandbox('test_profile_target');
+const dirFusion = crearSandbox('test_profile_calibration');
 
 for (const d of [dirPersistencia, dirFusion]) {
   if (fs.existsSync(d)) fs.rmSync(d, { recursive: true, force: true });

@@ -22,6 +22,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const PhaseEvidence = require('./phase_evidence.js');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -51,7 +52,7 @@ const SECURITY_SURFACE_FILES = [
 
 const IGNORED_DIR_NAMES = new Set(['node_modules', '.git', 'scratch', '.axion', '.phase-e', 'dist', '.sandbox']);
 
-const CACHE_FORMAT = 2;
+const CACHE_FORMAT = 3;
 const PHASE_NAMES = ['testsPassed', 'vibeGuardPassed', 'smtProofPassed', 'chaosFuzzPassed'];
 
 class MerkleCacheEngine {
@@ -204,11 +205,23 @@ class MerkleCacheEngine {
   }
 
   /**
-   * Sella el estado actual en la caché Merkle.
-   * Las fases solo se registran como `true` si el llamador las aporta como `true`.
-   * Nunca se inventan fases verdes. Con errores de lectura no se sella nada.
+   * Valida la evidencia de una fase delegando en el módulo de evidencia de fase:
+   * artefacto tipado, productor autorizado, dentro de la raíz, sin symlink, hash
+   * vigente y entrada de ledger vinculada. Un booleano o un archivo cualquiera no
+   * cuentan como evidencia.
    */
-  sealState(merkleInfo, verifiedPhases = {}) {
+  validatePhaseEvidence(phaseName, evidence) {
+    const res = PhaseEvidence.validatePhaseEvidence(this.root, phaseName, evidence);
+    return res.ok ? res.verified : null;
+  }
+
+  /**
+   * Sella el estado actual en la caché Merkle.
+   * Cada fase se registra SOLO si aporta evidencia verificable (artefacto + SHA-256 +
+   * resultado PASS). Booleanos o artefactos inválidos se sellan como null: nunca true.
+   * Con errores de lectura no se sella nada.
+   */
+  sealState(merkleInfo, phaseEvidence = {}) {
     const info = merkleInfo && typeof merkleInfo === 'object' ? merkleInfo : {};
     const readErrors = Array.isArray(info.readErrors) ? info.readErrors : [];
     if (readErrors.length > 0 || !info.merkleRoot || info.filesCount === 0) {
@@ -222,7 +235,18 @@ class MerkleCacheEngine {
 
     const phases = {};
     for (const name of PHASE_NAMES) {
-      phases[name] = verifiedPhases[name] === true;
+      phases[name] = this.validatePhaseEvidence(name, phaseEvidence[name]);
+    }
+
+    // Una misma evidencia no puede acreditar dos fases distintas.
+    const verificadas = PHASE_NAMES.map((n) => phases[n]).filter(Boolean);
+    const shasUnicos = new Set(verificadas.map((v) => v.sha256));
+    const rutasUnicas = new Set(verificadas.map((v) => v.artifact));
+    if (shasUnicos.size !== verificadas.length || rutasUnicas.size !== verificadas.length) {
+      return {
+        sealed: false,
+        reason: 'PHASE_ARTIFACT_REUSE: la misma evidencia (ruta/hash) no puede acreditar fases distintas.'
+      };
     }
 
     const cacheEntry = {
@@ -231,7 +255,7 @@ class MerkleCacheEngine {
       filesCount: info.filesCount,
       sealedAt: new Date().toISOString(),
       readErrors: 0,
-      verifiedPhases: phases
+      phases
     };
 
     fs.writeFileSync(this.cacheFile, JSON.stringify(cacheEntry, null, 2), 'utf8');
@@ -272,20 +296,33 @@ class MerkleCacheEngine {
       };
     }
 
-    if (!cached.verifiedPhases || typeof cached.verifiedPhases !== 'object') {
+    if (!cached.phases || typeof cached.phases !== 'object') {
       return {
         canFastForward: false,
-        reason: 'Caché incompleta: no declara fases verificadas.',
+        reason: 'Caché incompleta: no declara fases con evidencia.',
         cached,
         current
       };
     }
 
-    const missing = PHASE_NAMES.filter((name) => cached.verifiedPhases[name] !== true);
-    if (missing.length > 0) {
+    // Re-validación en el momento de autorizar: artefacto tipado, productor autorizado,
+    // ledger vinculado, hash vigente y sin reutilización entre fases.
+    const referencias = PHASE_NAMES.map((name) => this.validatePhaseEvidence(name, cached.phases[name]));
+    const fasesInvalidas = PHASE_NAMES.filter((name, i) => !referencias[i]);
+    if (fasesInvalidas.length > 0) {
       return {
         canFastForward: false,
-        reason: `Fases no verificadas (${missing.join(', ')}); Fast-Forward bloqueado.`,
+        reason: `Fases sin evidencia verificable vigente (${fasesInvalidas.join(', ')}); Fast-Forward bloqueado.`,
+        cached,
+        current
+      };
+    }
+    const shasDistintos = new Set(referencias.map((r) => r.sha256));
+    const rutasDistintas = new Set(referencias.map((r) => r.artifact));
+    if (shasDistintos.size !== PHASE_NAMES.length || rutasDistintas.size !== PHASE_NAMES.length) {
+      return {
+        canFastForward: false,
+        reason: 'Evidencia reutilizada entre fases distintas; Fast-Forward bloqueado.',
         cached,
         current
       };
@@ -311,7 +348,7 @@ class MerkleCacheEngine {
 
     return {
       canFastForward: true,
-      reason: 'Merkle Root idéntico y cuatro fases verificadas: Fast-Forward autorizado.',
+      reason: 'Merkle Root idéntico y cuatro fases con evidencia verificable vigente: Fast-Forward autorizado.',
       cached,
       current
     };

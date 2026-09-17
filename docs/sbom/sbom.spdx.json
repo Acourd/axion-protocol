@@ -3,8 +3,8 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "axion-protocol",
-  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/bec469c3420df9521ae24c1269423930d1fc382928ca6d74eb895f746dede89c",
-  "documentComment": "Superficie publicada indexada: 522 archivos. Excluidos por autorreferencia (declarados): 2 — docs/sbom/sbom.cyclonedx.json, docs/sbom/sbom.spdx.json.",
+  "documentNamespace": "https://github.com/Acourd/axion-protocol/spdx/058918844c9e7b6d12b1ae18d23f2d07f7d22a862761429416129d52caf3c856",
+  "documentComment": "Superficie publicada indexada: 537 archivos. Excluidos por autorreferencia (declarados): 2 — docs/sbom/sbom.cyclonedx.json, docs/sbom/sbom.spdx.json.",
   "creationInfo": {
     "created": "1970-01-01T00:00:00.000Z",
     "creators": [
@@ -632,7 +632,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "8ed879d8a5c87bad22ddff7c193935ace48d4beaa15e1c7d317aef7d5c6fd0dd"
+          "checksumValue": "795b4cddd0bdec3f78fffcaa380496c83537f0a340074e6b0bce5c2f3c22d82b"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -884,7 +884,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "4bcd81b24f302169caf6d4d7223d279eb1d434b77cf89b0758cc4a8b80c0689c"
+          "checksumValue": "485c34ec00585ca5bda8e9c3ec13831a02185bf270a2d6c94000f26c6ca7c72a"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -996,7 +996,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "707a40c365d78e8ae8bbf979dba7a0ec612c5c1b9ef29779560ddc85d393604b"
+          "checksumValue": "67df4f6edd9d9ff78f3c147339a707bcec1f192f6c5cb6a5f1e9a8c5fdef5881"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1010,7 +1010,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "20132893beb3b13d1f66aa7a7faf612b0dd7200869752a9d3c5abdee44e0b5d8"
+          "checksumValue": "3ea70078f91a6c05161e4eefb0e14994aa1dabd30348d691e04be7d642c2cfb4"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1024,7 +1024,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "8c83ea361885a51ed5cd61f6295ec297293a25a610bd05e8b41526c8be9e6f7c"
+          "checksumValue": "f7d6459e575a0e958577115795afa30f939a3ec8c1ea6b00c724166ca1e81f0a"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1243,8 +1243,22 @@
       ]
     },
     {
-      "fileName": "./docs/vision.md",
+      "fileName": "./docs/VERIFICATION_PATH.md",
       "SPDXID": "SPDXRef-File-87",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3d937ea388c6fb874ba26207dde77330b996b624164ecd8a2006cb6200de312c"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./docs/vision.md",
+      "SPDXID": "SPDXRef-File-88",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1258,7 +1272,7 @@
     },
     {
       "fileName": "./examples/README.md",
-      "SPDXID": "SPDXRef-File-88",
+      "SPDXID": "SPDXRef-File-89",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1272,7 +1286,7 @@
     },
     {
       "fileName": "./GOVERNANCE.md",
-      "SPDXID": "SPDXRef-File-89",
+      "SPDXID": "SPDXRef-File-90",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1286,7 +1300,7 @@
     },
     {
       "fileName": "./install.js",
-      "SPDXID": "SPDXRef-File-90",
+      "SPDXID": "SPDXRef-File-91",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1300,7 +1314,7 @@
     },
     {
       "fileName": "./LICENSE",
-      "SPDXID": "SPDXRef-File-91",
+      "SPDXID": "SPDXRef-File-92",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1314,7 +1328,7 @@
     },
     {
       "fileName": "./NOTICE",
-      "SPDXID": "SPDXRef-File-92",
+      "SPDXID": "SPDXRef-File-93",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1328,7 +1342,7 @@
     },
     {
       "fileName": "./opencode.json",
-      "SPDXID": "SPDXRef-File-93",
+      "SPDXID": "SPDXRef-File-94",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1342,7 +1356,7 @@
     },
     {
       "fileName": "./package.json",
-      "SPDXID": "SPDXRef-File-94",
+      "SPDXID": "SPDXRef-File-95",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1356,7 +1370,7 @@
     },
     {
       "fileName": "./phase-e-integrity.yaml",
-      "SPDXID": "SPDXRef-File-95",
+      "SPDXID": "SPDXRef-File-96",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1370,7 +1384,7 @@
     },
     {
       "fileName": "./policies/authority.yaml",
-      "SPDXID": "SPDXRef-File-96",
+      "SPDXID": "SPDXRef-File-97",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1384,7 +1398,7 @@
     },
     {
       "fileName": "./policies/promotion.yaml",
-      "SPDXID": "SPDXRef-File-97",
+      "SPDXID": "SPDXRef-File-98",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1398,7 +1412,7 @@
     },
     {
       "fileName": "./policies/README.md",
-      "SPDXID": "SPDXRef-File-98",
+      "SPDXID": "SPDXRef-File-99",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1412,7 +1426,7 @@
     },
     {
       "fileName": "./policies/retention.yaml",
-      "SPDXID": "SPDXRef-File-99",
+      "SPDXID": "SPDXRef-File-100",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1426,7 +1440,7 @@
     },
     {
       "fileName": "./policies/risk.yaml",
-      "SPDXID": "SPDXRef-File-100",
+      "SPDXID": "SPDXRef-File-101",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1440,11 +1454,11 @@
     },
     {
       "fileName": "./README.es.md",
-      "SPDXID": "SPDXRef-File-101",
+      "SPDXID": "SPDXRef-File-102",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "2410620c99b5a9d60e32eada17dc9dc299993dbc122a03910e4bb5dd06208f3d"
+          "checksumValue": "85a120a42d40dfa29bb05d67813e087e3a37e0240398f179fb0a5dd7af25733f"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1454,11 +1468,11 @@
     },
     {
       "fileName": "./README.md",
-      "SPDXID": "SPDXRef-File-102",
+      "SPDXID": "SPDXRef-File-103",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "bc9461cc62b149e0a901486a642ea80c1972e41bf3ef1c82d5c174e66dab8da2"
+          "checksumValue": "5db364c100b6252e819bec93ed2c070ab2301686cb81d30d9c3a5ce777316897"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1468,11 +1482,11 @@
     },
     {
       "fileName": "./ROADMAP.md",
-      "SPDXID": "SPDXRef-File-103",
+      "SPDXID": "SPDXRef-File-104",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "a00083d685df6fbf92476f75ed20fa6889f5245696515e7a59bbf4950ab07e55"
+          "checksumValue": "145a9470ee14e9f15cdedaf75595e21a7b19a4250663669371c08dc114450052"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1482,7 +1496,7 @@
     },
     {
       "fileName": "./schemas/action.schema.json",
-      "SPDXID": "SPDXRef-File-104",
+      "SPDXID": "SPDXRef-File-105",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1496,7 +1510,7 @@
     },
     {
       "fileName": "./schemas/approval.schema.json",
-      "SPDXID": "SPDXRef-File-105",
+      "SPDXID": "SPDXRef-File-106",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1510,7 +1524,7 @@
     },
     {
       "fileName": "./schemas/audit.schema.json",
-      "SPDXID": "SPDXRef-File-106",
+      "SPDXID": "SPDXRef-File-107",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1524,7 +1538,7 @@
     },
     {
       "fileName": "./schemas/authority_registry.schema.json",
-      "SPDXID": "SPDXRef-File-107",
+      "SPDXID": "SPDXRef-File-108",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1538,7 +1552,7 @@
     },
     {
       "fileName": "./schemas/check_attestation.schema.json",
-      "SPDXID": "SPDXRef-File-108",
+      "SPDXID": "SPDXRef-File-109",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1552,7 +1566,7 @@
     },
     {
       "fileName": "./schemas/common.schema.json",
-      "SPDXID": "SPDXRef-File-109",
+      "SPDXID": "SPDXRef-File-110",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1566,7 +1580,7 @@
     },
     {
       "fileName": "./schemas/component.schema.json",
-      "SPDXID": "SPDXRef-File-110",
+      "SPDXID": "SPDXRef-File-111",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1580,7 +1594,7 @@
     },
     {
       "fileName": "./schemas/decision.schema.json",
-      "SPDXID": "SPDXRef-File-111",
+      "SPDXID": "SPDXRef-File-112",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1594,7 +1608,7 @@
     },
     {
       "fileName": "./schemas/evidence.schema.json",
-      "SPDXID": "SPDXRef-File-112",
+      "SPDXID": "SPDXRef-File-113",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1608,7 +1622,7 @@
     },
     {
       "fileName": "./schemas/non_conformance.schema.json",
-      "SPDXID": "SPDXRef-File-113",
+      "SPDXID": "SPDXRef-File-114",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1622,7 +1636,7 @@
     },
     {
       "fileName": "./schemas/README.md",
-      "SPDXID": "SPDXRef-File-114",
+      "SPDXID": "SPDXRef-File-115",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1636,7 +1650,7 @@
     },
     {
       "fileName": "./schemas/rollback-plan.schema.json",
-      "SPDXID": "SPDXRef-File-115",
+      "SPDXID": "SPDXRef-File-116",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1650,7 +1664,7 @@
     },
     {
       "fileName": "./schemas/rollback.schema.json",
-      "SPDXID": "SPDXRef-File-116",
+      "SPDXID": "SPDXRef-File-117",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1664,7 +1678,7 @@
     },
     {
       "fileName": "./schemas/runtime.schema.json",
-      "SPDXID": "SPDXRef-File-117",
+      "SPDXID": "SPDXRef-File-118",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1678,7 +1692,7 @@
     },
     {
       "fileName": "./schemas/task.schema.json",
-      "SPDXID": "SPDXRef-File-118",
+      "SPDXID": "SPDXRef-File-119",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1692,7 +1706,7 @@
     },
     {
       "fileName": "./SECURITY.md",
-      "SPDXID": "SPDXRef-File-119",
+      "SPDXID": "SPDXRef-File-120",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1706,7 +1720,7 @@
     },
     {
       "fileName": "./sha256-manifest.txt",
-      "SPDXID": "SPDXRef-File-120",
+      "SPDXID": "SPDXRef-File-121",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1720,7 +1734,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_001_installer_backup.test.js",
-      "SPDXID": "SPDXRef-File-121",
+      "SPDXID": "SPDXRef-File-122",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1734,7 +1748,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_002_risk_gate.test.js",
-      "SPDXID": "SPDXRef-File-122",
+      "SPDXID": "SPDXRef-File-123",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1748,7 +1762,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_003_verified_requires_checks.test.js",
-      "SPDXID": "SPDXRef-File-123",
+      "SPDXID": "SPDXRef-File-124",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1762,7 +1776,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_005_preflight_destructive.test.js",
-      "SPDXID": "SPDXRef-File-124",
+      "SPDXID": "SPDXRef-File-125",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1776,7 +1790,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_014_package_contract.test.js",
-      "SPDXID": "SPDXRef-File-125",
+      "SPDXID": "SPDXRef-File-126",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1790,7 +1804,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_015_workflow_contract.test.js",
-      "SPDXID": "SPDXRef-File-126",
+      "SPDXID": "SPDXRef-File-127",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1804,7 +1818,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_016_tool_contracts.test.js",
-      "SPDXID": "SPDXRef-File-127",
+      "SPDXID": "SPDXRef-File-128",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1818,7 +1832,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_024_command_scope.test.js",
-      "SPDXID": "SPDXRef-File-128",
+      "SPDXID": "SPDXRef-File-129",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1832,11 +1846,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_026_updater_preservation.test.js",
-      "SPDXID": "SPDXRef-File-129",
+      "SPDXID": "SPDXRef-File-130",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "87f3f884139f116ffa1d249b18b5c273bd72ea130deab04ec6cf5ff0cb8d45f3"
+          "checksumValue": "66041cafbf6838233d4168b66ef70e13be74ef384948f12572bca64e1dbe548b"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1846,7 +1860,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_027_state_machine_strictness.test.js",
-      "SPDXID": "SPDXRef-File-130",
+      "SPDXID": "SPDXRef-File-131",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1860,7 +1874,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_033_cli_unified_dispatcher.test.js",
-      "SPDXID": "SPDXRef-File-131",
+      "SPDXID": "SPDXRef-File-132",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1874,7 +1888,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_035_risk_policy_compiler_strictness.test.js",
-      "SPDXID": "SPDXRef-File-132",
+      "SPDXID": "SPDXRef-File-133",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1888,11 +1902,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_040_verify_changes_deterministic.test.js",
-      "SPDXID": "SPDXRef-File-133",
+      "SPDXID": "SPDXRef-File-134",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "bc294d3240847f563f0ac525162e653c0a4910ceaed5995ec761d47571a346e0"
+          "checksumValue": "8ca41457ad064367797b21a6d412cfdd5dcde2c9aa04362d10f9430d81cdb6fb"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1902,11 +1916,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_050_health_check_workspace_integrity.test.js",
-      "SPDXID": "SPDXRef-File-134",
+      "SPDXID": "SPDXRef-File-135",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "3a51b5be9ecd92e89ceb4b5381fd275c8cf48e3869945b3ff978d9ccfecea5d5"
+          "checksumValue": "e409693f2d4b129c1556f16d98eb674c2314b4758833457fe8dfbf2a81c7dc52"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1916,7 +1930,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_055_pretooluse_hook_hot_multiplexing.test.js",
-      "SPDXID": "SPDXRef-File-135",
+      "SPDXID": "SPDXRef-File-136",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1930,7 +1944,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_061_killswitch_adversarial_invariants.test.js",
-      "SPDXID": "SPDXRef-File-136",
+      "SPDXID": "SPDXRef-File-137",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1944,7 +1958,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_062_structured_command_adversarial_invariants.test.js",
-      "SPDXID": "SPDXRef-File-137",
+      "SPDXID": "SPDXRef-File-138",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1958,7 +1972,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_067_risk_policy_compiler_adversarial_invariants.test.js",
-      "SPDXID": "SPDXRef-File-138",
+      "SPDXID": "SPDXRef-File-139",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1972,7 +1986,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_081_drive_engine_adaptive_deliberation_invariants.test.js",
-      "SPDXID": "SPDXRef-File-139",
+      "SPDXID": "SPDXRef-File-140",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -1986,7 +2000,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_083_drive_engine_resilience_invariants.test.js",
-      "SPDXID": "SPDXRef-File-140",
+      "SPDXID": "SPDXRef-File-141",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2000,7 +2014,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_084_consolidated_12_commands_invariants.test.js",
-      "SPDXID": "SPDXRef-File-141",
+      "SPDXID": "SPDXRef-File-142",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2014,7 +2028,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_085_antigravity_drive_harness_invariants.test.js",
-      "SPDXID": "SPDXRef-File-142",
+      "SPDXID": "SPDXRef-File-143",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2028,7 +2042,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_087_clean_code_complexity_invariants.test.js",
-      "SPDXID": "SPDXRef-File-143",
+      "SPDXID": "SPDXRef-File-144",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2042,7 +2056,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_090_performance_benchmark_invariants.test.js",
-      "SPDXID": "SPDXRef-File-144",
+      "SPDXID": "SPDXRef-File-145",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2056,7 +2070,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_092_ast_dead_code_invariants.test.js",
-      "SPDXID": "SPDXRef-File-145",
+      "SPDXID": "SPDXRef-File-146",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2070,7 +2084,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_093_drive_telemetry_invariants.test.js",
-      "SPDXID": "SPDXRef-File-146",
+      "SPDXID": "SPDXRef-File-147",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2084,7 +2098,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_094_adaptive_phase_planner_invariants.test.js",
-      "SPDXID": "SPDXRef-File-147",
+      "SPDXID": "SPDXRef-File-148",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2098,7 +2112,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_095_asymptotic_excellence_invariants.test.js",
-      "SPDXID": "SPDXRef-File-148",
+      "SPDXID": "SPDXRef-File-149",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2112,11 +2126,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_096_drive_mission_journal_invariants.test.js",
-      "SPDXID": "SPDXRef-File-149",
+      "SPDXID": "SPDXRef-File-150",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "cdf91311721d008e1d4db026d6125b506f3782273e57c7a7d7c2aba0d05867f5"
+          "checksumValue": "45a6102320111ec901c98177a21569e106cb14c56e0bf79ecf103e28248a035f"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2126,7 +2140,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_097_pipeline_fast_gate_invariants.test.js",
-      "SPDXID": "SPDXRef-File-150",
+      "SPDXID": "SPDXRef-File-151",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2140,11 +2154,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_098_parallel_test_runner_invariants.test.js",
-      "SPDXID": "SPDXRef-File-151",
+      "SPDXID": "SPDXRef-File-152",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "5b43572c349d2825c4471b8472a81498c3bdfdaff5be308253f08d71d38ce842"
+          "checksumValue": "40953c7f211fa4d84fabd493cff4ab4cbfe7a26ebfae2afbe5f15021256fe5c7"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2154,7 +2168,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_100_autonomous_autopilot_invariants.test.js",
-      "SPDXID": "SPDXRef-File-152",
+      "SPDXID": "SPDXRef-File-153",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2168,11 +2182,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_101_workspace_debloater_invariants.test.js",
-      "SPDXID": "SPDXRef-File-153",
+      "SPDXID": "SPDXRef-File-154",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "42395ee8975ef36dac9e1f1f9b8f504dadeeb2e142efed9eba9ada46d073bca7"
+          "checksumValue": "d3811b7c6eb55cf1f4447532617b5ec1312e6bbdac84802c912289aff88d8295"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2182,7 +2196,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_103_scout_recon_invariants.test.js",
-      "SPDXID": "SPDXRef-File-154",
+      "SPDXID": "SPDXRef-File-155",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2196,7 +2210,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_104_convergence_loop_invariants.test.js",
-      "SPDXID": "SPDXRef-File-155",
+      "SPDXID": "SPDXRef-File-156",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2210,7 +2224,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_105_blast_radius_boundary_invariants.test.js",
-      "SPDXID": "SPDXRef-File-156",
+      "SPDXID": "SPDXRef-File-157",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2224,7 +2238,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_106_formal_smt_verification_invariants.test.js",
-      "SPDXID": "SPDXRef-File-157",
+      "SPDXID": "SPDXRef-File-158",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2238,11 +2252,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_109_merkle_cache_fast_forward_invariants.test.js",
-      "SPDXID": "SPDXRef-File-158",
+      "SPDXID": "SPDXRef-File-159",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "6370312692af5926cae6b941fb3c168f06af4a884e5990dd0dc74fc1a279e941"
+          "checksumValue": "7f65cf3cb28f8492c479d62cff86cc6f3066e284efc0eba25c68f669ad68a7fa"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2252,7 +2266,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_110_drive_memory_copilot_invariants.test.js",
-      "SPDXID": "SPDXRef-File-159",
+      "SPDXID": "SPDXRef-File-160",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2266,11 +2280,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_111_drive_worker_sandbox_invariants.test.js",
-      "SPDXID": "SPDXRef-File-160",
+      "SPDXID": "SPDXRef-File-161",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "6dc12c11fbf8df4ee62b5428fc408595b5981896413dd5df520056120c799a1f"
+          "checksumValue": "fd1e8f49b319b0faa353d412b71994b871da4d14f7dac9bddc4493f00ff7a49a"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2280,7 +2294,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_113_adaptive_worker_pool_invariants.test.js",
-      "SPDXID": "SPDXRef-File-161",
+      "SPDXID": "SPDXRef-File-162",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2294,7 +2308,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_114_convergence_regression_guard_invariants.test.js",
-      "SPDXID": "SPDXRef-File-162",
+      "SPDXID": "SPDXRef-File-163",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2308,7 +2322,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_116_module_dependency_graph_invariants.test.js",
-      "SPDXID": "SPDXRef-File-163",
+      "SPDXID": "SPDXRef-File-164",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2322,7 +2336,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_118_temporal_state_verifier_invariants.test.js",
-      "SPDXID": "SPDXRef-File-164",
+      "SPDXID": "SPDXRef-File-165",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2336,7 +2350,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_120_context_entropy_guard_invariants.test.js",
-      "SPDXID": "SPDXRef-File-165",
+      "SPDXID": "SPDXRef-File-166",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2350,7 +2364,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_121_ast_complexity_analyzer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-166",
+      "SPDXID": "SPDXRef-File-167",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2364,11 +2378,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_123_ast_taint_dataflow_invariants.test.js",
-      "SPDXID": "SPDXRef-File-167",
+      "SPDXID": "SPDXRef-File-168",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "459f3120f6d49cf84a8f851fd87984d510edeed415e601c2d327f02d56554ef2"
+          "checksumValue": "08619acfd7d7d0df559306835822be995873f22810edcf40b7bd764f4fefce4b"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2378,11 +2392,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_124_ast_patch_synthesizer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-168",
+      "SPDXID": "SPDXRef-File-169",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "3898b88503f6d649a02738994ca2d1b2c264d0294296fe2d934570c643aa8448"
+          "checksumValue": "e02ea4baeace1143a105dcc508402064ef8fcb0f0f808147038587f28446b711"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2392,7 +2406,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_125_concurrent_race_verifier_invariants.test.js",
-      "SPDXID": "SPDXRef-File-169",
+      "SPDXID": "SPDXRef-File-170",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2406,7 +2420,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_126_hardware_adaptive_profiler_invariants.test.js",
-      "SPDXID": "SPDXRef-File-170",
+      "SPDXID": "SPDXRef-File-171",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2420,11 +2434,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_128_autonomous_module_packager_invariants.test.js",
-      "SPDXID": "SPDXRef-File-171",
+      "SPDXID": "SPDXRef-File-172",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "dc164b4db86a67fd7692ba61e49801dddf9ca812efeb9b4f07af89b9e545f8ed"
+          "checksumValue": "035132cb36d80c0eda3706c518200bdfa28dab60ca9cb54d89a3be88c0f4b7bc"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2434,7 +2448,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_129_semantic_auto_healer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-172",
+      "SPDXID": "SPDXRef-File-173",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2448,11 +2462,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_130_transversal_project_optimizer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-173",
+      "SPDXID": "SPDXRef-File-174",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "e2209070b4996d2753ad85fcb8c70a6ef6bc664b7829ad2d480a436c14e39d7f"
+          "checksumValue": "82d1968d272436455160425212040737916aafd6414f2fa2c78fc0419b3dfce6"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2462,7 +2476,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_132_semantic_type_reconciler_invariants.test.js",
-      "SPDXID": "SPDXRef-File-174",
+      "SPDXID": "SPDXRef-File-175",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2476,11 +2490,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_134_forensic_telemetry_invariants.test.js",
-      "SPDXID": "SPDXRef-File-175",
+      "SPDXID": "SPDXRef-File-176",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "e2dcc2a63f9f9ed7214843bfa3419d04de87e594f07d150882e72cae47abd1e8"
+          "checksumValue": "0ea91313acb27cbd2b1c8ed8b5023096a8ca309d47db3d9fa7811f2ec1d0112c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2490,11 +2504,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_135_multi_file_cross_healer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-176",
+      "SPDXID": "SPDXRef-File-177",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "45e89e49739b5f697f50643dff8f4faaeca97fab4105bfd1773ff76127a7a14b"
+          "checksumValue": "5131e2560e6c0e05b7e39a29c51a64390447b88ae0d87a3ce33c902f1559a383"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2504,11 +2518,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_136_agent_shield_security_invariants.test.js",
-      "SPDXID": "SPDXRef-File-177",
+      "SPDXID": "SPDXRef-File-178",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "4e0532af499341af8506bd721dd97ea33a03f574fd41db025ac115851f37be77"
+          "checksumValue": "72489623241d886ce6cb0b91204894e7661252e1a1fcc5c87dcb66f7aac51861"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2518,11 +2532,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_137_instinct_synthesizer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-178",
+      "SPDXID": "SPDXRef-File-179",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "ce10b486879caac21795ef81fd009b88fffceae8b727b57a48e4f5d4ad814e2d"
+          "checksumValue": "b09fb9b11206fb2316654051f496287c7aeb98bffd6b4970a586df46dd5bd067"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2532,11 +2546,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_138_multi_harness_adapter_invariants.test.js",
-      "SPDXID": "SPDXRef-File-179",
+      "SPDXID": "SPDXRef-File-180",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "a08bda2d4121437fc8bec213fe91703434294fbea263b56e650879a45479b654"
+          "checksumValue": "c890dbfdc1139f2629b3ccc829b8cf929ba0faeed4997d08cc00dc108a75f56d"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2546,7 +2560,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_139_doctor_repair_engine_invariants.test.js",
-      "SPDXID": "SPDXRef-File-180",
+      "SPDXID": "SPDXRef-File-181",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2560,11 +2574,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_140_context_budget_guard_invariants.test.js",
-      "SPDXID": "SPDXRef-File-181",
+      "SPDXID": "SPDXRef-File-182",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "25d3dfee600c29bd2c0ba8a4050ea5d2d784f71f888e911273622366b357a171"
+          "checksumValue": "d9dd9617df5643ceb2d826fd975562a3b487c5655f32503d0b0092573075d8b0"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2574,11 +2588,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_141_capability_manager_invariants.test.js",
-      "SPDXID": "SPDXRef-File-182",
+      "SPDXID": "SPDXRef-File-183",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "f096f328b71eeb3cf93fea9bb2c657ccca1c61a751df24e887f5cf008c4ca94e"
+          "checksumValue": "86af9e1f80c29db6b1c40ae3feca43cff656be9ca862b6a00cf548bbbe020609"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2588,11 +2602,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_142_governance_dashboard_invariants.test.js",
-      "SPDXID": "SPDXRef-File-183",
+      "SPDXID": "SPDXRef-File-184",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "dad2524c4505e067bb9f72ecf1983a6f00f3fb63d0f52e4024761c5d48345b4e"
+          "checksumValue": "f7d978d314704123f538376e76381754cd7d18f046d00034cb5afc022e792bb8"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2602,11 +2616,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_144_dynamic_rule_weaver_invariants.test.js",
-      "SPDXID": "SPDXRef-File-184",
+      "SPDXID": "SPDXRef-File-185",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "ef1945a33d23514019f0a850505ff21045b8154f4769c093a2e9161c33c84c87"
+          "checksumValue": "67c768d10184a04186ed38c85034ea0def70e51f94886b18bb45cd25047ee69a"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2616,7 +2630,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_146_bundle_compiler_invariants.test.js",
-      "SPDXID": "SPDXRef-File-185",
+      "SPDXID": "SPDXRef-File-186",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2630,11 +2644,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_148_git_governance_hook_invariants.test.js",
-      "SPDXID": "SPDXRef-File-186",
+      "SPDXID": "SPDXRef-File-187",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "7f2cebef91cf680c7e42102d144f8edc47f9d8687754f1c7d3bc908d3ef09544"
+          "checksumValue": "1d44de803251161dee272fe3bf0e5cfb2c426b6e3982c94ab9aad38a7c4d95f9"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2644,11 +2658,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_149_fast_parity_benchmarker_invariants.test.js",
-      "SPDXID": "SPDXRef-File-187",
+      "SPDXID": "SPDXRef-File-188",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "ad2bfff6909b98d70b3c3c31953347b5223ce6afc6616e720ff5abecc7c4733f"
+          "checksumValue": "2e6e6ba3f960006e4d25b560db3942b9f8136c023f1229882b8eea6a50527362"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2658,11 +2672,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_150_compliance_matrix_exporter_invariants.test.js",
-      "SPDXID": "SPDXRef-File-188",
+      "SPDXID": "SPDXRef-File-189",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "1edb60c54cd9d9beb96a3a2913f4ab600d7845bc9932f3f9aa56ca47fa8b8787"
+          "checksumValue": "1f7cfe772b6edde90e010bce11c4cf8afa2ca43c50f4f4313839be97000b9d6c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2672,11 +2686,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_151_agent_heartbeat_daemon_invariants.test.js",
-      "SPDXID": "SPDXRef-File-189",
+      "SPDXID": "SPDXRef-File-190",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "5b707c756108bae074fd04a03be52d20f121d6bfcb2e422fcc3d3c4b492ffdf4"
+          "checksumValue": "7d12a7c8244244b9df101aa6cce7eb9a4fe996f6cc4d18534c3ed33cbcba78b7"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2686,7 +2700,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_152_schema_contract_verifier_invariants.test.js",
-      "SPDXID": "SPDXRef-File-190",
+      "SPDXID": "SPDXRef-File-191",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2700,11 +2714,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_153_swarm_arbiter_invariants.test.js",
-      "SPDXID": "SPDXRef-File-191",
+      "SPDXID": "SPDXRef-File-192",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "f68c7afb22ef53d8ce2376365b076dc11e35cf66b25930e41c1349554c1a361e"
+          "checksumValue": "f85b448368aa9bc11889a03a1ac2f8992baff835fc7e48019fa640feb22895b5"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2714,11 +2728,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_154_auto_compacting_checkpoint_invariants.test.js",
-      "SPDXID": "SPDXRef-File-192",
+      "SPDXID": "SPDXRef-File-193",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "60a7edf325dbbaf462e58f720410cd5b2e814868c73b1450dd19ea73ed910b4f"
+          "checksumValue": "d1d15efe3a29ca56017c9d3596dfe342e153797f0ab5f4b9db513f5c9011f4cf"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2728,11 +2742,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_155_disk_pressure_guard_invariants.test.js",
-      "SPDXID": "SPDXRef-File-193",
+      "SPDXID": "SPDXRef-File-194",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "9b332023b3f6a39a92a7d33063d7123038c01ed7e1c5401fc669e3a1995c8f79"
+          "checksumValue": "bc58b39f5db20ae03d98df434471d0856411db7faf16ec8e6fd62b7c32e9ae75"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2742,11 +2756,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_156_vibeguard_storage_hook_invariants.test.js",
-      "SPDXID": "SPDXRef-File-194",
+      "SPDXID": "SPDXRef-File-195",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "426a3e8f525779ec9c43205d4de5d624b2fdf91b960cbe2d5c908c1f7e71aeb7"
+          "checksumValue": "26061f11ec6f8a9920f5a56c66ae2a64c1849378e11ba81cccc6233199438f1c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2756,7 +2770,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_157_smart_incremental_runner_invariants.test.js",
-      "SPDXID": "SPDXRef-File-195",
+      "SPDXID": "SPDXRef-File-196",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2770,11 +2784,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_159_flight_recorder_invariants.test.js",
-      "SPDXID": "SPDXRef-File-196",
+      "SPDXID": "SPDXRef-File-197",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "e4c29b50fa2f10fb54ac7b6abe2854a7b635f47ddc64861818b78650297e5517"
+          "checksumValue": "f64cf83a181997562d51d3c7bf1f76a775a3b50a1ccc6f69d0cbc5766e742a1a"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2784,7 +2798,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_161_quickstart_interactive.test.js",
-      "SPDXID": "SPDXRef-File-197",
+      "SPDXID": "SPDXRef-File-198",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2798,7 +2812,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_162_competitive_benchmark.test.js",
-      "SPDXID": "SPDXRef-File-198",
+      "SPDXID": "SPDXRef-File-199",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2812,7 +2826,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_163_asymptotic_critic.test.js",
-      "SPDXID": "SPDXRef-File-199",
+      "SPDXID": "SPDXRef-File-200",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2826,7 +2840,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_164_sync_mirror_gate.test.js",
-      "SPDXID": "SPDXRef-File-200",
+      "SPDXID": "SPDXRef-File-201",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2840,7 +2854,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_165_preflight_tdd_synthesizer.test.js",
-      "SPDXID": "SPDXRef-File-201",
+      "SPDXID": "SPDXRef-File-202",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2854,7 +2868,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_166_humanizer_engine.test.js",
-      "SPDXID": "SPDXRef-File-202",
+      "SPDXID": "SPDXRef-File-203",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2868,7 +2882,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_167_cognitive_dag_optimizer.test.js",
-      "SPDXID": "SPDXRef-File-203",
+      "SPDXID": "SPDXRef-File-204",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2882,11 +2896,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_168_onboarding_wizard.test.js",
-      "SPDXID": "SPDXRef-File-204",
+      "SPDXID": "SPDXRef-File-205",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "15cacd956754030e43b8aab68d7d033abe38acf9d86df913339d2a8d987ecab7"
+          "checksumValue": "ff52030022a9d2522efd90287ea0d5d9a1751fd987da0b9d4de03076ba5dc44d"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2896,7 +2910,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_169_ci_workflow_matrix.test.js",
-      "SPDXID": "SPDXRef-File-205",
+      "SPDXID": "SPDXRef-File-206",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2910,7 +2924,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_170_ecosystem_governance_invariants.test.js",
-      "SPDXID": "SPDXRef-File-206",
+      "SPDXID": "SPDXRef-File-207",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2924,7 +2938,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_171_context_entropy_prediction.test.js",
-      "SPDXID": "SPDXRef-File-207",
+      "SPDXID": "SPDXRef-File-208",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -2938,11 +2952,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_172_attestation_visualizer.test.js",
-      "SPDXID": "SPDXRef-File-208",
+      "SPDXID": "SPDXRef-File-209",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "64a5e51909ab38898ec25db280758fbc501b4f15e1b7c3b863fe9d8eef51bb1a"
+          "checksumValue": "54ed8794619209d1bac2124950cbc3fb531b860f40cb76636dcfd2663d87364a"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2952,11 +2966,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_173_swarm_ast_arbiter.test.js",
-      "SPDXID": "SPDXRef-File-209",
+      "SPDXID": "SPDXRef-File-210",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "0487f5c5ee0344251ea8ce8a515ac8b95966f6b0622251189f6a55c236de7348"
+          "checksumValue": "8e28da73f8f69ea3f7152170ed456b9825211dbee9b4513f86b01b81655f7a54"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2966,11 +2980,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_174_swarm_p2p_channel.test.js",
-      "SPDXID": "SPDXRef-File-210",
+      "SPDXID": "SPDXRef-File-211",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "88c7807e7d8f2bfcd4b221628d0ed05733dad0c23c88a8c929acd8f4e2f502ca"
+          "checksumValue": "173dbe4c309f4dfa573a8284e1c84be427ff795e8ecc9b5f53f8b15cc5381200"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2980,11 +2994,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_175_swarm_consensus_arbiter.test.js",
-      "SPDXID": "SPDXRef-File-211",
+      "SPDXID": "SPDXRef-File-212",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "c6c54d2914649bf79f8c1523c68c64459b9000b968e77f28e7462ee74d62592a"
+          "checksumValue": "c6b9c7ec56857c31755c6fea14ce187887bc433acf2f02ea6a24d9b92572899a"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2994,7 +3008,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_176_swarm_architecture_docs.test.js",
-      "SPDXID": "SPDXRef-File-212",
+      "SPDXID": "SPDXRef-File-213",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3008,7 +3022,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_177_swarm_benchmark_invariants.test.js",
-      "SPDXID": "SPDXRef-File-213",
+      "SPDXID": "SPDXRef-File-214",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3022,7 +3036,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_178_swarm_simulator.test.js",
-      "SPDXID": "SPDXRef-File-214",
+      "SPDXID": "SPDXRef-File-215",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3036,7 +3050,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_179_asymptotic_maturity_docs.test.js",
-      "SPDXID": "SPDXRef-File-215",
+      "SPDXID": "SPDXRef-File-216",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3050,7 +3064,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_180_telemetry_gateway.test.js",
-      "SPDXID": "SPDXRef-File-216",
+      "SPDXID": "SPDXRef-File-217",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3064,11 +3078,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_181_sbom_sovereign_generator.test.js",
-      "SPDXID": "SPDXRef-File-217",
+      "SPDXID": "SPDXRef-File-218",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "77477d15bb4cc5a5b0801c87c57147cc1799a2098a284e02891cdbedb8f9adcc"
+          "checksumValue": "b0c640ea5719a23c3a6a783a5a55ac4fa0d385a80207b1ef86d63ae5d527de61"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -3078,7 +3092,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_182_live_hud_connector.test.js",
-      "SPDXID": "SPDXRef-File-218",
+      "SPDXID": "SPDXRef-File-219",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3092,7 +3106,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_183_bicentennial_universal_invariants.test.js",
-      "SPDXID": "SPDXRef-File-219",
+      "SPDXID": "SPDXRef-File-220",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3106,7 +3120,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_184_opencode_codex_compatibility.test.js",
-      "SPDXID": "SPDXRef-File-220",
+      "SPDXID": "SPDXRef-File-221",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3120,7 +3134,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_185_convergence_auto_resolver_invariants.test.js",
-      "SPDXID": "SPDXRef-File-221",
+      "SPDXID": "SPDXRef-File-222",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3134,11 +3148,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_186_realtime_forensic_telemetry_invariants.test.js",
-      "SPDXID": "SPDXRef-File-222",
+      "SPDXID": "SPDXRef-File-223",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "e763628b10a7ca845a35209c06cb207148768dcccdf93f26e6dd427b1619ec60"
+          "checksumValue": "624c3401686645b7cb8120893c8b044726ea3af8454c7a4b6a963e15550662c4"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -3148,11 +3162,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_187_cognitive_reasoning_invariants.test.js",
-      "SPDXID": "SPDXRef-File-223",
+      "SPDXID": "SPDXRef-File-224",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "bbb96fa0d6e70c41cdd4713812337754876a362e43bc56757cae97e26174ec3f"
+          "checksumValue": "e34f5f8bcbf90d602cd43fb11ee560034b4582addebb9a8a6cb7ed4ea3c76308"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -3162,7 +3176,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_188_token_economy_pruner_invariants.test.js",
-      "SPDXID": "SPDXRef-File-224",
+      "SPDXID": "SPDXRef-File-225",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3176,7 +3190,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_189_semantic_cross_indexer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-225",
+      "SPDXID": "SPDXRef-File-226",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3190,7 +3204,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_190_metacognitive_ast_analyzer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-226",
+      "SPDXID": "SPDXRef-File-227",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3204,7 +3218,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_191_context_cache_accelerator_invariants.test.js",
-      "SPDXID": "SPDXRef-File-227",
+      "SPDXID": "SPDXRef-File-228",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3218,7 +3232,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_192_metacognitive_heuristic_solver_invariants.test.js",
-      "SPDXID": "SPDXRef-File-228",
+      "SPDXID": "SPDXRef-File-229",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3232,7 +3246,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_193_dynamic_invariant_assertor_invariants.test.js",
-      "SPDXID": "SPDXRef-File-229",
+      "SPDXID": "SPDXRef-File-230",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3246,7 +3260,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_194_semantic_contract_verifier_invariants.test.js",
-      "SPDXID": "SPDXRef-File-230",
+      "SPDXID": "SPDXRef-File-231",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3260,7 +3274,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_195_context_snapshot_compressor_invariants.test.js",
-      "SPDXID": "SPDXRef-File-231",
+      "SPDXID": "SPDXRef-File-232",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3274,7 +3288,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_196_mutation_coverage_oracle_invariants.test.js",
-      "SPDXID": "SPDXRef-File-232",
+      "SPDXID": "SPDXRef-File-233",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3288,7 +3302,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_197_formal_equivalence_checker_invariants.test.js",
-      "SPDXID": "SPDXRef-File-233",
+      "SPDXID": "SPDXRef-File-234",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3302,7 +3316,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_198_dialectic_debater_invariants.test.js",
-      "SPDXID": "SPDXRef-File-234",
+      "SPDXID": "SPDXRef-File-235",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3316,7 +3330,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_199_inductive_hypothesis_prover_invariants.test.js",
-      "SPDXID": "SPDXRef-File-235",
+      "SPDXID": "SPDXRef-File-236",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3330,7 +3344,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_200_prompt_grammar_compactor_invariants.test.js",
-      "SPDXID": "SPDXRef-File-236",
+      "SPDXID": "SPDXRef-File-237",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3344,7 +3358,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_201_dialectic_consensus_arbiter_invariants.test.js",
-      "SPDXID": "SPDXRef-File-237",
+      "SPDXID": "SPDXRef-File-238",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3358,7 +3372,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_202_token_streaming_compactor_invariants.test.js",
-      "SPDXID": "SPDXRef-File-238",
+      "SPDXID": "SPDXRef-File-239",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3372,7 +3386,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_203_counterfactual_reasoning_oracle_invariants.test.js",
-      "SPDXID": "SPDXRef-File-239",
+      "SPDXID": "SPDXRef-File-240",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3386,7 +3400,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_204_semantic_token_deduplicator_invariants.test.js",
-      "SPDXID": "SPDXRef-File-240",
+      "SPDXID": "SPDXRef-File-241",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3400,7 +3414,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_205_causal_dag_backtracker_invariants.test.js",
-      "SPDXID": "SPDXRef-File-241",
+      "SPDXID": "SPDXRef-File-242",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3414,7 +3428,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_206_zero_overhead_trace_logger_invariants.test.js",
-      "SPDXID": "SPDXRef-File-242",
+      "SPDXID": "SPDXRef-File-243",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3428,7 +3442,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_207_metaprompt_dialectic_synthesizer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-243",
+      "SPDXID": "SPDXRef-File-244",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3442,7 +3456,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_208_adaptive_token_budgeter_invariants.test.js",
-      "SPDXID": "SPDXRef-File-244",
+      "SPDXID": "SPDXRef-File-245",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3456,7 +3470,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_209_epistemic_uncertainty_quantifier_invariants.test.js",
-      "SPDXID": "SPDXRef-File-245",
+      "SPDXID": "SPDXRef-File-246",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3470,7 +3484,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_210_speculative_token_expander_invariants.test.js",
-      "SPDXID": "SPDXRef-File-246",
+      "SPDXID": "SPDXRef-File-247",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3484,7 +3498,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_211_convergence_drift_analyzer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-247",
+      "SPDXID": "SPDXRef-File-248",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3498,7 +3512,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_212_context_relevance_pruner_invariants.test.js",
-      "SPDXID": "SPDXRef-File-248",
+      "SPDXID": "SPDXRef-File-249",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3512,7 +3526,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_213_abductive_anomaly_detector_invariants.test.js",
-      "SPDXID": "SPDXRef-File-249",
+      "SPDXID": "SPDXRef-File-250",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3526,7 +3540,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_214_prefix_cache_affinity_router_invariants.test.js",
-      "SPDXID": "SPDXRef-File-250",
+      "SPDXID": "SPDXRef-File-251",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3540,7 +3554,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_215_bayesian_hypothesis_updater_invariants.test.js",
-      "SPDXID": "SPDXRef-File-251",
+      "SPDXID": "SPDXRef-File-252",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3554,7 +3568,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_216_diff_token_compactor_invariants.test.js",
-      "SPDXID": "SPDXRef-File-252",
+      "SPDXID": "SPDXRef-File-253",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3568,7 +3582,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_225_drive_contextual_orchestrator_invariants.test.js",
-      "SPDXID": "SPDXRef-File-253",
+      "SPDXID": "SPDXRef-File-254",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3582,11 +3596,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_225_merkle_cache_fail_closed_adversarial.test.js",
-      "SPDXID": "SPDXRef-File-254",
+      "SPDXID": "SPDXRef-File-255",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "46295a52ca643747152b377a5decc053696804ff22a086ca3c3713fc2ab76d09"
+          "checksumValue": "132f17808a73feeda90306f820a3e4362bb656757d89f99c98d89a0cf9148b07"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -3596,11 +3610,39 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/ax_f_229_documentation_claims_invariants.test.js",
-      "SPDXID": "SPDXRef-File-255",
+      "SPDXID": "SPDXRef-File-256",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "1d7bb676056d8553dddce7da3755aef6892c8ef774e01083800c28156ca8c909"
+          "checksumValue": "9adb04ed34d0ee0e5c0aa1fc51aebc903f2c8ef6d168dc0bb487f54a79e2bbbc"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tests/01_governance_preflight/ax_f_230_suite_runner_timeout_invariants.test.js",
+      "SPDXID": "SPDXRef-File-257",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7b7114d450dbf3fb477d91ccda923c1f542a72cc2a34e94ae10ea8c274fce146"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tests/01_governance_preflight/ax_f_231_public_verification_path_e2e.test.js",
+      "SPDXID": "SPDXRef-File-258",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5f23f338c3993bd544ba207a765756819b08acd73a645c677902ca78fd317fd1"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -3610,7 +3652,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/c01_governance_chain.test.js",
-      "SPDXID": "SPDXRef-File-256",
+      "SPDXID": "SPDXRef-File-259",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3624,7 +3666,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/c02_destructive_classifier.test.js",
-      "SPDXID": "SPDXRef-File-257",
+      "SPDXID": "SPDXRef-File-260",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3638,7 +3680,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/install.test.js",
-      "SPDXID": "SPDXRef-File-258",
+      "SPDXID": "SPDXRef-File-261",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3652,7 +3694,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/killswitch.test.js",
-      "SPDXID": "SPDXRef-File-259",
+      "SPDXID": "SPDXRef-File-262",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3666,7 +3708,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/risk_policy_compiler.test.js",
-      "SPDXID": "SPDXRef-File-260",
+      "SPDXID": "SPDXRef-File-263",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3680,7 +3722,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/structured_command.test.js",
-      "SPDXID": "SPDXRef-File-261",
+      "SPDXID": "SPDXRef-File-264",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3694,7 +3736,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/tools.test.js",
-      "SPDXID": "SPDXRef-File-262",
+      "SPDXID": "SPDXRef-File-265",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3708,11 +3750,11 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/workflow_enforcement_e2e.test.js",
-      "SPDXID": "SPDXRef-File-263",
+      "SPDXID": "SPDXRef-File-266",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "8d8b31d622c9fe7db34cef6f925efa6a6be518651ff672c6d323abf21cf94e75"
+          "checksumValue": "627b8daf9974e1ddfe951d9277de6a55fd57af4ad850473fbbf2fcf732b7b214"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -3722,7 +3764,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/workflow_state_machine.test.js",
-      "SPDXID": "SPDXRef-File-264",
+      "SPDXID": "SPDXRef-File-267",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3736,7 +3778,7 @@
     },
     {
       "fileName": "./tests/01_governance_preflight/workflow.test.js",
-      "SPDXID": "SPDXRef-File-265",
+      "SPDXID": "SPDXRef-File-268",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3750,11 +3792,11 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/approval_ed25519.test.js",
-      "SPDXID": "SPDXRef-File-266",
+      "SPDXID": "SPDXRef-File-269",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "4e4d92f0fa93b6b754d93da3d1ae5783b599c0ae1d714e583ca2b3e15c0d1172"
+          "checksumValue": "386cc8daefa4e6668ad5f940946f8476f7dee173b0794d2a1e943a64632c152c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -3764,7 +3806,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/approval_forgery_baseline.test.js",
-      "SPDXID": "SPDXRef-File-267",
+      "SPDXID": "SPDXRef-File-270",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3778,7 +3820,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/approval_required_bypass.test.js",
-      "SPDXID": "SPDXRef-File-268",
+      "SPDXID": "SPDXRef-File-271",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3792,7 +3834,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/assurance.test.js",
-      "SPDXID": "SPDXRef-File-269",
+      "SPDXID": "SPDXRef-File-272",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3806,7 +3848,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/attestation.test.js",
-      "SPDXID": "SPDXRef-File-270",
+      "SPDXID": "SPDXRef-File-273",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3820,7 +3862,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_030_dsse_pae_interoperability.test.js",
-      "SPDXID": "SPDXRef-File-271",
+      "SPDXID": "SPDXRef-File-274",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3834,7 +3876,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_031_canonical_json_rfc8785.test.js",
-      "SPDXID": "SPDXRef-File-272",
+      "SPDXID": "SPDXRef-File-275",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3848,7 +3890,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_032_identity_canonical_alias.test.js",
-      "SPDXID": "SPDXRef-File-273",
+      "SPDXID": "SPDXRef-File-276",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3862,7 +3904,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_042_attestation_intoto_lifecycle.test.js",
-      "SPDXID": "SPDXRef-File-274",
+      "SPDXID": "SPDXRef-File-277",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3876,11 +3918,11 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_049_emit_attestation_selftest.test.js",
-      "SPDXID": "SPDXRef-File-275",
+      "SPDXID": "SPDXRef-File-278",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "7a0d9c3ef2fabbceabaa673c4643b6f1e5e13aae1c0564a9e103f83388333745"
+          "checksumValue": "71f850075697f77f1e56c8f0f90c83cf91da96adcc54fae0b09f8b9f1c4bf453"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -3890,7 +3932,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_051_assurance_separation_invariants.test.js",
-      "SPDXID": "SPDXRef-File-276",
+      "SPDXID": "SPDXRef-File-279",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3904,7 +3946,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_066_assurance_separation_invariants.test.js",
-      "SPDXID": "SPDXRef-File-277",
+      "SPDXID": "SPDXRef-File-280",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3918,7 +3960,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_069_revocation_key_lifecycle_invariants.test.js",
-      "SPDXID": "SPDXRef-File-278",
+      "SPDXID": "SPDXRef-File-281",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3932,7 +3974,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_078_evidence_canonical_graph_invariants.test.js",
-      "SPDXID": "SPDXRef-File-279",
+      "SPDXID": "SPDXRef-File-282",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3946,7 +3988,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_079_identity_canonical_homoglyph_invariants.test.js",
-      "SPDXID": "SPDXRef-File-280",
+      "SPDXID": "SPDXRef-File-283",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3960,7 +4002,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_082_holistic_governance_lifecycle_invariants.test.js",
-      "SPDXID": "SPDXRef-File-281",
+      "SPDXID": "SPDXRef-File-284",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3974,7 +4016,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_088_full_repo_intoto_dsse_invariants.test.js",
-      "SPDXID": "SPDXRef-File-282",
+      "SPDXID": "SPDXRef-File-285",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -3988,7 +4030,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_112_drive_dsse_attestation_invariants.test.js",
-      "SPDXID": "SPDXRef-File-283",
+      "SPDXID": "SPDXRef-File-286",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4002,7 +4044,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_158_provenance_sbom_invariants.test.js",
-      "SPDXID": "SPDXRef-File-284",
+      "SPDXID": "SPDXRef-File-287",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4016,7 +4058,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_160_merkle_integrity_ledger_invariants.test.js",
-      "SPDXID": "SPDXRef-File-285",
+      "SPDXID": "SPDXRef-File-288",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4030,11 +4072,11 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_227_drive_dsse_evidence_binding_adversarial.test.js",
-      "SPDXID": "SPDXRef-File-286",
+      "SPDXID": "SPDXRef-File-289",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "34527bd2c26acd478da330147a01e1a65e66881083ae82cc7d101a0f092bdfe9"
+          "checksumValue": "3cf7869e3e2bf6cdb8cb4c7d6d9455fa6071e72f4b573d811a3eacab7819d9f3"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4044,11 +4086,39 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/ax_f_228_distributed_sbom_coverage_adversarial.test.js",
-      "SPDXID": "SPDXRef-File-287",
+      "SPDXID": "SPDXRef-File-290",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "0365bd1c5493569019c03f2e9b4eda54e73edf1ad2396a40492ccc80110ea3a9"
+          "checksumValue": "856b8e5ac48ebfec15ac898caf9a90324ca006e7207b2bc3fbf2c61aa385bdf1"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tests/02_cryptography_attestation/ax_f_232_attestation_keyring_invariants.test.js",
+      "SPDXID": "SPDXRef-File-291",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a5e6dfe30746e5f59b994253d000e73b3317054471e23c9991481b61f64e38ed"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tests/02_cryptography_attestation/ax_f_233_evidence_ledger_concurrency_invariants.test.js",
+      "SPDXID": "SPDXRef-File-292",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7ca3d51081e39f327ccd4bb3e3b27ee2890f7352902de10ddae8426cf4a31f7b"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4058,7 +4128,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/c03_independent_attestations.test.js",
-      "SPDXID": "SPDXRef-File-288",
+      "SPDXID": "SPDXRef-File-293",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4072,11 +4142,11 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/check_ed25519.test.js",
-      "SPDXID": "SPDXRef-File-289",
+      "SPDXID": "SPDXRef-File-294",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "d0fe9cbc311c6f6a38b77f77f27dfaa1a31f4e8e682f5eb30299bf9a34ed7ec9"
+          "checksumValue": "ed101c2315dfc06b095e6a031d82d35e4acab6edb03e1436b61155dd97f5daa1"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4086,7 +4156,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/evidence_binding.test.js",
-      "SPDXID": "SPDXRef-File-290",
+      "SPDXID": "SPDXRef-File-295",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4100,7 +4170,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/payload_reread.test.js",
-      "SPDXID": "SPDXRef-File-291",
+      "SPDXID": "SPDXRef-File-296",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4114,7 +4184,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/principal_alias.test.js",
-      "SPDXID": "SPDXRef-File-292",
+      "SPDXID": "SPDXRef-File-297",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4128,11 +4198,11 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/revocation.test.js",
-      "SPDXID": "SPDXRef-File-293",
+      "SPDXID": "SPDXRef-File-298",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "4caedfa06789ff4588957a9097666373b0c8ec5a4b72d529bba6db25b30fde70"
+          "checksumValue": "3578439e7be770a47c1b6910112865da1d65f2ad373ffe8ba993abdd65355c99"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4142,7 +4212,7 @@
     },
     {
       "fileName": "./tests/02_cryptography_attestation/role_separation.test.js",
-      "SPDXID": "SPDXRef-File-294",
+      "SPDXID": "SPDXRef-File-299",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4156,7 +4226,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_008_doc_consistency.test.js",
-      "SPDXID": "SPDXRef-File-295",
+      "SPDXID": "SPDXRef-File-300",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4170,7 +4240,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_013_documented_examples.test.js",
-      "SPDXID": "SPDXRef-File-296",
+      "SPDXID": "SPDXRef-File-301",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4184,7 +4254,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_019_deep_reasoning.test.js",
-      "SPDXID": "SPDXRef-File-297",
+      "SPDXID": "SPDXRef-File-302",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4198,7 +4268,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_022_deep_reasoning_robustness.test.js",
-      "SPDXID": "SPDXRef-File-298",
+      "SPDXID": "SPDXRef-File-303",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4212,11 +4282,11 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_025_profile_calibration.test.js",
-      "SPDXID": "SPDXRef-File-299",
+      "SPDXID": "SPDXRef-File-304",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "26aabf86726477b9dfd2bb7dbe9b356844b2a987d3163aa56627bfd3471b7898"
+          "checksumValue": "72039371da7aebe5d6ddb78a7354a241c08195d1236799dd2ce3e0756a4253d4"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4226,7 +4296,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_036_intent_clarifier_socratic.test.js",
-      "SPDXID": "SPDXRef-File-300",
+      "SPDXID": "SPDXRef-File-305",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4240,11 +4310,11 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_044_deep_reasoning_adversarial_invariants.test.js",
-      "SPDXID": "SPDXRef-File-301",
+      "SPDXID": "SPDXRef-File-306",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "7bf255c7038b46ea88208681d4b13a07b099bc34d3304c9a5c4aea0e3b93ec3f"
+          "checksumValue": "4ccc68d75d15a4e745a1f43a1aac3cfbf4f0bf72a7269b50f2b64eb95309f913"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4254,11 +4324,11 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_046_git_assistant_diagnostics.test.js",
-      "SPDXID": "SPDXRef-File-302",
+      "SPDXID": "SPDXRef-File-307",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "f226583ee178af2afa280ec984f30af288a942b6089515e261401b694c037cec"
+          "checksumValue": "c1db5ffbc6613714f5b965ef5d57078b621ab837d3b6bd92a7130bb5413af9d1"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4268,11 +4338,11 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_047_wizard_interactive_calibration.test.js",
-      "SPDXID": "SPDXRef-File-303",
+      "SPDXID": "SPDXRef-File-308",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "ec7f2fd2a5783c4b21257bef175c7b661956db1550efc933776615a1423d464e"
+          "checksumValue": "643cd669108b16620218cfc19453e0751c1d50d98e6d5ed85c8f5057c466486c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4282,7 +4352,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_058_intent_clarifier_socratic_sealing.test.js",
-      "SPDXID": "SPDXRef-File-304",
+      "SPDXID": "SPDXRef-File-309",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4296,7 +4366,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_064_intent_contract_atomic_canonical_sealing.test.js",
-      "SPDXID": "SPDXRef-File-305",
+      "SPDXID": "SPDXRef-File-310",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4310,7 +4380,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_071_profile_adapter_atomic_calibration_invariants.test.js",
-      "SPDXID": "SPDXRef-File-306",
+      "SPDXID": "SPDXRef-File-311",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4324,7 +4394,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_073_git_assistant_resilience_invariants.test.js",
-      "SPDXID": "SPDXRef-File-307",
+      "SPDXID": "SPDXRef-File-312",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4338,7 +4408,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_074_learning_engine_semantic_invariants.test.js",
-      "SPDXID": "SPDXRef-File-308",
+      "SPDXID": "SPDXRef-File-313",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4352,7 +4422,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_075_wizard_fail_closed_invariants.test.js",
-      "SPDXID": "SPDXRef-File-309",
+      "SPDXID": "SPDXRef-File-314",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4366,7 +4436,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_099_web_ui_wcag_i18n_invariants.test.js",
-      "SPDXID": "SPDXRef-File-310",
+      "SPDXID": "SPDXRef-File-315",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4380,11 +4450,11 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_117_user_decision_trajectory_invariants.test.js",
-      "SPDXID": "SPDXRef-File-311",
+      "SPDXID": "SPDXRef-File-316",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "3a4a31bd68aa1f035dc4ab3b784ae69bda0ed50eaa994c6583dcbee12ff4abef"
+          "checksumValue": "ec339060b53ad1c6512b8217d1adc4018ef5a740fd26206a166791d637be10ed"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4394,11 +4464,11 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_127_drive_mission_matrix_invariants.test.js",
-      "SPDXID": "SPDXRef-File-312",
+      "SPDXID": "SPDXRef-File-317",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "a9e799ba5d5a67a20d5a28abd0671a7baaa4229f88781386ae70841a830b212b"
+          "checksumValue": "14502a4d5ba88731b5c635b77b769f5fbdaca5f715188d05ee4af3d37f7620ab"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4408,11 +4478,11 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_131_mission_backlog_vault_invariants.test.js",
-      "SPDXID": "SPDXRef-File-313",
+      "SPDXID": "SPDXRef-File-318",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "c54f8c4fea81328dc35a8f2b6fff6f3fd7891ce20772ff291977cda3bde87647"
+          "checksumValue": "81e10d96e7e418a77464a327043b3fc9ca568cbffe668a08668a2eaf735085fa"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4422,11 +4492,11 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_133_multidimensional_socratic_planner_invariants.test.js",
-      "SPDXID": "SPDXRef-File-314",
+      "SPDXID": "SPDXRef-File-319",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "bc37c4b5d87d270e6cbfe5d418843793ea6ef1362dd7bd266f771a6186d1a8a3"
+          "checksumValue": "7758fba375dee031c7250cb40a6e2050a91bbe40c4deb33635c84a65c17086db"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4436,7 +4506,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/ax_f_143_socratic_tree_visualizer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-315",
+      "SPDXID": "SPDXRef-File-320",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4450,7 +4520,7 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/clarifier.test.js",
-      "SPDXID": "SPDXRef-File-316",
+      "SPDXID": "SPDXRef-File-321",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4464,11 +4534,11 @@
     },
     {
       "fileName": "./tests/03_intent_socratic/learning_git.test.js",
-      "SPDXID": "SPDXRef-File-317",
+      "SPDXID": "SPDXRef-File-322",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "41532107c5d5bee51633d30fba4106bfdaefbffe801fe4e9b4dc6c6e683042fe"
+          "checksumValue": "5c926172df64e84e598fad181494e0b0e23b3847fed552f12ffbcf2452adb63c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4478,7 +4548,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_004_evidence_manifest.test.js",
-      "SPDXID": "SPDXRef-File-318",
+      "SPDXID": "SPDXRef-File-323",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4492,7 +4562,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_006_learnings_preservation.test.js",
-      "SPDXID": "SPDXRef-File-319",
+      "SPDXID": "SPDXRef-File-324",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4506,7 +4576,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_012_suite_integrity.test.js",
-      "SPDXID": "SPDXRef-File-320",
+      "SPDXID": "SPDXRef-File-325",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4520,7 +4590,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_017_memory.test.js",
-      "SPDXID": "SPDXRef-File-321",
+      "SPDXID": "SPDXRef-File-326",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4534,7 +4604,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_018_evidence_scope.test.js",
-      "SPDXID": "SPDXRef-File-322",
+      "SPDXID": "SPDXRef-File-327",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4548,7 +4618,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_021_memory_guard.test.js",
-      "SPDXID": "SPDXRef-File-323",
+      "SPDXID": "SPDXRef-File-328",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4562,7 +4632,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_028_evidence_canonical_dedup.test.js",
-      "SPDXID": "SPDXRef-File-324",
+      "SPDXID": "SPDXRef-File-329",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4576,11 +4646,11 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_037_context_shield_anchor.test.js",
-      "SPDXID": "SPDXRef-File-325",
+      "SPDXID": "SPDXRef-File-330",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "d195cd141dc41e283a92751e9eeca50acc9a60fbb7b69ab3837638857be37f09"
+          "checksumValue": "8d226f7782f4dfe16ae0567e2b38c3848a2e4b706b0080146a0fd5d62866421b"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4590,11 +4660,11 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_039_checkpoint_atomic_integrity.test.js",
-      "SPDXID": "SPDXRef-File-326",
+      "SPDXID": "SPDXRef-File-331",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "67f9945fa2dcc97adf2b51417d2ae7c45abc86a63c56e3a4de0381a2f1eb5aab"
+          "checksumValue": "bad27c32c78393890ed08bbcec4db787d76960235bb28cc8260c597ea2238cfb"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4604,7 +4674,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_057_context_shield_governance_drift.test.js",
-      "SPDXID": "SPDXRef-File-327",
+      "SPDXID": "SPDXRef-File-332",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4618,7 +4688,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_060_rollback_plan_deterministic_validation.test.js",
-      "SPDXID": "SPDXRef-File-328",
+      "SPDXID": "SPDXRef-File-333",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4632,7 +4702,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_063_context_shield_cross_runtime_anchoring.test.js",
-      "SPDXID": "SPDXRef-File-329",
+      "SPDXID": "SPDXRef-File-334",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4646,7 +4716,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_065_evidence_hasher_bound_manifest_invariants.test.js",
-      "SPDXID": "SPDXRef-File-330",
+      "SPDXID": "SPDXRef-File-335",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4660,7 +4730,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_068_checkpoint_adversarial_sandbox_invariants.test.js",
-      "SPDXID": "SPDXRef-File-331",
+      "SPDXID": "SPDXRef-File-336",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4674,7 +4744,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_070_memory_atomic_guard_invariants.test.js",
-      "SPDXID": "SPDXRef-File-332",
+      "SPDXID": "SPDXRef-File-337",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4688,7 +4758,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_077_health_check_adversarial_corruption_invariants.test.js",
-      "SPDXID": "SPDXRef-File-333",
+      "SPDXID": "SPDXRef-File-338",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4702,11 +4772,11 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_089_self_healing_backtracking_invariants.test.js",
-      "SPDXID": "SPDXRef-File-334",
+      "SPDXID": "SPDXRef-File-339",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "cd6b6c2e7e881b69dc4f5f037da631bd144230372af95685a29d7bb0682d80ad"
+          "checksumValue": "83f8fbdb1b6f6a7af25401a2bdb19b0d078a74e81e40282a54ed94782f44fe0b"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4716,7 +4786,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_107_semantic_memory_graph_invariants.test.js",
-      "SPDXID": "SPDXRef-File-335",
+      "SPDXID": "SPDXRef-File-340",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4730,11 +4800,11 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_115_drive_state_resumer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-336",
+      "SPDXID": "SPDXRef-File-341",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "f94f5b945b6543294022ce0361ffc38ac4321e87d722a26d04f3597a0c32228a"
+          "checksumValue": "3b619d365a2a2aea5afb9b9033665ab9d8a6ddace28bd2bf0a69cc61d24ee6ee"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4744,11 +4814,11 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_122_sqlite_snapshot_isolation_invariants.test.js",
-      "SPDXID": "SPDXRef-File-337",
+      "SPDXID": "SPDXRef-File-342",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "8ff6f9d85afdb75352f7612b83bf280559f4c29721fdae2cdb3bfff3c10b4bfa"
+          "checksumValue": "a532da01890d6b72a130f7e81696d23a19076db886b65ec35ce0eeef8ca4cca5"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4758,11 +4828,11 @@
     },
     {
       "fileName": "./tests/04_state_recovery/ax_f_145_semantic_snapshot_indexer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-338",
+      "SPDXID": "SPDXRef-File-343",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "9a61e9478acdf52dbf040b20979ba298e0f43aa9e651b7aec9fd9baec396408a"
+          "checksumValue": "e416242e052fb8fb2a3eeff81f506343e8c34b3079ac491197471636ec76714f"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4772,7 +4842,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/checkpoint_restore.test.js",
-      "SPDXID": "SPDXRef-File-339",
+      "SPDXID": "SPDXRef-File-344",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4786,7 +4856,7 @@
     },
     {
       "fileName": "./tests/04_state_recovery/rollback_plan.test.js",
-      "SPDXID": "SPDXRef-File-340",
+      "SPDXID": "SPDXRef-File-345",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4800,7 +4870,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/adversarial.test.js",
-      "SPDXID": "SPDXRef-File-341",
+      "SPDXID": "SPDXRef-File-346",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4814,7 +4884,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_020_adversarial_fuzzing.test.js",
-      "SPDXID": "SPDXRef-File-342",
+      "SPDXID": "SPDXRef-File-347",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4828,7 +4898,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_023_premortem.test.js",
-      "SPDXID": "SPDXRef-File-343",
+      "SPDXID": "SPDXRef-File-348",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4842,11 +4912,11 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_029_vibeguard_lexical_resilience.test.js",
-      "SPDXID": "SPDXRef-File-344",
+      "SPDXID": "SPDXRef-File-349",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "b551635e23a5f85d88da8e85421cb4e8c2f28591242c7a90c5f8ed2f36d1f6d9"
+          "checksumValue": "0af489a2a7666418a945b43a1b90faaa4d75d07f263838015d340fa3140b3568"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4856,11 +4926,11 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_034_learning_engine_classification.test.js",
-      "SPDXID": "SPDXRef-File-345",
+      "SPDXID": "SPDXRef-File-350",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "4c555ff9ffa00f819c8f80b3229d2387fbf1b68ad4689c108c58b62402e61209"
+          "checksumValue": "dd2e7a1ee2877b5e095be47e71bc16d63b3dbd74f122aeeb37b0a16d6b162df6"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -4870,7 +4940,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_048_fuzzer_mutation_burst_resilience.test.js",
-      "SPDXID": "SPDXRef-File-346",
+      "SPDXID": "SPDXRef-File-351",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4884,7 +4954,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_059_premortem_adversarial_invariants.test.js",
-      "SPDXID": "SPDXRef-File-347",
+      "SPDXID": "SPDXRef-File-352",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4898,7 +4968,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_072_vibeguard_adversarial_lexical_invariants.test.js",
-      "SPDXID": "SPDXRef-File-348",
+      "SPDXID": "SPDXRef-File-353",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4912,7 +4982,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_076_fuzzer_adversarial_zero_evasion_invariants.test.js",
-      "SPDXID": "SPDXRef-File-349",
+      "SPDXID": "SPDXRef-File-354",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4926,7 +4996,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_086_massive_500_vectors_fuzzer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-350",
+      "SPDXID": "SPDXRef-File-355",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4940,7 +5010,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_091_chaos_1000_vectors_fuzzer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-351",
+      "SPDXID": "SPDXRef-File-356",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4954,7 +5024,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_102_chaos_2500_vectors_fuzzer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-352",
+      "SPDXID": "SPDXRef-File-357",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4968,7 +5038,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_108_chaos_5000_vectors_fuzzer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-353",
+      "SPDXID": "SPDXRef-File-358",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4982,7 +5052,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_119_chaos_10000_vectors_fuzzer_invariants.test.js",
-      "SPDXID": "SPDXRef-File-354",
+      "SPDXID": "SPDXRef-File-359",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -4996,11 +5066,11 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/ax_f_147_agent_chaos_monkey_invariants.test.js",
-      "SPDXID": "SPDXRef-File-355",
+      "SPDXID": "SPDXRef-File-360",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "b01a233ed8e2f236737192ae11148485e1238754b7b98aa6c6c1fc224fda5c56"
+          "checksumValue": "804cd6dbab4ec768dd590e01567e081b0fbcf9725f6bdee9a10785599440a99b"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -5010,7 +5080,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/human_anti_patterns.test.js",
-      "SPDXID": "SPDXRef-File-356",
+      "SPDXID": "SPDXRef-File-361",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5024,7 +5094,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/premortem_gate.test.js",
-      "SPDXID": "SPDXRef-File-357",
+      "SPDXID": "SPDXRef-File-362",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5038,7 +5108,7 @@
     },
     {
       "fileName": "./tests/05_adversarial_resilience/vibeguard.test.js",
-      "SPDXID": "SPDXRef-File-358",
+      "SPDXID": "SPDXRef-File-363",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5052,11 +5122,11 @@
     },
     {
       "fileName": "./tests/README.md",
-      "SPDXID": "SPDXRef-File-359",
+      "SPDXID": "SPDXRef-File-364",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "ffcd3c501df4b1344d68db014a3017671e201e1cf28ea6666cbd4a7232dafb04"
+          "checksumValue": "41aaa1ab178a8656c56164e3e149eb2daddf7cbb46c3ab8e1ae5297ef802844a"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -5066,11 +5136,11 @@
     },
     {
       "fileName": "./tests/run_all.js",
-      "SPDXID": "SPDXRef-File-360",
+      "SPDXID": "SPDXRef-File-365",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "ee75224db335aff86f12b1e84b4e28a57f904b1e56fe095dc038bfd662a3a9e3"
+          "checksumValue": "1d2f95668aed03475fd2edb2d967d4d69f759c5515cf21d14b88bf7257c6b477"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -5080,11 +5150,11 @@
     },
     {
       "fileName": "./tests/trust_fixture.js",
-      "SPDXID": "SPDXRef-File-361",
+      "SPDXID": "SPDXRef-File-366",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "d63c88b9ae68b3ac84a2d670e1e4db9a3ce018fc508811413c01ae550712187b"
+          "checksumValue": "3a22c306f2ded88a9097c645374b12c65258955a3ad78d1976f797cbb267d4db"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -5094,7 +5164,7 @@
     },
     {
       "fileName": "./tools/abductive_anomaly_detector.js",
-      "SPDXID": "SPDXRef-File-362",
+      "SPDXID": "SPDXRef-File-367",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5108,7 +5178,7 @@
     },
     {
       "fileName": "./tools/adaptive_phase_planner.js",
-      "SPDXID": "SPDXRef-File-363",
+      "SPDXID": "SPDXRef-File-368",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5122,7 +5192,7 @@
     },
     {
       "fileName": "./tools/adaptive_token_budgeter.js",
-      "SPDXID": "SPDXRef-File-364",
+      "SPDXID": "SPDXRef-File-369",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5136,7 +5206,7 @@
     },
     {
       "fileName": "./tools/adaptive_worker_pool.js",
-      "SPDXID": "SPDXRef-File-365",
+      "SPDXID": "SPDXRef-File-370",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5150,7 +5220,7 @@
     },
     {
       "fileName": "./tools/agent_chaos_monkey.js",
-      "SPDXID": "SPDXRef-File-366",
+      "SPDXID": "SPDXRef-File-371",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5164,7 +5234,7 @@
     },
     {
       "fileName": "./tools/agent_heartbeat_daemon.js",
-      "SPDXID": "SPDXRef-File-367",
+      "SPDXID": "SPDXRef-File-372",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5178,7 +5248,7 @@
     },
     {
       "fileName": "./tools/agent_shield.js",
-      "SPDXID": "SPDXRef-File-368",
+      "SPDXID": "SPDXRef-File-373",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5192,7 +5262,7 @@
     },
     {
       "fileName": "./tools/antigravity_drive_harness.js",
-      "SPDXID": "SPDXRef-File-369",
+      "SPDXID": "SPDXRef-File-374",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5206,7 +5276,7 @@
     },
     {
       "fileName": "./tools/approval_ed25519.js",
-      "SPDXID": "SPDXRef-File-370",
+      "SPDXID": "SPDXRef-File-375",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5220,7 +5290,7 @@
     },
     {
       "fileName": "./tools/assurance.js",
-      "SPDXID": "SPDXRef-File-371",
+      "SPDXID": "SPDXRef-File-376",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5234,7 +5304,7 @@
     },
     {
       "fileName": "./tools/ast_complexity_analyzer.js",
-      "SPDXID": "SPDXRef-File-372",
+      "SPDXID": "SPDXRef-File-377",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5248,7 +5318,7 @@
     },
     {
       "fileName": "./tools/ast_dead_code_analyzer.js",
-      "SPDXID": "SPDXRef-File-373",
+      "SPDXID": "SPDXRef-File-378",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5262,7 +5332,7 @@
     },
     {
       "fileName": "./tools/ast_patch_synthesizer.js",
-      "SPDXID": "SPDXRef-File-374",
+      "SPDXID": "SPDXRef-File-379",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5276,7 +5346,7 @@
     },
     {
       "fileName": "./tools/ast_taint_dataflow_analyzer.js",
-      "SPDXID": "SPDXRef-File-375",
+      "SPDXID": "SPDXRef-File-380",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5290,7 +5360,7 @@
     },
     {
       "fileName": "./tools/asymptotic_critic.js",
-      "SPDXID": "SPDXRef-File-376",
+      "SPDXID": "SPDXRef-File-381",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5303,12 +5373,40 @@
       ]
     },
     {
-      "fileName": "./tools/attestation_visualizer.js",
-      "SPDXID": "SPDXRef-File-377",
+      "fileName": "./tools/atomic_write.js",
+      "SPDXID": "SPDXRef-File-382",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "7071a42fe4126b592969d54c1cfa8834614fe8eae3e8f1a80ffb70d9b3ee4fd2"
+          "checksumValue": "30a60f84da12fc8645314468e3c2c6ffc53e4531a29891e957111c244016223f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/attestation_keyring.js",
+      "SPDXID": "SPDXRef-File-383",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4e815a8649afd381ddb28a6931a10ac01d3d4880fa67731078714701b77646c8"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/attestation_visualizer.js",
+      "SPDXID": "SPDXRef-File-384",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7c339a7b7f289aa6cb44bdd30ce58e35413a7d6e68deb7e0919189ae263b00a9"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -5318,7 +5416,7 @@
     },
     {
       "fileName": "./tools/attestation.js",
-      "SPDXID": "SPDXRef-File-378",
+      "SPDXID": "SPDXRef-File-385",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5332,7 +5430,7 @@
     },
     {
       "fileName": "./tools/auto_compacting_checkpoint.js",
-      "SPDXID": "SPDXRef-File-379",
+      "SPDXID": "SPDXRef-File-386",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5346,7 +5444,7 @@
     },
     {
       "fileName": "./tools/autonomous_module_packager.js",
-      "SPDXID": "SPDXRef-File-380",
+      "SPDXID": "SPDXRef-File-387",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5360,7 +5458,7 @@
     },
     {
       "fileName": "./tools/bayesian_hypothesis_updater.js",
-      "SPDXID": "SPDXRef-File-381",
+      "SPDXID": "SPDXRef-File-388",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5374,7 +5472,7 @@
     },
     {
       "fileName": "./tools/blast_radius_estimator.js",
-      "SPDXID": "SPDXRef-File-382",
+      "SPDXID": "SPDXRef-File-389",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5388,7 +5486,7 @@
     },
     {
       "fileName": "./tools/bundle_compiler.js",
-      "SPDXID": "SPDXRef-File-383",
+      "SPDXID": "SPDXRef-File-390",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5402,7 +5500,7 @@
     },
     {
       "fileName": "./tools/canonical_json.js",
-      "SPDXID": "SPDXRef-File-384",
+      "SPDXID": "SPDXRef-File-391",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5416,7 +5514,7 @@
     },
     {
       "fileName": "./tools/capability_manager.js",
-      "SPDXID": "SPDXRef-File-385",
+      "SPDXID": "SPDXRef-File-392",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5430,7 +5528,7 @@
     },
     {
       "fileName": "./tools/causal_dag_backtracker.js",
-      "SPDXID": "SPDXRef-File-386",
+      "SPDXID": "SPDXRef-File-393",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5444,7 +5542,7 @@
     },
     {
       "fileName": "./tools/chaos_fuzzer_1000.js",
-      "SPDXID": "SPDXRef-File-387",
+      "SPDXID": "SPDXRef-File-394",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5458,7 +5556,7 @@
     },
     {
       "fileName": "./tools/chaos_fuzzer_10000.js",
-      "SPDXID": "SPDXRef-File-388",
+      "SPDXID": "SPDXRef-File-395",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5472,7 +5570,7 @@
     },
     {
       "fileName": "./tools/chaos_fuzzer_2500.js",
-      "SPDXID": "SPDXRef-File-389",
+      "SPDXID": "SPDXRef-File-396",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5486,7 +5584,7 @@
     },
     {
       "fileName": "./tools/chaos_fuzzer_5000.js",
-      "SPDXID": "SPDXRef-File-390",
+      "SPDXID": "SPDXRef-File-397",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5500,7 +5598,7 @@
     },
     {
       "fileName": "./tools/check_ed25519.js",
-      "SPDXID": "SPDXRef-File-391",
+      "SPDXID": "SPDXRef-File-398",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5514,7 +5612,7 @@
     },
     {
       "fileName": "./tools/checkpoint.js",
-      "SPDXID": "SPDXRef-File-392",
+      "SPDXID": "SPDXRef-File-399",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5528,7 +5626,7 @@
     },
     {
       "fileName": "./tools/cognitive_reasoning_engine.js",
-      "SPDXID": "SPDXRef-File-393",
+      "SPDXID": "SPDXRef-File-400",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5542,11 +5640,11 @@
     },
     {
       "fileName": "./tools/competitive_benchmark.js",
-      "SPDXID": "SPDXRef-File-394",
+      "SPDXID": "SPDXRef-File-401",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "3da7325679b835ad15d436039e4abf10dfefa30d1ab3b84833c46678cdabdec9"
+          "checksumValue": "c4479f13ef7c3d84137b6217511876d5ed7652962603cead0fdc30d2ee9094e3"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -5556,11 +5654,11 @@
     },
     {
       "fileName": "./tools/compliance_matrix_exporter.js",
-      "SPDXID": "SPDXRef-File-395",
+      "SPDXID": "SPDXRef-File-402",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "50ec56478555ba3f0220ea9b35a027f70509e3f772573d6a351128e7c180b9cf"
+          "checksumValue": "d01c46540feef19ca19455df892a855b9b0f10771d6509b221c24432587fbda2"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -5570,7 +5668,7 @@
     },
     {
       "fileName": "./tools/concurrent_race_verifier.js",
-      "SPDXID": "SPDXRef-File-396",
+      "SPDXID": "SPDXRef-File-403",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5583,8 +5681,22 @@
       ]
     },
     {
+      "fileName": "./tools/concurrent_suite_check.js",
+      "SPDXID": "SPDXRef-File-404",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9af0199e1a911c097d2266f69af608ca221f246c6c41837c1876d1ab972ad0e3"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
       "fileName": "./tools/context_budget_guard.js",
-      "SPDXID": "SPDXRef-File-397",
+      "SPDXID": "SPDXRef-File-405",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5598,7 +5710,7 @@
     },
     {
       "fileName": "./tools/context_cache_accelerator.js",
-      "SPDXID": "SPDXRef-File-398",
+      "SPDXID": "SPDXRef-File-406",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5612,7 +5724,7 @@
     },
     {
       "fileName": "./tools/context_entropy_guard.js",
-      "SPDXID": "SPDXRef-File-399",
+      "SPDXID": "SPDXRef-File-407",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5626,7 +5738,7 @@
     },
     {
       "fileName": "./tools/context_relevance_pruner.js",
-      "SPDXID": "SPDXRef-File-400",
+      "SPDXID": "SPDXRef-File-408",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5640,7 +5752,7 @@
     },
     {
       "fileName": "./tools/context_shield.js",
-      "SPDXID": "SPDXRef-File-401",
+      "SPDXID": "SPDXRef-File-409",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5654,7 +5766,7 @@
     },
     {
       "fileName": "./tools/context_snapshot_compressor.js",
-      "SPDXID": "SPDXRef-File-402",
+      "SPDXID": "SPDXRef-File-410",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5668,7 +5780,7 @@
     },
     {
       "fileName": "./tools/convergence_drift_analyzer.js",
-      "SPDXID": "SPDXRef-File-403",
+      "SPDXID": "SPDXRef-File-411",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5682,7 +5794,7 @@
     },
     {
       "fileName": "./tools/convergence_loop.js",
-      "SPDXID": "SPDXRef-File-404",
+      "SPDXID": "SPDXRef-File-412",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5696,7 +5808,7 @@
     },
     {
       "fileName": "./tools/convergence_regression_guard.js",
-      "SPDXID": "SPDXRef-File-405",
+      "SPDXID": "SPDXRef-File-413",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5710,7 +5822,7 @@
     },
     {
       "fileName": "./tools/counterfactual_reasoning_oracle.js",
-      "SPDXID": "SPDXRef-File-406",
+      "SPDXID": "SPDXRef-File-414",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5723,8 +5835,36 @@
       ]
     },
     {
+      "fileName": "./tools/coverage_report.js",
+      "SPDXID": "SPDXRef-File-415",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0701dff332aef0df98457532b321391f56a677110075cff01326dd1c3d9364c6"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/coverage_thresholds.json",
+      "SPDXID": "SPDXRef-File-416",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "bb29dc9b7f6012483254141e52b8bd1c4e486bb9f32ec948b1a3b432b1677f28"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
       "fileName": "./tools/dashboard.html",
-      "SPDXID": "SPDXRef-File-407",
+      "SPDXID": "SPDXRef-File-417",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5738,7 +5878,7 @@
     },
     {
       "fileName": "./tools/deep_reasoning.js",
-      "SPDXID": "SPDXRef-File-408",
+      "SPDXID": "SPDXRef-File-418",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5752,7 +5892,7 @@
     },
     {
       "fileName": "./tools/dialectic_consensus_arbiter.js",
-      "SPDXID": "SPDXRef-File-409",
+      "SPDXID": "SPDXRef-File-419",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5766,7 +5906,7 @@
     },
     {
       "fileName": "./tools/dialectic_debater.js",
-      "SPDXID": "SPDXRef-File-410",
+      "SPDXID": "SPDXRef-File-420",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5780,7 +5920,7 @@
     },
     {
       "fileName": "./tools/diff_token_compactor.js",
-      "SPDXID": "SPDXRef-File-411",
+      "SPDXID": "SPDXRef-File-421",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5794,7 +5934,7 @@
     },
     {
       "fileName": "./tools/disk_pressure_guard.js",
-      "SPDXID": "SPDXRef-File-412",
+      "SPDXID": "SPDXRef-File-422",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5808,7 +5948,7 @@
     },
     {
       "fileName": "./tools/doctor_repair_engine.js",
-      "SPDXID": "SPDXRef-File-413",
+      "SPDXID": "SPDXRef-File-423",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5822,11 +5962,11 @@
     },
     {
       "fileName": "./tools/drive_dsse_attester.js",
-      "SPDXID": "SPDXRef-File-414",
+      "SPDXID": "SPDXRef-File-424",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "4e57a221d9e4cf908f4d3293dc357859c6653657f15566600e7df37366cf7c93"
+          "checksumValue": "e23a17443846d7646c065c947667372b13d8cb6ffa88b188c7d6deb857872fa8"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -5836,7 +5976,7 @@
     },
     {
       "fileName": "./tools/drive_engine.js",
-      "SPDXID": "SPDXRef-File-415",
+      "SPDXID": "SPDXRef-File-425",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5850,7 +5990,7 @@
     },
     {
       "fileName": "./tools/drive_memory_copilot.js",
-      "SPDXID": "SPDXRef-File-416",
+      "SPDXID": "SPDXRef-File-426",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5864,7 +6004,7 @@
     },
     {
       "fileName": "./tools/drive_mission_matrix.js",
-      "SPDXID": "SPDXRef-File-417",
+      "SPDXID": "SPDXRef-File-427",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5878,7 +6018,7 @@
     },
     {
       "fileName": "./tools/drive_mission_tracker.js",
-      "SPDXID": "SPDXRef-File-418",
+      "SPDXID": "SPDXRef-File-428",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5892,7 +6032,7 @@
     },
     {
       "fileName": "./tools/drive_state_resumer.js",
-      "SPDXID": "SPDXRef-File-419",
+      "SPDXID": "SPDXRef-File-429",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5906,7 +6046,7 @@
     },
     {
       "fileName": "./tools/drive_telemetry.js",
-      "SPDXID": "SPDXRef-File-420",
+      "SPDXID": "SPDXRef-File-430",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5920,7 +6060,7 @@
     },
     {
       "fileName": "./tools/drive_worker_sandbox.js",
-      "SPDXID": "SPDXRef-File-421",
+      "SPDXID": "SPDXRef-File-431",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5934,7 +6074,7 @@
     },
     {
       "fileName": "./tools/dsse.js",
-      "SPDXID": "SPDXRef-File-422",
+      "SPDXID": "SPDXRef-File-432",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5948,7 +6088,7 @@
     },
     {
       "fileName": "./tools/dynamic_invariant_assertor.js",
-      "SPDXID": "SPDXRef-File-423",
+      "SPDXID": "SPDXRef-File-433",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -5962,11 +6102,11 @@
     },
     {
       "fileName": "./tools/dynamic_rule_weaver.js",
-      "SPDXID": "SPDXRef-File-424",
+      "SPDXID": "SPDXRef-File-434",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "44e744050bd6d5171b486abf524bd64e54072749d050d6384fb41365b76768f4"
+          "checksumValue": "18c78677fe5ccdbc833a966f2ebe66f16ff3dccb9d7b97a84e1cad602124356b"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -5976,11 +6116,11 @@
     },
     {
       "fileName": "./tools/emit_attestation.js",
-      "SPDXID": "SPDXRef-File-425",
+      "SPDXID": "SPDXRef-File-435",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "9768e0294dc0b09a8847c16fa620480f8b868b949986d3bc5c126a96048b533f"
+          "checksumValue": "0832d5013c3420d497b4d12062f49995f4ad10954e4bed57d54ecbb6df0abea9"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -5990,7 +6130,7 @@
     },
     {
       "fileName": "./tools/epistemic_uncertainty_quantifier.js",
-      "SPDXID": "SPDXRef-File-426",
+      "SPDXID": "SPDXRef-File-436",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6004,7 +6144,7 @@
     },
     {
       "fileName": "./tools/evidence_hasher.js",
-      "SPDXID": "SPDXRef-File-427",
+      "SPDXID": "SPDXRef-File-437",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6018,11 +6158,11 @@
     },
     {
       "fileName": "./tools/evidence_ledger.js",
-      "SPDXID": "SPDXRef-File-428",
+      "SPDXID": "SPDXRef-File-438",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "291983ec887759f170474396ad51b9d1a65724049558b557770e49e7f4a63349"
+          "checksumValue": "21d73a30732bd5120d0f2b8623a94b18e3cc95eb382de72985b558471885b561"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6032,11 +6172,25 @@
     },
     {
       "fileName": "./tools/fast_parity_benchmarker.js",
-      "SPDXID": "SPDXRef-File-429",
+      "SPDXID": "SPDXRef-File-439",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "450262f0076fff032d71e7ef2fc01936268ef0d355bcf50c4408fbeff77b947f"
+          "checksumValue": "32fdd3d3b5f86ebc9dc62796bdf8a2637c59c818eb29c36e4e2be4046ccaeaea"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "fileName": "./tools/file_lock.js",
+      "SPDXID": "SPDXRef-File-440",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4426b691898cfa8787d3f69c8f2a9d2251ad151bec7a1a3293ee045d3a8f808b"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6046,11 +6200,11 @@
     },
     {
       "fileName": "./tools/flight_recorder.js",
-      "SPDXID": "SPDXRef-File-430",
+      "SPDXID": "SPDXRef-File-441",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "ae76dcec0ac74eeca762aee8cc6cd9c5eea969ce9999fc7c70dd5e904774307b"
+          "checksumValue": "492a947b476ddc8f150c6b6c329f5b0d4808a7874adf11ba9415517515dfb11f"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6060,11 +6214,11 @@
     },
     {
       "fileName": "./tools/forensic_telemetry_engine.js",
-      "SPDXID": "SPDXRef-File-431",
+      "SPDXID": "SPDXRef-File-442",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "f7480aac4736670c97b3b04c62f46e98065ce8b9af87d9e8c282c472491bad2e"
+          "checksumValue": "3ddb5d43476d8a0c7bce5f95f0ceff638fb4933074bc18ef10828de7f612fad1"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6074,7 +6228,7 @@
     },
     {
       "fileName": "./tools/formal_equivalence_checker.js",
-      "SPDXID": "SPDXRef-File-432",
+      "SPDXID": "SPDXRef-File-443",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6088,7 +6242,7 @@
     },
     {
       "fileName": "./tools/formal_smt_policy_verifier.js",
-      "SPDXID": "SPDXRef-File-433",
+      "SPDXID": "SPDXRef-File-444",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6102,7 +6256,7 @@
     },
     {
       "fileName": "./tools/fuzzer.js",
-      "SPDXID": "SPDXRef-File-434",
+      "SPDXID": "SPDXRef-File-445",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6116,7 +6270,7 @@
     },
     {
       "fileName": "./tools/git_assistant.js",
-      "SPDXID": "SPDXRef-File-435",
+      "SPDXID": "SPDXRef-File-446",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6130,7 +6284,7 @@
     },
     {
       "fileName": "./tools/git_governance_hook.js",
-      "SPDXID": "SPDXRef-File-436",
+      "SPDXID": "SPDXRef-File-447",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6144,11 +6298,11 @@
     },
     {
       "fileName": "./tools/governance_dashboard.js",
-      "SPDXID": "SPDXRef-File-437",
+      "SPDXID": "SPDXRef-File-448",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "73366d35d8ed104579ff2cc4e8775e44133ff2afc3bb1cf06b1ceab7be6140ed"
+          "checksumValue": "e03bbc3f5ddad86299298468572dd3be0221dc9c5bb8f4d63ac2503137c6bf94"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6158,7 +6312,7 @@
     },
     {
       "fileName": "./tools/hardware_adaptive_profiler.js",
-      "SPDXID": "SPDXRef-File-438",
+      "SPDXID": "SPDXRef-File-449",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6172,7 +6326,7 @@
     },
     {
       "fileName": "./tools/health_check.js",
-      "SPDXID": "SPDXRef-File-439",
+      "SPDXID": "SPDXRef-File-450",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6186,7 +6340,7 @@
     },
     {
       "fileName": "./tools/humanizer_engine.js",
-      "SPDXID": "SPDXRef-File-440",
+      "SPDXID": "SPDXRef-File-451",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6200,7 +6354,7 @@
     },
     {
       "fileName": "./tools/identity_canonical.js",
-      "SPDXID": "SPDXRef-File-441",
+      "SPDXID": "SPDXRef-File-452",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6214,7 +6368,7 @@
     },
     {
       "fileName": "./tools/inductive_hypothesis_prover.js",
-      "SPDXID": "SPDXRef-File-442",
+      "SPDXID": "SPDXRef-File-453",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6228,7 +6382,7 @@
     },
     {
       "fileName": "./tools/instinct_synthesizer.js",
-      "SPDXID": "SPDXRef-File-443",
+      "SPDXID": "SPDXRef-File-454",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6242,7 +6396,7 @@
     },
     {
       "fileName": "./tools/intent_clarifier.js",
-      "SPDXID": "SPDXRef-File-444",
+      "SPDXID": "SPDXRef-File-455",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6256,7 +6410,7 @@
     },
     {
       "fileName": "./tools/killswitch.js",
-      "SPDXID": "SPDXRef-File-445",
+      "SPDXID": "SPDXRef-File-456",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6270,7 +6424,7 @@
     },
     {
       "fileName": "./tools/learning_engine.js",
-      "SPDXID": "SPDXRef-File-446",
+      "SPDXID": "SPDXRef-File-457",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6284,7 +6438,7 @@
     },
     {
       "fileName": "./tools/license_auditor.js",
-      "SPDXID": "SPDXRef-File-447",
+      "SPDXID": "SPDXRef-File-458",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6298,7 +6452,7 @@
     },
     {
       "fileName": "./tools/live_hud_connector.js",
-      "SPDXID": "SPDXRef-File-448",
+      "SPDXID": "SPDXRef-File-459",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6312,7 +6466,7 @@
     },
     {
       "fileName": "./tools/massive_fuzzer.js",
-      "SPDXID": "SPDXRef-File-449",
+      "SPDXID": "SPDXRef-File-460",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6326,7 +6480,7 @@
     },
     {
       "fileName": "./tools/memory.js",
-      "SPDXID": "SPDXRef-File-450",
+      "SPDXID": "SPDXRef-File-461",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6340,11 +6494,11 @@
     },
     {
       "fileName": "./tools/merkle_cache_fast_forward.js",
-      "SPDXID": "SPDXRef-File-451",
+      "SPDXID": "SPDXRef-File-462",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "ffa517d896af033fe4e43f785bb1eb1dababe9bc9ab8e775107901409b957509"
+          "checksumValue": "9328d10a6f4c16e4a7d021b81860f6917a963584ad4533e44c98b256b38d1398"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6354,11 +6508,11 @@
     },
     {
       "fileName": "./tools/merkle_integrity_ledger.js",
-      "SPDXID": "SPDXRef-File-452",
+      "SPDXID": "SPDXRef-File-463",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "f02890b26ad442fb71c82e9373e9f3784a040c7838c38b293fa1399caa734ace"
+          "checksumValue": "db39aa26ca2485938db32728b3930c0ad71ec4d9b6fbf427fe8fc9d57aaf2923"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6368,7 +6522,7 @@
     },
     {
       "fileName": "./tools/metacognitive_ast_analyzer.js",
-      "SPDXID": "SPDXRef-File-453",
+      "SPDXID": "SPDXRef-File-464",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6382,7 +6536,7 @@
     },
     {
       "fileName": "./tools/metacognitive_heuristic_solver.js",
-      "SPDXID": "SPDXRef-File-454",
+      "SPDXID": "SPDXRef-File-465",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6396,7 +6550,7 @@
     },
     {
       "fileName": "./tools/metaprompt_dialectic_synthesizer.js",
-      "SPDXID": "SPDXRef-File-455",
+      "SPDXID": "SPDXRef-File-466",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6410,7 +6564,7 @@
     },
     {
       "fileName": "./tools/mission_backlog_vault.js",
-      "SPDXID": "SPDXRef-File-456",
+      "SPDXID": "SPDXRef-File-467",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6424,7 +6578,7 @@
     },
     {
       "fileName": "./tools/mission_context.js",
-      "SPDXID": "SPDXRef-File-457",
+      "SPDXID": "SPDXRef-File-468",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6438,7 +6592,7 @@
     },
     {
       "fileName": "./tools/module_dependency_graph.js",
-      "SPDXID": "SPDXRef-File-458",
+      "SPDXID": "SPDXRef-File-469",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6452,7 +6606,7 @@
     },
     {
       "fileName": "./tools/multi_file_cross_healer.js",
-      "SPDXID": "SPDXRef-File-459",
+      "SPDXID": "SPDXRef-File-470",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6466,7 +6620,7 @@
     },
     {
       "fileName": "./tools/multi_harness_adapter.js",
-      "SPDXID": "SPDXRef-File-460",
+      "SPDXID": "SPDXRef-File-471",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6480,7 +6634,7 @@
     },
     {
       "fileName": "./tools/multidimensional_socratic_planner.js",
-      "SPDXID": "SPDXRef-File-461",
+      "SPDXID": "SPDXRef-File-472",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6494,7 +6648,7 @@
     },
     {
       "fileName": "./tools/mutation_coverage_oracle.js",
-      "SPDXID": "SPDXRef-File-462",
+      "SPDXID": "SPDXRef-File-473",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6508,7 +6662,7 @@
     },
     {
       "fileName": "./tools/onboarding_wizard.js",
-      "SPDXID": "SPDXRef-File-463",
+      "SPDXID": "SPDXRef-File-474",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6522,7 +6676,7 @@
     },
     {
       "fileName": "./tools/performance_benchmark.js",
-      "SPDXID": "SPDXRef-File-464",
+      "SPDXID": "SPDXRef-File-475",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6535,8 +6689,22 @@
       ]
     },
     {
+      "fileName": "./tools/phase_evidence.js",
+      "SPDXID": "SPDXRef-File-476",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2c0d4603f7a3337612e61ee594457ec852790ccd4ee88dcabfce2bc5fa6dbb9b"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
       "fileName": "./tools/pipeline_fast_gate.js",
-      "SPDXID": "SPDXRef-File-465",
+      "SPDXID": "SPDXRef-File-477",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6550,7 +6718,7 @@
     },
     {
       "fileName": "./tools/prefix_cache_affinity_router.js",
-      "SPDXID": "SPDXRef-File-466",
+      "SPDXID": "SPDXRef-File-478",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6564,7 +6732,7 @@
     },
     {
       "fileName": "./tools/preflight_tdd_synthesizer.js",
-      "SPDXID": "SPDXRef-File-467",
+      "SPDXID": "SPDXRef-File-479",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6578,7 +6746,7 @@
     },
     {
       "fileName": "./tools/preflight.js",
-      "SPDXID": "SPDXRef-File-468",
+      "SPDXID": "SPDXRef-File-480",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6592,7 +6760,7 @@
     },
     {
       "fileName": "./tools/premortem.js",
-      "SPDXID": "SPDXRef-File-469",
+      "SPDXID": "SPDXRef-File-481",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6606,7 +6774,7 @@
     },
     {
       "fileName": "./tools/presentation.html",
-      "SPDXID": "SPDXRef-File-470",
+      "SPDXID": "SPDXRef-File-482",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6619,8 +6787,22 @@
       ]
     },
     {
+      "fileName": "./tools/process_tree.js",
+      "SPDXID": "SPDXRef-File-483",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fd4209f8f1c1d2e78439295a49034d3e985aadff9fd1369682da9054418b7fc3"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
       "fileName": "./tools/profile_adapter.js",
-      "SPDXID": "SPDXRef-File-471",
+      "SPDXID": "SPDXRef-File-484",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6634,7 +6816,7 @@
     },
     {
       "fileName": "./tools/prompt_grammar_compactor.js",
-      "SPDXID": "SPDXRef-File-472",
+      "SPDXID": "SPDXRef-File-485",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6648,11 +6830,11 @@
     },
     {
       "fileName": "./tools/provenance_sbom_generator.js",
-      "SPDXID": "SPDXRef-File-473",
+      "SPDXID": "SPDXRef-File-486",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "a971f1be09e385b5932910328e60f7d1d2497009e0221c330a19e28c0f512bb7"
+          "checksumValue": "d91ad644bb25abacbd50d56b289d9f00dda444af2d5258d5b6509cec304d380f"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6662,7 +6844,7 @@
     },
     {
       "fileName": "./tools/quickstart_interactive.js",
-      "SPDXID": "SPDXRef-File-474",
+      "SPDXID": "SPDXRef-File-487",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6676,7 +6858,7 @@
     },
     {
       "fileName": "./tools/README.md",
-      "SPDXID": "SPDXRef-File-475",
+      "SPDXID": "SPDXRef-File-488",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6690,11 +6872,11 @@
     },
     {
       "fileName": "./tools/repo_attestation_generator.js",
-      "SPDXID": "SPDXRef-File-476",
+      "SPDXID": "SPDXRef-File-489",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "edf22490614f477e310a57ab2a3795f1146d361b2835ad8935baa0e85dad2877"
+          "checksumValue": "395ee2be85ab33af497dc9c5d4c94f1eaf55afd93fee706d1bf77e2602e931ef"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6704,7 +6886,7 @@
     },
     {
       "fileName": "./tools/revocation_manager.js",
-      "SPDXID": "SPDXRef-File-477",
+      "SPDXID": "SPDXRef-File-490",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6718,7 +6900,7 @@
     },
     {
       "fileName": "./tools/risk_policy_compiler.js",
-      "SPDXID": "SPDXRef-File-478",
+      "SPDXID": "SPDXRef-File-491",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6732,7 +6914,7 @@
     },
     {
       "fileName": "./tools/rollback_plan.js",
-      "SPDXID": "SPDXRef-File-479",
+      "SPDXID": "SPDXRef-File-492",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6746,11 +6928,11 @@
     },
     {
       "fileName": "./tools/sbom_sovereign_generator.js",
-      "SPDXID": "SPDXRef-File-480",
+      "SPDXID": "SPDXRef-File-493",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "33d83fe337ca97f3f213cd1819cd8093fdc88e5a3ff2b41401f9ed72b00d3691"
+          "checksumValue": "540c2e85979e3c72e14b6252004f000bcf07cdc23638e63b1386dde4fa12a75a"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6760,7 +6942,7 @@
     },
     {
       "fileName": "./tools/schema_contract_verifier.js",
-      "SPDXID": "SPDXRef-File-481",
+      "SPDXID": "SPDXRef-File-494",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6774,7 +6956,7 @@
     },
     {
       "fileName": "./tools/scout_engine.js",
-      "SPDXID": "SPDXRef-File-482",
+      "SPDXID": "SPDXRef-File-495",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6788,7 +6970,7 @@
     },
     {
       "fileName": "./tools/self_healing_engine.js",
-      "SPDXID": "SPDXRef-File-483",
+      "SPDXID": "SPDXRef-File-496",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6802,7 +6984,7 @@
     },
     {
       "fileName": "./tools/semantic_auto_healer.js",
-      "SPDXID": "SPDXRef-File-484",
+      "SPDXID": "SPDXRef-File-497",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6816,7 +6998,7 @@
     },
     {
       "fileName": "./tools/semantic_contract_verifier.js",
-      "SPDXID": "SPDXRef-File-485",
+      "SPDXID": "SPDXRef-File-498",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6830,7 +7012,7 @@
     },
     {
       "fileName": "./tools/semantic_cross_indexer.js",
-      "SPDXID": "SPDXRef-File-486",
+      "SPDXID": "SPDXRef-File-499",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6844,11 +7026,11 @@
     },
     {
       "fileName": "./tools/semantic_memory_graph.js",
-      "SPDXID": "SPDXRef-File-487",
+      "SPDXID": "SPDXRef-File-500",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "2704d0a9366a8098ed3c45e3895223cff971c6b275c8bdd500b3f41f84432bd1"
+          "checksumValue": "f1643cdc520ce0a9dadc7621f723da08d41430c72f117e6a7827347d3d633b8f"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -6858,7 +7040,7 @@
     },
     {
       "fileName": "./tools/semantic_snapshot_indexer.js",
-      "SPDXID": "SPDXRef-File-488",
+      "SPDXID": "SPDXRef-File-501",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6872,7 +7054,7 @@
     },
     {
       "fileName": "./tools/semantic_token_deduplicator.js",
-      "SPDXID": "SPDXRef-File-489",
+      "SPDXID": "SPDXRef-File-502",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6886,7 +7068,7 @@
     },
     {
       "fileName": "./tools/semantic_type_reconciler.js",
-      "SPDXID": "SPDXRef-File-490",
+      "SPDXID": "SPDXRef-File-503",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6900,7 +7082,7 @@
     },
     {
       "fileName": "./tools/smart_incremental_runner.js",
-      "SPDXID": "SPDXRef-File-491",
+      "SPDXID": "SPDXRef-File-504",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6914,7 +7096,7 @@
     },
     {
       "fileName": "./tools/socratic_tree_visualizer.js",
-      "SPDXID": "SPDXRef-File-492",
+      "SPDXID": "SPDXRef-File-505",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6928,7 +7110,7 @@
     },
     {
       "fileName": "./tools/speculative_token_expander.js",
-      "SPDXID": "SPDXRef-File-493",
+      "SPDXID": "SPDXRef-File-506",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6942,7 +7124,7 @@
     },
     {
       "fileName": "./tools/sqlite_snapshot_isolation.js",
-      "SPDXID": "SPDXRef-File-494",
+      "SPDXID": "SPDXRef-File-507",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6956,7 +7138,7 @@
     },
     {
       "fileName": "./tools/structured_command.js",
-      "SPDXID": "SPDXRef-File-495",
+      "SPDXID": "SPDXRef-File-508",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6969,8 +7151,22 @@
       ]
     },
     {
+      "fileName": "./tools/suite_runner.js",
+      "SPDXID": "SPDXRef-File-509",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "566b5cd93a461427e03a411a94c2b92bef8daf8b639081315ed0b1ce4e734976"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
       "fileName": "./tools/swarm_arbiter.js",
-      "SPDXID": "SPDXRef-File-496",
+      "SPDXID": "SPDXRef-File-510",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6984,7 +7180,7 @@
     },
     {
       "fileName": "./tools/swarm_ast_arbiter.js",
-      "SPDXID": "SPDXRef-File-497",
+      "SPDXID": "SPDXRef-File-511",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -6998,11 +7194,11 @@
     },
     {
       "fileName": "./tools/swarm_benchmark.js",
-      "SPDXID": "SPDXRef-File-498",
+      "SPDXID": "SPDXRef-File-512",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "09eb4fe22e6b4a497b7a476d5934d39eb0914da719290adea3fb324957951e40"
+          "checksumValue": "68a0dfbee8e789d268ff9b3f7552cbb61167b59ce5f0b924c0ab6df1d1faff50"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -7012,7 +7208,7 @@
     },
     {
       "fileName": "./tools/swarm_consensus_arbiter.js",
-      "SPDXID": "SPDXRef-File-499",
+      "SPDXID": "SPDXRef-File-513",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7026,7 +7222,7 @@
     },
     {
       "fileName": "./tools/swarm_p2p_channel.js",
-      "SPDXID": "SPDXRef-File-500",
+      "SPDXID": "SPDXRef-File-514",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7040,11 +7236,11 @@
     },
     {
       "fileName": "./tools/swarm_simulator.js",
-      "SPDXID": "SPDXRef-File-501",
+      "SPDXID": "SPDXRef-File-515",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "5ee26d799d9bdc883f942eedc938d501a3b494b0e1f6b5cfa97666636f2925fb"
+          "checksumValue": "c9e57da8f0caac62f25ef63e381769b7c80a3a6f2cade9afa90c9454ee36fc39"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -7054,11 +7250,11 @@
     },
     {
       "fileName": "./tools/sync_doc_stats.js",
-      "SPDXID": "SPDXRef-File-502",
+      "SPDXID": "SPDXRef-File-516",
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "246a88a8a1f07610067df8881f65ecbfffbd48cfcd69f3ea70bab9095385bd0c"
+          "checksumValue": "081b6f3e1dc5dc0b15448359404b6f8c272d6b9df566fd307ebaad61f44490e3"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -7068,7 +7264,7 @@
     },
     {
       "fileName": "./tools/sync_mirror_gate.js",
-      "SPDXID": "SPDXRef-File-503",
+      "SPDXID": "SPDXRef-File-517",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7082,7 +7278,7 @@
     },
     {
       "fileName": "./tools/telemetry_gateway.js",
-      "SPDXID": "SPDXRef-File-504",
+      "SPDXID": "SPDXRef-File-518",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7096,7 +7292,7 @@
     },
     {
       "fileName": "./tools/temporal_state_verifier.js",
-      "SPDXID": "SPDXRef-File-505",
+      "SPDXID": "SPDXRef-File-519",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7109,8 +7305,22 @@
       ]
     },
     {
+      "fileName": "./tools/test_sandbox.js",
+      "SPDXID": "SPDXRef-File-520",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3a99ea134dbb53a44a608eb8fb4864e00e8991a27a13eceb3136c0b338d1a793"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
       "fileName": "./tools/token_economy_pruner.js",
-      "SPDXID": "SPDXRef-File-506",
+      "SPDXID": "SPDXRef-File-521",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7124,7 +7334,7 @@
     },
     {
       "fileName": "./tools/token_streaming_compactor.js",
-      "SPDXID": "SPDXRef-File-507",
+      "SPDXID": "SPDXRef-File-522",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7138,7 +7348,7 @@
     },
     {
       "fileName": "./tools/transversal_project_optimizer.js",
-      "SPDXID": "SPDXRef-File-508",
+      "SPDXID": "SPDXRef-File-523",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7152,7 +7362,7 @@
     },
     {
       "fileName": "./tools/universal_invariants_verifier.js",
-      "SPDXID": "SPDXRef-File-509",
+      "SPDXID": "SPDXRef-File-524",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7166,7 +7376,7 @@
     },
     {
       "fileName": "./tools/updater.js",
-      "SPDXID": "SPDXRef-File-510",
+      "SPDXID": "SPDXRef-File-525",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7180,7 +7390,7 @@
     },
     {
       "fileName": "./tools/user_decision_trajectory.js",
-      "SPDXID": "SPDXRef-File-511",
+      "SPDXID": "SPDXRef-File-526",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7194,7 +7404,7 @@
     },
     {
       "fileName": "./tools/verify_changes.js",
-      "SPDXID": "SPDXRef-File-512",
+      "SPDXID": "SPDXRef-File-527",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7208,7 +7418,7 @@
     },
     {
       "fileName": "./tools/vibeguard_gate.js",
-      "SPDXID": "SPDXRef-File-513",
+      "SPDXID": "SPDXRef-File-528",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7222,7 +7432,7 @@
     },
     {
       "fileName": "./tools/vibeguard_storage_hook.js",
-      "SPDXID": "SPDXRef-File-514",
+      "SPDXID": "SPDXRef-File-529",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7236,7 +7446,7 @@
     },
     {
       "fileName": "./tools/vibeguard.js",
-      "SPDXID": "SPDXRef-File-515",
+      "SPDXID": "SPDXRef-File-530",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7250,7 +7460,7 @@
     },
     {
       "fileName": "./tools/web_ui_auditor.js",
-      "SPDXID": "SPDXRef-File-516",
+      "SPDXID": "SPDXRef-File-531",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7264,7 +7474,7 @@
     },
     {
       "fileName": "./tools/wizard.js",
-      "SPDXID": "SPDXRef-File-517",
+      "SPDXID": "SPDXRef-File-532",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7278,7 +7488,7 @@
     },
     {
       "fileName": "./tools/workflow_runner.js",
-      "SPDXID": "SPDXRef-File-518",
+      "SPDXID": "SPDXRef-File-533",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7292,7 +7502,7 @@
     },
     {
       "fileName": "./tools/workflow_state_machine.js",
-      "SPDXID": "SPDXRef-File-519",
+      "SPDXID": "SPDXRef-File-534",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7306,7 +7516,7 @@
     },
     {
       "fileName": "./tools/workspace_debloater.js",
-      "SPDXID": "SPDXRef-File-520",
+      "SPDXID": "SPDXRef-File-535",
       "checksums": [
         {
           "algorithm": "SHA256",
@@ -7320,7 +7530,7 @@
     },
     {
       "fileName": "./tools/zero_overhead_trace_logger.js",
-      "SPDXID": "SPDXRef-File-521",
+      "SPDXID": "SPDXRef-File-536",
       "checksums": [
         {
           "algorithm": "SHA256",

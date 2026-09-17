@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const ASTTaintDataFlowAnalyzer = require('../../tools/ast_taint_dataflow_analyzer.js');
@@ -30,7 +31,7 @@ assert.strictEqual(audit.complianceRate, '100.0%');
 console.log(`✓ Auditoría global de taint validada: ${audit.totalAudited} módulos analizados (100.0% seguros)`);
 
 // 2. Probar detección de inyección de taint insegura en sandbox
-const sandbox = path.join(ROOT, 'scratch', `test_taint_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_taint_sandbox');
 fs.mkdirSync(sandbox, { recursive: true });
 
 const unsafeCode = `

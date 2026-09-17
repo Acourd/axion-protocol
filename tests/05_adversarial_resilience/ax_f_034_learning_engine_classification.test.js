@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const { classifyFeedbackCategory, captureHumanFeedback } = require('../../tools/learning_engine.js');
@@ -8,7 +9,7 @@ const { classifyFeedbackCategory, captureHumanFeedback } = require('../../tools/
 console.log('=== AX-F-034 Clasificación Semántica y Persistencia del Learning Engine ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const scratchDir = path.join(ROOT, 'scratch', 'test_learning');
+const scratchDir = crearSandbox('test_learning');
 if (!fs.existsSync(scratchDir)) {
   fs.mkdirSync(scratchDir, { recursive: true });
 }

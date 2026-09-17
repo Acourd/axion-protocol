@@ -14,6 +14,7 @@
  */
 
 const fs = require('fs');
+const { writeFileAtomicSync } = require('./atomic_write.js');
 const path = require('path');
 const crypto = require('crypto');
 
@@ -180,9 +181,9 @@ class GovernanceDashboardGenerator {
     const mdPath = path.join(this.reportsDir, 'dashboard.md');
     const jsonPath = path.join(this.reportsDir, 'dashboard.json');
 
-    fs.writeFileSync(htmlPath, htmlContent, 'utf8');
-    fs.writeFileSync(mdPath, mdContent, 'utf8');
-    fs.writeFileSync(jsonPath, JSON.stringify(metrics, null, 2), 'utf8');
+    writeFileAtomicSync(htmlPath, htmlContent);
+    writeFileAtomicSync(mdPath, mdContent);
+    writeFileAtomicSync(jsonPath, JSON.stringify(metrics, null, 2));
 
     const digest = crypto.createHash('sha256')
       .update(htmlContent + mdContent)

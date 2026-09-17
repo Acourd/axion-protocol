@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const SemanticSnapshotIndexer = require('../../tools/semantic_snapshot_indexer.js');
@@ -20,7 +21,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-145 Invariantes del Indexador y Búsqueda Semántica Vectorless ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_search_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_search_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 fs.mkdirSync(path.join(sandbox, '.agents', 'memory'), { recursive: true });
 

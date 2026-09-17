@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const DriveStateResumer = require('../../tools/drive_state_resumer.js');
@@ -20,7 +21,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-115 Invariantes del Reanudador de Estado Interrumpido para /drive ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test-resumer-sandbox-${Date.now()}`);
+const sandbox = crearSandbox('test-resumer-sandbox');
 
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 

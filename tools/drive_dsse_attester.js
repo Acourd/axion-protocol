@@ -26,6 +26,8 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const MerkleCacheEngine = require('./merkle_cache_fast_forward.js');
+const AttestationKeyring = require('./attestation_keyring.js');
+const { writeFileAtomicSync } = require('./atomic_write.js');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -46,28 +48,27 @@ class DriveDsseAttester {
     this.root = path.resolve(projectRoot);
     this.keysDir = path.join(this.root, '.axion', 'keys');
     this.attestDir = path.join(this.root, '.axion', 'attestations');
+    this.keyring = new AttestationKeyring(this.root);
     this.ensureDirs();
   }
 
   ensureDirs() {
-    if (!fs.existsSync(this.keysDir)) {
-      fs.mkdirSync(this.keysDir, { recursive: true, mode: 0o700 });
-    }
+    // El keyring crea y protege .axion/keys; aquí solo el directorio de atestaciones.
     if (!fs.existsSync(this.attestDir)) {
       fs.mkdirSync(this.attestDir, { recursive: true });
     }
   }
 
   privKeyPath() {
-    return path.join(this.keysDir, 'attestation_ed25519.key');
+    return this.keyring.privKeyPath();
   }
 
   pubKeyPath() {
-    return path.join(this.keysDir, 'attestation_ed25519.pub');
+    return this.keyring.pubKeyPath();
   }
 
   keyIdFor(publicKeyPem) {
-    return crypto.createHash('sha256').update(publicKeyPem).digest('hex').slice(0, 16);
+    return this.keyring.keyIdFor(publicKeyPem);
   }
 
   fail(code, message) {
@@ -76,113 +77,29 @@ class DriveDsseAttester {
     return err;
   }
 
-  /**
-   * En POSIX el material privado no puede ser legible por grupo/otros.
-   * En Windows los modos POSIX no aplican: se documenta y se omite el chequeo.
-   */
   assertSecurePermissions(keyPath) {
-    if (process.platform === 'win32') return;
-    const stat = fs.statSync(keyPath);
-    const mode = stat.mode & 0o777;
-    if ((mode & 0o077) !== 0) {
-      throw this.fail('ERR_KEYS_INSECURE_PERMISSIONS',
-        `Clave privada ${keyPath} con permisos inseguros (${mode.toString(8)}). Se exige 0600; no se repara ni se rota en silencio.`);
-    }
+    return this.keyring.assertSecurePermissions(keyPath);
   }
 
   /**
-   * Carga y valida el par de claves. Falla explícitamente si no existe, si está
-   * incompleto, si el PEM no es válido o si la clave pública no corresponde.
+   * Carga y valida el par de claves (delegado al keyring aislado).
    */
   loadKeyPair() {
-    const privPath = this.privKeyPath();
-    const pubPath = this.pubKeyPath();
-    const hasPriv = fs.existsSync(privPath);
-    const hasPub = fs.existsSync(pubPath);
-
-    if (!hasPriv && !hasPub) {
-      throw this.fail('ERR_KEYS_MISSING',
-        `No existen claves de atestación en ${this.keysDir}. Genera un par explícito con: node tools/drive_dsse_attester.js --init-keys`);
-    }
-    if (!hasPriv || !hasPub) {
-      throw this.fail('ERR_KEYS_INCOMPLETE',
-        `Par de claves incompleto en ${this.keysDir} (priv=${hasPriv}, pub=${hasPub}). No se rota ni se completa en silencio.`);
-    }
-
-    const privateKeyPem = fs.readFileSync(privPath, 'utf8');
-    const publicKeyPem = fs.readFileSync(pubPath, 'utf8');
-
-    let derivedPublicPem;
-    try {
-      const privateKey = crypto.createPrivateKey(privateKeyPem);
-      derivedPublicPem = crypto.createPublicKey(privateKey).export({ type: 'spki', format: 'pem' });
-    } catch (parseErr) {
-      throw this.fail('ERR_KEYS_CORRUPT', `Clave privada ilegible en ${privPath}: ${parseErr.message}`);
-    }
-
-    if (derivedPublicPem.trim() !== publicKeyPem.trim()) {
-      throw this.fail('ERR_KEYS_CORRUPT', `La clave pública en ${pubPath} no corresponde a la clave privada.`);
-    }
-
-    // La validación de permisos va después del parseo: una clave corrupta se reporta
-    // como corrupta aunque su modo dependa del umask del proceso que la escribió.
-    this.assertSecurePermissions(privPath);
-
-    return { publicKeyPem, privateKeyPem };
+    return this.keyring.loadKeyPair();
   }
 
   /**
-   * Creación explícita de claves. Escritura atómica + permisos restrictivos.
-   * Nunca sobrescribe un par existente (no hay rotación silenciosa).
+   * Creación explícita de claves (delegada al keyring; nunca rota en silencio).
    */
   generateKeyPair() {
-    const privPath = this.privKeyPath();
-    const pubPath = this.pubKeyPath();
-
-    if (fs.existsSync(privPath) || fs.existsSync(pubPath)) {
-      throw this.fail('ERR_KEYS_EXIST',
-        `Ya existe material de clave en ${this.keysDir}. La rotación debe ser una decisión explícita y auditada.`);
-    }
-
-    const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519', {
-      publicKeyEncoding: { type: 'spki', format: 'pem' },
-      privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
-    });
-
-    const privTmp = `${privPath}.tmp-${process.pid}-${Date.now()}`;
-    fs.writeFileSync(privTmp, privateKey, { encoding: 'utf8', mode: 0o600 });
-    try {
-      fs.chmodSync(privTmp, 0o600);
-    } catch (_) {
-      // Windows no implementa modos POSIX; el archivo queda escrito igualmente.
-    }
-    fs.renameSync(privTmp, privPath);
-
-    const pubTmp = `${pubPath}.tmp-${process.pid}-${Date.now()}`;
-    fs.writeFileSync(pubTmp, publicKey, { encoding: 'utf8', mode: 0o644 });
-    fs.renameSync(pubTmp, pubPath);
-
-    return {
-      publicKeyPem: publicKey,
-      privateKeyPem: privateKey,
-      keyId: this.keyIdFor(publicKey),
-      created: true,
-      keysDir: this.keysDir
-    };
+    return this.keyring.generateKeyPair();
   }
 
   /**
-   * Acción explícita idempotente: crear si no existe, validar si existe.
-   * No repara claves corruptas ni inseguras: en ese caso falla.
+   * Bootstrap idempotente y tolerante a carreras (delegado al keyring).
    */
   ensureKeyPair() {
-    const privPath = this.privKeyPath();
-    const pubPath = this.pubKeyPath();
-    if (!fs.existsSync(privPath) && !fs.existsSync(pubPath)) {
-      return this.generateKeyPair();
-    }
-    const pair = this.loadKeyPair();
-    return { ...pair, keyId: this.keyIdFor(pair.publicKeyPem), created: false, keysDir: this.keysDir };
+    return this.keyring.ensureKeyPair();
   }
 
   /**
@@ -219,12 +136,59 @@ class DriveDsseAttester {
     }
 
     const absPath = path.isAbsolute(ref.path) ? ref.path : path.resolve(this.root, ref.path);
-    if (!fs.existsSync(absPath) || !fs.statSync(absPath).isFile()) {
-      throw this.fail('ERR_EVIDENCE_MISSING', `Artefacto de evidencia '${slot}' no existe: ${ref.path}`);
+    const O_NOFOLLOW = fs.constants.O_NOFOLLOW || 0;
+
+    if (!O_NOFOLLOW) {
+      let lstat = null;
+      try {
+        lstat = fs.lstatSync(absPath);
+      } catch (_) {
+        throw this.fail('ERR_EVIDENCE_MISSING', `Artefacto de evidencia '${slot}' no existe: ${ref.path}`);
+      }
+      if (lstat.isSymbolicLink()) {
+        throw this.fail('ERR_EVIDENCE_SYMLINK', `Artefacto de evidencia '${slot}' no puede ser un symlink: ${ref.path}`);
+      }
+      if (!lstat.isFile()) {
+        throw this.fail('ERR_EVIDENCE_INVALID', `Artefacto de evidencia '${slot}' no es un archivo regular: ${ref.path}`);
+      }
     }
 
-    // Lectura única: el mismo buffer se hashea y se parsea (sin TOCTOU entre hash y parseo).
-    const content = fs.readFileSync(absPath);
+    // Descriptor único: se abre con O_NOFOLLOW (POSIX), se valida con fstat y se lee del
+    // mismo descriptor; sin ventana TOCTOU entre comprobación de ruta y lectura.
+    let fd = null;
+    let content = null;
+    try {
+      try {
+        fd = fs.openSync(absPath, fs.constants.O_RDONLY | O_NOFOLLOW);
+      } catch (openErr) {
+        if (openErr.code === 'ELOOP' || openErr.code === 'EMLINK') {
+          throw this.fail('ERR_EVIDENCE_SYMLINK', `Artefacto de evidencia '${slot}' no puede ser un symlink: ${ref.path}`);
+        }
+        if (openErr.code === 'ENOENT') {
+          throw this.fail('ERR_EVIDENCE_MISSING', `Artefacto de evidencia '${slot}' no existe: ${ref.path}`);
+        }
+        throw openErr;
+      }
+
+      const st = fs.fstatSync(fd);
+      if (!st.isFile()) {
+        throw this.fail('ERR_EVIDENCE_INVALID', `Artefacto de evidencia '${slot}' no es un archivo regular: ${ref.path}`);
+      }
+
+      const realRoot = fs.realpathSync(this.root);
+      const realAbs = fs.realpathSync(absPath);
+      const relReal = path.relative(realRoot, realAbs);
+      if (relReal.startsWith('..') || path.isAbsolute(relReal)) {
+        throw this.fail('ERR_EVIDENCE_ESCAPE', `Artefacto de evidencia '${slot}' resuelve fuera de la raíz: ${ref.path}`);
+      }
+
+      content = fs.readFileSync(fd);
+    } finally {
+      if (fd !== null) {
+        try { fs.closeSync(fd); } catch (_) { /* descriptor ya cerrado */ }
+      }
+    }
+
     const actualSha256 = crypto.createHash('sha256').update(content).digest('hex');
     if (ref.sha256 !== actualSha256) {
       throw this.fail('ERR_EVIDENCE_HASH_MISMATCH',
@@ -385,11 +349,7 @@ class DriveDsseAttester {
   }
 
   buildSigner() {
-    const { privateKeyPem, publicKeyPem } = this.loadKeyPair();
-    return {
-      keyId: this.keyIdFor(publicKeyPem),
-      sign: (buffer) => crypto.sign(null, buffer, privateKeyPem)
-    };
+    return this.keyring.buildSigner();
   }
 
   /**
@@ -443,7 +403,7 @@ class DriveDsseAttester {
 
     const envelopeDigest = crypto.createHash('sha256').update(JSON.stringify(dsseEnvelope)).digest('hex');
     const attestationPath = path.join(this.attestDir, `drive-session-${envelopeDigest.slice(0, 16)}.dsse.json`);
-    fs.writeFileSync(attestationPath, JSON.stringify(dsseEnvelope, null, 2), 'utf8');
+    writeFileAtomicSync(attestationPath, JSON.stringify(dsseEnvelope, null, 2));
 
     return {
       attestationPath,
@@ -528,10 +488,11 @@ class DriveDsseAttester {
    * - Se sella el Merkle Root antes y después de la ejecución; si el árbol mutó durante
    *   la corrida, el sellado posterior no puede representar la prueba y VERIFIED se bloquea.
    */
-  runSuiteAndAttest(sessionData = {}, options = {}) {
-    const { spawnSync } = require('child_process');
+  async runSuiteAndAttest(sessionData = {}, options = {}) {
+    const { spawn } = require('child_process');
     const { detectarVerificador, parseSuiteCounts } = require('./verify_changes.js');
     const { recordEvidence } = require('./evidence_ledger.js');
+    const { killTree } = require('./process_tree.js');
 
     const {
       missionId = `mission_${Date.now()}`,
@@ -550,19 +511,49 @@ class DriveDsseAttester {
     const merkleBefore = merkleEngine.computeMerkleRoot();
     const ledgerBefore = this.verifyEvidenceLedger();
 
+    const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
+      ? options.timeoutMs
+      : 10 * 60 * 1000;
+
     const startedAtMs = Date.now();
-    const r = spawnSync(runner.executable, runner.args, {
-      cwd: this.root,
-      encoding: 'utf8',
-      shell: false,
-      timeout: options.timeoutMs || 10 * 60 * 1000,
-      windowsHide: true
+    const ejecucion = await new Promise((resolve) => {
+      const child = spawn(runner.executable, runner.args, {
+        cwd: this.root,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        detached: process.platform !== 'win32'
+      });
+      let salida = '';
+      let settled = false;
+      const finalizar = (resultado) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(watchdog);
+        resolve({ ...resultado, output: salida, elapsedMs: Date.now() - startedAtMs });
+      };
+      const watchdog = setTimeout(() => {
+        const kill = killTree(child, { graceMs: 400 });
+        try { child.stdout.destroy(); } catch (_) { /* stream ya cerrado */ }
+        try { child.stderr.destroy(); } catch (_) { /* stream ya cerrado */ }
+        finalizar({ timeout: true, kill, error: `Timeout de ejecución (${timeoutMs}ms); árbol terminado vía ${kill.method}` });
+      }, timeoutMs);
+      child.stdout.on('data', (d) => { salida += d; });
+      child.stderr.on('data', (d) => { salida += d; });
+      child.on('error', (err) => finalizar({ timeout: false, error: `spawn error: ${err.message}` }));
+      child.on('close', (code, signal) => {
+        if (signal) {
+          finalizar({ timeout: false, signal, error: `Terminado por señal ${signal}` });
+          return;
+        }
+        finalizar({ timeout: false, signal: null, exitCode: typeof code === 'number' ? code : null, error: null });
+      });
     });
-    const finishedAtMs = Date.now();
-    const output = `${r.stdout || ''}${r.stderr || ''}`;
+
+    const finishedAtMs = startedAtMs + ejecucion.elapsedMs;
+    const output = ejecucion.output;
     const suites = parseSuiteCounts(output);
-    const exitCode = typeof r.status === 'number' ? r.status : null;
-    const ranGreen = !r.error && exitCode === 0 && suites.total > 0 && suites.failed === 0 && suites.passed === suites.total;
+    const exitCode = typeof ejecucion.exitCode === 'number' ? ejecucion.exitCode : null;
+    const ranGreen = !ejecucion.timeout && !ejecucion.error && exitCode === 0
+      && suites.total > 0 && suites.failed === 0 && suites.passed === suites.total;
     const command = `${path.basename(runner.executable)} ${runner.args.join(' ')}`;
 
     const merkleAfter = merkleEngine.computeMerkleRoot();
@@ -574,26 +565,35 @@ class DriveDsseAttester {
     let produced = null;
     let ledgerAfter = ledgerBefore;
     if (ledgerBefore.valid) {
-      produced = recordEvidence(this.root, {
-        schema: 'axion.execution/v1',
-        producer: 'tools/drive_dsse_attester.js',
-        runner: runner.etiqueta,
-        command,
-        exitCode: exitCode === null ? 1 : exitCode,
-        status: ranGreen ? 'PASS' : 'FAIL',
-        suites,
-        startedAt: new Date(startedAtMs).toISOString(),
-        finishedAt: new Date(finishedAtMs).toISOString(),
-        durationMs: finishedAtMs - startedAtMs,
-        outputSha256: crypto.createHash('sha256').update(output).digest('hex'),
-        signer: this.buildSigner()
-      });
-      ledgerAfter = this.verifyEvidenceLedger();
+      try {
+        produced = recordEvidence(this.root, {
+          schema: 'axion.execution/v1',
+          producer: 'tools/drive_dsse_attester.js',
+          runner: runner.etiqueta,
+          command,
+          exitCode: exitCode === null ? 1 : exitCode,
+          status: ranGreen ? 'PASS' : 'FAIL',
+          suites,
+          startedAt: new Date(startedAtMs).toISOString(),
+          finishedAt: new Date(finishedAtMs).toISOString(),
+          durationMs: finishedAtMs - startedAtMs,
+          outputSha256: crypto.createHash('sha256').update(output).digest('hex'),
+          signer: this.buildSigner()
+        });
+        ledgerAfter = this.verifyEvidenceLedger();
+      } catch (appendErr) {
+        produced = null;
+        ledgerAfter = {
+          valid: false,
+          entries: ledgerBefore.entries.length,
+          reason: `${appendErr.code || 'ERROR'}: ${appendErr.message}`
+        };
+      }
     }
 
     const verified = ranGreen && treeStable && ledgerAfter.valid;
     const reasons = [];
-    if (!ranGreen) reasons.push(`ejecución no superada (error=${r.error ? r.error.message : 'ninguno'}, exitCode=${exitCode}, total=${suites.total}, passed=${suites.passed}, failed=${suites.failed})`);
+    if (!ranGreen) reasons.push(`ejecución no superada (error=${ejecucion.error || 'ninguno'}, exitCode=${exitCode}, total=${suites.total}, passed=${suites.passed}, failed=${suites.failed})`);
     if (!treeStable) reasons.push('el árbol rastreado cambió durante la ejecución; el sellado posterior no representa el estado probado');
     if (!ledgerAfter.valid) reasons.push(`ledger inválido (${ledgerAfter.reason || 'cadena no verificable'})`);
 
@@ -701,7 +701,9 @@ class DriveDsseAttester {
 
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const attester = new DriveDsseAttester();
+  const iTarget = args.indexOf('--target');
+  const targetDir = iTarget !== -1 && args[iTarget + 1] ? path.resolve(args[iTarget + 1]) : ROOT;
+  const attester = new DriveDsseAttester(targetDir);
 
   if (args.includes('--init-keys')) {
     try {
@@ -716,16 +718,52 @@ if (require.main === module) {
   }
 
   if (args.includes('--run-suite')) {
+    const iTimeout = args.indexOf('--timeout');
+    const timeoutMs = iTimeout !== -1 && args[iTimeout + 1] ? Number(args[iTimeout + 1]) : undefined;
+    (async () => {
+      try {
+        const res = await attester.runSuiteAndAttest({
+          missionId: 'MISSION_EXECUTED_IN_SIGNER',
+          title: 'Sellado por ejecución dentro del firmante'
+        }, { timeoutMs });
+        console.log(`  Archivo sellado: ${res.attestationPath}`);
+        console.log(`  Merkle Root:     ${res.merkleRoot}`);
+        console.log(`  Key ID:          ed25519:${res.keyId}`);
+        console.log(`  Verificación:    ${res.verificationStatus}`);
+        process.exit(res.verificationStatus === 'VERIFIED' ? 0 : 1);
+      } catch (err) {
+        console.error(`✗ ${err.code || 'ERROR'}: ${err.message}`);
+        process.exit(2);
+      }
+    })();
+    return;
+  }
+
+  if (args.includes('--verify')) {
+    const iEnvelope = args.indexOf('--verify');
+    const envelopePath = args[iEnvelope + 1];
     try {
-      const res = attester.runSuiteAndAttest({
-        missionId: 'MISSION_EXECUTED_IN_SIGNER',
-        title: 'Sellado por ejecución dentro del firmante'
-      });
-      console.log(`  Archivo sellado: ${res.attestationPath}`);
-      console.log(`  Merkle Root:     ${res.merkleRoot}`);
-      console.log(`  Key ID:          ed25519:${res.keyId}`);
-      console.log(`  Verificación:    ${res.verificationStatus}`);
-      process.exit(res.verificationStatus === 'VERIFIED' ? 0 : 1);
+      if (!envelopePath || !fs.existsSync(envelopePath)) {
+        throw attester.fail('ERR_ENVELOPE_MISSING', `Sobre DSSE no encontrado: ${String(envelopePath)}`);
+      }
+      const envelope = JSON.parse(fs.readFileSync(envelopePath, 'utf8'));
+      const verificacion = attester.verifyAttestation(envelope);
+      const merkle = new MerkleCacheEngine(attester.root).computeMerkleRoot();
+      const subjectDigest = verificacion.statement && Array.isArray(verificacion.statement.subject) && verificacion.statement.subject[0]
+        ? (verificacion.statement.subject[0].digest || {}).sha256 || null
+        : null;
+      const subjectMatches = Boolean(subjectDigest && subjectDigest === merkle.merkleRoot);
+      const salida = {
+        valid: verificacion.valid,
+        keyId: verificacion.keyId,
+        subjectSha256: subjectDigest,
+        targetMerkleRoot: merkle.merkleRoot,
+        subjectMatches,
+        target: attester.root,
+        reason: verificacion.reason
+      };
+      console.log(JSON.stringify(salida, null, 2));
+      process.exit(verificacion.valid && subjectMatches ? 0 : 1);
     } catch (err) {
       console.error(`✗ ${err.code || 'ERROR'}: ${err.message}`);
       process.exit(2);

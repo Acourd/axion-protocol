@@ -14,6 +14,7 @@
  */
 
 const fs = require('fs');
+const { writeFileAtomicSync } = require('./atomic_write.js');
 const path = require('path');
 const crypto = require('crypto');
 
@@ -223,7 +224,7 @@ class MerkleIntegrityLedger {
       history
     };
 
-    fs.writeFileSync(this.ledgerFile, JSON.stringify(payload, null, 2), 'utf8');
+    writeFileAtomicSync(this.ledgerFile, JSON.stringify(payload, null, 2));
 
     return {
       root: tree.root,

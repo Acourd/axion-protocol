@@ -14,10 +14,9 @@ const {
 const { hashCanonical } = require('../../tools/canonical_json.js');
 
 const ROOT = path.join(__dirname, '..', '..');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const fixtureDir = path.join(
-  ROOT,
-  '.phase-e',
-  'test-runtime',
+  crearSandbox('phase-e-check'),
   `check-${crypto.randomBytes(8).toString('hex')}`,
 );
 fs.mkdirSync(fixtureDir, { recursive: true });

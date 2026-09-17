@@ -5,7 +5,7 @@
 >
 > **Estado**: Runtime EXPERIMENTAL. El enforcement no intercepta comandos de shell del sistema operativo automáticamente sin el hook de agente integrado. Requiere **Node.js 22.13** o superior. Cero dependencias externas de npm.
 
-[![Estado de CI](https://img.shields.io/badge/CI-238%20Suites-informational.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
+[![Estado de CI](https://img.shields.io/badge/CI-242%20Suites-informational.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
 [![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.4.0--beta.1-0969da.svg?style=flat-square)](package.json)
 [![Licencia](https://img.shields.io/badge/Licencia-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
 [![Cero Dependencias](https://img.shields.io/badge/Dependencias-0-success.svg?style=flat-square)](package.json)
@@ -130,10 +130,10 @@ Axion Protocol incorpora 12 slash commands diseñados para operar en sinergia. P
 
 ## Verificación Determinista e Invariantes
 
-Axion Protocol incluye **238 suites de prueba deterministas** que se ejecutan concurrentemente sin dependencias externas:
+Axion Protocol incluye **242 suites de prueba deterministas** que se ejecutan concurrentemente sin dependencias externas:
 
 ```bash
-# Ejecutar las 238 suites de prueba
+# Ejecutar las 242 suites de prueba
 npm test
 ```
 

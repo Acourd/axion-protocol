@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -20,7 +21,7 @@ const SwarmP2PChannel = require('../../tools/swarm_p2p_channel.js');
 console.log('=== AX-F-174: Invariantes de SwarmP2PChannel (v2.0 P2P Bus) ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const tempRoot = path.join(os.tmpdir(), `test_ax_f_174_${Date.now()}`);
+const tempRoot = crearSandboxTemporal('test_ax_f_174');
 fs.mkdirSync(tempRoot, { recursive: true });
 
 try {

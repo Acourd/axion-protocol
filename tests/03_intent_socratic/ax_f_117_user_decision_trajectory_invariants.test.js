@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const UserDecisionTrajectory = require('../../tools/user_decision_trajectory.js');
@@ -20,7 +21,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-117 Invariantes de Trayectoria de Decisiones y Calibración Metacognitiva ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test-trajectory-sandbox-${Date.now()}`);
+const sandbox = crearSandbox('test-trajectory-sandbox');
 
 fs.mkdirSync(path.join(sandbox, '.axion', 'memory'), { recursive: true });
 

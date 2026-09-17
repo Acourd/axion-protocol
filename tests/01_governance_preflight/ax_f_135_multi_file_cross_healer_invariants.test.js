@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const MultiFileCrossHealer = require('../../tools/multi_file_cross_healer.js');
@@ -20,7 +21,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-135 Invariantes del Orquestador de Auto-Curación Multi-Archivo ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_cross_heal_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_cross_heal_sandbox');
 fs.mkdirSync(path.join(sandbox, 'tools'), { recursive: true });
 
 const healer = new MultiFileCrossHealer(sandbox);

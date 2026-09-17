@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const { DatabaseSync } = require('node:sqlite');
@@ -21,7 +22,7 @@ const SemanticMemoryGraph = require('../../tools/semantic_memory_graph.js');
 console.log('=== AX-F-122 Invariantes de Transacciones ACID y Snapshot Isolation SQLite ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandboxDb = path.join(ROOT, 'scratch', `test_tx_invariants_${Date.now()}.db`);
+const sandboxDb = path.join(crearSandbox('test_tx_invariants'), 'sandbox.db');
 fs.mkdirSync(path.dirname(sandboxDb), { recursive: true });
 
 const db = new DatabaseSync(sandboxDb);
@@ -68,7 +69,7 @@ assert.strictEqual(integrity.isHealthy, true, 'La integridad de SQLite debe ser 
 console.log('✓ PRAGMA integrity_check verificado al 100%');
 
 // 4. Validar integración con SemanticMemoryGraph
-const graph = new SemanticMemoryGraph(ROOT, { inMemory: true });
+const graph = new SemanticMemoryGraph({ projectRoot: ROOT, inMemory: true });
 const graphTx = graph.withTransaction(() => {
   graph.upsertNode({
     id: 'decision_tx_01',
@@ -79,6 +80,9 @@ const graphTx = graph.withTransaction(() => {
   return { nodeInserted: true };
 });
 
+if (!graphTx.success) {
+  console.error('graphTx.error:', graphTx.error, '| savepoint:', graphTx.savepoint);
+}
 assert.strictEqual(graphTx.success, true, 'SemanticMemoryGraph debe ejecutar mutaciones transaccionales');
 const nodes = graph.queryNodes({ keyword: 'Transacción en Grafo' });
 assert.ok(nodes.length > 0, 'El nodo insertado en transacción debe existir en el grafo');

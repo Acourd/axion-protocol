@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const ForensicTelemetryEngine = require('../../tools/forensic_telemetry_engine.js');
@@ -19,7 +20,7 @@ const ForensicTelemetryEngine = require('../../tools/forensic_telemetry_engine.j
 console.log('=== AX-F-186 Invariantes de Telemetría Forense en Tiempo Real ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_forensic_186_${Date.now()}`);
+const sandbox = crearSandbox('test_forensic_186');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 fs.mkdirSync(path.join(sandbox, 'tools'), { recursive: true });
 fs.mkdirSync(path.join(sandbox, 'policies'), { recursive: true });

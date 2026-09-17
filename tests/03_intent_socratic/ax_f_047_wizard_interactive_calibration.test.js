@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const { runWizard } = require('../../tools/wizard.js');
@@ -8,7 +9,7 @@ const { runWizard } = require('../../tools/wizard.js');
 console.log('=== AX-F-047 Asistente de Inicialización Interactivo y Calibración Segura ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const scratchDir = path.join(ROOT, 'scratch', 'test_wizard_init');
+const scratchDir = crearSandbox('test_wizard_init');
 
 if (fs.existsSync(scratchDir)) {
   fs.rmSync(scratchDir, { recursive: true, force: true });

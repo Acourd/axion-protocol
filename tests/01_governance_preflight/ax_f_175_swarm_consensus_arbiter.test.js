@@ -13,6 +13,7 @@
  */
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -22,7 +23,7 @@ const SwarmConsensusArbiter = require('../../tools/swarm_consensus_arbiter.js');
 console.log('=== AX-F-175: Invariantes de SwarmConsensusArbiter (v2.0 BFT Consensus) ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const tempRoot = path.join(os.tmpdir(), `test_ax_f_175_${Date.now()}`);
+const tempRoot = crearSandboxTemporal('test_ax_f_175');
 fs.mkdirSync(tempRoot, { recursive: true });
 
 try {

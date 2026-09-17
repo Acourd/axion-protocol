@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const { detectarVerificador, runVerificationLoop } = require('../../tools/verify_changes.js');
@@ -17,7 +18,7 @@ assert.strictEqual(vRoot.args[0].endsWith('tests' + path.sep + 'run_all.js') || 
 console.log('✓ Detección de tests/run_all.js como runner prioritario verificada');
 
 // 2. Detección de script "test" en package.json alternativo
-const mockDir = path.join(ROOT, 'scratch', 'test_verify_mock');
+const mockDir = crearSandbox('test_verify_mock');
 if (fs.existsSync(mockDir)) fs.rmSync(mockDir, { recursive: true, force: true });
 fs.mkdirSync(mockDir, { recursive: true });
 
@@ -32,7 +33,7 @@ assert.strictEqual(vMock.args.includes('test'), true);
 console.log('✓ Fallback a package.json scripts.test verificado');
 
 // 3. Fallo controlado cuando no hay runner disponible
-const emptyDir = path.join(ROOT, 'scratch', 'test_verify_empty');
+const emptyDir = crearSandbox('test_verify_empty');
 if (fs.existsSync(emptyDir)) fs.rmSync(emptyDir, { recursive: true, force: true });
 fs.mkdirSync(emptyDir, { recursive: true });
 

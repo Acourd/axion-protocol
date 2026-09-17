@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -20,7 +21,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-187 Invariantes del Motor de Razonamiento Deductivo (Deep Thinking Protocol) ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(os.tmpdir(), `test_cognitive_${Date.now()}`);
+const sandbox = crearSandboxTemporal('test_cognitive');
 fs.mkdirSync(path.join(sandbox, '.axion'), { recursive: true });
 
 const engine = new CognitiveReasoningEngine(sandbox);
