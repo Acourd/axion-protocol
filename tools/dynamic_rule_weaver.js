@@ -17,6 +17,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { writeFileAtomicSync } = require('./atomic_write.js');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -174,16 +175,11 @@ class DynamicRuleWeaver {
     const digest = crypto.createHash('sha256').update(content).digest('hex');
 
     const targetFile = path.join(this.rulesDir, 'active-stack-governance.md');
-    // Escritura idempotente y atómica: si el contenido ya es el canónico no se toca
-    // el archivo (evita churn de hashes en SBOM y lecturas parciales en concurrencia).
-    let written = false;
-    const existente = fs.existsSync(targetFile) ? fs.readFileSync(targetFile, 'utf8') : null;
-    if (existente !== content) {
-      const tmpFile = `${targetFile}.tmp-${process.pid}-${Date.now()}`;
-      fs.writeFileSync(tmpFile, content, 'utf8');
-      fs.renameSync(tmpFile, targetFile);
-      written = true;
-    }
+    // Escritura idempotente y atómica con reintento ante violaciones de sharing en
+    // Windows: si el contenido ya es el canónico no se toca el archivo (evita churn
+    // de hashes en SBOM, lecturas parciales y EPERM en concurrencia).
+    const escritura = writeFileAtomicSync(targetFile, content);
+    const written = escritura.escrito;
 
     return {
       success: true,

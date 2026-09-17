@@ -67,6 +67,9 @@ const drivePre = driveEngine.captureForensicSnapshot('drive-pre');
 const drivePost = driveEngine.captureForensicSnapshot('drive-post');
 const driveForensics = driveEngine.evaluateAndSealForensics('DriveIntegratedTask', drivePre, drivePost, { maxHeapGrowthMb: 50.0, maxRssGrowthMb: 150.0 });
 
+if (!driveForensics.drift.pass) {
+  console.error('Regresiones detectadas en deriva DriveEngine:', JSON.stringify(driveForensics.drift.regressions));
+}
 assert.strictEqual(driveForensics.drift.pass, true);
 assert.strictEqual(driveForensics.seal.signatureValid, true);
 console.log('✓ Integración DriveEngine.evaluateAndSealForensics() verificada');

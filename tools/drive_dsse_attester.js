@@ -27,6 +27,7 @@ const path = require('path');
 const crypto = require('crypto');
 const MerkleCacheEngine = require('./merkle_cache_fast_forward.js');
 const AttestationKeyring = require('./attestation_keyring.js');
+const { writeFileAtomicSync } = require('./atomic_write.js');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -402,9 +403,7 @@ class DriveDsseAttester {
 
     const envelopeDigest = crypto.createHash('sha256').update(JSON.stringify(dsseEnvelope)).digest('hex');
     const attestationPath = path.join(this.attestDir, `drive-session-${envelopeDigest.slice(0, 16)}.dsse.json`);
-    const tmpPath = `${attestationPath}.tmp-${process.pid}`;
-    fs.writeFileSync(tmpPath, JSON.stringify(dsseEnvelope, null, 2), 'utf8');
-    fs.renameSync(tmpPath, attestationPath);
+    writeFileAtomicSync(attestationPath, JSON.stringify(dsseEnvelope, null, 2));
 
     return {
       attestationPath,

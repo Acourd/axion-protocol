@@ -20,6 +20,7 @@ const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
 const { signEnvelope, verifyEnvelope, DSSE_STATUS } = require('./dsse.js');
+const { writeFileAtomicSync } = require('./atomic_write.js');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -133,10 +134,13 @@ class ForensicTelemetryEngine {
     try {
       if (fs.existsSync(this.historyFile)) {
         const data = JSON.parse(fs.readFileSync(this.historyFile, 'utf8'));
-        if (Array.isArray(data) && data.length > 0) {
-          const durations = data.map(d => d.durationMs || 0);
+        // Solo muestras del PROPIO proceso: comparar latencias entre procesos
+        // concurrentes (entornos y carga distintos) produce picos falsos.
+        const propias = Array.isArray(data) ? data.filter((d) => d.pid === process.pid) : [];
+        if (propias.length > 0) {
+          const durations = propias.map(d => d.durationMs || 0);
           const avgDurationMs = durations.reduce((a, b) => a + b, 0) / durations.length;
-          return { sampleCount: data.length, avgDurationMs };
+          return { sampleCount: propias.length, avgDurationMs };
         }
       }
     } catch (_err) {
@@ -163,6 +167,7 @@ class ForensicTelemetryEngine {
 
       history.push({
         taskName,
+        pid: process.pid,
         timestamp: new Date().toISOString(),
         durationMs: driftReport.durationMs,
         heapDeltaMb: driftReport.heapDeltaMb,
@@ -175,7 +180,7 @@ class ForensicTelemetryEngine {
       });
 
       if (history.length > 50) history = history.slice(-50);
-      fs.writeFileSync(this.historyFile, JSON.stringify(history, null, 2), 'utf8');
+      writeFileAtomicSync(this.historyFile, JSON.stringify(history, null, 2));
       return true;
     } catch (_err) {
       // Error no bloqueante al persistir telemetria continua
@@ -323,7 +328,7 @@ class ForensicTelemetryEngine {
       privateKey: privateKeyPem,
       keyId: 'axion://key/forensic-telemetry'
     });
-    fs.writeFileSync(this.telemetryFile, JSON.stringify(dsseEnvelope, null, 2), 'utf8');
+    writeFileAtomicSync(this.telemetryFile, JSON.stringify(dsseEnvelope, null, 2));
 
     const verifyResult = verifyEnvelope({
       envelope: dsseEnvelope,

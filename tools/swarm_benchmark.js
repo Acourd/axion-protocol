@@ -33,8 +33,7 @@ class SwarmBenchmark {
     p2pIterations = 500,
     bftRounds = 100
   } = {}) {
-    const tempDir = path.join(os.tmpdir(), `axion_swarm_bench_${Date.now()}`);
-    fs.mkdirSync(tempDir, { recursive: true });
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'axion_swarm_bench_'));
 
     try {
       const results = {

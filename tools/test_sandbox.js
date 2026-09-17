@@ -17,11 +17,16 @@ const ROOT = path.resolve(__dirname, '..');
 
 /**
  * Sandbox dentro del checkout (scratch/, ignorado por git y por el escaneo Merkle).
+ * El prefijo `sbx_` es deliberado: los barridos de limpieza (workspace_debloater,
+ * vibeguard_storage_hook, transversal_project_optimizer) borran entradas `test_*`/
+ * `temp_*` de scratch/, y un sandbox ACTIVO de otra suite concurrente jamás debe
+ * caer en ese namespace. La limpieza de residuos antiguos sigue funcionando.
  */
 function crearSandbox(prefijo = 'test') {
   const base = path.join(ROOT, 'scratch');
   fs.mkdirSync(base, { recursive: true });
-  return fs.mkdtempSync(path.join(base, `${prefijo}-`));
+  const nombreSeguro = `sbx_${String(prefijo).replace(/[^a-zA-Z0-9._-]/g, '-')}`;
+  return fs.mkdtempSync(path.join(base, `${nombreSeguro}-`));
 }
 
 /**

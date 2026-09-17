@@ -71,8 +71,7 @@ class CompetitiveBenchmarkEngine {
    * Benchmark 2: Latencia de Snapshot y Rollback Criptográfico
    */
   benchmarkRollbackLatency(iterations = 100) {
-    const tmpDir = path.join(os.tmpdir(), `axion_bench_rb_${Date.now()}`);
-    fs.mkdirSync(tmpDir, { recursive: true });
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'axion_bench_rb_'));
 
     const sampleFile = path.join(tmpDir, 'state.json');
     const sampleContent = JSON.stringify({ state: 'CLEAN', timestamp: Date.now(), items: Array.from({ length: 50 }, (_, i) => i) });

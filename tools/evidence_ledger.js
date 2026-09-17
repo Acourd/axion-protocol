@@ -21,6 +21,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const FileLock = require('./file_lock.js');
+const { writeFileAtomicSync } = require('./atomic_write.js');
 
 const LEDGER_SCHEMA = 'axion.evidence-ledger/v1';
 const GENESIS_HASH = '0'.repeat(64);
@@ -94,21 +95,35 @@ function computeEntryHash(entry) {
   return sha256(canonical(rest));
 }
 
-function readLedger(root) {
+function readLedgerDetallado(root, options = {}) {
+  const tolerarColaParcial = options.tolerarColaParcial === true;
   const file = ledgerPath(root);
-  if (!fs.existsSync(file)) return [];
+  if (!fs.existsSync(file)) return { entries: [], colaParcialIgnorada: false };
   const lines = fs.readFileSync(file, 'utf8').split('\n').filter((line) => line.trim() !== '');
   const entries = [];
+  let colaParcialIgnorada = false;
   for (let i = 0; i < lines.length; i++) {
     try {
       entries.push(JSON.parse(lines[i]));
     } catch (parseErr) {
+      const esUltima = i === lines.length - 1;
+      if (esUltima && tolerarColaParcial) {
+        // Un append concurrente puede dejar la ÚLTIMA línea a medio escribir: la
+        // verificación la ignora (el siguiente lector la verá completa). Fuera de ese
+        // caso, cualquier línea ilegible invalida el ledger (fail-closed).
+        colaParcialIgnorada = true;
+        break;
+      }
       const err = new Error(`entrada ${i + 1}: JSON ilegible (${parseErr.message})`);
       err.code = 'ERR_LEDGER_UNREADABLE';
       throw err;
     }
   }
-  return entries;
+  return { entries, colaParcialIgnorada };
+}
+
+function readLedger(root, options = {}) {
+  return readLedgerDetallado(root, options).entries;
 }
 
 /**
@@ -116,13 +131,17 @@ function readLedger(root) {
  * entrada. Cualquier ruptura invalida todo el ledger: no hay fast-forward de evidencia.
  * Nunca lanza: una entrada ilegible se reporta como ledger inválido.
  */
-function verifyLedger(root, publicKeyPem) {
-  let entries;
+function verifyLedger(root, publicKeyPem, options = {}) {
+  // La verificación tolera (y reporta) una cola en vuelo de un append concurrente;
+  // los escritores exigen estricto (ver appendEntry). Hashes/firmas siguen obligatorios.
+  const tolerarColaParcial = options.tolerarColaParcial !== false;
+  let lectura;
   try {
-    entries = readLedger(root);
+    lectura = readLedgerDetallado(root, { tolerarColaParcial });
   } catch (readErr) {
     return { valid: false, reason: readErr.message, entries: [] };
   }
+  const entries = lectura.entries;
   let previous = GENESIS_HASH;
 
   for (let i = 0; i < entries.length; i++) {
@@ -159,7 +178,7 @@ function verifyLedger(root, publicKeyPem) {
     previous = entry.entryHash;
   }
 
-  return { valid: true, entries, head: previous };
+  return { valid: true, entries, head: previous, colaParcialIgnorada: lectura.colaParcialIgnorada };
 }
 
 function appendEntry(root, payload, options = {}) {
@@ -168,8 +187,9 @@ function appendEntry(root, payload, options = {}) {
 
   // Sección crítica: lectura de la cadena, validación, anexado y liberación del lock.
   return withLock(root, () => {
-    // Fail-closed: no se anexa a una cadena rota; se exige ledger íntegro antes de escribir.
-    const state = verifyLedger(root);
+    // Fail-closed: no se anexa a una cadena rota; se exige ledger íntegro (cola estricta)
+    // antes de escribir, para no sellar un seq sobre una línea parcial de un writer caído.
+    const state = verifyLedger(root, undefined, { tolerarColaParcial: false });
     if (!state.valid) {
       const err = new Error(`No se anexa evidencia: ledger inválido (${state.reason}).`);
       err.code = 'ERR_LEDGER_INVALID';
@@ -231,9 +251,7 @@ function recordEvidence(root, payload, options = {}) {
   const content = JSON.stringify(evidence, null, 2);
   const fileName = `${path.basename(payload.schema).replace(/[^a-z0-9.-]/gi, '-')}-${sha256(content).slice(0, 16)}.json`;
   const finalPath = path.join(dir, fileName);
-  const tmpPath = `${finalPath}.tmp-${process.pid}`;
-  fs.writeFileSync(tmpPath, content, 'utf8');
-  fs.renameSync(tmpPath, finalPath);
+  writeFileAtomicSync(finalPath, content);
 
   const artifactSha256 = sha256(fs.readFileSync(finalPath));
   const entry = appendEntry(root, {
@@ -256,7 +274,7 @@ function recordEvidence(root, payload, options = {}) {
 }
 
 function findEntry(root, artifactSha256, producer) {
-  const entries = readLedger(root);
+  const entries = readLedger(root, { tolerarColaParcial: true });
   return entries.find((e) => e.artifactSha256 === artifactSha256 && e.producer === producer) || null;
 }
 
