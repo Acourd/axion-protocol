@@ -123,6 +123,9 @@ class FastParityBenchmarker {
     const rssMB = (memAfter.rss / (1024 * 1024)).toFixed(1);
 
     const allPassedBudget = benchmarks.every(b => b.stats.avgMillis <= b.budgetMs);
+    const violations = benchmarks
+      .filter(b => b.stats.avgMillis > b.budgetMs)
+      .map(b => ({ name: b.name, avgMillis: b.stats.avgMillis, budgetMs: b.budgetMs }));
 
     const report = {
       timestamp: new Date().toISOString(),
@@ -133,6 +136,12 @@ class FastParityBenchmarker {
         currentRssMB: parseFloat(rssMB)
       },
       allPassedBudget,
+      // Señal DIAGNÓSTICA: los presupuestos son orientativos y dependen del entorno.
+      // No deben bloquear la corrección general por microtiempos.
+      budgetDiagnostic: {
+        withinBudget: allPassedBudget,
+        violations
+      },
       benchmarks
     };
 

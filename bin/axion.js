@@ -76,6 +76,7 @@ const SUBCOMANDOS = {
   'attest-keygen': { script: 'tools/drive_dsse_attester.js', ayuda: 'crea el keyring Ed25519 de atestación (acción explícita; nunca rota)', fijo: ['--init-keys'] },
   'attest-run': { script: 'tools/drive_dsse_attester.js', ayuda: 'ejecuta la suite dentro del firmante y sella VERIFIED solo con árbol estable y ledger íntegro', fijo: ['--run-suite'] },
   'attest-verify': { script: 'tools/drive_dsse_attester.js', ayuda: 'verifica un sobre DSSE y contrasta el subject Merkle contra el árbol (--verify <sobre> [--target <dir>])', fijo: ['--verify'] },
+  coverage: { script: 'tools/coverage_report.js', ayuda: 'ejecuta la suite con cobertura V8 nativa y exige umbrales en rutas críticas' },
   record: { script: 'tools/flight_recorder.js', ayuda: 'caja negra agéntica forense y reproductor determinista de sesiones' },
   merkle: { script: 'tools/merkle_integrity_ledger.js', ayuda: 'árbol Merkle criptográfico con pruebas de inclusión y no-repudio' },
   demo: { script: 'tools/quickstart_interactive.js', ayuda: 'onboarding interactivo de 15 segundos y demo en vivo de protección fail-closed' },

@@ -18,7 +18,11 @@ const SelfHealingEngine = require('../../tools/self_healing_engine.js');
 console.log('=== AX-F-089 Invariantes de Auto-Curación y Backtracking Determinista ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const engine = new SelfHealingEngine(ROOT);
+const { crearSandbox } = require('../../tools/test_sandbox.js');
+const sandbox = crearSandbox('test-self-healing');
+fs.mkdirSync(path.join(sandbox, 'src'), { recursive: true });
+fs.writeFileSync(path.join(sandbox, 'src', 'a.js'), 'module.exports = 1;\n', 'utf8');
+const engine = new SelfHealingEngine(sandbox);
 
 // 1. Ejecución exitosa normal
 const cleanRes = engine.executeWithSelfHealing(() => {
@@ -41,5 +45,11 @@ assert.strictEqual(failRes.originalError, 'SIMULATED_SYNTAX_ERROR_IN_MUTATION', 
 assert.ok(failRes.preManifestHash && failRes.postManifestHash, 'Debe registrar hashes pre y post curación');
 assert.strictEqual(failRes.hashesMatch, true, 'El árbol de archivos debe coincidir al byte antes y después del rollback');
 console.log(`✓ Inyección de fallo interceptada: Auto-curación determinista verificada con hashesMatch: true`);
+
+try {
+  fs.rmSync(sandbox, { recursive: true, force: true });
+} catch (_) {
+  // limpieza best-effort
+}
 
 console.log('\nPASS AX-F-089 — Invariantes de auto-curación y backtracking verificados al 100%.');

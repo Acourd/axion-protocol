@@ -1,0 +1,13 @@
+{
+  "metodologia": "Cobertura de lineas V8 nativa (NODE_V8_COVERAGE) sobre la suite completa secuencial (--concurrency 1). La cobertura efectiva de una posicion es la del rango mas interno que la contiene (rangos anidados de V8). Denominador: lineas con contenido no vacio. LIMITE CONOCIDO: V8 no escribe reporte para procesos terminados con SIGKILL (timeouts y kill de arbol de los tests adversariales), por lo que la cobertura observada varia entre corridas (p. ej. drive_dsse_attester 31-57%, suite_runner 59-87%). Los umbrales son pisos de regresion con margen sobre el minimo observado, no objetivos de calidad. Los reportes de cobertura de procesos terminados con SIGKILL (kill de arbol en tests adversariales) no se escriben, lo que produce varianza entre corridas (p. ej. evidence_ledger 45-88%); los umbrales son pisos de regresion sobre el minimo observado.",
+  "files": {
+    "tools/attestation_keyring.js": 55,
+    "tools/evidence_ledger.js": 40,
+    "tools/drive_dsse_attester.js": 28,
+    "tools/merkle_cache_fast_forward.js": 60,
+    "tools/checkpoint.js": 38,
+    "tools/suite_runner.js": 45,
+    ".agents/hooks/validate-tool-call.mjs": 62,
+    "bin/axion.js": 78
+  }
+}

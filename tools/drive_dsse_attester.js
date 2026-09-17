@@ -26,6 +26,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const MerkleCacheEngine = require('./merkle_cache_fast_forward.js');
+const AttestationKeyring = require('./attestation_keyring.js');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -46,28 +47,27 @@ class DriveDsseAttester {
     this.root = path.resolve(projectRoot);
     this.keysDir = path.join(this.root, '.axion', 'keys');
     this.attestDir = path.join(this.root, '.axion', 'attestations');
+    this.keyring = new AttestationKeyring(this.root);
     this.ensureDirs();
   }
 
   ensureDirs() {
-    if (!fs.existsSync(this.keysDir)) {
-      fs.mkdirSync(this.keysDir, { recursive: true, mode: 0o700 });
-    }
+    // El keyring crea y protege .axion/keys; aquí solo el directorio de atestaciones.
     if (!fs.existsSync(this.attestDir)) {
       fs.mkdirSync(this.attestDir, { recursive: true });
     }
   }
 
   privKeyPath() {
-    return path.join(this.keysDir, 'attestation_ed25519.key');
+    return this.keyring.privKeyPath();
   }
 
   pubKeyPath() {
-    return path.join(this.keysDir, 'attestation_ed25519.pub');
+    return this.keyring.pubKeyPath();
   }
 
   keyIdFor(publicKeyPem) {
-    return crypto.createHash('sha256').update(publicKeyPem).digest('hex').slice(0, 16);
+    return this.keyring.keyIdFor(publicKeyPem);
   }
 
   fail(code, message) {
@@ -76,148 +76,29 @@ class DriveDsseAttester {
     return err;
   }
 
-  /**
-   * En POSIX el material privado no puede ser legible por grupo/otros.
-   * En Windows los modos POSIX no aplican: se documenta y se omite el chequeo.
-   */
   assertSecurePermissions(keyPath) {
-    if (process.platform === 'win32') return;
-    const stat = fs.statSync(keyPath);
-    const mode = stat.mode & 0o777;
-    if ((mode & 0o077) !== 0) {
-      throw this.fail('ERR_KEYS_INSECURE_PERMISSIONS',
-        `Clave privada ${keyPath} con permisos inseguros (${mode.toString(8)}). Se exige 0600; no se repara ni se rota en silencio.`);
-    }
+    return this.keyring.assertSecurePermissions(keyPath);
   }
 
   /**
-   * Carga y valida el par de claves. Falla explícitamente si no existe, si está
-   * incompleto, si el PEM no es válido o si la clave pública no corresponde.
+   * Carga y valida el par de claves (delegado al keyring aislado).
    */
   loadKeyPair() {
-    const privPath = this.privKeyPath();
-    const pubPath = this.pubKeyPath();
-    const hasPriv = fs.existsSync(privPath);
-    const hasPub = fs.existsSync(pubPath);
-
-    if (!hasPriv && !hasPub) {
-      throw this.fail('ERR_KEYS_MISSING',
-        `No existen claves de atestación en ${this.keysDir}. Genera un par explícito con: node tools/drive_dsse_attester.js --init-keys`);
-    }
-    if (!hasPriv || !hasPub) {
-      throw this.fail('ERR_KEYS_INCOMPLETE',
-        `Par de claves incompleto en ${this.keysDir} (priv=${hasPriv}, pub=${hasPub}). No se rota ni se completa en silencio.`);
-    }
-
-    const privateKeyPem = fs.readFileSync(privPath, 'utf8');
-    const publicKeyPem = fs.readFileSync(pubPath, 'utf8');
-
-    let derivedPublicPem;
-    try {
-      const privateKey = crypto.createPrivateKey(privateKeyPem);
-      derivedPublicPem = crypto.createPublicKey(privateKey).export({ type: 'spki', format: 'pem' });
-    } catch (parseErr) {
-      throw this.fail('ERR_KEYS_CORRUPT', `Clave privada ilegible en ${privPath}: ${parseErr.message}`);
-    }
-
-    if (derivedPublicPem.trim() !== publicKeyPem.trim()) {
-      throw this.fail('ERR_KEYS_CORRUPT', `La clave pública en ${pubPath} no corresponde a la clave privada.`);
-    }
-
-    // La validación de permisos va después del parseo: una clave corrupta se reporta
-    // como corrupta aunque su modo dependa del umask del proceso que la escribió.
-    this.assertSecurePermissions(privPath);
-
-    return { publicKeyPem, privateKeyPem };
+    return this.keyring.loadKeyPair();
   }
 
   /**
-   * Creación explícita de claves. Escritura atómica con O_EXCL (sin carreras entre
-   * procesos): nunca sobrescribe un par existente (no hay rotación silenciosa).
+   * Creación explícita de claves (delegada al keyring; nunca rota en silencio).
    */
   generateKeyPair() {
-    const privPath = this.privKeyPath();
-    const pubPath = this.pubKeyPath();
-
-    if (fs.existsSync(privPath) || fs.existsSync(pubPath)) {
-      throw this.fail('ERR_KEYS_EXIST',
-        `Ya existe material de clave en ${this.keysDir}. La rotación debe ser una decisión explícita y auditada.`);
-    }
-
-    const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519', {
-      publicKeyEncoding: { type: 'spki', format: 'pem' },
-      privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
-    });
-
-    let privFd = null;
-    let pubFd = null;
-    try {
-      privFd = fs.openSync(privPath, 'wx', 0o600);
-      fs.writeSync(privFd, privateKey);
-      fs.closeSync(privFd);
-      privFd = null;
-      try {
-        fs.chmodSync(privPath, 0o600);
-      } catch (_) {
-        // Windows no implementa modos POSIX
-      }
-
-      pubFd = fs.openSync(pubPath, 'wx', 0o644);
-      fs.writeSync(pubFd, publicKey);
-      fs.closeSync(pubFd);
-      pubFd = null;
-    } catch (err) {
-      if (privFd !== null) { try { fs.closeSync(privFd); } catch (_) { /* fd ya cerrado */ } }
-      if (pubFd !== null) { try { fs.closeSync(pubFd); } catch (_) { /* fd ya cerrado */ } }
-      // Limpieza de material parcial para no dejar un par a medias.
-      try { if (fs.existsSync(privPath) && !fs.existsSync(pubPath)) fs.unlinkSync(privPath); } catch (_) { /* limpieza best-effort */ }
-      try { if (fs.existsSync(pubPath) && !fs.existsSync(privPath)) fs.unlinkSync(pubPath); } catch (_) { /* limpieza best-effort */ }
-      if (err.code === 'EEXIST') {
-        throw this.fail('ERR_KEYS_EXIST',
-          `Otra instancia creó material de clave en ${this.keysDir}; no se rota en silencio.`);
-      }
-      throw err;
-    }
-
-    return {
-      publicKeyPem: publicKey,
-      privateKeyPem: privateKey,
-      keyId: this.keyIdFor(publicKey),
-      created: true,
-      keysDir: this.keysDir
-    };
+    return this.keyring.generateKeyPair();
   }
 
   /**
-   * Acción explícita idempotente: crear si no existe, validar si existe.
-   * Tolera carreras entre procesos (ERR_KEYS_EXIST / par a medio crear).
-   * No repara claves corruptas ni inseguras: en ese caso falla.
+   * Bootstrap idempotente y tolerante a carreras (delegado al keyring).
    */
   ensureKeyPair() {
-    const privPath = this.privKeyPath();
-    const pubPath = this.pubKeyPath();
-    if (!fs.existsSync(privPath) && !fs.existsSync(pubPath)) {
-      try {
-        return this.generateKeyPair();
-      } catch (err) {
-        if (err.code !== 'ERR_KEYS_EXIST') throw err;
-        // Otra instancia ganó la carrera; se carga su par.
-      }
-    }
-
-    let ultimoError = null;
-    for (let intento = 0; intento < 40; intento++) {
-      try {
-        const pair = this.loadKeyPair();
-        return { ...pair, keyId: this.keyIdFor(pair.publicKeyPem), created: false, keysDir: this.keysDir };
-      } catch (err) {
-        ultimoError = err;
-        // Ventana de carrera: el otro proceso aún no escribió la clave pública.
-        if (err.code !== 'ERR_KEYS_INCOMPLETE') throw err;
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
-      }
-    }
-    throw ultimoError;
+    return this.keyring.ensureKeyPair();
   }
 
   /**
@@ -420,11 +301,7 @@ class DriveDsseAttester {
   }
 
   buildSigner() {
-    const { privateKeyPem, publicKeyPem } = this.loadKeyPair();
-    return {
-      keyId: this.keyIdFor(publicKeyPem),
-      sign: (buffer) => crypto.sign(null, buffer, privateKeyPem)
-    };
+    return this.keyring.buildSigner();
   }
 
   /**

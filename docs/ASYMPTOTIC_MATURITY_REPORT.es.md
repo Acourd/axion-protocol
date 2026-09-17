@@ -9,7 +9,7 @@
 
 ## Estado Actual Verificado
 
-- 241 suites deterministas se ejecutan en CI (`node tests/run_all.js`) en los 5 dominios de gobernanza.
+- 242 suites deterministas se ejecutan en CI (`node tests/run_all.js`) en los 5 dominios de gobernanza.
 - La CI ejercita salud (`axion check`), la compuerta de calidad VibeGuard, el hook
   PreToolUse, la parada de emergencia, la reversión determinista y la cadena de atestación.
 - El empaquetado multi-SO se prueba instalando el tarball real de `npm pack` en Ubuntu, macOS y Windows.
