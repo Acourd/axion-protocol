@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const TransversalProjectOptimizer = require('../../tools/transversal_project_optimizer.js');
@@ -20,7 +21,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-130 Invariantes del Optimizador Transversal de Proyectos y Bloat ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_optimizer_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_optimizer_sandbox');
 fs.mkdirSync(path.join(sandbox, 'src'), { recursive: true });
 
 // Crear archivos de prueba en sandbox

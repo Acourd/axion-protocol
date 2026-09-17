@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const GitGovernanceHook = require('../../tools/git_governance_hook.js');
@@ -19,7 +20,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-148 Invariantes del Hook de Pre-Commit Criptográfico de Git ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_git_hook_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_git_hook_sandbox');
 fs.mkdirSync(path.join(sandbox, '.git', 'hooks'), { recursive: true });
 
 try {

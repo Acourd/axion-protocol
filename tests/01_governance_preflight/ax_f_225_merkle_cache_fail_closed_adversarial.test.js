@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const MerkleCacheEngine = require('../../tools/merkle_cache_fast_forward.js');
@@ -19,7 +20,7 @@ const MerkleCacheEngine = require('../../tools/merkle_cache_fast_forward.js');
 console.log('=== AX-F-225 Caché Merkle fail-closed: pruebas adversariales ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `merkle-adversarial-${Date.now()}`);
+const sandbox = crearSandbox('merkle-adversarial');
 
 const ALL_TRUE = {
   testsPassed: true,

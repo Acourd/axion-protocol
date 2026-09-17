@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -20,7 +21,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-131 Invariantes de la Bóveda Persistente de Misiones y Formato Visual ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(os.tmpdir(), `test_vault_sandbox_${Date.now()}`);
+const sandbox = crearSandboxTemporal('test_vault_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 
 const vault = new MissionBacklogVault(sandbox);

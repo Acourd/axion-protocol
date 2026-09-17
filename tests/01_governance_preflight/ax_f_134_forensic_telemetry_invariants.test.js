@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const ForensicTelemetryEngine = require('../../tools/forensic_telemetry_engine.js');
@@ -19,7 +20,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-134 Invariantes de Telemetría Forense y Detección de Regresiones ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_forensic_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_forensic_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 
 const engine = new ForensicTelemetryEngine(sandbox);

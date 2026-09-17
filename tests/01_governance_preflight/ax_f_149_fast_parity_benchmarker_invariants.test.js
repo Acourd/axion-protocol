@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const FastParityBenchmarker = require('../../tools/fast_parity_benchmarker.js');
@@ -20,7 +21,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-149 Invariantes del Perfilador de Latencia y Benchmarking ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_bench_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_bench_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 
 try {

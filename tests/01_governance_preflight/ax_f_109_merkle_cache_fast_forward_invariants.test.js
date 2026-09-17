@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const MerkleCacheEngine = require('../../tools/merkle_cache_fast_forward.js');
@@ -19,7 +20,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-109 Invariantes de Caché de Estado Merkle y Fast-Forward ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test-merkle-sandbox-${Date.now()}`);
+const sandbox = crearSandbox('test-merkle-sandbox');
 
 // Configurar estructura de sandbox
 fs.mkdirSync(path.join(sandbox, 'tools'), { recursive: true });

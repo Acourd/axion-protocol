@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const FlightRecorder = require('../../tools/flight_recorder.js');
@@ -19,7 +20,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-159 Invariantes de la Caja Negra Forense (Flight Recorder) ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_flight_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_flight_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 
 try {

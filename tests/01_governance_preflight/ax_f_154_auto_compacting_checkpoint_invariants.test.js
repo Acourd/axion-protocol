@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const AutoCompactingCheckpointEngine = require('../../tools/auto_compacting_checkpoint.js');
@@ -19,7 +20,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-154 Invariantes de Auto-Compactación y Prevención de Bloat ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_autocompact_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_autocompact_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'checkpoints'), { recursive: true });
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 

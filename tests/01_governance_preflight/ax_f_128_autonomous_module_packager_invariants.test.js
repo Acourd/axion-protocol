@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const AutonomousModulePackager = require('../../tools/autonomous_module_packager.js');
@@ -19,7 +20,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-128 Invariantes del Empaquetador Autónomo de Módulos & Plugins ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_packager_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_packager_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 
 const packager = new AutonomousModulePackager(sandbox);

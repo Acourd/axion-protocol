@@ -13,6 +13,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const AgentShieldScanner = require('../../tools/agent_shield.js');
@@ -21,7 +22,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-136 Invariantes de Seguridad Agéntica AgentShield ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_agentshield_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_agentshield_sandbox');
 fs.mkdirSync(sandbox, { recursive: true });
 
 try {

@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const WorkspaceDebloater = require('../../tools/workspace_debloater.js');
@@ -18,7 +19,7 @@ const WorkspaceDebloater = require('../../tools/workspace_debloater.js');
 console.log('=== AX-F-101 Invariantes del Podador y Compactador de Workspace ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test-debloat-sandbox-${Date.now()}`);
+const sandbox = crearSandbox('test-debloat-sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'checkpoints'), { recursive: true });
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 

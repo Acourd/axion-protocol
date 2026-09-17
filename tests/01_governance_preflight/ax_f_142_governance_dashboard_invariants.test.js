@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const GovernanceDashboardGenerator = require('../../tools/governance_dashboard.js');
@@ -20,7 +21,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-142 Invariantes del Generador de Panel de Gobernanza ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_dashboard_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_dashboard_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'reports'), { recursive: true });
 
 try {

@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const SwarmArbiter = require('../../tools/swarm_arbiter.js');
@@ -20,7 +21,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-153 Invariantes del Árbitro de Sincronización de Enjambres ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_swarm_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_swarm_sandbox');
 const stateDir = path.join(sandbox, '.axion', 'state');
 fs.mkdirSync(stateDir, { recursive: true });
 

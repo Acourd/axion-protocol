@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const ASTPatchSynthesizer = require('../../tools/ast_patch_synthesizer.js');
@@ -64,7 +65,7 @@ assert.strictEqual(safetyUnsafe.reason, 'REJECTED_BY_REGRESSION_GUARD');
 console.log('✓ Bloqueo y descarte de parche inseguro verificado');
 
 // 4. Validar aplicación atómica en sandbox
-const sandbox = path.join(ROOT, 'scratch', `test_patch_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_patch_sandbox');
 fs.mkdirSync(sandbox, { recursive: true });
 const targetRel = 'sandbox_module.js';
 const targetAbs = path.join(sandbox, targetRel);

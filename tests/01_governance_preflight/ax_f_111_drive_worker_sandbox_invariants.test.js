@@ -14,6 +14,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const DriveWorkerSandbox = require('../../tools/drive_worker_sandbox.js');
@@ -23,7 +24,7 @@ console.log('=== AX-F-111 Runner de Workers: rechazo fail-closed de ejecución a
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const sandbox = new DriveWorkerSandbox({ maxHeapMb: 32, defaultTimeoutMs: 5000 });
-const markerPath = path.join(ROOT, 'scratch', `sandbox-marker-${Date.now()}.txt`);
+const markerPath = path.join(crearSandbox('sandbox-marker'), 'sandbox.txt');
 
 (async () => {
   // 1. Estado explícito: no hay aislamiento real disponible.

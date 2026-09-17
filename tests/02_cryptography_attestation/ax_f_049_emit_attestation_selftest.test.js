@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -11,7 +12,7 @@ const { verifyAttestation, ATTESTATION_STATUS } = require('../../tools/attestati
 console.log('=== AX-F-049 Autoprueba de la Cadena de Atestación (in-toto v1 + DSSE) ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const scratchDir = path.join(ROOT, 'scratch', 'test_emit_attestation');
+const scratchDir = crearSandbox('test_emit_attestation');
 
 if (fs.existsSync(scratchDir)) {
   fs.rmSync(scratchDir, { recursive: true, force: true });

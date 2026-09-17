@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -20,7 +21,7 @@ const OnboardingWizard = require('../../tools/onboarding_wizard.js');
 console.log('=== AX-F-168: Invariantes de OnboardingWizard & Flight HUD ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const tempSandbox = path.join(os.tmpdir(), `test_ax_f_168_${Date.now()}`);
+const tempSandbox = crearSandboxTemporal('test_ax_f_168');
 fs.mkdirSync(tempSandbox, { recursive: true });
 
 try {

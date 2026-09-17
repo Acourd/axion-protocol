@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const AgentHeartbeatDaemon = require('../../tools/agent_heartbeat_daemon.js');
@@ -20,7 +21,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-151 Invariantes del Demonio de Vigilancia y Latidos de Liveness ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_heartbeat_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_heartbeat_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 fs.mkdirSync(path.join(sandbox, '.agents', 'rules'), { recursive: true });
 

@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -43,7 +44,7 @@ assert.ok(!html.includes('http://') && !html.includes('https://cdn.'), 'No debe 
 console.log('  ✓ Invariante 3: Cumplimiento 100% offline standalone verificado.');
 
 // Invariante 4: Exportación a disco
-const tempDir = path.join(os.tmpdir(), `test_ax_f_172_${Date.now()}`);
+const tempDir = crearSandboxTemporal('test_ax_f_172');
 const tempFile = path.join(tempDir, 'test_dashboard.html');
 
 try {

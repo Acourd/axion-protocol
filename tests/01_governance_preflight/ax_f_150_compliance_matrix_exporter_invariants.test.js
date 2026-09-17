@@ -11,6 +11,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const ComplianceMatrixExporter = require('../../tools/compliance_matrix_exporter.js');
@@ -19,7 +20,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-150 Invariantes del Exportador de Matriz de Conformidad ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test_compliance_sandbox_${Date.now()}`);
+const sandbox = crearSandbox('test_compliance_sandbox');
 fs.mkdirSync(path.join(sandbox, '.axion', 'reports'), { recursive: true });
 fs.mkdirSync(path.join(sandbox, '.axion', 'state'), { recursive: true });
 

@@ -12,6 +12,7 @@
  */
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const path = require('path');
 const fs = require('fs');
 const { DatabaseSync } = require('node:sqlite');
@@ -21,7 +22,7 @@ const SemanticMemoryGraph = require('../../tools/semantic_memory_graph.js');
 console.log('=== AX-F-122 Invariantes de Transacciones ACID y Snapshot Isolation SQLite ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandboxDb = path.join(ROOT, 'scratch', `test_tx_invariants_${Date.now()}.db`);
+const sandboxDb = path.join(crearSandbox('test_tx_invariants'), 'sandbox.db');
 fs.mkdirSync(path.dirname(sandboxDb), { recursive: true });
 
 const db = new DatabaseSync(sandboxDb);

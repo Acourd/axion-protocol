@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -17,7 +18,7 @@ console.log('=== AX-F-039 Checkpoints: aislamiento, integridad atómica y antirr
 // El arenal vive en el temporal del sistema, fuera del árbol del proyecto. Un checkpoint
 // escribe en <raíz>/.axion/checkpoints: si la raíz fuese el proyecto, la prueba sembraría
 // el almacén real y el resultado pasaría a depender del orden de ejecución.
-const testRoot = path.join(os.tmpdir(), 'axion_checkpoint_test_' + Date.now());
+const testRoot = crearSandboxTemporal('axion_checkpoint_test');
 fs.mkdirSync(testRoot, { recursive: true });
 
 // --- 1. Resistencia a path traversal ---

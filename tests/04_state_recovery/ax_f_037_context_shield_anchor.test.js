@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const { compactSessionContext, digestGobernanza } = require('../../tools/context_shield.js');
@@ -8,7 +9,7 @@ const { compactSessionContext, digestGobernanza } = require('../../tools/context
 console.log('=== AX-F-037 Escudo de Contexto, Anclaje de Invariantes y Purgado de Snapshots ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const scratchDir = path.join(ROOT, 'scratch', 'test_context_shield');
+const scratchDir = crearSandbox('test_context_shield');
 if (!fs.existsSync(scratchDir)) {
   fs.mkdirSync(scratchDir, { recursive: true });
 }

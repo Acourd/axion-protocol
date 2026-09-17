@@ -10,6 +10,7 @@
  */
 
 const assert = require('assert');
+const { crearSandboxTemporal } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -107,7 +108,7 @@ assert.strictEqual(JSON.stringify(sinArtefacto).includes('SLSA_LEVEL_3'), false,
 assert.ok(sinArtefacto.predicate.buildDefinition.externalParameters.source.includes('Acourd/axion-protocol'), 'El origen del repositorio debe ser el real');
 console.log('✓ Procedencia sin reclamo SLSA y con origen correcto');
 
-const artefacto = path.join(os.tmpdir(), `axion-artifact-${Date.now()}.tgz`);
+const artefacto = path.join(crearSandboxTemporal('axion-artifact'), 'sandbox.tgz');
 try {
   fs.writeFileSync(artefacto, 'artefacto construido de prueba');
   const conArtefacto = provenance.generateSlsaProvenance({ artifactPath: artefacto, save: false });

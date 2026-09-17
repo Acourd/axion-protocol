@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
@@ -9,7 +10,7 @@ const { inspectFileContent, scanFile } = require('../../tools/vibeguard.js');
 console.log('=== AX-F-029 Resiliencia Léxica y Códigos de Salida en VibeGuard ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const scratchDir = path.join(ROOT, 'scratch', 'test_vibeguard');
+const scratchDir = crearSandbox('test_vibeguard');
 if (!fs.existsSync(scratchDir)) {
   fs.mkdirSync(scratchDir, { recursive: true });
 }
