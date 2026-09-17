@@ -55,11 +55,11 @@ try {
   assert.strictEqual(healResult.afterMetrics.hasPressure, false);
   console.log(`✓ Auto-curación preventiva en caliente ejecutada con éxito (Restablecido a: ${healResult.status})`);
 
-  // 4. Validar integración con DriveEngine
-  const driveEngine = new DriveEngine(ROOT);
+  // 4. Validar integración con DriveEngine (en sandbox: jamás auto-curación sobre el checkout compartido)
+  const driveEngine = new DriveEngine(sandbox);
   const driveEnsure = driveEngine.ensureOptimalDiskState();
   assert.ok(driveEnsure.status);
-  console.log('✓ Integración DriveEngine.ensureOptimalDiskState() verificada');
+  console.log('✓ Integración DriveEngine.ensureOptimalDiskState() verificada (sandbox aislado)');
 
 } finally {
   if (fs.existsSync(sandbox)) {

@@ -68,17 +68,35 @@ try {
     attester.ensureKeyPair();
     fs.writeFileSync(writerScript, writerSource, 'utf8');
 
-    // 1-2. 20 escritores concurrentes
-    const hijos = [];
-    for (let i = 0; i < 20; i++) {
-      hijos.push(new Promise((resolve) => {
+    // 1-2. 20 escritores concurrentes (con reintento ante EAGAIN transitorio del SO)
+    function lanzarEscritor(i, intento = 0) {
+      return new Promise((resolve) => {
         const child = spawn(process.execPath, [writerScript, sandbox, String(i)], { stdio: ['ignore', 'pipe', 'pipe'] });
         let out = '';
         let errOut = '';
+        let settled = false;
         child.stdout.on('data', (d) => { out += d; });
         child.stderr.on('data', (d) => { errOut += d; });
-        child.on('close', (code) => resolve({ code, out, errOut, index: i }));
-      }));
+        child.on('error', (err) => {
+          if (settled) return;
+          settled = true;
+          if (intento < 3) {
+            setTimeout(() => resolve(lanzarEscritor(i, intento + 1)), 150);
+          } else {
+            resolve({ code: 1, out: '', errOut: `spawn error: ${err.message}`, index: i });
+          }
+        });
+        child.on('close', (code) => {
+          if (settled) return;
+          settled = true;
+          resolve({ code, out, errOut, index: i });
+        });
+      });
+    }
+
+    const hijos = [];
+    for (let i = 0; i < 20; i++) {
+      hijos.push(lanzarEscritor(i));
     }
     const resultados = await Promise.all(hijos);
     const fallidos = resultados.filter((r) => r.code !== 0);

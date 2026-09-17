@@ -19,14 +19,19 @@ console.log('=== AX-F-098 Invariantes del Ejecutor Concurrente de Pruebas ===\n'
 const ROOT = path.resolve(__dirname, '..', '..');
 const runAllPath = path.join(ROOT, 'tests', 'run_all.js');
 
-// 1. Validar existencia del script
+// 1. Validar existencia del script y del motor de ejecución
 assert.ok(fs.existsSync(runAllPath), 'tests/run_all.js debe existir');
 const code = fs.readFileSync(runAllPath, 'utf8');
+const runnerPath = path.join(ROOT, 'tools', 'suite_runner.js');
+assert.ok(fs.existsSync(runnerPath), 'tools/suite_runner.js debe existir');
+const runnerCode = fs.readFileSync(runnerPath, 'utf8');
+assert.ok(code.includes('suite_runner'), 'tests/run_all.js debe delegar en el motor de suites');
+assert.ok(runnerCode.includes('spawn'), 'El motor debe gestionar procesos concurrentes');
 
-// 2. Validar características de concurrencia
-assert.ok(code.includes('CONCURRENCY') || code.includes('workers'), 'Debe definir lógica de workers concurrentes');
-assert.ok(code.includes('runTestTask') || code.includes('spawn'), 'Debe gestionar procesos concurrentes');
-console.log('✓ tests/run_all.js implementa arquitectura de workers concurrentes');
+// 2. Validar características de concurrencia (motor con timeout y workers)
+assert.ok(runnerCode.includes('concurrency') || runnerCode.includes('workers'), 'Debe definir lógica de workers concurrentes');
+assert.ok(runnerCode.includes('timeoutMs'), 'Debe definir timeout por suite');
+console.log('✓ El ejecutor delega en un motor de workers concurrentes con timeout por suite');
 
 // 3. Validar los 5 dominios
 const expectedDomains = [
@@ -38,7 +43,7 @@ const expectedDomains = [
 ];
 
 for (const d of expectedDomains) {
-  assert.ok(code.includes(d), `Debe incluir el dominio ${d}`);
+  assert.ok(runnerCode.includes(d), `Debe incluir el dominio ${d}`);
 }
 console.log('✓ Los 5 Dominios Fundamentales están mapeados en el ejecutor concurrente');
 
