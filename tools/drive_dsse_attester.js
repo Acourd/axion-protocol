@@ -565,10 +565,11 @@ class DriveDsseAttester {
    * - Se sella el Merkle Root antes y después de la ejecución; si el árbol mutó durante
    *   la corrida, el sellado posterior no puede representar la prueba y VERIFIED se bloquea.
    */
-  runSuiteAndAttest(sessionData = {}, options = {}) {
-    const { spawnSync } = require('child_process');
+  async runSuiteAndAttest(sessionData = {}, options = {}) {
+    const { spawn } = require('child_process');
     const { detectarVerificador, parseSuiteCounts } = require('./verify_changes.js');
     const { recordEvidence } = require('./evidence_ledger.js');
+    const { killTree } = require('./process_tree.js');
 
     const {
       missionId = `mission_${Date.now()}`,
@@ -587,19 +588,49 @@ class DriveDsseAttester {
     const merkleBefore = merkleEngine.computeMerkleRoot();
     const ledgerBefore = this.verifyEvidenceLedger();
 
+    const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
+      ? options.timeoutMs
+      : 10 * 60 * 1000;
+
     const startedAtMs = Date.now();
-    const r = spawnSync(runner.executable, runner.args, {
-      cwd: this.root,
-      encoding: 'utf8',
-      shell: false,
-      timeout: options.timeoutMs || 10 * 60 * 1000,
-      windowsHide: true
+    const ejecucion = await new Promise((resolve) => {
+      const child = spawn(runner.executable, runner.args, {
+        cwd: this.root,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        detached: process.platform !== 'win32'
+      });
+      let salida = '';
+      let settled = false;
+      const finalizar = (resultado) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(watchdog);
+        resolve({ ...resultado, output: salida, elapsedMs: Date.now() - startedAtMs });
+      };
+      const watchdog = setTimeout(() => {
+        const kill = killTree(child, { graceMs: 400 });
+        try { child.stdout.destroy(); } catch (_) { /* stream ya cerrado */ }
+        try { child.stderr.destroy(); } catch (_) { /* stream ya cerrado */ }
+        finalizar({ timeout: true, kill, error: `Timeout de ejecución (${timeoutMs}ms); árbol terminado vía ${kill.method}` });
+      }, timeoutMs);
+      child.stdout.on('data', (d) => { salida += d; });
+      child.stderr.on('data', (d) => { salida += d; });
+      child.on('error', (err) => finalizar({ timeout: false, error: `spawn error: ${err.message}` }));
+      child.on('close', (code, signal) => {
+        if (signal) {
+          finalizar({ timeout: false, signal, error: `Terminado por señal ${signal}` });
+          return;
+        }
+        finalizar({ timeout: false, signal: null, exitCode: typeof code === 'number' ? code : null, error: null });
+      });
     });
-    const finishedAtMs = Date.now();
-    const output = `${r.stdout || ''}${r.stderr || ''}`;
+
+    const finishedAtMs = startedAtMs + ejecucion.elapsedMs;
+    const output = ejecucion.output;
     const suites = parseSuiteCounts(output);
-    const exitCode = typeof r.status === 'number' ? r.status : null;
-    const ranGreen = !r.error && exitCode === 0 && suites.total > 0 && suites.failed === 0 && suites.passed === suites.total;
+    const exitCode = typeof ejecucion.exitCode === 'number' ? ejecucion.exitCode : null;
+    const ranGreen = !ejecucion.timeout && !ejecucion.error && exitCode === 0
+      && suites.total > 0 && suites.failed === 0 && suites.passed === suites.total;
     const command = `${path.basename(runner.executable)} ${runner.args.join(' ')}`;
 
     const merkleAfter = merkleEngine.computeMerkleRoot();
@@ -639,7 +670,7 @@ class DriveDsseAttester {
 
     const verified = ranGreen && treeStable && ledgerAfter.valid;
     const reasons = [];
-    if (!ranGreen) reasons.push(`ejecución no superada (error=${r.error ? r.error.message : 'ninguno'}, exitCode=${exitCode}, total=${suites.total}, passed=${suites.passed}, failed=${suites.failed})`);
+    if (!ranGreen) reasons.push(`ejecución no superada (error=${ejecucion.error || 'ninguno'}, exitCode=${exitCode}, total=${suites.total}, passed=${suites.passed}, failed=${suites.failed})`);
     if (!treeStable) reasons.push('el árbol rastreado cambió durante la ejecución; el sellado posterior no representa el estado probado');
     if (!ledgerAfter.valid) reasons.push(`ledger inválido (${ledgerAfter.reason || 'cadena no verificable'})`);
 
@@ -747,7 +778,9 @@ class DriveDsseAttester {
 
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const attester = new DriveDsseAttester();
+  const iTarget = args.indexOf('--target');
+  const targetDir = iTarget !== -1 && args[iTarget + 1] ? path.resolve(args[iTarget + 1]) : ROOT;
+  const attester = new DriveDsseAttester(targetDir);
 
   if (args.includes('--init-keys')) {
     try {
@@ -762,16 +795,52 @@ if (require.main === module) {
   }
 
   if (args.includes('--run-suite')) {
+    const iTimeout = args.indexOf('--timeout');
+    const timeoutMs = iTimeout !== -1 && args[iTimeout + 1] ? Number(args[iTimeout + 1]) : undefined;
+    (async () => {
+      try {
+        const res = await attester.runSuiteAndAttest({
+          missionId: 'MISSION_EXECUTED_IN_SIGNER',
+          title: 'Sellado por ejecución dentro del firmante'
+        }, { timeoutMs });
+        console.log(`  Archivo sellado: ${res.attestationPath}`);
+        console.log(`  Merkle Root:     ${res.merkleRoot}`);
+        console.log(`  Key ID:          ed25519:${res.keyId}`);
+        console.log(`  Verificación:    ${res.verificationStatus}`);
+        process.exit(res.verificationStatus === 'VERIFIED' ? 0 : 1);
+      } catch (err) {
+        console.error(`✗ ${err.code || 'ERROR'}: ${err.message}`);
+        process.exit(2);
+      }
+    })();
+    return;
+  }
+
+  if (args.includes('--verify')) {
+    const iEnvelope = args.indexOf('--verify');
+    const envelopePath = args[iEnvelope + 1];
     try {
-      const res = attester.runSuiteAndAttest({
-        missionId: 'MISSION_EXECUTED_IN_SIGNER',
-        title: 'Sellado por ejecución dentro del firmante'
-      });
-      console.log(`  Archivo sellado: ${res.attestationPath}`);
-      console.log(`  Merkle Root:     ${res.merkleRoot}`);
-      console.log(`  Key ID:          ed25519:${res.keyId}`);
-      console.log(`  Verificación:    ${res.verificationStatus}`);
-      process.exit(res.verificationStatus === 'VERIFIED' ? 0 : 1);
+      if (!envelopePath || !fs.existsSync(envelopePath)) {
+        throw attester.fail('ERR_ENVELOPE_MISSING', `Sobre DSSE no encontrado: ${String(envelopePath)}`);
+      }
+      const envelope = JSON.parse(fs.readFileSync(envelopePath, 'utf8'));
+      const verificacion = attester.verifyAttestation(envelope);
+      const merkle = new MerkleCacheEngine(attester.root).computeMerkleRoot();
+      const subjectDigest = verificacion.statement && Array.isArray(verificacion.statement.subject) && verificacion.statement.subject[0]
+        ? (verificacion.statement.subject[0].digest || {}).sha256 || null
+        : null;
+      const subjectMatches = Boolean(subjectDigest && subjectDigest === merkle.merkleRoot);
+      const salida = {
+        valid: verificacion.valid,
+        keyId: verificacion.keyId,
+        subjectSha256: subjectDigest,
+        targetMerkleRoot: merkle.merkleRoot,
+        subjectMatches,
+        target: attester.root,
+        reason: verificacion.reason
+      };
+      console.log(JSON.stringify(salida, null, 2));
+      process.exit(verificacion.valid && subjectMatches ? 0 : 1);
     } catch (err) {
       console.error(`✗ ${err.code || 'ERROR'}: ${err.message}`);
       process.exit(2);

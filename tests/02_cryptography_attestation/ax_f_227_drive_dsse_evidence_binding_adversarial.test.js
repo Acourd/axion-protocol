@@ -70,6 +70,7 @@ function crearRaizConRunner(bodyRunner) {
 }
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'axion-dsse-'));
+(async () => {
 try {
   const attester = new DriveDsseAttester(root);
 
@@ -212,7 +213,7 @@ try {
   try {
     const atesterEjecutor = new DriveDsseAttester(raizOk);
     atesterEjecutor.ensureKeyPair();
-    const ejecutada = atesterEjecutor.runSuiteAndAttest({ missionId: 'MISSION_EJECUTADA', title: 'Ejecución real' });
+    const ejecutada = await atesterEjecutor.runSuiteAndAttest({ missionId: 'MISSION_EJECUTADA', title: 'Ejecución real' });
     assert.strictEqual(ejecutada.verificationStatus, 'VERIFIED');
     const stmtEjecutado = JSON.parse(Buffer.from(ejecutada.dsseEnvelope.payload, 'base64').toString('utf8'));
     assert.strictEqual(stmtEjecutado.predicate.verification.mode, 'EXECUTED_IN_SIGNER');
@@ -233,7 +234,7 @@ try {
   try {
     const atesterFallo = new DriveDsseAttester(raizFallo);
     atesterFallo.ensureKeyPair();
-    const ejecutadaFallo = atesterFallo.runSuiteAndAttest({ missionId: 'MISSION_FALLO_REAL', title: 'Fallo real' });
+    const ejecutadaFallo = await atesterFallo.runSuiteAndAttest({ missionId: 'MISSION_FALLO_REAL', title: 'Fallo real' });
     assert.strictEqual(ejecutadaFallo.verificationStatus, 'UNVERIFIED');
     const stmtFallo = JSON.parse(Buffer.from(ejecutadaFallo.dsseEnvelope.payload, 'base64').toString('utf8'));
     assert.strictEqual(stmtFallo.predicate.governance.suitesPassed, 2, 'Las cifras observadas se reportan tal cual');
@@ -254,7 +255,7 @@ try {
     const dirEvidencia = path.join(raizLedgerRoto, '.axion', 'evidence');
     fs.mkdirSync(dirEvidencia, { recursive: true });
     fs.writeFileSync(path.join(dirEvidencia, 'ledger.jsonl'), '{"schema":"roto"}\n', 'utf8');
-    const conLedgerPrevioRoto = atesterLedgerRoto.runSuiteAndAttest({ missionId: 'MISSION_LEDGER_PREVIO', title: 'Ledger previo roto' });
+    const conLedgerPrevioRoto = await atesterLedgerRoto.runSuiteAndAttest({ missionId: 'MISSION_LEDGER_PREVIO', title: 'Ledger previo roto' });
     assert.strictEqual(conLedgerPrevioRoto.verificationStatus, 'UNVERIFIED', 'Un ledger roto no puede sostener VERIFIED');
     const stmtLedgerRoto = JSON.parse(Buffer.from(conLedgerPrevioRoto.dsseEnvelope.payload, 'base64').toString('utf8'));
     assert.strictEqual(stmtLedgerRoto.predicate.verification.ledger.valid, false);
@@ -277,7 +278,7 @@ try {
   try {
     const atesterMutante = new DriveDsseAttester(raizMutante);
     atesterMutante.ensureKeyPair();
-    const conArbolMutado = atesterMutante.runSuiteAndAttest({ missionId: 'MISSION_TOCTOU', title: 'Árbol mutado en corrida' });
+    const conArbolMutado = await atesterMutante.runSuiteAndAttest({ missionId: 'MISSION_TOCTOU', title: 'Árbol mutado en corrida' });
     assert.strictEqual(conArbolMutado.verificationStatus, 'UNVERIFIED', 'Un árbol mutado durante la corrida no puede declarar VERIFIED');
     const stmtMutado = JSON.parse(Buffer.from(conArbolMutado.dsseEnvelope.payload, 'base64').toString('utf8'));
     assert.strictEqual(stmtMutado.predicate.verification.tree.stable, false);
@@ -338,3 +339,7 @@ try {
     // limpieza best-effort
   }
 }
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
