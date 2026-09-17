@@ -1,6 +1,8 @@
 # Axion Protocol v2.0 — Especificación de Arquitectura Swarm
 
-> **Coordinación Multi-Agente Determinista, Bloqueo AST Granular y Consenso por Quórum Bizantino.**
+> **Alcance:** capa de **simulación local**. No es un motor de producción, no aporta aislamiento de proceso y no reemplaza controles de seguridad. El arbitraje AST y el consenso BFT operan sobre agentes simulados dentro de un mismo entorno de confianza.
+
+> **Coordinación Multi-Agente Determinista, Bloqueo AST Granular y Consenso por Quórum Bizantino (simulado).**
 
 ---
 

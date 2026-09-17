@@ -9,7 +9,7 @@
 
 ## Verified Current State
 
-- 242 deterministic test suites run in CI (`node tests/run_all.js`) across the 5 governance domains.
+- 244 deterministic test suites run in CI (`node tests/run_all.js`) across the 5 governance domains.
 - CI exercises health (`axion check`), the VibeGuard quality gate, the PreToolUse hook,
   the killswitch, deterministic rollback, and the attestation chain.
 - Multi-OS packaging is tested by installing the real `npm pack` tarball on Ubuntu, macOS and Windows.

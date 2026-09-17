@@ -37,7 +37,7 @@
         <div class="side-icon-box">
           <span class="side-num">01</span>
         </div>
-        <span class="side-label" data-i18n="navSwarm">Swarm Engine</span>
+                <span class="side-label" data-i18n="navSwarm">Simulador Swarm</span>
       </a>
 
       <a href="#playground" class="side-item" data-nav-target="playground" title="Simulador CLI Sandbox">
@@ -145,7 +145,7 @@
         <!-- Indicador de Telemetría WebSocket en Vivo -->
         <div class="telemetry-live-pill" id="telemetry-pill" title="Gateway WebSocket de Telemetría en localhost:8765">
           <span class="live-dot" id="telemetry-dot"></span>
-          <span class="live-pill-text" id="telemetry-text">242 Suites</span>
+          <span class="live-pill-text" id="telemetry-text">244 Suites</span>
         </div>
 
         <!-- Conmutador de Sonido Háptico -->
@@ -198,7 +198,11 @@
             </h1>
 
             <p class="hero-summary" id="hero-lead" data-i18n="heroLead">
-              Motor de ejecución en modo <code>fail-closed</code> (95.7 KB). Intercepta llamadas de terminal sin sub-shell, arbitra colisiones concurrentes en el árbol AST y garantiza reversión atómica verificada con SHA-256.
+              Motor de ejecución en modo <code>fail-closed</code>. Intercepta llamadas de terminal sin sub-shell, arbitra colisiones concurrentes en el árbol AST y garantiza reversión atómica verificada con SHA-256.
+            </p>
+
+            <p class="scope-banner" data-i18n="scopeBanner" role="note">
+              <strong>Alcance:</strong> toolkit experimental de gobernanza local. Identidad y firma locales; sin aislamiento de proceso; sin certificación. Swarm y BFT son simulaciones de diagnóstico.
             </p>
 
             <!-- Quick Copy CLI Box -->
@@ -227,7 +231,7 @@
             <!-- Métricas de Ingeniería Verificables -->
             <div class="metrics-strip">
               <div class="metric-item">
-                <span class="m-val">242 suites</span>
+                <span class="m-val">244 suites</span>
                 <span class="m-lbl" data-i18n="metricSuites">Suites en el Repositorio</span>
               </div>
               <div class="metric-item">
@@ -240,7 +244,7 @@
               </div>
               <div class="metric-item">
                 <span class="m-val">1,663</span>
-                <span class="m-lbl" data-i18n="metricBft">Rondas BFT / seg</span>
+                <span class="m-lbl" data-i18n="metricBft">Rondas BFT simuladas / seg</span>
               </div>
             </div>
           </div>
@@ -257,10 +261,10 @@
               </div>
               <div class="console-stream" id="console-stream-feed">
                 <div class="stream-line system"><span class="ts">[05:01:02]</span> <span class="badge sys">INIT</span> Axion Runtime Kernel v2.0.0-rc.1 inicializado</div>
-                <div class="stream-line"><span class="ts">[05:01:03]</span> <span class="badge info">SWARM</span> AST Arbiter activo: 0 colisiones en espacio de nombres</div>
-                <div class="stream-line"><span class="ts">[05:01:04]</span> <span class="badge pass">BFT</span> Quórum de consenso alcanzado (&ge; 66.7% votos válidos)</div>
+          <div class="stream-line"><span class="ts">[05:01:03]</span> <span class="badge info">SWARM</span> AST Arbiter (simulación) activo: 0 colisiones en espacio de nombres</div>
+          <div class="stream-line"><span class="ts">[05:01:04]</span> <span class="badge pass">BFT</span> Quórum de consenso simulado alcanzado (&ge; 66.7% votos válidos)</div>
                 <div class="stream-line"><span class="ts">[05:01:05]</span> <span class="badge pass">DSSE</span> in-toto Statement v1 emitido con firma Ed25519</div>
-                <div class="stream-line highlight"><span class="ts">[05:01:06]</span> <span class="badge pass">AUDIT</span> 242 suites · resultados publicados por CI</div>
+                <div class="stream-line highlight"><span class="ts">[05:01:06]</span> <span class="badge pass">AUDIT</span> 244 suites · resultados publicados por CI</div>
               </div>
               <div class="console-footer">
                 <div class="stat-indicator">
@@ -327,8 +331,8 @@
       <section class="content-section" id="swarm">
         <div class="section-title-wrap">
           <span class="sub-label" data-i18n="swarmBadge">CONCURRENCIA MULTI-AGENTE</span>
-          <h2 class="section-heading" data-i18n="swarmTitle">Arquitectura Swarm v2.0 & Triunvirato de Arbitraje</h2>
-          <p class="section-lead" data-i18n="swarmDesc">Tres pilares matemáticos desacoplados para coordinar enjambres de IA sin condiciones de carrera ni modificaciones ciegas:</p>
+          <h2 class="section-heading" data-i18n="swarmTitle">Simulación Swarm v2.0 & Arbitraje</h2>
+          <p class="section-lead" data-i18n="swarmDesc">Tres componentes de simulación local para explorar coordinación multi-agente sin condiciones de carrera ni modificaciones ciegas (sin aislamiento de proceso):</p>
         </div>
 
         <div class="swarm-trio-grid">
@@ -379,7 +383,7 @@
               </svg>
             </div>
             <div class="tile-tag" data-i18n="p3Tag">PILAR 3 · GOBERNANZA</div>
-            <h3 class="tile-title" data-i18n="pillar3Title">Quórum de Consenso Bizantino (BFT ≥ 66%)</h3>
+            <h3 class="tile-title" data-i18n="pillar3Title">Quórum de consenso simulado (BFT ≥ 66%, 3 agentes locales)</h3>
             <p class="tile-desc" data-i18n="pillar3Desc">
               Ninguna mutación estructural se aplica al código sin alcanzar una supermayoría calificada del 66.7% de los votos de los agentes evaluadores antes de escribir en disco.
             </p>
@@ -395,7 +399,7 @@
           <div class="deck-top">
             <div class="deck-title-group">
               <span class="deck-badge" data-i18n="deckBadge">SIMULADOR EN VIVO</span>
-              <h4 class="deck-title" data-i18n="deckTitle">Panel de Votación y Quórum BFT</h4>
+              <h4 class="deck-title" data-i18n="deckTitle">Panel de votación BFT (simulación local)</h4>
             </div>
             <button class="btn-deck-trigger" id="btn-trigger-consensus">
               <span class="play-icon">▶</span>
@@ -493,7 +497,7 @@
           <div class="step-card" data-step="06">
             <div class="step-num">06</div>
             <h4 class="step-name" data-i18n="step06Name">AUDITAR</h4>
-            <p class="step-summary" data-i18n="step06Desc">Ejecución real de la suite de 242 pruebas, escaneo VibeGuard de antipatrones y validación de salida con exit code 0.</p>
+            <p class="step-summary" data-i18n="step06Desc">Ejecución real de la suite de 244 pruebas, escaneo VibeGuard de antipatrones y validación de salida con exit code 0.</p>
           </div>
 
           <div class="step-card" data-step="07">
@@ -568,7 +572,7 @@
         <div class="radar-card-layout spotlight-card">
           <div class="radar-controls-bar">
             <div class="radar-filter-chips">
-              <button class="r-chip active" data-domain="all" data-i18n="chipAllDomains">Todos los Dominios (242)</button>
+              <button class="r-chip active" data-domain="all" data-i18n="chipAllDomains">Todos los Dominios (244)</button>
               <button class="r-chip" data-domain="gov" data-i18n="chipGovDomain">01 Gobernanza (110)</button>
               <button class="r-chip" data-domain="crypto" data-i18n="chipCryptoDomain">02 Criptografía (27)</button>
               <button class="r-chip" data-domain="intent" data-i18n="chipIntentDomain">03 Intención (23)</button>
@@ -628,7 +632,7 @@
             <div class="chart-header">
               <div class="ch-left">
                 <span class="ch-badge" data-i18n="chartBadge">LIVE THROUGHPUT</span>
-                <h4 class="ch-title" data-i18n="chartTitle">Rondas de Consenso BFT & Validaciones / Seg</h4>
+                <h4 class="ch-title" data-i18n="chartTitle">Rondas de consenso BFT simuladas</h4>
               </div>
               <span class="ch-rate" id="telemetry-live-rate">1,663 ops/s</span>
             </div>
@@ -639,33 +643,33 @@
 
           <!-- Desglose por Dominios con Barras -->
           <div class="domains-breakdown-box spotlight-card">
-            <h4 class="breakdown-title" data-i18n="breakdownTitle">Distribución de las 242 Suites</h4>
+            <h4 class="breakdown-title" data-i18n="breakdownTitle">Distribución de las 244 Suites</h4>
             <div class="domain-bars-list">
               <div class="d-bar-item">
                 <div class="d-bar-head">
                   <span data-i18n="d1Name">01 Gobernanza & Preflight</span>
-                  <strong>147 suites (60.7%)</strong>
+                  <strong>148 suites (60.7%)</strong>
                 </div>
-                <div class="d-bar-track"><div class="d-bar-fill" style="width: 12.8%;"></div></div>
+                <div class="d-bar-track"><div class="d-bar-fill" style="width: 13.1%;"></div></div>
               </div>
               <div class="d-bar-item">
                 <div class="d-bar-head">
                   <span data-i18n="d2Name">02 Criptografía & Atestación</span>
-                  <strong>31 suites (12.8%)</strong>
+                  <strong>32 suites (13.1%)</strong>
                 </div>
-                <div class="d-bar-track"><div class="d-bar-fill" style="width: 9.5%;"></div></div>
+                <div class="d-bar-track"><div class="d-bar-fill" style="width: 9.4%;"></div></div>
               </div>
               <div class="d-bar-item">
                 <div class="d-bar-head">
                   <span data-i18n="d3Name">03 Intención & UX Socrática</span>
-                  <strong>23 suites (9.5%)</strong>
+                  <strong>23 suites (9.4%)</strong>
                 </div>
-                <div class="d-bar-track"><div class="d-bar-fill" style="width: 9.5%;"></div></div>
+                <div class="d-bar-track"><div class="d-bar-fill" style="width: 9.4%;"></div></div>
               </div>
               <div class="d-bar-item">
                 <div class="d-bar-head">
                   <span data-i18n="d4Name">04 Estado & Checkpoints</span>
-                  <strong>23 suites (9.5%)</strong>
+                  <strong>23 suites (9.4%)</strong>
                 </div>
                 <div class="d-bar-track"><div class="d-bar-fill" style="width: 7.4%;"></div></div>
               </div>

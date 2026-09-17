@@ -5,7 +5,7 @@
 >
 > **Status**: EXPERIMENTAL runtime. Enforcement does not intercept arbitrary OS-level shell commands automatically without the integrated agent hook. Requires **Node.js 22.13** or later. Zero external npm dependencies.
 
-[![CI Status](https://img.shields.io/badge/CI-242%20Suites-informational.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
+[![CI Status](https://img.shields.io/badge/CI-244%20Suites-informational.svg?style=flat-square)](https://github.com/Acourd/axion-protocol/actions)
 [![Version](https://img.shields.io/badge/Version-v1.4.0--beta.1-0969da.svg?style=flat-square)](package.json)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0-success.svg?style=flat-square)](package.json)
@@ -130,7 +130,7 @@ Axion Protocol provides 12 core slash commands designed to work in synergy. For 
 
 ## Test Verification & Deterministic Invariants
 
-Axion Protocol includes **242 deterministic test suites** that run concurrently with zero external test runners:
+Axion Protocol includes **244 deterministic test suites** that run concurrently with zero external test runners:
 
 ```bash
 # Run the complete test suite across all 5 domains
@@ -141,13 +141,13 @@ npm test
 
 | Domain Pillar | Core Responsibilities | Test Suites |
 | :--- | :--- | :---: |
-| 🛡️ **Governance & Preflight** | PreToolUse hooks, lexical preflight, killswitch, risk policy compiler, structured commands, workflow state machine, drive engine | 147 |
-| 🔐 **Cryptography & Attestation** | DSSE/PAE envelopes, RFC 8785 canonical JSON, in-toto Statement v1, Ed25519 signatures, evidence binding, revocation | 31 |
+| 🛡️ **Governance & Preflight** | PreToolUse hooks, lexical preflight, killswitch, risk policy compiler, structured commands, workflow state machine, drive engine | 148 |
+| 🔐 **Cryptography & Attestation** | DSSE/PAE envelopes, RFC 8785 canonical JSON, in-toto Statement v1, Ed25519 signatures, evidence binding, revocation | 32 |
 | 🧭 **Intent & Socratic UX** | 2-question clarifier, A/B/C contracts, SHA-256 intent sealing, profile calibration, interactive wizard, deep reasoning | 23 |
 | 💾 **State, Checkpoints & Recovery** | Atomic snapshots, rollback plan validation, memory guard limits, context shield anchoring, evidence hasher, governance drift detection | 23 |
 | ⚡ **Adversarial Resilience** | Mutation vectors, pre-mortem verdict derivation, VibeGuard lexical gate, boilerplate detection, fuzzer burst resilience | 18 |
 
-**Total: 242 suites** across the 5 governance domains. CI publishes the verified result.
+**Total: 244 suites** across the 5 governance domains. CI publishes the verified result.
 
 Public end-to-end verification route (keygen → run attest → verify subject Merkle):
 [`docs/VERIFICATION_PATH.md`](docs/VERIFICATION_PATH.md).

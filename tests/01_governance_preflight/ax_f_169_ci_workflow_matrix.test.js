@@ -46,4 +46,8 @@ assert.ok(ciContent.includes('node bin/axion.js check') || ciContent.includes('n
 assert.ok(ciContent.includes('node bin/axion.js vibeguard') || ciContent.includes('npx axion vibeguard'), 'Debe auditar VibeGuard');
 console.log('  ✓ Invariante 4: Compuertas deterministas de CI verificadas.');
 
-console.log('\nPASS: AX-F-169 — Matriz Multi-SO y Pipeline de CI/CD verificados con 4/4 invariantes en verde.');
+// Invariante 5: La concurrencia es una puerta obligatoria, no un chequeo local
+assert.ok(ciContent.includes('concurrent_suite_check.js'), 'CI debe ejecutar dos suites simultáneas sobre el mismo checkout');
+console.log('  ✓ Invariante 5: Puerta de concurrencia en CI verificada.');
+
+console.log('\nPASS: AX-F-169 — Matriz Multi-SO y Pipeline de CI/CD verificados con 5/5 invariantes en verde.');

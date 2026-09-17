@@ -104,14 +104,39 @@ async function verificarConcurrencia() {
     }
   }
 
+  const veredicto = construirResumen(resultados);
+
   fs.rmSync(home, { recursive: true, force: true });
-  if (!ok) {
-    console.log('\nFAIL: una o más corridas concurrentes no terminaron 242/242 con resumen válido (ver logs arriba).');
-  } else {
-    console.log(`\nPASS: ${runs} corridas concurrentes 242/242 sobre el mismo checkout, sin colisiones.`);
-    if (!keepLogs) console.log('(los logs se conservan en scratch/concurrent-suite-check; ignorados por git)');
+  console.log(veredicto.mensaje);
+  if (veredicto.ok && !keepLogs) console.log('(los logs se conservan en scratch/concurrent-suite-check; ignorados por git)');
+  return veredicto.ok;
+}
+
+/**
+ * Mensaje final derivado del conteo REAL de cada corrida. Cualquier texto fijo con
+ * totales queda prohibido: si las corridas verdes no coinciden entre sí, es FAIL por
+ * evidencia inconsistente (no se puede sellar un total que nadie midió).
+ */
+function construirResumen(resultados) {
+  const verdes = resultados.filter((r) => r.resumen && r.resumen.paso && r.resumen.rojo === '0' && r.code === 0 && !r.timedOut);
+  if (verdes.length !== resultados.length) {
+    return {
+      ok: false,
+      mensaje: `\nFAIL: ${verdes.length}/${resultados.length} corridas concurrentes terminaron verdes y completas (ver logs arriba).`
+    };
   }
-  return ok;
+  const conteos = [...new Set(verdes.map((r) => r.resumen.verde))];
+  if (conteos.length !== 1) {
+    return {
+      ok: false,
+      mensaje: `\nFAIL: las corridas verdes reportan totales distintos (${conteos.join(', ')}); evidencia inconsistente.`
+    };
+  }
+  const total = conteos[0];
+  return {
+    ok: true,
+    mensaje: `\nPASS: ${resultados.length} corridas concurrentes verdes (${total}/${total} cada una) sobre el mismo checkout, sin colisiones.`
+  };
 }
 
 if (require.main === module) {
@@ -123,4 +148,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { verificarConcurrencia, lanzar, resumir };
+module.exports = { verificarConcurrencia, lanzar, resumir, construirResumen };
