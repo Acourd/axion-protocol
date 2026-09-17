@@ -17,6 +17,56 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+/**
+ * Apertura exclusiva (O_EXCL) tolerante a contención transitoria de Windows/AV.
+ * EEXIST es definitivo (otra instancia ganó); EPERM/EACCES se reintentan acotadamente.
+ */
+function abrirExclusivo(filePath, mode) {
+  for (let intento = 0; intento < 40; intento++) {
+    try {
+      return fs.openSync(filePath, 'wx', mode);
+    } catch (err) {
+      if (err.code !== 'EPERM' && err.code !== 'EACCES') throw err;
+      sleepSync(25);
+    }
+  }
+  return fs.openSync(filePath, 'wx', mode);
+}
+
+/**
+ * Lock de creación de claves: serializa a los creadores para que nunca convivan
+ * "priv sin pub" ni "pub sin priv" por interleaving entre procesos.
+ */
+function acquireKeygenLock(keysDir, timeoutMs = 10000, staleMs = 30000) {
+  const lock = path.join(keysDir, '.keygen.lock');
+  const deadline = Date.now() + timeoutMs;
+  while (true) {
+    try {
+      const fd = abrirExclusivo(lock, 0o600);
+      fs.closeSync(fd);
+      return lock;
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
+      try {
+        const stat = fs.statSync(lock);
+        if (Date.now() - stat.mtimeMs > staleMs) fs.unlinkSync(lock);
+      } catch (_) {
+        // el titular liberó entre stat y unlink
+      }
+      if (Date.now() >= deadline) {
+        const lockErr = new Error('No se pudo adquirir el lock de creación de claves.');
+        lockErr.code = 'ERR_KEYS_LOCKED';
+        throw lockErr;
+      }
+      sleepSync(25);
+    }
+  }
+}
+
 class AttestationKeyring {
   constructor(projectRoot) {
     this.root = path.resolve(projectRoot);
@@ -109,75 +159,101 @@ class AttestationKeyring {
         `Ya existe material de clave en ${this.keysDir}. La rotación debe ser una decisión explícita y auditada.`);
     }
 
-    const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519', {
-      publicKeyEncoding: { type: 'spki', format: 'pem' },
-      privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
-    });
-
-    let privFd = null;
-    let pubFd = null;
+    // Serializa creadores: sin lock, dos procesos pueden intercalar priv/pub y dejar
+    // un par inconsistente (priv=false, pub=true) aunque cada archivo use O_EXCL.
+    const lock = acquireKeygenLock(this.keysDir);
     try {
-      privFd = fs.openSync(privPath, 'wx', 0o600);
-      fs.writeSync(privFd, privateKey);
-      fs.closeSync(privFd);
-      privFd = null;
-      try {
-        fs.chmodSync(privPath, 0o600);
-      } catch (_) {
-        // Windows no implementa modos POSIX
-      }
-
-      pubFd = fs.openSync(pubPath, 'wx', 0o644);
-      fs.writeSync(pubFd, publicKey);
-      fs.closeSync(pubFd);
-      pubFd = null;
-    } catch (err) {
-      if (privFd !== null) { try { fs.closeSync(privFd); } catch (_) { /* fd ya cerrado */ } }
-      if (pubFd !== null) { try { fs.closeSync(pubFd); } catch (_) { /* fd ya cerrado */ } }
-      // Limpieza de material parcial para no dejar un par a medias.
-      try { if (fs.existsSync(privPath) && !fs.existsSync(pubPath)) fs.unlinkSync(privPath); } catch (_) { /* limpieza best-effort */ }
-      try { if (fs.existsSync(pubPath) && !fs.existsSync(privPath)) fs.unlinkSync(pubPath); } catch (_) { /* limpieza best-effort */ }
-      if (err.code === 'EEXIST') {
+      if (fs.existsSync(privPath) || fs.existsSync(pubPath)) {
         throw this.fail('ERR_KEYS_EXIST',
           `Otra instancia creó material de clave en ${this.keysDir}; no se rota en silencio.`);
       }
-      throw err;
-    }
 
-    return {
-      publicKeyPem: publicKey,
-      privateKeyPem: privateKey,
-      keyId: this.keyIdFor(publicKey),
-      created: true,
-      keysDir: this.keysDir
-    };
+      const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519', {
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+        privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
+      });
+
+      let privFd = null;
+      let pubFd = null;
+      try {
+        privFd = abrirExclusivo(privPath, 0o600);
+        fs.writeSync(privFd, privateKey);
+        fs.closeSync(privFd);
+        privFd = null;
+        try {
+          fs.chmodSync(privPath, 0o600);
+        } catch (_) {
+          // Windows no implementa modos POSIX
+        }
+
+        pubFd = abrirExclusivo(pubPath, 0o644);
+        fs.writeSync(pubFd, publicKey);
+        fs.closeSync(pubFd);
+        pubFd = null;
+      } catch (err) {
+        if (privFd !== null) { try { fs.closeSync(privFd); } catch (_) { /* fd ya cerrado */ } }
+        if (pubFd !== null) { try { fs.closeSync(pubFd); } catch (_) { /* fd ya cerrado */ } }
+        // Limpieza de material parcial (segura: el lock impide creadores concurrentes).
+        try { if (fs.existsSync(privPath) && !fs.existsSync(pubPath)) fs.unlinkSync(privPath); } catch (_) { /* limpieza best-effort */ }
+        try { if (fs.existsSync(pubPath) && !fs.existsSync(privPath)) fs.unlinkSync(pubPath); } catch (_) { /* limpieza best-effort */ }
+        if (err.code === 'EEXIST') {
+          throw this.fail('ERR_KEYS_EXIST',
+            `Otra instancia creó material de clave en ${this.keysDir}; no se rota en silencio.`);
+        }
+        throw err;
+      }
+
+      return {
+        publicKeyPem: publicKey,
+        privateKeyPem: privateKey,
+        keyId: this.keyIdFor(publicKey),
+        created: true,
+        keysDir: this.keysDir
+      };
+    } finally {
+      try {
+        fs.unlinkSync(lock);
+      } catch (_) {
+        // lock ya liberado
+      }
+    }
   }
 
   /**
-   * Idempotente: crear si no existe, validar si existe. Tolera carreras (ERR_KEYS_EXIST
-   * y ventanas de escritura parcial). No repara claves corruptas ni inseguras.
+   * Idempotente: crear si no existe, validar si existe. Tolera carreras y contención
+   * transitoria (EPERM/EACCES/ventanas de escritura parcial). No repara claves
+   * corruptas ni inseguras: en ese caso falla de inmediato.
    */
   ensureKeyPair() {
     const privPath = this.privKeyPath();
     const pubPath = this.pubKeyPath();
-    if (!fs.existsSync(privPath) && !fs.existsSync(pubPath)) {
-      try {
-        return this.generateKeyPair();
-      } catch (err) {
-        if (err.code !== 'ERR_KEYS_EXIST') throw err;
-        // Otra instancia ganó la carrera; se carga su par.
-      }
-    }
-
     let ultimoError = null;
+
     for (let intento = 0; intento < 40; intento++) {
+      const hasPriv = fs.existsSync(privPath);
+      const hasPub = fs.existsSync(pubPath);
+
+      if (!hasPriv && !hasPub) {
+        try {
+          return this.generateKeyPair();
+        } catch (err) {
+          const reintentable = err.code === 'ERR_KEYS_EXIST' || err.code === 'EPERM'
+            || err.code === 'EACCES' || err.code === 'ERR_KEYS_LOCKED';
+          if (!reintentable) throw err;
+          ultimoError = err;
+          sleepSync(50);
+          continue;
+        }
+      }
+
       try {
         const pair = this.loadKeyPair();
         return { ...pair, keyId: this.keyIdFor(pair.publicKeyPem), created: false, keysDir: this.keysDir };
       } catch (err) {
         ultimoError = err;
-        if (err.code !== 'ERR_KEYS_INCOMPLETE') throw err;
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+        // Ventana de carrera (priv sin pub) o archivos aún no visibles: reintentar.
+        if (err.code !== 'ERR_KEYS_INCOMPLETE' && err.code !== 'ERR_KEYS_MISSING') throw err;
+        sleepSync(50);
       }
     }
     throw ultimoError;

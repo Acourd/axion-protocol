@@ -1,7 +1,7 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:d04858aa-bfe0-7371-73ef-ab95515c4afc",
+  "serialNumber": "urn:uuid:f3d482b5-ec65-6233-609f-c2e9d7191c33",
   "version": 1,
   "metadata": {
     "timestamp": "1970-01-01T00:00:00.000Z",
@@ -9211,7 +9211,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "d63c88b9ae68b3ac84a2d670e1e4db9a3ce018fc508811413c01ae550712187b"
+          "content": "3a22c306f2ded88a9097c645374b12c65258955a3ad78d1976f797cbb267d4db"
         }
       ],
       "licenses": [
@@ -9224,7 +9224,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "2632"
+          "value": "2693"
         }
       ]
     },
@@ -9611,7 +9611,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "52f4de675a4376f6e45ab0b4e45daafba0b5152fdc0b50c2fc6262cb8ea18714"
+          "content": "2a645bc35258ef19de82e18af04097715df5c36b0cc428ecf306cde7ec6b4909"
         }
       ],
       "licenses": [
@@ -9624,7 +9624,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "6722"
+          "value": "9262"
         }
       ]
     },

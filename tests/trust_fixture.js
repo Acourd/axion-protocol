@@ -9,7 +9,8 @@ const { hashCanonical } = require('../tools/canonical_json.js');
 
 function createLowRiskFixture({ missionId, assertions, modifiedFiles = [] }) {
   const root = path.resolve(__dirname, '..');
-  const runtimeDir = path.join(root, '.phase-e', 'test-runtime', `legacy-${process.pid}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`);
+  const { crearSandbox } = require('../tools/test_sandbox.js');
+  const runtimeDir = path.join(crearSandbox('trust-fixture'), `legacy-${process.pid}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`);
   fs.mkdirSync(runtimeDir, { recursive: true });
   const auditorKeys = crypto.generateKeyPairSync('ed25519');
   const keyId = computePublicKeyId(auditorKeys.publicKey);
