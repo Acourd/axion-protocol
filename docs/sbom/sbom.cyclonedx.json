@@ -1,7 +1,7 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:e8ef6207-62ae-f140-59f2-12035fab44c6",
+  "serialNumber": "urn:uuid:1fede861-8d38-94e4-3895-a85344ceaaa4",
   "version": 1,
   "metadata": {
     "timestamp": "1970-01-01T00:00:00.000Z",
@@ -40,7 +40,7 @@
       },
       {
         "name": "axion:sbomIncludedCount",
-        "value": "538"
+        "value": "539"
       },
       {
         "name": "axion:sbomExcludedCount",
@@ -1786,7 +1786,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "10767b4d8fdaf2cb54c0da7a1b05a0ae297f8e80ee5699ac9bf6425c546701d8"
+          "content": "8f44879464a9b6a556e214524923d46084dc46eb8f4dc824550e5bbf909f3a33"
         }
       ],
       "licenses": [
@@ -1811,7 +1811,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "2fc7ba8cdc0f24cfff40b9d57d1178fc9a4c7b6f2fcc7252c3cb68b88f6fc0d3"
+          "content": "6577167208aca1b68b37f3209f201299caa1b5731f90b166ea611197b82ddae8"
         }
       ],
       "licenses": [
@@ -1836,7 +1836,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "5b0e38b4e48e843e15cc43539a7a52ceec255ca41139fef215c3157d770141e6"
+          "content": "a19f88a61dc7e66e4b2bbc22a5850c109d8f5cdd8ef5c55251aa75704a49325a"
         }
       ],
       "licenses": [
@@ -2611,7 +2611,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "9ff5121190a36de817e5608f7ee427ff806d935eabb89e9ec16c4f8b9027b84e"
+          "content": "c8335638e7228a5fa8a25b88c1b918b60b677d3a5e45ecfed77ad0070c10d79c"
         }
       ],
       "licenses": [
@@ -2636,7 +2636,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "e9354e2fb0fa8f277c08d9a8a42addae24043feb148f216446dfbf33d0f30ffb"
+          "content": "3a0fe0c1f04541c9ee4237ecd921aecfa13af146175f3e58b21d234f4b6e16dd"
         }
       ],
       "licenses": [
@@ -2661,7 +2661,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "578f8649a47b4fa6b6b88fab1efe9bb88f2b84a14bd0854dd115aef3e42c5090"
+          "content": "31d79778698e09fe36a05a637cb853221c2e81faa7f8b5a4e0173cb1e8bf62f9"
         }
       ],
       "licenses": [
@@ -6530,6 +6530,31 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tests/01_governance_preflight/ax_f_235_concurrent_check_count_precision.test.js",
+      "name": "tests/01_governance_preflight/ax_f_235_concurrent_check_count_precision.test.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "654a9533708acdf9d98ee7355b83423a5b9e859d6ccc11b2e0c32d3569e8f11c"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "4107"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tests/01_governance_preflight/c01_governance_chain.test.js",
       "name": "tests/01_governance_preflight/c01_governance_chain.test.js",
       "version": "1.4.0-beta.1",
@@ -9186,7 +9211,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "c3cd15f942b6f5179fe25301ad80666c121d9b04d7c551e9865032adaa1f1c06"
+          "content": "bda21e37f0669021ccfadc50d33b19d9357b30ba8c5230f5dc171b4c08d8168f"
         }
       ],
       "licenses": [
@@ -10186,7 +10211,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "9af0199e1a911c097d2266f69af608ca221f246c6c41837c1876d1ab972ad0e3"
+          "content": "bc7b5266c46e80bc881f8d461cf6ef2a02de8fb2746b85ee06042f07642d3f73"
         }
       ],
       "licenses": [
@@ -10199,7 +10224,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "5103"
+          "value": "6081"
         }
       ]
     },

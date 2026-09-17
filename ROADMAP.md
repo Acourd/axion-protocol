@@ -13,7 +13,7 @@
 - [x] **CI/CD Multiplataforma:** Integración continua en Node 22/24 sobre Ubuntu, macOS y Windows (`.github/workflows/ci.yml`).
 - [x] **Integraciones Incluidas:** Hooks de Antigravity (`.agents/hooks/`) y Claude Code bridge (`CLAUDE.md`, `.claude/commands/`).
 - [x] **Resiliencia de Estado y Retención:** Mitigación de colisiones de marcas temporales y retención FIFO en snapshots (`tools/context_shield.js`).
-- [x] **Suite de Verificación Determinista:** 243 suites deterministas (resultado verificado en CI) con cero dependencias externas (`tests/run_all.js`).
+- [x] **Suite de Verificación Determinista:** 244 suites deterministas (resultado verificado en CI) con cero dependencias externas (`tests/run_all.js`).
 
 ---
 

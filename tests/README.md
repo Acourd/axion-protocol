@@ -5,7 +5,7 @@ runner de terceros. Cada archivo se ejecuta con `node tests/<archivo>` y señala
 resultado mediante el código de salida. El runner de conjunto es `tests/run_all.js`
 (`npm test`), que reparte las suites entre workers concurrentes.
 
-## 5 dominios y 243 suites
+## 5 dominios y 244 suites
 
 | Dominio | Qué cubre |
 | :--- | :--- |
