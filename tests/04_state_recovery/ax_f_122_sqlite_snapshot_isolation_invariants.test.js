@@ -69,7 +69,7 @@ assert.strictEqual(integrity.isHealthy, true, 'La integridad de SQLite debe ser 
 console.log('✓ PRAGMA integrity_check verificado al 100%');
 
 // 4. Validar integración con SemanticMemoryGraph
-const graph = new SemanticMemoryGraph(ROOT, { inMemory: true });
+const graph = new SemanticMemoryGraph({ projectRoot: ROOT, inMemory: true });
 const graphTx = graph.withTransaction(() => {
   graph.upsertNode({
     id: 'decision_tx_01',
@@ -80,6 +80,9 @@ const graphTx = graph.withTransaction(() => {
   return { nodeInserted: true };
 });
 
+if (!graphTx.success) {
+  console.error('graphTx.error:', graphTx.error, '| savepoint:', graphTx.savepoint);
+}
 assert.strictEqual(graphTx.success, true, 'SemanticMemoryGraph debe ejecutar mutaciones transaccionales');
 const nodes = graph.queryNodes({ keyword: 'Transacción en Grafo' });
 assert.ok(nodes.length > 0, 'El nodo insertado en transacción debe existir en el grafo');

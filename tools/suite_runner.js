@@ -66,11 +66,26 @@ function recolectarTareas(testsDir, filtro = null) {
 function ejecutarTarea(task, timeoutMs) {
   return new Promise((resolve) => {
     const t0 = Date.now();
-    const child = spawn(process.execPath, [task.absPath], {
-      cwd: ROOT,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      detached: process.platform !== 'win32'
-    });
+    let child;
+    try {
+      child = spawn(process.execPath, [task.absPath], {
+        cwd: ROOT,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        detached: process.platform !== 'win32'
+      });
+    } catch (spawnErr) {
+      // Fallo síncrono de spawn (EAGAIN/ENOMEM/permisos): jamás debe derribar al runner.
+      resolve({
+        ...task,
+        executionTimeMs: Date.now() - t0,
+        output: '',
+        status: 'SPAWN_ERROR',
+        pass: false,
+        signal: null,
+        error: `spawn: ${spawnErr.message}`
+      });
+      return;
+    }
     let stdout = '';
     let stderr = '';
     let settle = null;
@@ -167,11 +182,11 @@ if (require.main === module) {
   runSuites({ testsDir: process.argv[2] })
     .then((r) => {
       console.log(JSON.stringify({ total: r.total, passed: r.passed, failed: r.failed, timeouts: r.timeouts }, null, 2));
-      process.exit(r.failed === 0 ? 0 : 1);
+      process.exitCode = r.failed === 0 ? 0 : 1;
     })
     .catch((err) => {
       console.error(err);
-      process.exit(1);
+      process.exitCode = 1;
     });
 }
 

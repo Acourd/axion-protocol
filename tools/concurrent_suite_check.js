@@ -29,6 +29,7 @@ function arg(name, fallback) {
 
 const runs = Number(arg('runs', '2'));
 const timeoutMs = Number(arg('timeout', String(30 * 60 * 1000)));
+const workers = Number(arg('workers', String(Math.max(2, Math.min(os.cpus().length, 4)))));
 const keepLogs = process.argv.includes('--keep');
 const home = fs.mkdtempSync(path.join(os.tmpdir(), 'axion-concurrent-home-'));
 const logsDir = path.join(ROOT, 'scratch', 'concurrent-suite-check');
@@ -37,7 +38,7 @@ const env = { ...process.env, USERPROFILE: home, HOME: home };
 
 function lanzar(run) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [path.join(ROOT, 'tests', 'run_all.js')], {
+    const child = spawn(process.execPath, [path.join(ROOT, 'tests', 'run_all.js'), '--concurrency', String(workers)], {
       cwd: ROOT,
       env,
       stdio: ['ignore', 'pipe', 'pipe']
@@ -50,11 +51,14 @@ function lanzar(run) {
     }, timeoutMs);
     child.stdout.on('data', (d) => { salida += d; });
     child.stderr.on('data', (d) => { salida += d; });
-    child.on('close', (code) => {
+    child.on('close', (code, signal) => {
       clearTimeout(timer);
-      const logFile = path.join(logsDir, `run-${run}.log`);
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const logFile = path.join(logsDir, `run-${run}-${stamp}.log`);
+      const stableFile = path.join(logsDir, `run-${run}.log`);
       fs.writeFileSync(logFile, salida, 'utf8');
-      resolve({ run, code, salida, timedOut, logFile });
+      fs.writeFileSync(stableFile, salida, 'utf8');
+      resolve({ run, code, signal, salida, timedOut, logFile });
     });
   });
 }
@@ -68,7 +72,7 @@ function resumir(r) {
 }
 
 async function verificarConcurrencia() {
-  console.log(`=== Suites concurrentes sobre el mismo checkout (runs=${runs}, timeout=${timeoutMs}ms) ===`);
+  console.log(`=== Suites concurrentes sobre el mismo checkout (runs=${runs}, workers/run=${workers}, timeout=${timeoutMs}ms) ===`);
   const resultados = await Promise.all(Array.from({ length: runs }, (_, i) => lanzar(i + 1)));
 
   let ok = true;
@@ -79,9 +83,9 @@ async function verificarConcurrencia() {
     if (r.code !== 0 || !valido) ok = false;
     let estado;
     if (r.timedOut) estado = `TIMEOUT (SIGKILL a los ${timeoutMs}ms; sin resumen válido)`;
-    else if (s.verde === null) estado = 'SIN RESUMEN VALIDO (la corrida no imprimió el resumen)';
+    else if (s.verde === null) estado = `SIN RESUMEN VALIDO (exit=${r.code}${r.signal ? `, señal=${r.signal}` : ''}; la corrida no imprimió el resumen)`;
     else estado = `${s.paso && s.rojo === '0' ? 'PASS' : 'FAIL'}`;
-    console.log(`  run ${r.run}: exit=${r.code} verde=${s.verde ?? '?'} rojo=${s.rojo ?? '?'} ${estado}`);
+    console.log(`  run ${r.run}: exit=${r.code}${r.signal ? ` señal=${r.signal}` : ''} verde=${s.verde ?? '?'} rojo=${s.rojo ?? '?'} ${estado}`);
     if (s.fallidas.length > 0) {
       console.log(`    suites en rojo (${s.fallidas.length}):`);
       for (const f of s.fallidas) console.log(`      - ${f}`);

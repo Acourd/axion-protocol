@@ -20,7 +20,13 @@ const crypto = require('crypto');
 const ROOT = path.resolve(__dirname, '..');
 
 class SemanticMemoryGraph {
-  constructor(options = {}) {
+  constructor(rootOrOptions = {}, extraOptions = {}) {
+    // Compatibilidad defensiva: `new SemanticMemoryGraph(root)` o
+    // `new SemanticMemoryGraph(root, { inMemory })` jamás deben caer en silencio
+    // al ROOT del módulo (dejaba el SQLite compartido del repo bloqueando entre corridas).
+    const options = typeof rootOrOptions === 'string'
+      ? { ...extraOptions, projectRoot: rootOrOptions }
+      : (rootOrOptions || {});
     this.root = path.resolve(options.projectRoot || ROOT);
     this.memoryDir = path.join(this.root, '.axion', 'memory');
     this.dbPath = options.dbPath || path.join(this.memoryDir, 'memory_graph.sqlite');

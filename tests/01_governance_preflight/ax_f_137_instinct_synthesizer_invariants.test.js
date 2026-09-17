@@ -80,8 +80,9 @@ try {
   assert.ok(block.includes('modificación de archivos de atestación'));
   console.log('✓ Formateo de bloque de prompt validado');
 
-  // 6. Validar integración con DriveEngine
-  const driveEngine = new DriveEngine(ROOT);
+  // 6. Validar integración con DriveEngine (en sandbox: el vault sobre el checkout
+  // compartido sufre lost-update entre corridas concurrentes)
+  const driveEngine = new DriveEngine(sandbox);
   const driveSyn = driveEngine.synthesizeProjectInstinct({
     domain: 'TESTING',
     trigger: 'ejecución de suite paralela',

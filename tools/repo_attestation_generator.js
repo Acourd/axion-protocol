@@ -13,6 +13,7 @@
  */
 
 const fs = require('fs');
+const { writeFileAtomicSync } = require('./atomic_write.js');
 const path = require('path');
 const crypto = require('crypto');
 const { pae, signEnvelope, verifyEnvelope } = require('./dsse.js');
@@ -141,7 +142,7 @@ class RepoAttestationGenerator {
     });
 
     const outPath = path.join(this.stateDir, 'repo-attestation.dsse.json');
-    fs.writeFileSync(outPath, JSON.stringify(envelope, null, 2), 'utf8');
+    writeFileAtomicSync(outPath, JSON.stringify(envelope, null, 2));
 
     return {
       envelope,

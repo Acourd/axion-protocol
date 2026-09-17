@@ -13,6 +13,7 @@
  */
 
 const fs = require('fs');
+const { writeFileAtomicSync } = require('./atomic_write.js');
 const path = require('path');
 const crypto = require('crypto');
 
@@ -151,7 +152,7 @@ class AttestationVisualizer {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const html = this.generateHTML();
-    fs.writeFileSync(dest, html, 'utf8');
+    writeFileAtomicSync(dest, html);
     return dest;
   }
 }

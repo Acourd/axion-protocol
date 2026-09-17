@@ -15,6 +15,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const MerkleCacheEngine = require('../../tools/merkle_cache_fast_forward.js');
+const { crearSandbox } = require('../../tools/test_sandbox.js');
 const PhaseEvidence = require('../../tools/phase_evidence.js');
 const AttestationKeyring = require('../../tools/attestation_keyring.js');
 const DriveEngine = require('../../tools/drive_engine.js');
@@ -22,7 +23,7 @@ const DriveEngine = require('../../tools/drive_engine.js');
 console.log('=== AX-F-109 Invariantes de Caché de Estado Merkle y Fast-Forward ===\n');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sandbox = path.join(ROOT, 'scratch', `test-merkle-sandbox-${Date.now()}`);
+const sandbox = crearSandbox('merkle-sandbox');
 const FASE_NAMES = PhaseEvidence.PHASE_NAMES;
 const PRODUCTORES = {
   testsPassed: 'tools/verify_changes.js',

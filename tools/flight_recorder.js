@@ -14,6 +14,7 @@
  */
 
 const fs = require('fs');
+const { writeFileAtomicSync } = require('./atomic_write.js');
 const path = require('path');
 const crypto = require('crypto');
 
@@ -62,7 +63,7 @@ class FlightRecorder {
       updatedAt: new Date().toISOString(),
       events: this.events
     };
-    fs.writeFileSync(this.sessionFile, JSON.stringify(payload, null, 2), 'utf8');
+    writeFileAtomicSync(this.sessionFile, JSON.stringify(payload, null, 2));
     return this.sessionFile;
   }
 

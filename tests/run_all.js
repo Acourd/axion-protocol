@@ -16,6 +16,10 @@
 const path = require('path');
 const { runSuites } = require('../tools/suite_runner.js');
 
+// Si el consumidor del pipe muere, escribir no debe derribar al runner (EPIPE).
+process.stdout.on('error', () => { /* consumidor ausente */ });
+process.stderr.on('error', () => { /* consumidor ausente */ });
+
 const args = process.argv.slice(2);
 function valorOpcion(nombre) {
   const i = args.indexOf(`--${nombre}`);
@@ -32,7 +36,8 @@ const concurrency = Number(valorOpcion('concurrency') || 0) || undefined;
     res = await runSuites({ domain: filtro, timeoutMs, concurrency });
   } catch (err) {
     console.error(`No se pudieron recolectar las suites: ${err.message}`);
-    process.exit(2);
+    process.exitCode = 2;
+    return;
   }
 
   const dominios = [...new Set(res.results.map((r) => r.dominio))];
@@ -70,9 +75,24 @@ const concurrency = Number(valorOpcion('concurrency') || 0) || undefined;
       if (salida) console.log(salida);
     }
     console.log(`\nFAIL: ${fallos.length} de ${res.total} suites en rojo.`);
-    process.exit(1);
+    terminarCon(1);
+    return;
   }
 
   console.log(`\nPASS: las ${res.total} suites en los 5 dominios de gobernanza están en verde.`);
-  process.exit(0);
-})();
+  terminarCon(0);
+})().catch((err) => {
+  console.error(`Error fatal del runner: ${err && err.stack ? err.stack : err}`);
+  terminarCon(2);
+});
+
+/**
+ * Cierre sin `process.exit()`: con stdout en pipe, exit() inmediato puede truncar
+ * la salida pendiente (el resumen jamás llega al consumidor). Se fija el código y
+ * se espera el drenaje de stdout para terminar de forma natural.
+ */
+function terminarCon(codigo) {
+  process.exitCode = codigo;
+  if (process.stdout.writableLength === 0) return;
+  process.stdout.write('', () => { /* drenaje completo */ });
+}

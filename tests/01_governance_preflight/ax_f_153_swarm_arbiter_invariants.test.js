@@ -84,8 +84,9 @@ try {
   assert.strictEqual(arbiter.listLocks().length, 0);
   console.log('✓ Conservación de bloqueos activos futuros (no expirados) validada');
 
-  // 7. Validar integración con DriveEngine
-  const driveEngine = new DriveEngine(ROOT);
+  // 7. Validar integración con DriveEngine (en sandbox: el lock sobre el checkout
+  // compartido interfiere entre corridas concurrentes del mismo recurso)
+  const driveEngine = new DriveEngine(sandbox);
   const driveLock = driveEngine.acquireSwarmLock('drive_subagent_1', 'scratch/dummy.txt', 60000);
   assert.strictEqual(driveLock.acquired, true);
   const driveList = driveEngine.listSwarmLocks();
