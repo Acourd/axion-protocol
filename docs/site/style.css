@@ -884,6 +884,22 @@ code, kbd, samp, pre {
   max-width: 580px;
 }
 
+.scope-banner {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 580px;
+  margin-bottom: 24px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--border-subtle);
+  background: var(--bg-surface-elevated);
+  border-radius: 0 6px 6px 0;
+}
+
+.scope-banner strong {
+  color: var(--text-primary);
+}
+
 .hero-summary code {
   font-family: var(--font-mono);
   font-size: 0.9em;

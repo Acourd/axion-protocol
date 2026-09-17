@@ -22,28 +22,128 @@ function sleepSync(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
+const O_NOFOLLOW = fs.constants.O_NOFOLLOW || 0;
+const FLAGS_EXCLUSIVO = fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | O_NOFOLLOW;
+
+function esSymlink(filePath) {
+  try {
+    return fs.lstatSync(filePath).isSymbolicLink();
+  } catch (_) {
+    return false;
+  }
+}
+
 /**
- * Apertura exclusiva (O_EXCL) tolerante a contención transitoria de Windows/AV.
- * EEXIST es definitivo (otra instancia ganó); EPERM/EACCES se reintentan acotadamente.
+ * Apertura exclusiva (O_EXCL + O_NOFOLLOW) tolerante a contención transitoria de
+ * Windows/AV. EEXIST es definitivo (otra instancia ganó, o hay un symlink plantado);
+ * EPERM/EACCES se reintentan acotadamente.
  */
 function abrirExclusivo(filePath, mode) {
   for (let intento = 0; intento < 40; intento++) {
     try {
-      return fs.openSync(filePath, 'wx', mode);
+      return fs.openSync(filePath, FLAGS_EXCLUSIVO, mode);
     } catch (err) {
       if (err.code !== 'EPERM' && err.code !== 'EACCES') throw err;
       sleepSync(25);
     }
   }
-  return fs.openSync(filePath, 'wx', mode);
+  return fs.openSync(filePath, FLAGS_EXCLUSIVO, mode);
 }
 
 class AttestationKeyring {
   constructor(projectRoot) {
     this.root = path.resolve(projectRoot);
     this.keysDir = path.join(this.root, '.axion', 'keys');
+    this.assertKeyZone();
     if (!fs.existsSync(this.keysDir)) {
       fs.mkdirSync(this.keysDir, { recursive: true, mode: 0o700 });
+    }
+    this.assertKeyZone();
+  }
+
+  /**
+   * La zona de claves completa debe estar contenida en el proyecto, sin symlinks en
+   * ningún componente y sin escritura para grupo/otros (POSIX). Un symlink plantado
+   * en .axion o .axion/keys desviaría el material privado fuera del proyecto: se
+   * rechaza de plano en vez de repararse en silencio.
+   */
+  assertKeyZone() {
+    let realRoot;
+    try {
+      realRoot = fs.realpathSync(this.root);
+    } catch (_) {
+      return; // El proyecto aún no existe: no hay zona que validar todavía.
+    }
+    const partes = path.relative(realRoot, this.keysDir).split(path.sep).filter(Boolean);
+    let actual = realRoot;
+    const candidatos = [realRoot];
+    for (const parte of partes) {
+      actual = path.join(actual, parte);
+      candidatos.push(actual);
+    }
+
+    for (const componente of candidatos) {
+      let st;
+      try {
+        st = fs.lstatSync(componente);
+      } catch (_) {
+        break; // El resto aún no existe: se creará bajo un ancestro ya validado.
+      }
+      if (st.isSymbolicLink()) {
+        throw this.fail('ERR_KEYS_SYMLINK',
+          `Componente de la zona de claves es un symlink (${componente}). El material de clave jamás sigue enlaces.`);
+      }
+      if (!st.isDirectory()) {
+        throw this.fail('ERR_KEYS_INVALID',
+          `Componente de la zona de claves no es un directorio (${componente}).`);
+      }
+      if (process.platform !== 'win32') {
+        const mode = st.mode & 0o777;
+        if ((mode & 0o022) !== 0) {
+          throw this.fail('ERR_KEYS_INSECURE_PERMISSIONS',
+            `Directorio de la zona de claves escribible por grupo/otros (${mode.toString(8)}): ${componente}. Se exige sin bits de escritura ajenos; no se repara en silencio.`);
+        }
+        if (typeof process.getuid === 'function' && st.uid !== process.getuid()) {
+          throw this.fail('ERR_KEYS_FOREIGN_OWNER',
+            `Directorio de la zona de claves con dueño distinto al proceso (${componente}).`);
+        }
+      }
+    }
+
+    if (fs.existsSync(this.keysDir)) {
+      const realKeys = fs.realpathSync(this.keysDir);
+      const rel = path.relative(realRoot, realKeys);
+      if (rel.startsWith('..') || path.isAbsolute(rel)) {
+        throw this.fail('ERR_KEYS_ESCAPE',
+          `La zona de claves resuelve fuera del proyecto (${this.keysDir} -> ${realKeys}).`);
+      }
+    }
+  }
+
+  /** Lectura por descriptor con O_NOFOLLOW: sin ventana entre comprobación y lectura. */
+  leerClaveSegura(filePath) {
+    if (esSymlink(filePath)) {
+      throw this.fail('ERR_KEYS_SYMLINK', `Archivo de clave es un symlink (${filePath}). No se sigue.`);
+    }
+    let fd = null;
+    try {
+      try {
+        fd = fs.openSync(filePath, fs.constants.O_RDONLY | O_NOFOLLOW);
+      } catch (openErr) {
+        if (openErr.code === 'ELOOP') {
+          throw this.fail('ERR_KEYS_SYMLINK', `Archivo de clave es un symlink (${filePath}). No se sigue.`);
+        }
+        throw openErr;
+      }
+      const st = fs.fstatSync(fd);
+      if (!st.isFile()) {
+        throw this.fail('ERR_KEYS_INVALID', `Archivo de clave no es un archivo regular (${filePath}).`);
+      }
+      return fs.readFileSync(fd, 'utf8');
+    } finally {
+      if (fd !== null) {
+        try { fs.closeSync(fd); } catch (_) { /* descriptor ya cerrado */ }
+      }
     }
   }
 
@@ -71,7 +171,7 @@ class AttestationKeyring {
    */
   assertSecurePermissions(keyPath) {
     if (process.platform === 'win32') return;
-    const mode = fs.statSync(keyPath).mode & 0o777;
+    const mode = fs.lstatSync(keyPath).mode & 0o777;
     if ((mode & 0o077) !== 0) {
       throw this.fail('ERR_KEYS_INSECURE_PERMISSIONS',
         `Clave privada ${keyPath} con permisos inseguros (${mode.toString(8)}). Se exige 0600; no se repara ni se rota en silencio.`);
@@ -85,6 +185,15 @@ class AttestationKeyring {
   loadKeyPair() {
     const privPath = this.privKeyPath();
     const pubPath = this.pubKeyPath();
+    this.assertKeyZone();
+
+    const privEsEnlace = esSymlink(privPath);
+    const pubEsEnlace = esSymlink(pubPath);
+    if (privEsEnlace || pubEsEnlace) {
+      throw this.fail('ERR_KEYS_SYMLINK',
+        `La zona de claves contiene symlinks (priv=${privEsEnlace}, pub=${pubEsEnlace}); no se lee a través de enlaces.`);
+    }
+
     const hasPriv = fs.existsSync(privPath);
     const hasPub = fs.existsSync(pubPath);
 
@@ -97,8 +206,8 @@ class AttestationKeyring {
         `Par de claves incompleto en ${this.keysDir} (priv=${hasPriv}, pub=${hasPub}). No se rota ni se completa en silencio.`);
     }
 
-    const privateKeyPem = fs.readFileSync(privPath, 'utf8');
-    const publicKeyPem = fs.readFileSync(pubPath, 'utf8');
+    const privateKeyPem = this.leerClaveSegura(privPath);
+    const publicKeyPem = this.leerClaveSegura(pubPath);
 
     let derivedPublicPem;
     try {
@@ -124,10 +233,15 @@ class AttestationKeyring {
   generateKeyPair() {
     const privPath = this.privKeyPath();
     const pubPath = this.pubKeyPath();
+    this.assertKeyZone();
 
     if (fs.existsSync(privPath) || fs.existsSync(pubPath)) {
       throw this.fail('ERR_KEYS_EXIST',
         `Ya existe material de clave en ${this.keysDir}. La rotación debe ser una decisión explícita y auditada.`);
+    }
+    if (esSymlink(privPath) || esSymlink(pubPath)) {
+      throw this.fail('ERR_KEYS_SYMLINK',
+        `La zona de claves contiene symlinks (priv=${esSymlink(privPath)}, pub=${esSymlink(pubPath)}); no se escribe material a través de enlaces.`);
     }
 
     // Serializa creadores con lock de propiedad verificable: sin esto, dos procesos
@@ -141,6 +255,10 @@ class AttestationKeyring {
       if (fs.existsSync(privPath) || fs.existsSync(pubPath)) {
         throw this.fail('ERR_KEYS_EXIST',
           `Otra instancia creó material de clave en ${this.keysDir}; no se rota en silencio.`);
+      }
+      if (esSymlink(privPath) || esSymlink(pubPath)) {
+        throw this.fail('ERR_KEYS_SYMLINK',
+          `La zona de claves contiene symlinks (priv=${esSymlink(privPath)}, pub=${esSymlink(pubPath)}); no se escribe material a través de enlaces.`);
       }
 
       const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519', {

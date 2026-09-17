@@ -1,6 +1,8 @@
 # Axion Protocol v2.0 — Swarm Architecture Specification
 
-> **Deterministic Multi-Agent Coordination, Granular AST Locking, and Byzantine Quorum Consensus.**
+> **Scope:** a **local simulation** layer. Not a production engine; it provides no process isolation and does not replace security controls. AST arbitration and BFT consensus operate over simulated agents within a single trust domain.
+
+> **Deterministic Multi-Agent Coordination, Granular AST Locking, and Byzantine Quorum Consensus (simulated).**
 
 ---
 

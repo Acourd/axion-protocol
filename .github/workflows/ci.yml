@@ -14,8 +14,8 @@ permissions:
 # producto funcione. La v1.2.0-beta.0 tenía 38/38 en verde con el hook PreToolUse muerto,
 # sin ningún slash command en Claude Code y con un tarball que no llevaba la gobernanza.
 # Ninguna prueba unitaria podía verlo, porque el defecto vivía entre las piezas.
-# Por eso aquí hay tres trabajos y no uno: las suites, las puertas, y el producto
-# instalado desde el paquete real que se publicaría.
+# Por eso aquí hay varios trabajos y no uno: las suites, las puertas, la concurrencia,
+# y el producto instalado desde el paquete real que se publicaría.
 
 jobs:
   suites:
@@ -240,3 +240,19 @@ jobs:
       # se exigen umbrales explícitos por archivo crítico (tools/coverage_thresholds.json).
       - name: Cobertura nativa con umbrales
         run: node tools/coverage_report.js
+
+  concurrencia:
+    name: Concurrencia sobre el mismo checkout
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24.x
+
+      # Dos suites completas SIMULTÁNEAS sobre el mismo checkout: las colisiones de
+      # estado compartido (sandboxes, keyring, ledger, atestaciones, escrituras) deben
+      # ser cero. Puerta obligatoria: antes solo se reproducía de forma local.
+      # La salida completa de ambas corridas queda en scratch/concurrent-suite-check/.
+      - name: Dos suites simultáneas con resumen completo
+        run: node tools/concurrent_suite_check.js --runs 2 --workers 4
