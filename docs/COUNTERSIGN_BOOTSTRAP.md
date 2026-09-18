@@ -51,6 +51,20 @@ Raiz unica permitida: `<target>/.axion/state/countersign-consumption/`.
 V2 no escribe estado de consumo: su unica escritura es la creacion de sus reportes.
 Ninguna otra ruta del proyecto se modifica.
 
+## Contencion de rutas
+
+Cada componente de la ruta de consumo (`.axion`, `.axion/state`,
+`.axion/state/countersign-consumption`, `reports/`) y cada archivo existente se
+verifica con `lstat` + `realpath`: se rechazan symlinks, junctions, rutas escapadas y
+hardlinks (`nlink > 1`). Los reportes se escriben con archivo temporal exclusivo y
+renombre dentro de la raiz validada. Los enlaces colgantes se detectan con `lstat`
+(no con `existsSync`), y las cadenas de `.axion` usadas para CRL y HALT se validan
+tambien antes de leer.
+
+Limite residual declarado: en Windows no existe `O_NOFOLLOW` y las operaciones de
+filesystem no son atomicas frente a una carrera de reemplazo entre la verificacion y
+la apertura; la contencion es best-effort. En POSIX se usa `O_NOFOLLOW` al abrir.
+
 ## Estados
 
 | Estado | Significado |

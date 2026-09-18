@@ -72,6 +72,128 @@ const USO = [
   'Codigos de salida: 0 valido, 1 bloqueado o invalido, 2 uso incorrecto.',
 ].join('\n');
 
+function containmentError(reason) {
+  const error = new Error(`Ruta no contenida: ${reason}`);
+  error.code = 'PATH_NOT_CONTAINED';
+  error.reason = reason;
+  return error;
+}
+
+function canonicalRootOf(targetRoot) {
+  const resolved = path.resolve(targetRoot);
+  try {
+    if (fs.existsSync(resolved)) return fs.realpathSync(resolved);
+  } catch (_) {
+    return resolved;
+  }
+  return resolved;
+}
+
+function pathKey(value) {
+  return process.platform === 'win32' ? value.toLowerCase() : value;
+}
+
+function lstatOrNull(file) {
+  try {
+    return fs.lstatSync(file);
+  } catch (_) {
+    return null;
+  }
+}
+
+function assertContained(targetRoot, absolutePath) {
+  const root = canonicalRootOf(targetRoot);
+  const resolved = path.resolve(absolutePath);
+  const rel = path.relative(root, resolved);
+  if (rel === '') return;
+  if (rel.startsWith('..') || path.isAbsolute(rel)) throw containmentError('ESCAPED_PATH');
+  let current = root;
+  for (const part of rel.split(path.sep)) {
+    current = path.join(current, part);
+    let stats;
+    try {
+      stats = fs.lstatSync(current);
+    } catch (_) {
+      break;
+    }
+    if (stats.isSymbolicLink()) throw containmentError('SYMLINK_REJECTED');
+    let real;
+    try {
+      real = fs.realpathSync(current);
+    } catch (_) {
+      throw containmentError('REALPATH_UNAVAILABLE');
+    }
+    if (pathKey(real) !== pathKey(current)) throw containmentError('SYMLINK_ESCAPE');
+    if (stats.isFile() && stats.nlink > 1) throw containmentError('HARDLINK_REJECTED');
+  }
+}
+
+function ensureContainedDirectory(targetRoot, parts) {
+  const root = canonicalRootOf(targetRoot);
+  if (!fs.existsSync(root)) throw containmentError('TARGET_ROOT_MISSING');
+  let current = root;
+  for (const part of parts) {
+    const next = path.join(current, part);
+    if (lstatOrNull(next) === null) fs.mkdirSync(next, { mode: 0o700 });
+    assertContained(targetRoot, next);
+    const stats = fs.lstatSync(next);
+    if (!stats.isDirectory()) throw containmentError('NOT_A_DIRECTORY');
+    current = next;
+  }
+  return current;
+}
+
+function withNoFollow(flags) {
+  if (process.platform !== 'win32' && fs.constants.O_NOFOLLOW) return flags | fs.constants.O_NOFOLLOW;
+  return flags;
+}
+
+function safeReadText(targetRoot, file) {
+  if (lstatOrNull(file) === null) return null;
+  assertContained(targetRoot, file);
+  return fs.readFileSync(file, 'utf8');
+}
+
+function safeAppendText(targetRoot, file, text) {
+  assertContained(targetRoot, file);
+  const flags = withNoFollow(fs.constants.O_APPEND | fs.constants.O_CREAT | fs.constants.O_WRONLY);
+  const descriptor = fs.openSync(file, flags, 0o600);
+  try {
+    fs.writeSync(descriptor, text);
+    fs.fsyncSync(descriptor);
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+
+function safeCreateExclusive(targetRoot, file, text) {
+  let descriptor;
+  try {
+    assertContained(targetRoot, file);
+    descriptor = fs.openSync(file, withNoFollow(fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY), 0o600);
+  } catch (error) {
+    if (error && error.code === 'EEXIST') return { ok: false, code: 'EXISTS' };
+    if (error && error.code === 'PATH_NOT_CONTAINED') throw error;
+    return { ok: false, code: 'UNAVAILABLE', error };
+  }
+  try {
+    fs.writeSync(descriptor, text);
+    fs.fsyncSync(descriptor);
+    fs.closeSync(descriptor);
+    descriptor = undefined;
+    return { ok: true };
+  } catch (error) {
+    if (descriptor !== undefined) {
+      try { fs.closeSync(descriptor); } catch (_) { /* descriptor ya cerrado */ }
+    }
+    return { ok: false, code: 'WRITE_FAILED', error };
+  }
+}
+
+function containmentResult(status, error) {
+  return { status, reason: 'PATH_NOT_CONTAINED', detail: error && error.reason };
+}
+
 function stateDir(targetRoot) {
   return path.join(targetRoot, ...STATE_PARTS);
 }
@@ -137,7 +259,9 @@ function readRegistry(registryPath) {
 
 function readCrl(targetRoot) {
   const file = path.join(targetRoot, '.axion', 'revocations', 'crl.json');
-  if (!fs.existsSync(file)) return { state: 'ABSENT', sha256: null, revokedKeyIds: [] };
+  assertContained(targetRoot, path.dirname(file));
+  if (lstatOrNull(file) === null) return { state: 'ABSENT', sha256: null, revokedKeyIds: [] };
+  assertContained(targetRoot, file);
   let parsed;
   try {
     parsed = readJsonStrict(file);
@@ -154,6 +278,9 @@ function readCrl(targetRoot) {
 }
 
 function readHalt(targetRoot) {
+  const haltFile = path.join(targetRoot, '.axion', 'HALT');
+  assertContained(targetRoot, path.dirname(haltFile));
+  if (lstatOrNull(haltFile) !== null) assertContained(targetRoot, haltFile);
   const result = readHaltState({ haltDir: path.join(targetRoot, '.axion') });
   return result.status;
 }
@@ -251,16 +378,7 @@ function resolveAuthority(authorityRegistryPath, keyId, actorId) {
   return { ok: true, authority, registry: loaded.registry, sha256: hashCanonical(loaded.registry) };
 }
 
-function readFileIfExists(file) {
-  try {
-    return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
-  } catch (_) {
-    return null;
-  }
-}
-
-function parseLogStrict(text, schema, hashField) {
-  void hashField;
+function parseLogStrict(text, schema) {
   if (text === null || text.trim() === '') return { ok: true, entries: [] };
   const lines = text.split('\n').filter((line) => line.trim() !== '');
   const entries = [];
@@ -314,6 +432,7 @@ function verifyDispositionChain(entries) {
 
 function readState(targetRoot, options = {}) {
   const dir = stateDir(targetRoot);
+  assertContained(targetRoot, dir);
   const names = fs.existsSync(dir) ? fs.readdirSync(dir) : [];
   const markerNames = names.filter((n) => MARKER_NAME_RE.test(n)).sort();
   const dispMarkerNames = names.filter((n) => DISP_MARKER_NAME_RE.test(n)).sort();
@@ -321,8 +440,9 @@ function readState(targetRoot, options = {}) {
   for (const name of markerNames) {
     let parsed;
     try {
-      parsed = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8'));
-    } catch (_) {
+      parsed = JSON.parse(safeReadText(targetRoot, path.join(dir, name)));
+    } catch (error) {
+      if (error && error.code === 'PATH_NOT_CONTAINED') throw error;
       return { ok: false, reason: 'PARTIAL_CONSUMPTION_MARKER_UNWRITTEN' };
     }
     if (!sameKeys(parsed, ['baselineDigest', 'clockHighWaterMark', 'consumedAt', 'keyId', 'nonce', 'operationId', 'registryId', 'registryRevision', 'schema', 'statementSha256'])) {
@@ -338,8 +458,9 @@ function readState(targetRoot, options = {}) {
   for (const name of dispMarkerNames) {
     let parsed;
     try {
-      parsed = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8'));
-    } catch (_) {
+      parsed = JSON.parse(safeReadText(targetRoot, path.join(dir, name)));
+    } catch (error) {
+      if (error && error.code === 'PATH_NOT_CONTAINED') throw error;
       return { ok: false, reason: 'PARTIAL_DISPOSITION_MARKER_UNWRITTEN' };
     }
     if (!sameKeys(parsed, ['envelopeSha256', 'schema', 'statement']) || parsed.schema !== SCHEMA_DISP_MARKER) {
@@ -348,12 +469,12 @@ function readState(targetRoot, options = {}) {
     dispMarkers.push({ name, content: parsed });
   }
 
-  const consumptionRead = parseLogStrict(readFileIfExists(consumptionLogPath(targetRoot)), SCHEMA_CONSUMPTION, 'entryHash');
+  const consumptionRead = parseLogStrict(safeReadText(targetRoot, consumptionLogPath(targetRoot)), SCHEMA_CONSUMPTION);
   if (!consumptionRead.ok) return { ok: false, reason: 'CONSUMPTION_CHAIN_INVALID' };
   const chain = verifyConsumptionChain(consumptionRead.entries);
   if (!chain.ok) return { ok: false, reason: chain.reason };
 
-  const dispositionRead = parseLogStrict(readFileIfExists(dispositionLogPath(targetRoot)), SCHEMA_DISPOSITION, 'entryHash');
+  const dispositionRead = parseLogStrict(safeReadText(targetRoot, dispositionLogPath(targetRoot)), SCHEMA_DISPOSITION);
   if (!dispositionRead.ok) return { ok: false, reason: 'DISPOSITION_CHAIN_INVALID' };
   const dispositionChain = verifyDispositionChain(dispositionRead.entries);
   if (!dispositionChain.ok) return { ok: false, reason: dispositionChain.reason };
@@ -573,14 +694,26 @@ function verifyCountersignature({ envelope, registryPath, authorityRegistryPath,
   if (!verifyStatementSignature(parsed.statement, parsed.payloadBytes, parsed.signatureBytes, publicKey)) {
     return { status: STATUS.COUNTERSIGN_INVALID_SIGNATURE, reason: 'SIGNATURE_INVALID' };
   }
-  const crl = readCrl(targetRoot);
+  let crl;
+  try {
+    crl = readCrl(targetRoot);
+  } catch (error) {
+    if (error && error.code === 'PATH_NOT_CONTAINED') return containmentResult(STATUS.COUNTERSIGN_STATE_UNAVAILABLE, error);
+    throw error;
+  }
   if (crl.state === 'UNREADABLE') {
     return { status: STATUS.COUNTERSIGN_STATE_UNAVAILABLE, reason: 'CRL_UNREADABLE' };
   }
   if (crl.revokedKeyIds.includes(parsed.statement.signer.keyId)) {
     return { status: STATUS.COUNTERSIGN_REVOKED, reason: 'CRL_REVOKED' };
   }
-  const haltState = readHalt(targetRoot);
+  let haltState;
+  try {
+    haltState = readHalt(targetRoot);
+  } catch (error) {
+    if (error && error.code === 'PATH_NOT_CONTAINED') return containmentResult(STATUS.COUNTERSIGN_STATE_UNAVAILABLE, error);
+    throw error;
+  }
   if (haltState !== HALT_STATUS.RUNNING) {
     return { status: STATUS.COUNTERSIGN_HALTED, reason: haltState };
   }
@@ -605,49 +738,22 @@ function verifyCountersignature({ envelope, registryPath, authorityRegistryPath,
   };
 }
 
-function writeMarkerExclusive(file, content) {
-  let descriptor;
-  try {
-    descriptor = fs.openSync(file, 'wx', 0o600);
-  } catch (error) {
-    if (error && error.code === 'EEXIST') return { ok: false, code: 'EXISTS' };
-    return { ok: false, code: 'UNAVAILABLE', error };
-  }
-  try {
-    fs.writeFileSync(descriptor, `${canonicalize(content)}\n`, 'utf8');
-    fs.fsyncSync(descriptor);
-    fs.closeSync(descriptor);
-    descriptor = undefined;
-    return { ok: true };
-  } catch (error) {
-    if (descriptor !== undefined) {
-      try { fs.closeSync(descriptor); } catch (_) { /* descriptor ya cerrado */ }
-    }
-    return { ok: false, code: 'WRITE_FAILED', error };
-  }
+function writeMarkerExclusive(targetRoot, file, content) {
+  return safeCreateExclusive(targetRoot, file, `${canonicalize(content)}\n`);
 }
 
-function appendChainedEntry(file, payload) {
-  const previous = fs.existsSync(file)
-    ? parseLogStrict(fs.readFileSync(file, 'utf8'), payload.schema, 'entryHash')
-    : { ok: true, entries: [] };
+function appendChainedEntry(targetRoot, file, payload) {
+  const text = safeReadText(targetRoot, file);
+  const previous = text === null ? { ok: true, entries: [] } : parseLogStrict(text, payload.schema);
   if (!previous.ok) return { ok: false, code: 'CHAIN_INVALID' };
   const seq = previous.entries.length + 1;
   const prevEntryHash = previous.entries.length > 0 ? previous.entries[previous.entries.length - 1].entryHash : GENESIS_HASH;
   const entry = { ...payload, seq, prevEntryHash };
   entry.entryHash = hashCanonical(entry);
-  let descriptor;
   try {
-    descriptor = fs.openSync(file, 'a', 0o600);
-    fs.writeFileSync(descriptor, `${canonicalize(entry)}\n`, 'utf8');
-    fs.fsyncSync(descriptor);
-    fs.closeSync(descriptor);
-    descriptor = undefined;
+    safeAppendText(targetRoot, file, `${canonicalize(entry)}\n`);
     return { ok: true, entry };
   } catch (error) {
-    if (descriptor !== undefined) {
-      try { fs.closeSync(descriptor); } catch (_) { /* descriptor ya cerrado */ }
-    }
     return { ok: false, code: 'APPEND_FAILED', error };
   }
 }
@@ -667,7 +773,13 @@ function maybeFault(options, point) {
 function readPreReport(targetRoot, operationId, options) {
   const explicit = options && options.preReportPath;
   const file = explicit || path.join(reportsDir(targetRoot), `v2-pre-${operationId}.json`);
-  if (!fs.existsSync(file)) return { ok: false, reason: 'V2_PRE_REPORT_MISSING', file };
+  if (lstatOrNull(file) === null) return { ok: false, reason: 'V2_PRE_REPORT_MISSING', file };
+  try {
+    assertContained(targetRoot, file);
+  } catch (error) {
+    if (error && error.code === 'PATH_NOT_CONTAINED') return { ok: false, reason: 'PATH_NOT_CONTAINED', file };
+    throw error;
+  }
   let parsed;
   try {
     parsed = readJsonStrict(file);
@@ -691,8 +803,14 @@ function consumeCountersignature({ targetRoot, envelope, registryPath, authority
   const verification = verifyCountersignature({ envelope, registryPath, authorityRegistryPath, targetRoot, options });
   if (verification.status !== STATUS.COUNTERSIGN_VALID) return verification;
   const operationId = verification.operationId;
-  const dir = stateDir(targetRoot);
-  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  let dir;
+  try {
+    dir = ensureContainedDirectory(targetRoot, STATE_PARTS);
+  } catch (error) {
+    return error && error.code === 'PATH_NOT_CONTAINED'
+      ? containmentResult(STATUS.COUNTERSIGN_STATE_UNAVAILABLE, error)
+      : { status: STATUS.COUNTERSIGN_STATE_UNAVAILABLE, reason: 'STATE_DIRECTORY_FAILED' };
+  }
   let lock;
   try {
     lock = FileLock.acquire(lockPath(targetRoot), {
@@ -778,7 +896,7 @@ function consumeCountersignature({ targetRoot, envelope, registryPath, authority
       consumedAt,
       clockHighWaterMark: highWaterMark
     };
-    const markerResult = writeMarkerExclusive(markerPath, markerContent);
+    const markerResult = writeMarkerExclusive(targetRoot, markerPath, markerContent);
     if (!markerResult.ok) {
       return markerResult.code === 'EXISTS'
         ? { status: STATUS.COUNTERSIGN_REPLAYED, reason: 'MARKER_RACE' }
@@ -787,18 +905,24 @@ function consumeCountersignature({ targetRoot, envelope, registryPath, authority
     maybeFault(options, 'after-marker-write');
     maybeFault(options, 'after-marker-write-kill');
     maybeFault(options, 'before-log-open');
-    const appendResult = appendChainedEntry(consumptionLogPath(targetRoot), {
-      schema: SCHEMA_CONSUMPTION,
-      operationId,
-      baselineDigest,
-      registryId: verification.statement.registryId,
-      registryRevision: verification.statement.registryRevision,
-      keyId: verification.keyId,
-      nonce: verification.statement.nonce,
-      statementSha256: verification.statementSha256,
-      consumedAt,
-      clockHighWaterMark: highWaterMark
-    });
+    let appendResult;
+    try {
+      appendResult = appendChainedEntry(targetRoot, consumptionLogPath(targetRoot), {
+        schema: SCHEMA_CONSUMPTION,
+        operationId,
+        baselineDigest,
+        registryId: verification.statement.registryId,
+        registryRevision: verification.statement.registryRevision,
+        keyId: verification.keyId,
+        nonce: verification.statement.nonce,
+        statementSha256: verification.statementSha256,
+        consumedAt,
+        clockHighWaterMark: highWaterMark
+      });
+    } catch (error) {
+      if (error && error.code === 'PATH_NOT_CONTAINED') return containmentResult(STATUS.COUNTERSIGN_STATE_UNAVAILABLE, error);
+      throw error;
+    }
     if (!appendResult.ok) {
       return { status: STATUS.COUNTERSIGN_STATE_UNAVAILABLE, reason: 'CONSUMPTION_LOG_APPEND_FAILED' };
     }
@@ -818,6 +942,9 @@ function consumeCountersignature({ targetRoot, envelope, registryPath, authority
       highWaterMark,
       report: preReport.file
     };
+  } catch (error) {
+    if (error && error.code === 'PATH_NOT_CONTAINED') return containmentResult(STATUS.COUNTERSIGN_STATE_UNAVAILABLE, error);
+    throw error;
   } finally {
     FileLock.release(lock.lockFile, lock.token);
   }
@@ -914,23 +1041,30 @@ function applyDisposition({ targetRoot, envelope, registryPath, authorityRegistr
   }
   const authorityResult = resolveAuthority(authorityRegistryPath, parsed.statement.signer.keyId, parsed.statement.signer.actorId);
   if (!authorityResult.ok) {
-    return {
-      status: authorityResult.reason === 'REVOKED_AUTHORITY' || authorityResult.reason === 'COMPROMISED_KEY'
-        ? STATUS.DISPOSITION_UNKNOWN_AUTHORITY
-        : STATUS.DISPOSITION_UNKNOWN_AUTHORITY,
-      reason: authorityResult.reason
-    };
+    return { status: STATUS.DISPOSITION_UNKNOWN_AUTHORITY, reason: authorityResult.reason };
   }
   const publicKey = crypto.createPublicKey(authorityResult.authority.publicKeyPem);
   if (!verifyDispositionSignature(parsed.statement, parsed.payloadBytes, parsed.signatureBytes, publicKey)) {
     return { status: STATUS.DISPOSITION_INVALID_SIGNATURE, reason: 'SIGNATURE_INVALID' };
   }
-  const haltState = readHalt(targetRoot);
+  let haltState;
+  try {
+    haltState = readHalt(targetRoot);
+  } catch (error) {
+    if (error && error.code === 'PATH_NOT_CONTAINED') return containmentResult(STATUS.DISPOSITION_UNAVAILABLE, error);
+    throw error;
+  }
   if (haltState !== HALT_STATUS.RUNNING) {
     return { status: STATUS.DISPOSITION_UNAVAILABLE, reason: haltState };
   }
-  const dir = stateDir(targetRoot);
-  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  let dir;
+  try {
+    dir = ensureContainedDirectory(targetRoot, STATE_PARTS);
+  } catch (error) {
+    return error && error.code === 'PATH_NOT_CONTAINED'
+      ? containmentResult(STATUS.DISPOSITION_UNAVAILABLE, error)
+      : { status: STATUS.DISPOSITION_UNAVAILABLE, reason: 'STATE_DIRECTORY_FAILED' };
+  }
   let lock;
   try {
     lock = FileLock.acquire(lockPath(targetRoot), {
@@ -977,7 +1111,7 @@ function applyDisposition({ targetRoot, envelope, registryPath, authorityRegistr
       statement: parsed.statement,
       envelopeSha256: hashCanonical(envelope)
     };
-    const markerResult = writeMarkerExclusive(dispMarkerPath, markerContent);
+    const markerResult = writeMarkerExclusive(targetRoot, dispMarkerPath, markerContent);
     if (!markerResult.ok) {
       return markerResult.code === 'EXISTS'
         ? { status: STATUS.DISPOSITION_REPLAYED, reason: 'MARKER_RACE' }
@@ -985,7 +1119,7 @@ function applyDisposition({ targetRoot, envelope, registryPath, authorityRegistr
     }
     if (parsed.statement.action === 'REPAIR') {
       const marker = state.markers.find((m) => m.name === `${parsed.statement.markerFileNameHash}.used`);
-      const appendResult = appendChainedEntry(consumptionLogPath(targetRoot), {
+      const appendResult = appendChainedEntry(targetRoot, consumptionLogPath(targetRoot), {
         schema: SCHEMA_CONSUMPTION,
         operationId: marker.content.operationId,
         baselineDigest: marker.content.baselineDigest,
@@ -1001,7 +1135,7 @@ function applyDisposition({ targetRoot, envelope, registryPath, authorityRegistr
         return { status: STATUS.DISPOSITION_UNAVAILABLE, reason: 'REPAIR_APPEND_FAILED' };
       }
     }
-    const dispositionAppend = appendChainedEntry(dispositionLogPath(targetRoot), {
+    const dispositionAppend = appendChainedEntry(targetRoot, dispositionLogPath(targetRoot), {
       schema: SCHEMA_DISPOSITION,
       envelope,
       envelopeSha256: hashCanonical(envelope)
@@ -1019,6 +1153,9 @@ function applyDisposition({ targetRoot, envelope, registryPath, authorityRegistr
       dispositionId: parsed.statement.dispositionId,
       entry: dispositionAppend.entry
     };
+  } catch (error) {
+    if (error && error.code === 'PATH_NOT_CONTAINED') return containmentResult(STATUS.DISPOSITION_UNAVAILABLE, error);
+    throw error;
   } finally {
     FileLock.release(lock.lockFile, lock.token);
   }
@@ -1136,5 +1273,7 @@ module.exports = {
   consumeCountersignature,
   validateDispositionStatement,
   applyDisposition,
+  assertContained,
+  ensureContainedDirectory,
   USO
 };

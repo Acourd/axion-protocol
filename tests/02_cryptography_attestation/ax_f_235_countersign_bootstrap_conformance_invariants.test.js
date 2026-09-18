@@ -342,5 +342,160 @@ function markerPathOf(s) {
   console.log(`✓ [${checks}] independencia y ausencia de memoria v2`);
 }
 
+// --- 8. S1-S8: contencion de rutas contra symlinks, junctions y enlaces colgantes ---
+{
+  function makeLink(targetAbs, linkPath, kind) {
+    try {
+      const type = kind === 'dir' && process.platform === 'win32' ? 'junction' : kind;
+      fs.symlinkSync(targetAbs, linkPath, type);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+  const blockedStatuses = new Set([
+    V1.STATUS.COUNTERSIGN_STATE_UNAVAILABLE,
+    V2.STATUS.V2_STATE_UNAVAILABLE,
+    V1.STATUS.DISPOSITION_UNAVAILABLE
+  ]);
+  const assertBlocked = (result, label) => {
+    ok(blockedStatuses.has(result.status) || result.reason === 'PATH_NOT_CONTAINED' || (Array.isArray(result.reasons) && result.reasons.includes('PATH_NOT_CONTAINED')),
+      `${label}: ${JSON.stringify(result)}`);
+  };
+
+  const s1 = setup();
+  const escape1 = H.makeWorkspace('axion-cs235-escape1-');
+  cleanup.push(escape1);
+  fs.mkdirSync(path.join(s1.root, '.axion', 'state'), { recursive: true });
+  if (makeLink(escape1, path.join(s1.root, '.axion', 'state', 'countersign-consumption'), 'dir')) {
+    assertBlocked(runPre(s1), 'S1 pre con directorio de consumo enlazado');
+    assertBlocked(runConsume(s1), 'S1 consume con directorio de consumo enlazado');
+    ok(H.readTree(escape1).length === 0, 'S1 nada escrito fuera de la raiz');
+    console.log(`✓ [${checks}] S1 directorio de consumo enlazado rechazado`);
+  } else {
+    console.log('  (S1 omitido: no se pudo crear el enlace de directorio)');
+  }
+
+  const s2 = setup();
+  const dir2 = V1.stateDir(s2.root);
+  fs.mkdirSync(dir2, { recursive: true });
+  const escapeLog2 = path.join(s2.authDir, 'escape-consumption.log');
+  fs.writeFileSync(escapeLog2, '', 'utf8');
+  if (makeLink(escapeLog2, path.join(dir2, 'consumption.log'), 'file')) {
+    const result = runConsume(s2);
+    ok(result.status === V1.STATUS.COUNTERSIGN_STATE_UNAVAILABLE && result.reason === 'PATH_NOT_CONTAINED', `S2 log enlazado bloquea: ${JSON.stringify(result)}`);
+    ok(fs.readFileSync(escapeLog2, 'utf8') === '', 'S2 log externo intacto');
+    ok(!fs.existsSync(path.join(dir2, V1.markerNameOf(registry.registryId, registry.registryRevision, s2.authority.keyId, s2.statement.nonce))), 'S2 sin marcador creado');
+    console.log(`✓ [${checks}] S2 log de consumo enlazado rechazado`);
+  } else {
+    console.log('  (S2 omitido: el sistema no permite enlaces de archivo)');
+  }
+
+  const s3 = setup();
+  const dir3 = V1.stateDir(s3.root);
+  fs.mkdirSync(dir3, { recursive: true });
+  const escapeLog3 = path.join(s3.authDir, 'escape-disposition.log');
+  fs.writeFileSync(escapeLog3, '', 'utf8');
+  if (makeLink(escapeLog3, path.join(dir3, 'disposition.log'), 'file')) {
+    const invalidate = H.signDispositionStatement(H.makeInvalidateStatement({
+      authority: s3.authority,
+      statementSha256: H.fakeHash('statement-s3'),
+      dispositionId: 'AX-DISP-0008'
+    }), s3.authority);
+    const result = V1.applyDisposition({
+      targetRoot: s3.root,
+      envelope: invalidate,
+      registryPath: s3.registryPath,
+      authorityRegistryPath: s3.authoritiesPath
+    });
+    ok(result.status === V1.STATUS.DISPOSITION_UNAVAILABLE && result.reason === 'PATH_NOT_CONTAINED', `S3 disposicion con log enlazado: ${JSON.stringify(result)}`);
+    ok(fs.readFileSync(escapeLog3, 'utf8') === '', 'S3 log de disposicion externo intacto');
+    console.log(`✓ [${checks}] S3 log de disposicion enlazado rechazado`);
+  } else {
+    console.log('  (S3 omitido: el sistema no permite enlaces de archivo)');
+  }
+
+  const s4 = setup();
+  const dir4 = V1.stateDir(s4.root);
+  fs.mkdirSync(dir4, { recursive: true });
+  const escape4 = H.makeWorkspace('axion-cs235-escape4-');
+  cleanup.push(escape4);
+  if (makeLink(escape4, path.join(dir4, 'reports'), 'dir')) {
+    const result = runPre(s4);
+    ok(result.status === V2.STATUS.V2_STATE_UNAVAILABLE && result.reason === 'PATH_NOT_CONTAINED', `S4 reports enlazado bloquea: ${JSON.stringify(result)}`);
+    ok(H.readTree(escape4).length === 0, 'S4 sin reportes fuera de la raiz');
+    console.log(`✓ [${checks}] S4 directorio de reportes enlazado rechazado`);
+  } else {
+    console.log('  (S4 omitido: no se pudo crear el enlace de directorio)');
+  }
+
+  const s5 = setup();
+  const dir5 = V1.stateDir(s5.root);
+  const reports5 = path.join(dir5, 'reports');
+  fs.mkdirSync(reports5, { recursive: true });
+  const operationId5 = V2.operationIdOf(registry.registryId, registry.registryRevision, s5.authority.keyId, s5.statement.nonce);
+  const escapeReport5 = path.join(s5.authDir, 'escape-report.json');
+  fs.writeFileSync(escapeReport5, 'original\n', 'utf8');
+  if (makeLink(escapeReport5, path.join(reports5, `v2-pre-${operationId5}.json`), 'file')) {
+    const result = runPre(s5);
+    ok(result.status === V2.STATUS.V2_STATE_UNAVAILABLE && result.reason === 'PATH_NOT_CONTAINED', `S5 reporte enlazado bloquea: ${JSON.stringify(result)}`);
+    ok(fs.readFileSync(escapeReport5, 'utf8') === 'original\n', 'S5 reporte externo intacto');
+    console.log(`✓ [${checks}] S5 reporte enlazado rechazado`);
+  } else {
+    console.log('  (S5 omitido: el sistema no permite enlaces de archivo)');
+  }
+
+  const s6 = setup();
+  const escape6 = H.makeWorkspace('axion-cs235-escape6-');
+  cleanup.push(escape6);
+  if (makeLink(escape6, path.join(s6.root, '.axion'), 'dir')) {
+    assertBlocked(runVerify(s6), 'S6 verify con .axion enlazado');
+    assertBlocked(runPre(s6), 'S6 pre con .axion enlazado');
+    assertBlocked(runConsume(s6), 'S6 consume con .axion enlazado');
+    ok(H.readTree(escape6).length === 0, 'S6 nada escrito fuera de la raiz');
+    console.log(`✓ [${checks}] S6 .axion enlazado rechazado`);
+  } else {
+    console.log('  (S6 omitido: no se pudo crear el enlace de directorio)');
+  }
+
+  const s7 = setup();
+  const escape7 = H.makeWorkspace('axion-cs235-escape7-');
+  cleanup.push(escape7);
+  fs.writeFileSync(path.join(escape7, 'crl.json'), `${JSON.stringify({ version: '1.0.0', entries: [] }, null, 2)}\n`, 'utf8');
+  fs.mkdirSync(path.join(s7.root, '.axion'), { recursive: true });
+  if (makeLink(escape7, path.join(s7.root, '.axion', 'revocations'), 'dir')) {
+    const result = runVerify(s7);
+    ok(result.status === V1.STATUS.COUNTERSIGN_STATE_UNAVAILABLE && result.reason === 'PATH_NOT_CONTAINED', `S7 CRL enlazada bloquea: ${JSON.stringify(result)}`);
+    console.log(`✓ [${checks}] S7 CRL enlazada rechazada`);
+  } else {
+    console.log('  (S7 omitido: no se pudo crear el enlace de directorio)');
+  }
+
+  const s8 = setup();
+  fs.mkdirSync(path.join(s8.root, '.axion'), { recursive: true });
+  if (makeLink(path.join(s8.authDir, 'no-existe-halt.json'), path.join(s8.root, '.axion', 'HALT'), 'file')) {
+    const result = runVerify(s8);
+    ok(result.status === V1.STATUS.COUNTERSIGN_STATE_UNAVAILABLE && result.reason === 'PATH_NOT_CONTAINED', `S8 HALT enlazado colgante bloquea: ${JSON.stringify(result)}`);
+    console.log(`✓ [${checks}] S8 HALT enlazado colgante rechazado`);
+  } else {
+    console.log('  (S8 omitido: el sistema no permite enlaces de archivo)');
+  }
+
+  const s9 = setup();
+  const dir9 = V1.stateDir(s9.root);
+  fs.mkdirSync(dir9, { recursive: true });
+  const external9 = path.join(s9.authDir, 'hardlink-source.log');
+  fs.writeFileSync(external9, '', 'utf8');
+  try {
+    fs.linkSync(external9, path.join(dir9, 'consumption.log'));
+    const result = runConsume(s9);
+    ok(result.status === V1.STATUS.COUNTERSIGN_STATE_UNAVAILABLE && result.reason === 'PATH_NOT_CONTAINED', `S9 hardlink bloquea: ${JSON.stringify(result)}`);
+    ok(fs.readFileSync(external9, 'utf8') === '', 'S9 archivo externo intacto');
+    console.log(`✓ [${checks}] S9 log con hardlink rechazado`);
+  } catch (_) {
+    console.log('  (S9 omitido: no se pudo crear el hardlink)');
+  }
+}
+
 H.cleanup(cleanup);
 console.log(`\n=== AX-F-235 PASS (${checks} comprobaciones) ===`);

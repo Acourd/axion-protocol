@@ -43,6 +43,88 @@ const USO = [
   'Codigos de salida: 0 PASS, 1 FAIL o bloqueo, 2 uso incorrecto.',
 ].join('\n');
 
+function containmentError(reason) {
+  const error = new Error(`Ruta no contenida: ${reason}`);
+  error.code = 'PATH_NOT_CONTAINED';
+  error.reason = reason;
+  return error;
+}
+
+function canonicalRootOf(targetRoot) {
+  const resolved = path.resolve(targetRoot);
+  try {
+    if (fs.existsSync(resolved)) return fs.realpathSync(resolved);
+  } catch (_) {
+    return resolved;
+  }
+  return resolved;
+}
+
+function pathKey(value) {
+  return process.platform === 'win32' ? value.toLowerCase() : value;
+}
+
+function lstatOrNull(file) {
+  try {
+    return fs.lstatSync(file);
+  } catch (_) {
+    return null;
+  }
+}
+
+function assertContained(targetRoot, absolutePath) {
+  const root = canonicalRootOf(targetRoot);
+  const resolved = path.resolve(absolutePath);
+  const rel = path.relative(root, resolved);
+  if (rel === '') return;
+  if (rel.startsWith('..') || path.isAbsolute(rel)) throw containmentError('ESCAPED_PATH');
+  let current = root;
+  for (const part of rel.split(path.sep)) {
+    current = path.join(current, part);
+    let stats;
+    try {
+      stats = fs.lstatSync(current);
+    } catch (_) {
+      break;
+    }
+    if (stats.isSymbolicLink()) throw containmentError('SYMLINK_REJECTED');
+    let real;
+    try {
+      real = fs.realpathSync(current);
+    } catch (_) {
+      throw containmentError('REALPATH_UNAVAILABLE');
+    }
+    if (pathKey(real) !== pathKey(current)) throw containmentError('SYMLINK_ESCAPE');
+    if (stats.isFile() && stats.nlink > 1) throw containmentError('HARDLINK_REJECTED');
+  }
+}
+
+function ensureContainedDirectory(targetRoot, parts) {
+  const root = canonicalRootOf(targetRoot);
+  if (!fs.existsSync(root)) throw containmentError('TARGET_ROOT_MISSING');
+  let current = root;
+  for (const part of parts) {
+    const next = path.join(current, part);
+    if (lstatOrNull(next) === null) fs.mkdirSync(next, { mode: 0o700 });
+    assertContained(targetRoot, next);
+    const stats = fs.lstatSync(next);
+    if (!stats.isDirectory()) throw containmentError('NOT_A_DIRECTORY');
+    current = next;
+  }
+  return current;
+}
+
+function withNoFollow(flags) {
+  if (process.platform !== 'win32' && fs.constants.O_NOFOLLOW) return flags | fs.constants.O_NOFOLLOW;
+  return flags;
+}
+
+function safeReadText(targetRoot, file) {
+  if (lstatOrNull(file) === null) return null;
+  assertContained(targetRoot, file);
+  return fs.readFileSync(file, 'utf8');
+}
+
 function canonicalizeIndependent(value) {
   if (value === null) return 'null';
   if (typeof value === 'string' || typeof value === 'boolean') return JSON.stringify(value);
@@ -62,10 +144,6 @@ function canonicalizeIndependent(value) {
 
 function hashCanonicalIndependent(value) {
   return crypto.createHash('sha256').update(canonicalizeIndependent(value), 'utf8').digest('hex');
-}
-
-function sha256Hex(buffer) {
-  return crypto.createHash('sha256').update(buffer).digest('hex');
 }
 
 function paeIndependent(payloadType, body) {
@@ -193,7 +271,9 @@ function resolveAuthorityIndependent(parsedRegistry, keyId, actorId, now) {
 
 function readCrlIndependent(targetRoot) {
   const file = path.join(targetRoot, '.axion', 'revocations', 'crl.json');
-  if (!fs.existsSync(file)) return { state: 'ABSENT', sha256: null, revokedKeyIds: [] };
+  assertContained(targetRoot, path.dirname(file));
+  if (lstatOrNull(file) === null) return { state: 'ABSENT', sha256: null, revokedKeyIds: [] };
+  assertContained(targetRoot, file);
   let parsed;
   try {
     parsed = readJson(file);
@@ -212,7 +292,9 @@ function readCrlIndependent(targetRoot) {
 
 function readHaltIndependent(targetRoot) {
   const file = path.join(targetRoot, '.axion', 'HALT');
-  if (!fs.existsSync(file)) return 'RUNNING';
+  assertContained(targetRoot, path.dirname(file));
+  if (lstatOrNull(file) === null) return 'RUNNING';
+  assertContained(targetRoot, file);
   let parsed;
   try {
     parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -302,10 +384,9 @@ function verifyEnvelopeIndependent({ envelope, registryObject, authorityRegistry
   return { ok: true, statement: parsed.statement, statementSha256: hashCanonicalIndependent(parsed.statement), envelopeSha256: hashCanonicalIndependent(envelope) };
 }
 
-function readLogIndependent(file, schema) {
-  if (!fs.existsSync(file)) return { ok: true, entries: [] };
-  const text = fs.readFileSync(file, 'utf8');
-  if (text.trim() === '') return { ok: true, entries: [] };
+function readLogIndependent(targetRoot, file, schema) {
+  const text = safeReadText(targetRoot, file);
+  if (text === null || text.trim() === '') return { ok: true, entries: [] };
   const entries = [];
   for (const line of text.split('\n').filter((l) => l.trim() !== '')) {
     let entry;
@@ -324,6 +405,7 @@ function readLogIndependent(file, schema) {
 
 function readStateIndependent(targetRoot) {
   const dir = stateDir(targetRoot);
+  assertContained(targetRoot, dir);
   const names = fs.existsSync(dir) ? fs.readdirSync(dir) : [];
   const markerNames = names.filter((n) => MARKER_NAME_RE.test(n)).sort();
   const dispMarkerNames = names.filter((n) => DISP_MARKER_NAME_RE.test(n)).sort();
@@ -331,8 +413,9 @@ function readStateIndependent(targetRoot) {
   for (const name of markerNames) {
     let parsed;
     try {
-      parsed = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8'));
-    } catch (_) {
+      parsed = JSON.parse(safeReadText(targetRoot, path.join(dir, name)));
+    } catch (error) {
+      if (error && error.code === 'PATH_NOT_CONTAINED') throw error;
       return { ok: false, reason: 'PARTIAL_CONSUMPTION_MARKER_UNWRITTEN' };
     }
     if (!sameKeys(parsed, ['baselineDigest', 'clockHighWaterMark', 'consumedAt', 'keyId', 'nonce', 'operationId', 'registryId', 'registryRevision', 'schema', 'statementSha256'])
@@ -341,7 +424,7 @@ function readStateIndependent(targetRoot) {
     }
     markers.push({ name, content: parsed });
   }
-  const consumptionRead = readLogIndependent(path.join(dir, 'consumption.log'), SCHEMA_CONSUMPTION);
+  const consumptionRead = readLogIndependent(targetRoot, path.join(dir, 'consumption.log'), SCHEMA_CONSUMPTION);
   if (!consumptionRead.ok) return { ok: false, reason: 'CONSUMPTION_CHAIN_INVALID' };
   let previous = GENESIS_HASH;
   for (let i = 0; i < consumptionRead.entries.length; i += 1) {
@@ -370,7 +453,7 @@ function readStateIndependent(targetRoot) {
   for (const entry of consumptionRead.entries) {
     if (!markerByOperation.has(entry.operationId)) return { ok: false, reason: 'PARTIAL_CONSUMPTION_LOG_WITHOUT_MARKER' };
   }
-  const dispositionRead = readLogIndependent(path.join(dir, 'disposition.log'), SCHEMA_DISPOSITION);
+  const dispositionRead = readLogIndependent(targetRoot, path.join(dir, 'disposition.log'), SCHEMA_DISPOSITION);
   if (!dispositionRead.ok) return { ok: false, reason: 'DISPOSITION_CHAIN_INVALID' };
   previous = GENESIS_HASH;
   const invalidatedRevisions = new Set();
@@ -475,14 +558,34 @@ function baselineDigestOf(operationId, authorizationDigest, stateDigest) {
   });
 }
 
-function writeReportAtomic(file, report) {
-  fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
+function writeReportAtomic(targetRoot, file, report) {
+  const dir = path.dirname(file);
+  ensureContainedDirectory(targetRoot, [...STATE_PARTS, 'reports']);
+  assertContained(targetRoot, dir);
+  if (lstatOrNull(file) !== null) {
+    const existing = fs.lstatSync(file);
+    if (existing.isSymbolicLink()) throw containmentError('SYMLINK_REJECTED');
+  }
   const tmp = `${file}.tmp-${process.pid}-${Date.now()}`;
-  fs.writeFileSync(tmp, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  assertContained(targetRoot, tmp);
+  const descriptor = fs.openSync(tmp, withNoFollow(fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY), 0o600);
+  try {
+    fs.writeSync(descriptor, `${JSON.stringify(report, null, 2)}\n`);
+    fs.fsyncSync(descriptor);
+  } finally {
+    fs.closeSync(descriptor);
+  }
   fs.renameSync(tmp, file);
+  assertContained(targetRoot, file);
 }
 
 function withLock(targetRoot, options, fn) {
+  try {
+    ensureContainedDirectory(targetRoot, STATE_PARTS);
+  } catch (error) {
+    if (error && error.code === 'PATH_NOT_CONTAINED') return { status: STATUS.V2_STATE_UNAVAILABLE, reason: 'PATH_NOT_CONTAINED', detail: error.reason };
+    return { status: STATUS.V2_STATE_UNAVAILABLE, reason: 'STATE_DIRECTORY_FAILED' };
+  }
   let lock;
   try {
     lock = FileLock.acquire(lockPath(targetRoot), {
@@ -513,72 +616,77 @@ function pre({ targetRoot, envelope, registryPath, authorityRegistryPath, option
   if (!authorityRead.ok) return { status: STATUS.V2_PRE_FAIL, reason: authorityRead.reason };
   const envelopeRead = verifyEnvelopeIndependent({ envelope, registryObject: registryRead.registry, authorityRegistry: authorityRead.registry, now });
   if (!envelopeRead.ok) return { status: STATUS.V2_PRE_FAIL, reason: envelopeRead.reason };
-  return withLock(targetRoot, options, () => {
-    const state = readStateIndependent(targetRoot);
-    if (!state.ok) return { status: STATUS.V2_PRE_FAIL, reason: state.reason };
-    const crl = readCrlIndependent(targetRoot);
-    if (crl.state === 'UNREADABLE') return { status: STATUS.V2_PRE_FAIL, reason: 'CRL_UNREADABLE' };
-    if (crl.revokedKeyIds.includes(envelopeRead.statement.signer.keyId)) return { status: STATUS.V2_PRE_FAIL, reason: 'CRL_REVOKED' };
-    const haltState = readHaltIndependent(targetRoot);
-    if (haltState !== 'RUNNING') return { status: STATUS.V2_PRE_FAIL, reason: haltState };
-    if (state.invalidatedRevisions.includes(envelopeRead.statement.registryRevision)) {
-      return { status: STATUS.V2_PRE_FAIL, reason: 'REVISION_INVALIDATED' };
-    }
-    const operationId = operationIdOf(
-      envelopeRead.statement.registryId,
-      envelopeRead.statement.registryRevision,
-      envelopeRead.statement.signer.keyId,
-      envelopeRead.statement.nonce
-    );
-    const stateDigest = stateDigestOf(state);
-    const authorizationDigest = authorizationDigestOf({
-      registryObject: registryRead.registry,
-      envelopeSha256: envelopeRead.envelopeSha256,
-      statementSha256: envelopeRead.statementSha256,
-      signerActorId: envelopeRead.statement.signer.actorId,
-      signerKeyId: envelopeRead.statement.signer.keyId,
-      authorityRegistrySha256: hashCanonicalIndependent(authorityRead.registry),
-      crl,
-      haltState,
-      dispositionStateDigest: dispositionStateDigestOf(state)
-    });
-    const baselineDigest = baselineDigestOf(operationId, authorizationDigest, stateDigest);
-    const report = {
-      schema: 'axion.countersign-v2-pre/v1',
-      phase: 'pre',
-      verifier: 'V2',
-      operationId,
-      verifiedAt: now.toISOString(),
-      registry: {
-        id: registryRead.registry.registryId,
-        revision: registryRead.registry.registryRevision,
-        designVersion: registryRead.registry.designVersion,
-        sha256: REGISTRY_SHA256
-      },
-      envelopeSha256: envelopeRead.envelopeSha256,
-      statementSha256: envelopeRead.statementSha256,
-      signer: { actorId: envelopeRead.statement.signer.actorId, keyId: envelopeRead.statement.signer.keyId },
-      authorizationDigest,
-      baselineDigest,
-      snapshot: {
-        stateDigest,
-        tailSeq: state.tailSeq,
-        tailEntryHash: state.tailEntryHash,
-        hwm: state.hwm,
-        markerSetHash: state.markerSetHash,
-        markerNames: state.markerNames,
-        logLength: state.logLength,
-        dispositionLength: state.dispositionLength,
-        dispositionHead: state.dispositionHead,
-        dispMarkerSetHash: state.dispMarkerSetHash,
-        invalidatedRevisions: state.invalidatedRevisions
+  try {
+    return withLock(targetRoot, options, () => {
+      const state = readStateIndependent(targetRoot);
+      if (!state.ok) return { status: STATUS.V2_PRE_FAIL, reason: state.reason };
+      const crl = readCrlIndependent(targetRoot);
+      if (crl.state === 'UNREADABLE') return { status: STATUS.V2_PRE_FAIL, reason: 'CRL_UNREADABLE' };
+      if (crl.revokedKeyIds.includes(envelopeRead.statement.signer.keyId)) return { status: STATUS.V2_PRE_FAIL, reason: 'CRL_REVOKED' };
+      const haltState = readHaltIndependent(targetRoot);
+      if (haltState !== 'RUNNING') return { status: STATUS.V2_PRE_FAIL, reason: haltState };
+      if (state.invalidatedRevisions.includes(envelopeRead.statement.registryRevision)) {
+        return { status: STATUS.V2_PRE_FAIL, reason: 'REVISION_INVALIDATED' };
       }
-    };
-    if (!sameKeys(report, PRE_REPORT_KEYS)) return { status: STATUS.V2_PRE_FAIL, reason: 'REPORT_SHAPE' };
-    const reportPath = path.join(reportsDir(targetRoot), `v2-pre-${operationId}.json`);
-    writeReportAtomic(reportPath, report);
-    return { status: STATUS.V2_PRE_OK, operationId, baselineDigest, reportPath, report };
-  });
+      const operationId = operationIdOf(
+        envelopeRead.statement.registryId,
+        envelopeRead.statement.registryRevision,
+        envelopeRead.statement.signer.keyId,
+        envelopeRead.statement.nonce
+      );
+      const stateDigest = stateDigestOf(state);
+      const authorizationDigest = authorizationDigestOf({
+        registryObject: registryRead.registry,
+        envelopeSha256: envelopeRead.envelopeSha256,
+        statementSha256: envelopeRead.statementSha256,
+        signerActorId: envelopeRead.statement.signer.actorId,
+        signerKeyId: envelopeRead.statement.signer.keyId,
+        authorityRegistrySha256: hashCanonicalIndependent(authorityRead.registry),
+        crl,
+        haltState,
+        dispositionStateDigest: dispositionStateDigestOf(state)
+      });
+      const baselineDigest = baselineDigestOf(operationId, authorizationDigest, stateDigest);
+      const report = {
+        schema: 'axion.countersign-v2-pre/v1',
+        phase: 'pre',
+        verifier: 'V2',
+        operationId,
+        verifiedAt: now.toISOString(),
+        registry: {
+          id: registryRead.registry.registryId,
+          revision: registryRead.registry.registryRevision,
+          designVersion: registryRead.registry.designVersion,
+          sha256: REGISTRY_SHA256
+        },
+        envelopeSha256: envelopeRead.envelopeSha256,
+        statementSha256: envelopeRead.statementSha256,
+        signer: { actorId: envelopeRead.statement.signer.actorId, keyId: envelopeRead.statement.signer.keyId },
+        authorizationDigest,
+        baselineDigest,
+        snapshot: {
+          stateDigest,
+          tailSeq: state.tailSeq,
+          tailEntryHash: state.tailEntryHash,
+          hwm: state.hwm,
+          markerSetHash: state.markerSetHash,
+          markerNames: state.markerNames,
+          logLength: state.logLength,
+          dispositionLength: state.dispositionLength,
+          dispositionHead: state.dispositionHead,
+          dispMarkerSetHash: state.dispMarkerSetHash,
+          invalidatedRevisions: state.invalidatedRevisions
+        }
+      };
+      if (!sameKeys(report, PRE_REPORT_KEYS)) return { status: STATUS.V2_PRE_FAIL, reason: 'REPORT_SHAPE' };
+      const reportPath = path.join(reportsDir(targetRoot), `v2-pre-${operationId}.json`);
+      writeReportAtomic(targetRoot, reportPath, report);
+      return { status: STATUS.V2_PRE_OK, operationId, baselineDigest, reportPath, report };
+    });
+  } catch (error) {
+    if (error && error.code === 'PATH_NOT_CONTAINED') return { status: STATUS.V2_STATE_UNAVAILABLE, reason: 'PATH_NOT_CONTAINED', detail: error.reason };
+    throw error;
+  }
 }
 
 function post({ targetRoot, envelope, registryPath, authorityRegistryPath, options }) {
@@ -602,92 +710,99 @@ function post({ targetRoot, envelope, registryPath, authorityRegistryPath, optio
   );
   const explicit = options && options.preReportPath;
   const preReportPath = explicit || path.join(reportsDir(targetRoot), `v2-pre-${operationId}.json`);
-  if (!fs.existsSync(preReportPath)) {
+  if (lstatOrNull(preReportPath) === null) {
     return { status: STATUS.INDEPENDENT_VERIFICATION_FAIL, reasons: ['PRE_REPORT_MISSING'] };
   }
   let preReport;
   try {
+    assertContained(targetRoot, preReportPath);
     preReport = readJson(preReportPath);
-  } catch (_) {
+  } catch (error) {
+    if (error && error.code === 'PATH_NOT_CONTAINED') return { status: STATUS.INDEPENDENT_VERIFICATION_FAIL, reasons: ['PATH_NOT_CONTAINED'], detail: error.reason };
     return { status: STATUS.INDEPENDENT_VERIFICATION_FAIL, reasons: ['PRE_REPORT_UNREADABLE'] };
   }
   if (!sameKeys(preReport, PRE_REPORT_KEYS) || preReport.schema !== 'axion.countersign-v2-pre/v1' || preReport.operationId !== operationId) {
     return { status: STATUS.INDEPENDENT_VERIFICATION_FAIL, reasons: ['PRE_REPORT_MALFORMED'] };
   }
-  return withLock(targetRoot, options, () => {
-    const reasons = [];
-    const state = readStateIndependent(targetRoot);
-    if (!state.ok) return { status: STATUS.INDEPENDENT_VERIFICATION_FAIL, reasons: [state.reason] };
-    const crl = readCrlIndependent(targetRoot);
-    const haltState = readHaltIndependent(targetRoot);
-    const currentAuthorization = authorizationDigestOf({
-      registryObject: registryRead.registry,
-      envelopeSha256: envelopeRead.envelopeSha256,
-      statementSha256: envelopeRead.statementSha256,
-      signerActorId: envelopeRead.statement.signer.actorId,
-      signerKeyId: envelopeRead.statement.signer.keyId,
-      authorityRegistrySha256: hashCanonicalIndependent(authorityRead.registry),
-      crl,
-      haltState,
-      dispositionStateDigest: dispositionStateDigestOf(state)
+  try {
+    return withLock(targetRoot, options, () => {
+      const reasons = [];
+      const state = readStateIndependent(targetRoot);
+      if (!state.ok) return { status: STATUS.INDEPENDENT_VERIFICATION_FAIL, reasons: [state.reason] };
+      const crl = readCrlIndependent(targetRoot);
+      const haltState = readHaltIndependent(targetRoot);
+      const currentAuthorization = authorizationDigestOf({
+        registryObject: registryRead.registry,
+        envelopeSha256: envelopeRead.envelopeSha256,
+        statementSha256: envelopeRead.statementSha256,
+        signerActorId: envelopeRead.statement.signer.actorId,
+        signerKeyId: envelopeRead.statement.signer.keyId,
+        authorityRegistrySha256: hashCanonicalIndependent(authorityRead.registry),
+        crl,
+        haltState,
+        dispositionStateDigest: dispositionStateDigestOf(state)
+      });
+      const authorizationUnchanged = currentAuthorization === preReport.authorizationDigest;
+      if (!authorizationUnchanged) reasons.push('AUTHORIZATION_CHANGED_DURING_CONSUMPTION');
+      if (state.tailSeq !== preReport.snapshot.tailSeq + 1) reasons.push('TRANSITION_COUNT');
+      if (state.logLength !== preReport.snapshot.logLength + 1) reasons.push('LOG_LENGTH');
+      const newEntry = state.entries[state.entries.length - 1];
+      if (!newEntry) {
+        reasons.push('ENTRY_MISSING');
+      } else {
+        if (newEntry.prevEntryHash !== preReport.snapshot.tailEntryHash) reasons.push('CHAIN_PREV');
+        if (newEntry.operationId !== operationId) reasons.push('OPERATION_ID');
+        if (newEntry.baselineDigest !== preReport.baselineDigest) reasons.push('BASELINE_BINDING');
+        if (newEntry.nonce !== envelopeRead.statement.nonce) reasons.push('NONCE');
+        if (newEntry.keyId !== envelopeRead.statement.signer.keyId) reasons.push('KEY_ID');
+        if (newEntry.registryId !== envelopeRead.statement.registryId || newEntry.registryRevision !== envelopeRead.statement.registryRevision) reasons.push('REGISTRY_BINDING');
+        if (newEntry.statementSha256 !== envelopeRead.statementSha256) reasons.push('STATEMENT_BINDING');
+        if (!Number.isFinite(Date.parse(newEntry.consumedAt))) reasons.push('CONSUMED_AT');
+        const expectedHwm = preReport.snapshot.hwm !== null && Date.parse(preReport.snapshot.hwm) > Date.parse(newEntry.consumedAt)
+          ? preReport.snapshot.hwm
+          : newEntry.consumedAt;
+        if (newEntry.clockHighWaterMark !== expectedHwm) reasons.push('HWM');
+      }
+      const expectedMarkerName = markerNameOf(
+        envelopeRead.statement.registryId,
+        envelopeRead.statement.registryRevision,
+        envelopeRead.statement.signer.keyId,
+        envelopeRead.statement.nonce
+      );
+      const expectedMarkers = [...preReport.snapshot.markerNames, expectedMarkerName].sort();
+      if (state.markerNames.join(',') !== expectedMarkers.join(',')) reasons.push('MARKER_TRANSITION');
+      const finalStateDigest = stateDigestOf(state);
+      const result = reasons.length === 0 ? STATUS.INDEPENDENT_VERIFICATION_PASS : STATUS.INDEPENDENT_VERIFICATION_FAIL;
+      const report = {
+        schema: 'axion.countersign-v2-post/v1',
+        phase: 'post',
+        verifier: 'V2',
+        operationId,
+        verifiedAt: now.toISOString(),
+        registry: {
+          id: registryRead.registry.registryId,
+          revision: registryRead.registry.registryRevision,
+          designVersion: registryRead.registry.designVersion,
+          sha256: REGISTRY_SHA256
+        },
+        envelopeSha256: envelopeRead.envelopeSha256,
+        statementSha256: envelopeRead.statementSha256,
+        baselineDigest: preReport.baselineDigest,
+        finalStateDigest,
+        expectedEntryHash: newEntry ? newEntry.entryHash : null,
+        authorizationUnchanged,
+        result,
+        reasons
+      };
+      if (!sameKeys(report, POST_REPORT_KEYS)) return { status: STATUS.INDEPENDENT_VERIFICATION_FAIL, reasons: ['REPORT_SHAPE'] };
+      const reportPath = path.join(reportsDir(targetRoot), `v2-post-${operationId}.json`);
+      writeReportAtomic(targetRoot, reportPath, report);
+      return { status: result, operationId, reasons, reportPath, report };
     });
-    const authorizationUnchanged = currentAuthorization === preReport.authorizationDigest;
-    if (!authorizationUnchanged) reasons.push('AUTHORIZATION_CHANGED_DURING_CONSUMPTION');
-    if (state.tailSeq !== preReport.snapshot.tailSeq + 1) reasons.push('TRANSITION_COUNT');
-    if (state.logLength !== preReport.snapshot.logLength + 1) reasons.push('LOG_LENGTH');
-    const newEntry = state.entries[state.entries.length - 1];
-    if (!newEntry) {
-      reasons.push('ENTRY_MISSING');
-    } else {
-      if (newEntry.prevEntryHash !== preReport.snapshot.tailEntryHash) reasons.push('CHAIN_PREV');
-      if (newEntry.operationId !== operationId) reasons.push('OPERATION_ID');
-      if (newEntry.baselineDigest !== preReport.baselineDigest) reasons.push('BASELINE_BINDING');
-      if (newEntry.nonce !== envelopeRead.statement.nonce) reasons.push('NONCE');
-      if (newEntry.keyId !== envelopeRead.statement.signer.keyId) reasons.push('KEY_ID');
-      if (newEntry.registryId !== envelopeRead.statement.registryId || newEntry.registryRevision !== envelopeRead.statement.registryRevision) reasons.push('REGISTRY_BINDING');
-      if (newEntry.statementSha256 !== envelopeRead.statementSha256) reasons.push('STATEMENT_BINDING');
-      if (!Number.isFinite(Date.parse(newEntry.consumedAt))) reasons.push('CONSUMED_AT');
-      const expectedHwm = preReport.snapshot.hwm !== null && Date.parse(preReport.snapshot.hwm) > Date.parse(newEntry.consumedAt)
-        ? preReport.snapshot.hwm
-        : newEntry.consumedAt;
-      if (newEntry.clockHighWaterMark !== expectedHwm) reasons.push('HWM');
-    }
-    const expectedMarkerName = markerNameOf(
-      envelopeRead.statement.registryId,
-      envelopeRead.statement.registryRevision,
-      envelopeRead.statement.signer.keyId,
-      envelopeRead.statement.nonce
-    );
-    const expectedMarkers = [...preReport.snapshot.markerNames, expectedMarkerName].sort();
-    if (state.markerNames.join(',') !== expectedMarkers.join(',')) reasons.push('MARKER_TRANSITION');
-    const finalStateDigest = stateDigestOf(state);
-    const result = reasons.length === 0 ? STATUS.INDEPENDENT_VERIFICATION_PASS : STATUS.INDEPENDENT_VERIFICATION_FAIL;
-    const report = {
-      schema: 'axion.countersign-v2-post/v1',
-      phase: 'post',
-      verifier: 'V2',
-      operationId,
-      verifiedAt: now.toISOString(),
-      registry: {
-        id: registryRead.registry.registryId,
-        revision: registryRead.registry.registryRevision,
-        designVersion: registryRead.registry.designVersion,
-        sha256: REGISTRY_SHA256
-      },
-      envelopeSha256: envelopeRead.envelopeSha256,
-      statementSha256: envelopeRead.statementSha256,
-      baselineDigest: preReport.baselineDigest,
-      finalStateDigest,
-      expectedEntryHash: newEntry ? newEntry.entryHash : null,
-      authorizationUnchanged,
-      result,
-      reasons
-    };
-    if (!sameKeys(report, POST_REPORT_KEYS)) return { status: STATUS.INDEPENDENT_VERIFICATION_FAIL, reasons: ['REPORT_SHAPE'] };
-    const reportPath = path.join(reportsDir(targetRoot), `v2-post-${operationId}.json`);
-    writeReportAtomic(reportPath, report);
-    return { status: result, operationId, reasons, reportPath, report };
-  });
+  } catch (error) {
+    if (error && error.code === 'PATH_NOT_CONTAINED') return { status: STATUS.INDEPENDENT_VERIFICATION_FAIL, reasons: ['PATH_NOT_CONTAINED'], detail: error.reason };
+    throw error;
+  }
 }
 
 function parseOptions(args) {
@@ -780,5 +895,7 @@ module.exports = {
   baselineDigestOf,
   pre,
   post,
+  assertContained,
+  ensureContainedDirectory,
   USO
 };

@@ -1,7 +1,7 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:8d070565-dd0a-7ce7-26bc-82fd41ca4a5d",
+  "serialNumber": "urn:uuid:ef88670a-1e09-1971-f1be-0091483d5ee2",
   "version": 1,
   "metadata": {
     "timestamp": "1970-01-01T00:00:00.000Z",
@@ -1911,7 +1911,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "a2ccb40777fd6d30ce574f864923d48f9da0c8a82aa1c8651d4baaf2075fbac3"
+          "content": "6641ed7422c4ba4489b647f15543514f5f8f8fd9e906b6815c48a549ef5a7fb7"
         }
       ],
       "licenses": [
@@ -1924,7 +1924,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "4718"
+          "value": "5496"
         }
       ]
     },
@@ -7461,7 +7461,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "219e79a3f09bc8f7c9ca689f824796f788e25babdff232bc84a6e51007dfeb52"
+          "content": "d634fada5828913fb78741ca4c857b0b0f9b02bd786a4f832091ec25e8ee185c"
         }
       ],
       "licenses": [
@@ -7474,7 +7474,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "18062"
+          "value": "25814"
         }
       ]
     },
@@ -10636,7 +10636,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "dcb76b0ce4733274975fdd5d16dbc05d21d23f7812231f360e0a5234995293f6"
+          "content": "441f774e4f7af38853f16b3c67800014d4c614a82ccc26417d86940cd921ff58"
         }
       ],
       "licenses": [
@@ -10649,7 +10649,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "48615"
+          "value": "53468"
         }
       ]
     },
@@ -10661,7 +10661,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "83ebe6512b6ccfd24f8f18356de664574940ab8adc429ac7b49fffff6e63c108"
+          "content": "ab4194808e72f6e11dbe167c88a149782a45fce6835f3979c4d0e06fca4298d0"
         }
       ],
       "licenses": [
@@ -10674,7 +10674,7 @@
       "properties": [
         {
           "name": "axion:fileSize",
-          "value": "36617"
+          "value": "41026"
         }
       ]
     },
