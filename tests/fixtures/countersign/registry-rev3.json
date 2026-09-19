@@ -1,0 +1,25 @@
+{
+  "registry": "axion.memory-design-registry",
+  "registryId": "AX-MEM-REG-0001",
+  "schemaVersion": "1.0.0",
+  "registryRevision": 3,
+  "designVersion": "0.13",
+  "date": "2026-09-17",
+  "decisions": [
+    {"id": "D1", "state": "RATIFICADA_HUMANA", "summary": "Sujeto: frontera de proyecto + actor canonico local para el estrato privado; sin tienda global."},
+    {"id": "D2", "state": "RATIFICADA_HUMANA", "summary": "Consentimiento: opt-in por ambito y proposito; por entrada para project/team y sensibles; denegacion por defecto; revocable."},
+    {"id": "D2-a", "state": "RATIFICADA_HUMANA", "summary": "Propositos: interaction_cadence, presentation_style, tooling_ergonomics; fuera del catalogo = rechazo."},
+    {"id": "D3", "state": "PENDIENTE_CONTRAFIRMA", "summary": "Presupuesto v1: 12 entradas; medir tokens y latencia sin prometer eficiencia."},
+    {"id": "D4a", "state": "PENDIENTE_CONTRAFIRMA", "summary": "Pre-admision: caducidades 90/30/180; confianza de inferencia <= 0.6; cuarentena en dos clases."},
+    {"id": "D4b", "state": "PENDIENTE", "summary": "Umbrales de promocion: despues de evidencia Shadow."},
+    {"id": "D5", "state": "PENDIENTE_CONTRAFIRMA", "summary": "Piloto de factibilidad X=1/Y=1; baseline: perfil de fabrica sin memoria; metrica de calibracion: correcciones manuales por tarea; eficacia requiere fase controlada posterior."},
+    {"id": "D6", "state": "RATIFICADA_HUMANA", "summary": "v1 solo recomendacion; sin aplicacion automatica; Assist/Approved requieren reabrir D6."},
+    {"id": "D7", "state": "PENDIENTE", "summary": "Comparticion por equipo: excluida por defecto."},
+    {"id": "D8", "state": "PENDIENTE", "summary": "Reversion de memoria: integrar con checkpoints o mecanismo propio."},
+    {"id": "D9", "state": "PENDIENTE", "summary": "Retencion y borrado: tombstones; precondiciones de retention.yaml."},
+    {"id": "D10", "state": "CONSTRENIDA_POR_D1", "summary": "Perfil en ambito de proyecto; sin perfil global mientras D1 no se reabra."},
+    {"id": "D11", "state": "PENDIENTE_CONTRAFIRMA", "summary": "Cadena de eventos propia con primitivas compartidas; ledger de evidencia sin contaminacion."},
+    {"id": "D12", "state": "PENDIENTE_CONTRAFIRMA", "summary": "Migracion dry-run, aprobacion humana, grandfathering como authority_ref, rollback byte-identical."},
+    {"id": "D13", "state": "PENDIENTE_CONTRAFIRMA", "summary": "Bootstrap: implementar solo verificador y consumidor de contrafirma/disposicion; sin memoria v2, journal ni Shadow; escritura solo en .axion/state/countersign-consumption/; gate: primera contrafirma verificada de forma independiente y consumida antes de cualquier fase posterior."}
+  ]
+}

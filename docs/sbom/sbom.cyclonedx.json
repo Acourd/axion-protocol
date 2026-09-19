@@ -1,7 +1,7 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:1fede861-8d38-94e4-3895-a85344ceaaa4",
+  "serialNumber": "urn:uuid:ef88670a-1e09-1971-f1be-0091483d5ee2",
   "version": 1,
   "metadata": {
     "timestamp": "1970-01-01T00:00:00.000Z",
@@ -40,7 +40,7 @@
       },
       {
         "name": "axion:sbomIncludedCount",
-        "value": "539"
+        "value": "547"
       },
       {
         "name": "axion:sbomExcludedCount",
@@ -1786,7 +1786,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "8f44879464a9b6a556e214524923d46084dc46eb8f4dc824550e5bbf909f3a33"
+          "content": "70d381d830107e0e06cb9a25f3f672b27dcec48a4b7ce344e552fbbc5ef84456"
         }
       ],
       "licenses": [
@@ -1811,7 +1811,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "6577167208aca1b68b37f3209f201299caa1b5731f90b166ea611197b82ddae8"
+          "content": "f7d062d1b219206f7d6d3d26f0b95f9919673b9df1172a8bb57741cf8d34fc8e"
         }
       ],
       "licenses": [
@@ -1836,7 +1836,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "a19f88a61dc7e66e4b2bbc22a5850c109d8f5cdd8ef5c55251aa75704a49325a"
+          "content": "414aef0030d98aaa45e559063bb9de6b30b594e86ba7c18bb576bb985a2a2f86"
         }
       ],
       "licenses": [
@@ -1900,6 +1900,31 @@
         {
           "name": "axion:fileSize",
           "value": "5778"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/docs/COUNTERSIGN_BOOTSTRAP.md",
+      "name": "docs/COUNTERSIGN_BOOTSTRAP.md",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6641ed7422c4ba4489b647f15543514f5f8f8fd9e906b6815c48a549ef5a7fb7"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "5496"
         }
       ]
     },
@@ -2611,7 +2636,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "c8335638e7228a5fa8a25b88c1b918b60b677d3a5e45ecfed77ad0070c10d79c"
+          "content": "c95b4601ef2c85f28ef5e1923e3aae3cc4d530af5ec7f4fc8064deb0cda014f5"
         }
       ],
       "licenses": [
@@ -2636,7 +2661,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "3a0fe0c1f04541c9ee4237ecd921aecfa13af146175f3e58b21d234f4b6e16dd"
+          "content": "c2396a721757cbe38cc58f19d66d3d3634e0547e738b12ba51b172ed0a50f111"
         }
       ],
       "licenses": [
@@ -2661,7 +2686,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "31d79778698e09fe36a05a637cb853221c2e81faa7f8b5a4e0173cb1e8bf62f9"
+          "content": "467973cda22b46bbfd90d25837b5732388387e879c54ac746869e0bb70c4afee"
         }
       ],
       "licenses": [
@@ -7430,6 +7455,31 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tests/02_cryptography_attestation/ax_f_235_countersign_bootstrap_conformance_invariants.test.js",
+      "name": "tests/02_cryptography_attestation/ax_f_235_countersign_bootstrap_conformance_invariants.test.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d634fada5828913fb78741ca4c857b0b0f9b02bd786a4f832091ec25e8ee185c"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "25814"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tests/02_cryptography_attestation/c03_independent_attestations.test.js",
       "name": "tests/02_cryptography_attestation/c03_independent_attestations.test.js",
       "version": "1.4.0-beta.1",
@@ -9130,6 +9180,31 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tests/05_adversarial_resilience/ax_f_236_countersign_bootstrap_multiprocess_adversarial.test.js",
+      "name": "tests/05_adversarial_resilience/ax_f_236_countersign_bootstrap_multiprocess_adversarial.test.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75156db6a424cb4b07442afc90c849a1c668052cfce26fe88ae340c201c8e2f5"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "16353"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tests/05_adversarial_resilience/human_anti_patterns.test.js",
       "name": "tests/05_adversarial_resilience/human_anti_patterns.test.js",
       "version": "1.4.0-beta.1",
@@ -9205,13 +9280,88 @@
     },
     {
       "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tests/fixtures/countersign/bootstrap_test_helpers.js",
+      "name": "tests/fixtures/countersign/bootstrap_test_helpers.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cc18df5906dd3d1baa78dfe9185c38034d78bb33b8dfb0470b8f6ff53309316e"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "9161"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tests/fixtures/countersign/consume_fault_child.js",
+      "name": "tests/fixtures/countersign/consume_fault_child.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "52454db18c252a490d7cfbbc129dbeaaed5d8597913cf6c83ae95fe6a0624e8c"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "488"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tests/fixtures/countersign/registry-rev3.json",
+      "name": "tests/fixtures/countersign/registry-rev3.json",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3a0c64c14e7e88352ab904c0980e6f5231f7f2399734dfafe04b0aac3aebd87b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "2677"
+        }
+      ]
+    },
+    {
+      "type": "file",
       "bom-ref": "pkg:generic/axion-protocol/tests/README.md",
       "name": "tests/README.md",
       "version": "1.4.0-beta.1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "bda21e37f0669021ccfadc50d33b19d9357b30ba8c5230f5dc171b4c08d8168f"
+          "content": "749252770f8065df4208eef6588250f7e7633a4ab23e68481b7e8a17169db370"
         }
       ],
       "licenses": [
@@ -10475,6 +10625,56 @@
         {
           "name": "axion:fileSize",
           "value": "4941"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/countersign_bootstrap.js",
+      "name": "tools/countersign_bootstrap.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "441f774e4f7af38853f16b3c67800014d4c614a82ccc26417d86940cd921ff58"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "53468"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "pkg:generic/axion-protocol/tools/countersign_independent_verifier.js",
+      "name": "tools/countersign_independent_verifier.js",
+      "version": "1.4.0-beta.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ab4194808e72f6e11dbe167c88a149782a45fce6835f3979c4d0e06fca4298d0"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "axion:fileSize",
+          "value": "41026"
         }
       ]
     },
